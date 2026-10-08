@@ -190,3 +190,23 @@ into the relevant later media prompt, preserving the manual-stats pilot priority
   of jersey numbers; do not silently map them onto the eventual actual roster.
 - Game Film is still a later feature. Hudl is the likely recording source; confirm
   exported video files versus links before selecting an integration.
+
+## Progress — Step 3 implementation complete, verification partial (2026-10-08)
+
+- Commit `1c3c314`: shared individual/table box-score entry, requested fields,
+  derived rebounds, missing-versus-zero handling, numeric validation, points
+  checks, incomplete draft persistence, and stable temporary-player IDs.
+- Planning review inspected the source and local Git state; it did not run the
+  app or repeat the implementation chat's reported checks.
+- Implementation reports a passing simulator build and model checks for invalid
+  input, discrepancies, overflow, persistence, unique updates, and storage errors.
+  iPad interactions verified both modes sharing edits, validation, draft saves,
+  editing without duplicates, and relaunch persistence. Step 2 files stayed intact.
+- UI automation then failed. iPhone interaction/layout and iPad new-game Save
+  remain unverified. Actual 26.0 runtime and physical devices remain untested.
+- Human action: unlock the Mac and reopen Simulator before resuming UI checks.
+- Next bounded task: finish these checks and fix only issues they reveal. Do not
+  start possession entry, connected services, or media features. Advanced-sheet
+  reconciliation remains unavailable, and draft saving is not publishing.
+- Implementation reports remote HEAD matching local HEAD. The two pre-existing
+  personal Xcode files remain staged/dirty and must stay outside task commits.

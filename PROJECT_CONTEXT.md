@@ -1,10 +1,11 @@
 # TeamStats — Project Context and Development Sequence
 
 Last updated: 2026-10-08.
-Status: requirements draft; Step 2 complete at `5b74f2f`. Local game creation,
-temporary roster display, and minimum OS adjustment are implemented. Next task:
-local box-score entry with both player/table modes, blank-versus-zero semantics,
-and shot/points discrepancy flags. Cross-sheet comparison follows possession entry.
+Status: requirements draft; Step 3 implementation at `1c3c314`, verification partial.
+Local game creation and both box-score entry modes are implemented, including
+blank-versus-zero semantics, draft storage, and shot/points discrepancy flags.
+Next task: finish iPhone entry checks and iPad new-game Save verification before
+further implementation. Cross-sheet comparison follows possession entry.
 
 ## Workspace and source of truth
 
