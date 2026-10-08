@@ -255,3 +255,15 @@ into the relevant later media prompt, preserving the manual-stats pilot priority
 
 Next bounded task: complete these two manual checks and record the evidence,
 fixing only any demonstrated defect. Do not begin the next implementation step.
+
+## Step 3 closed — owner manual verification (2026-10-08)
+
+- Owner reported “iphone passed; ipad passed” for the two remaining manual
+  checklist items above. iPhone table columns/rows and keyboard-visible Save
+  are reachable; iPad new-game Save and saved details passed.
+- Step 3 is complete. No source fix or rebuild was required. Earlier partial
+  verification entries are historical and superseded by this confirmation.
+- Actual 26.0-runtime execution and physical-device testing remain unverified.
+  Advanced-sheet reconciliation still awaits possession entry.
+- Next: resolve possession entry conventions, then authorize a bounded local
+  entry task. Supabase, publishing, and media remain later milestones.

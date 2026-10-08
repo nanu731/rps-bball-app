@@ -1,13 +1,14 @@
 # TeamStats — Project Context and Development Sequence
 
 Last updated: 2026-10-08.
-Status: requirements draft; Step 3 implementation at `1c3c314`, verification partial.
+Status: requirements draft; Step 3 complete, implementation at `1c3c314`.
 Local game creation and both box-score entry modes are implemented, including
 blank-versus-zero semantics, draft storage, and shot/points discrepancy flags.
-Next task: finish manual iPhone table scrolling and iPad new-game Save/details
-verification before further implementation. iPhone draft save/edit/relaunch,
-keyboard entry and keyboard-visible Save, derived rebounds, and points checks
-are now verified on Simulator 26.4. Cross-sheet comparison follows possession entry.
+The owner confirmed the remaining iPhone table scrolling/keyboard checks and
+iPad new-game Save/details checks passed. Simulator verification used 26.4;
+actual 26.0 and physical devices remain untested. Next: resolve possession entry
+conventions before a bounded implementation prompt. Cross-sheet comparison
+follows possession entry.
 
 ## Workspace and source of truth
 
