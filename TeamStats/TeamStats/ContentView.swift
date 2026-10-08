@@ -76,7 +76,7 @@ struct ContentView: View {
             NavigationStack {
                 List {
                     Section {
-                        ForEach(temporaryRoster, id: \.number) { player in
+                        ForEach(temporaryRoster) { player in
                             LabeledContent(player.name, value: "#\(player.number)")
                         }
                     } header: {
@@ -186,7 +186,7 @@ private struct NewGameView: View {
                     }
                 }
                 Section {
-                    Text("Saved only on this device. Stat entry is not available yet.")
+                    Text("Saved only on this device. Player box-score drafts are available from game details.")
                         .foregroundStyle(.secondary)
                 }
                 if let saveError {
@@ -217,6 +217,7 @@ private struct NewGameView: View {
 
 private struct GameDetailsView: View {
     let game: Game
+    @State private var entryMode: BoxScoreEntryMode?
 
     var body: some View {
         Form {
@@ -228,22 +229,35 @@ private struct GameDetailsView: View {
                 LabeledContent("Our team", value: game.venue.rawValue)
                 LabeledContent("Game type", value: game.kind.rawValue)
             }
+            Section("Local box-score draft") {
+                Button("Single-player entry") {
+                    entryMode = .player
+                }
+                Button("Whole-roster table entry") {
+                    entryMode = .table
+                }
+                Text("After-game entry only. Drafts are saved on this device, not published.")
+                    .foregroundStyle(.secondary)
+            }
             Section {
-                Text("Saved only on this device. Stat entry is not available yet.")
+                Text("Advanced-sheet reconciliation unavailable: possession entry has not been implemented.")
                     .foregroundStyle(.secondary)
             }
         }
         .navigationTitle(game.opponent)
+        .sheet(item: $entryMode) { mode in
+            BoxScoreEditor(gameID: game.id, initialMode: mode)
+        }
     }
 }
 
-// Replace this fixed development roster when the owner supplies the actual roster.
-private let temporaryRoster: [(name: String, number: Int)] = [
-    ("Temporary Player 1", 1),
-    ("Temporary Player 2", 2),
-    ("Temporary Player 3", 3),
-    ("Temporary Player 4", 4),
-    ("Temporary Player 5", 5)
+// These identities belong only to this temporary roster; never reuse them for actual players.
+let temporaryRoster: [TemporaryPlayer] = [
+    TemporaryPlayer(id: "temporary-roster-v1-a", name: "Temporary Player 1", number: 1),
+    TemporaryPlayer(id: "temporary-roster-v1-b", name: "Temporary Player 2", number: 2),
+    TemporaryPlayer(id: "temporary-roster-v1-c", name: "Temporary Player 3", number: 3),
+    TemporaryPlayer(id: "temporary-roster-v1-d", name: "Temporary Player 4", number: 4),
+    TemporaryPlayer(id: "temporary-roster-v1-e", name: "Temporary Player 5", number: 5)
 ]
 
 #Preview {
