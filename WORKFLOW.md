@@ -24,9 +24,12 @@ appropriate. Do not create or message other chats automatically.
 
 Confirmed sequence: after-game manual entry first, photo autofill afterward.
 Live tracking is excluded entirely. PRD.md records the owner-supplied player
-box-score totals, individual paint-touch totals, and home/away possession data.
+box-score totals, individual paint-touch totals, home/away possession data, and
+the custom Real Possessions formula. The dynamic playbook and approved practice
+videos are required; their placement in the implementation sequence is unresolved.
 Clarify definitions before finalizing forms, schema, or advanced-stat formulas;
-do not invent shot outcomes, player attribution, or additional collection fields.
+shot outcomes are confirmed, but do not invent attempt order, player attribution,
+additional collection fields, play contents, or video approval roles.
 
 ## Iteration sequence — once authorized
 
