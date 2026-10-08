@@ -15,12 +15,19 @@ Plan for approximately 100 potential users, including coaches and players.
 ## Confirmed decisions
 
 - Build a native app in Swift using SwiftUI and Xcode.
+- Support both iPhone and iPad. Android and browser interfaces are not part of
+  the confirmed device scope.
 - Use Supabase as the shared backend.
 - All statistical entry happens after games; playbook authoring is independent
   of the after-game entry schedule.
 - Phase 1: manual entry.
 - Phase 2: photo extraction that autofills an editable entry form.
-- Upload recorded data to a spreadsheet.
+- Supabase holds the official stats; automatically export published data and
+  accepted corrections to Google Sheets. Spreadsheet edits do not update the app.
+- The initial pilot focuses on after-game manual stats. Photo autofill, animated
+  plays, and practice videos remain required later components, not pilot blockers.
+- Offline entry is low priority. Start with online submission and do not build
+  offline synchronization for the initial pilot unless a demonstrated need arises.
 - Collected fields are specified below; definitions and input examples still
   require owner clarification. Do not add collection fields without agreement.
 - Live tracking is excluded entirely, including from future phases.
@@ -32,11 +39,37 @@ Plan for approximately 100 potential users, including coaches and players.
   accounts. Those accounts do not require case-by-case owner approval to upload.
   Other accounts can upload pending videos for owner review; those videos are
   not available to team viewers until the owner approves them.
+- Any app user may enter, propose edits to, and submit stats for publication,
+  subject to case-by-case owner approval. The owner may authorize selected
+  accounts to do so without case-by-case approval.
+- Owner-managed authorization also applies to submitting/publishing plays and
+  practice videos. Specific permission controls for each content type must be
+  defined; an account must not be able to authorize itself.
 
 ## Phase 1 — After-game manual entry
 
 Managers enter the owner's specified data through an easy-to-use interface.
 Players can view the agreed box scores and statistical summaries.
+
+### Stats approval and pilot scope
+
+All app users can contribute after-game stats and corrections. Ordinary users'
+submissions require owner approval before becoming published data. Selected
+owner-authorized users can enter, edit, and publish without individual approval.
+Owner review must apply to edits of existing records as well as new submissions.
+
+Proposed implementation behavior: preserve the currently published version while
+a correction awaits review; only accepted changes affect player statistics and
+the spreadsheet export. Keep the author's identity and approval state attached
+to each submission. These details require confirmation before implementation.
+
+The first pilot exercises manual box-score/possession entry, account access,
+owner review and permission grants, and published-stat viewing on iPhone/iPad.
+The exact pilot metric list and Google Sheets inclusion remain to be finalized.
+Do not include photo extraction, play animation, or video upload in that pilot.
+Online submission is the starting approach; show failures clearly without
+claiming that unsent changes have reached the shared database. Local draft
+recovery can be considered separately; offline sync is not a pilot requirement.
 
 ### Confirmed collected data
 
@@ -136,21 +169,27 @@ Requirements to finalize before implementation:
 - TODO_INPUT_EXAMPLES: existing forms or spreadsheet examples supplied by the owner.
 - TODO_MANUAL_ENTRY_FLOW: entry order, game identification, and correction behavior.
 - TODO_ADVANCED_STATS: desired metrics and formulas supported by collected inputs.
-- TODO_PUBLISHING_RULES: who may submit, approve, publish, and correct data.
+- TODO_STATS_REVIEW_DETAILS: review interface, rejection/resubmission, and pending
+  correction behavior. Owner approval and selected-user bypass are confirmed.
+- TODO_PERMISSION_GRANULARITY: separate owner grants for stats, plays, and videos
+  versus one shared trusted-contributor permission.
 - TODO_PLAYER_VISIBILITY: own stats, all team stats, or another access policy.
-- TODO_SPREADSHEET_SERVICE: Google Sheets, Excel, or another service.
-- TODO_DATA_AUTHORITY: database or spreadsheet as the official source; determine
-  whether coaches must edit official records in the spreadsheet.
-- TODO_OFFLINE_REQUIREMENTS: whether drafts must survive connectivity loss and
-  when uploads should retry.
+- TODO_SHEETS_EXPORT: spreadsheet destination, row/tab layout, export timing,
+  and handling failures. Supabase is authoritative; export is one-way.
+- TODO_DRAFT_RECOVERY: minimum protection for unsent form edits; offline entry
+  and synchronization are low priority and excluded from the initial pilot.
 - TODO_ACCOUNT_ENROLLMENT: team invitations and baseline access after signup.
 - TODO_AUTH_FLOW: verification, recovery, and linking email/phone methods to the
   same account when applicable. Both signup methods are confirmed.
-- TODO_DEVICE_COVERAGE: confirm iPhone/iPad needs and any Android/browser access.
+- TODO_DEVICE_TEST_MATRIX: supported iOS/iPadOS versions and representative
+  iPhone/iPad screen sizes. Both device families are confirmed.
 
 Proposed acceptance criteria, pending owner confirmation:
 
-- A manager can enter and correct an actual after-game record using agreed fields.
+- An app user can enter and submit an actual after-game record or correction.
+- Ordinary-user submissions require owner approval; authorized users can publish
+  without case-by-case review. Users cannot approve their own pending submissions
+  unless granted the appropriate authority by the owner.
 - An authorized player can view published records and agreed calculated stats.
 - Missing inputs remain visibly missing; never manufacture values or metrics.
 - Entered points can be checked against 2 × two-point makes + 3 × three-point
@@ -209,10 +248,13 @@ Proposed simplest implementation for discussion:
 
 Open decisions:
 
-- TODO_PLAYBOOK_PRIORITY: placement before/after photo autofill and first-release scope.
+- TODO_PLAYBOOK_PRIORITY: later placement relative to photo autofill; the manual
+  stats pilot comes first and excludes the playbook and practice videos.
 - TODO_PLAY_AUTHORING: required drawing tools, movement/pass representation,
   animation authoring method, and playback controls.
-- TODO_PLAY_PERMISSIONS: who can create, edit, publish, and view plays.
+- TODO_PLAY_REVIEW_DETAILS: owner approval workflow for ordinary contributors,
+  edit rights and viewing rules. Selected users may be authorized to submit plays
+  without case-by-case approval; coach drawing remains required.
 - TODO_VIDEO_REVIEW_DETAILS: owner review interface, rejection/resubmission
   behavior, and pending-video access for the uploader. Owner approval before
   team viewing is confirmed for users without unrestricted upload permission.
@@ -262,6 +304,8 @@ Custom encryption and bot protection need assessment against the final scope.
 - TODO_BUDGET: backend, extraction, and distribution budget.
 - TODO_DISTRIBUTION: pilot group and long-term app distribution method.
 - TODO_RELEASE_CRITERIA: agreed device coverage and end-to-end checks.
+- TODO_PILOT_DETAIL: metrics included, pilot participants, and whether Google
+  Sheets export is required in the first pilot or the next iteration.
 
 Backend choice does not determine which advanced stats are possible: collected
 inputs and documented calculations do. Do not expand collection scope merely
