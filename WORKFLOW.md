@@ -210,3 +210,48 @@ into the relevant later media prompt, preserving the manual-stats pilot priority
   reconciliation remains unavailable, and draft saving is not publishing.
 - Implementation reports remote HEAD matching local HEAD. The two pre-existing
   personal Xcode files remain staged/dirty and must stay outside task commits.
+
+## Step 3 verification follow-up (2026-10-08) — partial
+
+- No app source changes or new build: earlier build/model checks remain valid.
+- Earlier iPhone checks passed game Save/details, both entry modes, shared
+  unsaved edits, blank versus explicit zero, and negative-input save blocking.
+- Resumed iPhone checks used `TEST ONLY Step 3 iPhone verification` on iPhone 17,
+  Simulator 26.4. Saving an incomplete draft with the number keyboard visible
+  succeeded. Tapping keyboard 7 entered the value and Save remained reachable.
+- Accessibility output reported total rebounds 2 from offensive 0 + defensive 2,
+  disagreement for entered points 10 versus shot-implied 7 (twos made 2, threes
+  made 1, free throws made 0), then a match after editing points to 7.
+- JSON inspection after saves found five distinct game/player records, the updated
+  player values, and empty dictionaries for untouched players. Relaunching the
+  app and reopening the table restored those values, stable IDs, and match check.
+- Field focus automatically moved horizontally to shooting columns. Manual
+  scroll/swipe attempts produced no visible movement; manual table scrolling
+  remains unverified rather than treated as a demonstrated app defect.
+- iPad window switching and opening New game succeeded. Filling Opponent then
+  returned stale-element error `-10005`. UI retries stopped at the owner's request;
+  iPad new-game Save/details remain unverified. The form may still be open.
+- Existing Step 2 games and iPad draft records are preserved. Both personal Xcode
+  files, including their staged entries, remain outside task commits.
+- Actual iOS/iPadOS 26.0 and physical devices remain untested. Advanced-sheet
+  reconciliation remains unavailable. No connected services or further entry
+  features were started.
+
+### Remaining manual checklist
+
+1. On iPhone 17, open Games → `TEST ONLY Step 3 iPhone verification` → Whole-roster
+   table entry. Swipe horizontally left across the table to reach Total rebounds
+   and Points check, then right to return to Points. Expected: all columns remain
+   reachable, total rebounds is 2, and points match made shots (7). Tap a field
+   to show the keyboard and swipe vertically to reach Temporary Player 5;
+   expected: all five rows remain reachable and Save draft stays above the keyboard.
+   Leave values unchanged. Report whether these gestures work or which part fails.
+2. Dismiss any Simulator menu and bring iPad A16 forward. In Games, open Add game
+   (or use the already-open New game form). Set Opponent to
+   `TEST ONLY Step 3 iPad Save verification`, date October 8, 2026, Our team Home,
+   Game type Regular season. Tap Save. Expected: sheet closes and the labeled game
+   appears in Games. Open it; expected details show those four values. Report the
+   Save result and displayed details; retain the test game and existing records.
+
+Next bounded task: complete these two manual checks and record the evidence,
+fixing only any demonstrated defect. Do not begin the next implementation step.

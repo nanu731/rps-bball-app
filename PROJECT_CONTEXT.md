@@ -4,8 +4,10 @@ Last updated: 2026-10-08.
 Status: requirements draft; Step 3 implementation at `1c3c314`, verification partial.
 Local game creation and both box-score entry modes are implemented, including
 blank-versus-zero semantics, draft storage, and shot/points discrepancy flags.
-Next task: finish iPhone entry checks and iPad new-game Save verification before
-further implementation. Cross-sheet comparison follows possession entry.
+Next task: finish manual iPhone table scrolling and iPad new-game Save/details
+verification before further implementation. iPhone draft save/edit/relaunch,
+keyboard entry and keyboard-visible Save, derived rebounds, and points checks
+are now verified on Simulator 26.4. Cross-sheet comparison follows possession entry.
 
 ## Workspace and source of truth
 
