@@ -104,7 +104,7 @@ struct ContentView: View {
     }
 }
 
-private struct Game: Codable, Identifiable {
+struct Game: Codable, Identifiable {
     let id: UUID
     let date: Date
     let opponent: String
@@ -218,6 +218,7 @@ private struct NewGameView: View {
 private struct GameDetailsView: View {
     let game: Game
     @State private var entryMode: BoxScoreEntryMode?
+    @State private var showingPossessions = false
 
     var body: some View {
         Form {
@@ -240,13 +241,17 @@ private struct GameDetailsView: View {
                     .foregroundStyle(.secondary)
             }
             Section {
-                Text("Advanced-sheet reconciliation unavailable: possession entry has not been implemented.")
+                Button("Possession draft entry") { showingPossessions = true }
+                Text("Incomplete, unreviewed local drafts. Advanced-sheet reconciliation is unavailable.")
                     .foregroundStyle(.secondary)
             }
         }
         .navigationTitle(game.opponent)
         .sheet(item: $entryMode) { mode in
             BoxScoreEditor(gameID: game.id, initialMode: mode)
+        }
+        .sheet(isPresented: $showingPossessions) {
+            PossessionEditor(game: game)
         }
     }
 }

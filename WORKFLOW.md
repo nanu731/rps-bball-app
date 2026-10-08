@@ -289,3 +289,53 @@ fixing only any demonstrated defect. Do not begin the next implementation step.
   and edit-request enforcement follow accounts/backend permissions, not simulated
   local approval. Paint-touch player totals, reconciliations, and derived metrics
   are separate bounded tasks. No new dependency or restructuring is authorized.
+
+
+## Progress — Step 4 local possession drafts implemented, verification partial (2026-10-08)
+
+- Added `Possession.swift` with paired entry from game details, independent team
+  numbering, stable record/game UUIDs, eight requested count fields, and optional
+  turnover answers. Only Add next creates records; an empty opposite-side cell
+  stays a placeholder. Draft-record counts are explicitly incomplete, not metrics.
+- Reused the existing whole-number validator. Missing counts remain absent keys;
+  zero and No are explicit. Atomic `possessions.json` storage validates IDs,
+  team/number uniqueness and nonnegative values, preserves other records, and
+  reports load/save failures. No fixed possession limit, deletion, completion,
+  approvals, reconciliation, individual paint-touch totals, or connected services.
+- Generic simulator build passed with minimum target 26.0. Runtime inspections
+  used iPhone 17 and iPad A16 on 26.4, not actual 26.0 or physical devices.
+- Foundation checks passed missing/zero, invalid/overflow inputs, nil/Yes/No,
+  independent teams, stable IDs, unique updates, persistence, more than 40 records,
+  corrupt-load rejection, and failed-write propagation.
+- iPhone UI saved our possession 1 with no opponent record, then independently
+  added opponent 1 and our 2. Editing paint touches to explicit 0 and turnover
+  to No kept three unique IDs; other counts/answers stayed missing. Relaunch
+  restored records, counts 2/1, the zero, No, and the empty opponent-2 placeholder.
+  Number-keyboard entry and keyboard-visible Save passed. Final focus positioning
+  puts the active field above the keyboard; Hide keyboard does not dirty unchanged
+  input. Turnover menu offers Unanswered, Yes, No and shows the selected answer.
+- iPad paired layout, our-only addition, opposite placeholder/count 0, invalid
+  negative-count Save blocking, and incomplete draft Save passed. A native
+  setValue action returned `AXError.cannotComplete` after applying the negative
+  value; repeated text-entry attempts stopped. Button interactions remained usable.
+- UI inspections revealed and fixed clipped iPhone guidance, a keyboard-toolbar
+  overlap with Save, hidden focused fields under the keyboard, and unchanged
+  input becoming dirty on focus changes. Each behavioral fix was rebuilt.
+- Original games and box-score files on both simulators remain byte-for-byte
+  unchanged. Both personal Xcode files retain their staged entries and working
+  bytes and remain outside task commits. Planning commits are included in the push.
+
+### Remaining Step 4 manual checks
+
+On each simulator, use the existing labeled Step 3 verification game and open
+Possession draft entry. Swipe horizontally to the opponent side and back, then
+vertically through every field and additional paired rows. Expected: labels,
+Unanswered/Yes/No controls, and both Add next buttons remain reachable; guidance
+is readable at the initial position. On iPad, enter 0 in our possession 1 Paint
+touches, choose Yes for Turnover, then Save with the software keyboard visible.
+Expected: active field and Save remain visible with no overlap. Hide keyboard;
+expected: Done remains enabled. Relaunch and reopen; expected: 0 and Yes persist
+in the same record, with opponent still at zero records. Report any failed step.
+Do not delete the test records. These manual gesture/iPad keyboard/relaunch
+checks are outstanding, not presumed passing. Larger-text and landscape layouts
+also remain untested. Finish verification before the next implementation task.

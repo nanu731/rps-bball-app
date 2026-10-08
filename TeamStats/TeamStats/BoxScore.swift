@@ -197,7 +197,7 @@ struct BoxScoreEditor: View {
                         Text("Temporary roster · Local draft").font(.headline)
                         Text("Blank = not entered. Enter 0 explicitly. Nonnegative whole numbers only.")
                         Text(scoringSummary)
-                        Text("Advanced-sheet reconciliation unavailable until possession entry exists.")
+                        Text("Advanced-sheet reconciliation unavailable; possession drafts are incomplete and unreviewed.")
                             .foregroundStyle(.secondary)
                     }
                     .font(.footnote)

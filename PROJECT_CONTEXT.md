@@ -1,14 +1,16 @@
 # TeamStats — Project Context and Development Sequence
 
 Last updated: 2026-10-08.
-Status: requirements draft; Step 3 complete, implementation at `1c3c314`.
-Local game creation and both box-score entry modes are implemented, including
-blank-versus-zero semantics, draft storage, and shot/points discrepancy flags.
-The owner confirmed the remaining iPhone table scrolling/keyboard checks and
-iPad new-game Save/details checks passed. Simulator verification used 26.4;
-actual 26.0 and physical devices remain untested. Next: local paired possession
-draft entry only. Completion/edit requests follow backend authorization; cross-sheet comparison
-follows possession entry.
+Status: requirements draft; Steps 1–3 complete; Step 4 possession drafts implemented,
+verification partial. Games, shared box scores, and paired possession drafts are
+stored locally. Possessions have independent team numbering, stable UUIDs,
+missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data
+is incomplete and unreviewed; no completion or approval controls are implemented.
+Build/model checks and iPhone save/edit/relaunch checks passed on Simulator 26.4;
+iPad layout, independent addition, validation blocking, and draft Save were checked.
+Manual scrolling and iPad keyboard usability remain to be verified; see WORKFLOW.md.
+Actual 26.0 and physical devices remain untested. Completion/edit requests follow
+backend authorization; advanced metrics and cross-sheet comparison remain separate tasks.
 
 ## Workspace and source of truth
 
