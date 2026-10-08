@@ -1,6 +1,6 @@
 # TeamStats — Product Requirements
 
-Status: working draft; Step 1 foundation is complete. Further implementation
+Status: working draft; Steps 1 and 2 are complete. Further implementation
 requires the next bounded prompt; open requirements remain unresolved.
 Last updated: 2026-10-08.
 
@@ -386,6 +386,8 @@ Confirmed scope:
 - This is recorded-video upload/playback, not livestreaming, live stat tracking,
   or automatic video-to-stat extraction.
 - It is a later component, outside the initial manual-stats pilot.
+- Hudl is the likely recording source. No direct Hudl integration is confirmed;
+  uploaded exported files versus Hudl links must be decided before implementation.
 
 Proposed implementation direction:
 
@@ -400,6 +402,8 @@ Open decisions before implementation:
   team accounts may view published film.
 - TODO_GAME_FILM_LIMITS: formats, file size/duration, storage budget, and whether
   large games are uploaded as one video or multiple parts.
+- TODO_HUDL_WORKFLOW: exported video files, Hudl links, or both; confirm actual
+  access/export behavior rather than assuming APIs or download permissions.
 - TODO_MEDIA_PERMISSION_SCOPE: whether owner upload grants cover both practice
   videos and game film or are separate grants.
 - TODO_GAME_FILM_REVIEW: pending access, rejection/resubmission, replacements,

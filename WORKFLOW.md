@@ -167,3 +167,23 @@ into the relevant later media prompt, preserving the manual-stats pilot priority
   arbitrary names/numbers are permitted now, clearly labeled as development data.
 - Next bounded task: local game creation/viewing, temporary roster display, and
   minimum OS adjustment. Full stat entry follows in a separate prompt.
+
+## Progress — Step 2 complete (2026-10-08)
+
+- Commit `5b74f2f`: game creation/details, stable UUIDs, atomic local JSON storage,
+  visible save/load errors, temporary five-player roster, deployment target 26.0.
+- Planning review confirmed source/commit and two personal Xcode files remaining
+  staged/dirty; no app source changes were made by the planning chat.
+- Implementation reports final build passing on a 26.4 runtime, iPhone creation,
+  validation, details and relaunch persistence, plus iPad layout/load-error/Retry
+  checks. iPad Save interaction, physical devices, save-failure injection, and
+  actual 26.0-runtime execution remain unverified. Do not claim they passed.
+- Implementation reports successful push and remote HEAD verification; planning
+  review did not repeat network verification.
+- Next proposed task: local player box-score entry only, after clarifying entry
+  layout, blank-versus-zero semantics, and entered-versus-calculated points.
+  Possession entry and connected approval/publishing remain separate tasks.
+- Before stats are persisted, give temporary players stable identities independent
+  of jersey numbers; do not silently map them onto the eventual actual roster.
+- Game Film is still a later feature. Hudl is the likely recording source; confirm
+  exported video files versus links before selecting an integration.

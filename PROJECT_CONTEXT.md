@@ -1,8 +1,9 @@
 # TeamStats — Project Context and Development Sequence
 
 Last updated: 2026-10-08.
-Status: requirements draft; foundation complete at `3404839`. Game metadata,
-temporary roster permission, and minimum OS are settled for the next bounded task.
+Status: requirements draft; Step 2 complete at `5b74f2f`. Local game creation,
+temporary roster display, and minimum OS adjustment are implemented. Next task:
+local box-score entry after its remaining input decisions are resolved.
 
 ## Workspace and source of truth
 
@@ -42,6 +43,8 @@ rather than quietly inventing requirements.
   with the same owner-authorized upload bypass and pending review for other
   eligible uploaders. It follows the manual-stats pilot; no livestreaming or
   automatic video-to-stat extraction is requested.
+- Hudl is the likely game-film recording source. Exported-file upload versus Hudl
+  links is unresolved; do not assume direct API access or build an integration yet.
 - Owner-managed permissions apply to stats, plays, and videos. Separate versus
   shared permission grants remains unresolved.
 
@@ -148,9 +151,9 @@ Preserve existing work and staged changes. Commit only task-relevant files with
 descriptive messages; never use a blanket commit to absorb unrelated work.
 No force pushes, history rewrites, or deletion of existing work.
 
-Step 1 handoff and verification limitations are recorded in WORKFLOW.md.
-Current app configuration is 26.4; the next implementation task must lower the
-minimum to the owner-confirmed iOS/iPadOS 26.0 and verify API compatibility.
+Step 1/2 handoffs and verification limitations are recorded in WORKFLOW.md.
+Current minimum is 26.0. Build/simulator checks used 26.4; actual execution on
+26.0 is unverified because that runtime is not installed.
 
 Return 150–250 words, maximum 300, with:
 `STEP`, `RESULT`, `CHECKS`, `GIT`, `DECISIONS`, `BLOCKERS / HUMAN INPUT`, `NEXT`.
