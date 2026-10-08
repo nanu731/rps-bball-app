@@ -77,14 +77,17 @@ Advanced-sheet layout:
 - Circled two/three shot symbols denote makes. Plain and underlined shot symbols
   also carry shot-style meaning on the source; ignore that style distinction.
 - `FT0`, `FT1`, `FT2`, and `FT3` describe free throws made, not an explicit tally
-  of attempts or misses. Do not infer missed free throws without additional data.
+  of attempts or misses in the currently reviewed PDF. The owner will revise the
+  sheet to use `FTmade/attempted`, such as `FT1/1`, `FT1/2`, and `FT2/2`.
+  This new notation is confirmed, but the revised PDF has not yet been reviewed.
+  Do not infer misses from the old makes-only notation.
 - `TO` denotes a turnover; use the confirmed possession turnover field.
 
 Box-score layout:
 
 - One row per printed player with a shots cell and counting-stat columns.
-- Offensive and defensive rebounds appear separately, unlike the currently
-  confirmed single rebounds field; their app representation needs owner confirmation.
+- Offensive and defensive rebounds appear separately; the owner confirmed both
+  as app input fields. Calculate total rebounds as their sum.
 - The shots column does not explain its notation. Obtain a marked example before
   specifying photo parsing. Keep the confirmed made/missed fields in manual entry.
 - The source has no separate points column; points remain a requested app field.
@@ -130,7 +133,9 @@ recovery can be considered separately; offline sync is not a pilot requirement.
 **Player box-score game totals:**
 
 - Points.
-- Rebounds.
+- Offensive rebounds.
+- Defensive rebounds.
+- Total rebounds, calculated as offensive rebounds + defensive rebounds.
 - Assists.
 - Turnovers.
 - Steals.
@@ -170,6 +175,13 @@ requested; the confirmed opponent data is possession-level team data.
   the paint. Preserve this team definition in labels and calculations.
 - An offensive rebound continues the same possession. Track its tally within
   that possession rather than automatically starting a new possession.
+- Revised possession free-throw notation is `FTmade/attempted`: the numerator is
+  free throws made and the denominator is free throws attempted, not a percentage.
+  Free throws missed = attempted - made. For example, `FT1/2` means one made,
+  two attempted, and one missed. Sum counts across entries rather than averaging
+  the fractions. This supplies the same made/missed counts used by manual entry.
+  Propose validation of nonnegative whole-number counts with made <= attempted;
+  flag invalid or unreadable entries instead of silently correcting them.
 - Real Possessions is the owner's custom metric:
   `that team's game possessions - that team's turnovers + that team's offensive rebounds`.
   Preserve its name and formula; do not substitute a different possession
@@ -179,12 +191,13 @@ requested; the confirmed opponent data is possession-level team data.
 
 ### Definitions to resolve
 
-- TODO_FIELD_DEFINITIONS: counting conventions, required/optional fields, whether
-  rebounds means total rebounds or separate offensive/defensive counts, and
-  handling missing values versus recorded zero.
+- TODO_FIELD_DEFINITIONS: remaining counting conventions, required/optional
+  fields, and handling missing values versus recorded zero. Separate offensive
+  and defensive rebounds are confirmed.
 - TODO_TEAM_ROSTER: actual player names and jersey numbers from the owner.
-- TODO_SOURCE_NOTATION: a marked example of box-score shot notation and how
-  possession free-throw attempts/misses are recorded beyond the printed FT makes.
+- TODO_SOURCE_NOTATION: a marked example of box-score shot notation.
+- TODO_REVISED_ADVANCED_SHEET: obtain and review the owner's updated PDF with
+  `FTmade/attempted` notation; the existing PDF still uses makes-only notation.
 - TODO_SOURCE_PAGE_MAPPING: whether paired row numbers represent each team's
   own nth possession, and how multiple pages/halves map into a full game.
 - TODO_PAINT_TOUCH_COUNTING: whether repeated qualifying touches by the same

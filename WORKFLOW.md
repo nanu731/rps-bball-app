@@ -41,6 +41,9 @@ with online submission. The supplied blank box-score and advanced PDFs have been
 reviewed; PRD.md preserves layout findings and explicit excluded fields. Printed
 names and jersey numbers are placeholders, not the team roster. Do not extend
 scope from source legends or add excluded fields to manual entry/photo extraction.
+Collect offensive and defensive rebounds separately and derive total rebounds.
+The owner will revise the advanced sheet to use `FTmade/attempted`; derive missed
+free throws as attempted minus made. Do not infer misses from the old FT notation.
 Clarify definitions before finalizing forms, schema, or advanced-stat formulas;
 do not invent attempt order, player attribution, additional collection fields,
 or play contents. Do not add per-video owner approval for authorized uploaders
@@ -62,7 +65,8 @@ or expose pending videos to ordinary team viewers before owner approval.
 
 This is a planning sequence, not authorization to start implementation.
 
-1. Use the reviewed sheet layouts; resolve rebound representation, shot shorthand,
+1. Use the reviewed sheet layouts and confirmed rebound/FT definitions; review
+   the revised advanced PDF when supplied. Resolve box-score shot shorthand,
    possession/page mapping, and remaining definitions. Obtain the owner's actual
    roster; settle export details, pilot scope, and pending-edit behavior.
 2. Inspect the existing Xcode project and verify a baseline iPhone/iPad build.
