@@ -25,11 +25,16 @@ appropriate. Do not create or message other chats automatically.
 Confirmed sequence: after-game manual entry first, photo autofill afterward.
 Live tracking is excluded entirely. PRD.md records the owner-supplied player
 box-score totals, individual paint-touch totals, home/away possession data, and
-the custom Real Possessions formula. The dynamic playbook and approved practice
-videos are required; their placement in the implementation sequence is unresolved.
+the custom Real Possessions formula for each team. Possession shots are made/missed
+tallies by type, without attempt order. The dynamic playbook and practice videos
+are required; their placement in the implementation sequence is unresolved.
+The owner grants upload permission to selected accounts; those users need no
+case-by-case upload approval. Other users upload pending videos that only the
+owner may approve for team viewing. Signup supports both email and phone number.
 Clarify definitions before finalizing forms, schema, or advanced-stat formulas;
-shot outcomes are confirmed, but do not invent attempt order, player attribution,
-additional collection fields, play contents, or video approval roles.
+do not invent attempt order, player attribution, additional collection fields,
+or play contents. Do not add per-video owner approval for authorized uploaders
+or expose pending videos to ordinary team viewers before owner approval.
 
 ## Iteration sequence — once authorized
 
