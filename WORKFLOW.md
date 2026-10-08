@@ -23,7 +23,10 @@ appropriate. Do not create or message other chats automatically.
   in every prompt. Keep both documents aligned with owner-approved changes.
 
 Confirmed sequence: after-game manual entry first, photo autofill afterward.
-Live tracking is excluded entirely. The owner supplies all collected data fields.
+Live tracking is excluded entirely. PRD.md records the owner-supplied player
+box-score totals, individual paint-touch totals, and home/away possession data.
+Clarify definitions before finalizing forms, schema, or advanced-stat formulas;
+do not invent shot outcomes, player attribution, or additional collection fields.
 
 ## Iteration sequence — once authorized
 
