@@ -128,6 +128,23 @@ Players can view the agreed box scores and statistical summaries.
 
 ### Stats approval and pilot scope
 
+Confirmed manual box-score behavior:
+
+- Offer both single-player entry and whole-roster table entry for a selected game.
+  Both modes edit the same records; switching modes must not duplicate or lose data.
+- Empty numeric fields mean not entered. Zero must be entered explicitly.
+  Preserve this distinction in storage, displays, and calculations.
+- Points must agree with shot makes. Keep the entered value visible and flag
+  discrepancies with `2 * two-point makes + 3 * three-point makes + FT makes`;
+  never silently overwrite source values or treat missing inputs as zero.
+- Game-total box-score points must agree with the corresponding team's total
+  points derived from made shots on the advanced possession sheet. Perform that
+  comparison only when the required matching datasets are available/complete.
+  Until possession entry exists, show that the cross-sheet check is unavailable,
+  rather than claiming it passed or flagging absent data as a discrepancy.
+- Local drafts may be incomplete. Completion/publishing rules remain to be
+  finalized before backend approval is implemented.
+
 All app users can contribute after-game stats and corrections. Ordinary users'
 submissions require owner approval before becoming published data. Selected
 owner-authorized users can enter, edit, and publish without individual approval.
@@ -209,9 +226,9 @@ requested; the confirmed opponent data is possession-level team data.
 
 ### Definitions to resolve
 
-- TODO_FIELD_DEFINITIONS: remaining counting conventions, required/optional
-  fields, and handling missing values versus recorded zero. Separate offensive
-  and defensive rebounds are confirmed.
+- TODO_FIELD_DEFINITIONS: remaining counting conventions and required fields
+  for completion. Separate offensive/defensive rebounds and blank-versus-zero
+  semantics are confirmed.
 - TODO_TEAM_ROSTER: fixed actual player names/numbers after tryouts. Development
   can proceed with a visibly labeled temporary roster; this is not a blocker.
 - TODO_SOURCE_NOTATION: a marked example of box-score shot notation.
@@ -264,7 +281,8 @@ Requirements to finalize before implementation:
 
 - TODO_COMPLETED_INPUT_EXAMPLES: blank templates reviewed; obtain marked entries
   to verify tally/shot notation and completeness before photo extraction.
-- TODO_MANUAL_ENTRY_FLOW: entry order, game identification, and correction behavior.
+- TODO_MANUAL_ENTRY_DETAILS: entry order, completion rules, and correction review.
+  Both single-player and roster-table entry are confirmed.
 - TODO_ADVANCED_STATS: desired metrics and formulas supported by collected inputs.
 - TODO_STATS_REVIEW_DETAILS: review interface, rejection/resubmission, and pending
   correction behavior. Owner approval and selected-user bypass are confirmed.
@@ -289,9 +307,11 @@ Proposed acceptance criteria, pending owner confirmation:
   unless granted the appropriate authority by the owner.
 - An authorized player can view published records and agreed calculated stats.
 - Missing inputs remain visibly missing; never manufacture values or metrics.
-- Entered points can be checked against 2 × two-point makes + 3 × three-point
-  makes + free-throw makes; flag discrepancies for review rather than silently
-  overwriting recorded values. This validation rule is proposed for confirmation.
+- Check entered points against 2 × two-point makes + 3 × three-point makes +
+  free-throw makes; flag discrepancies rather than silently overwriting values.
+- Compare game-total box-score points with matching advanced-sheet points when
+  both datasets are complete. Distinguish incomplete/unavailable checks from
+  actual disagreements. These consistency requirements are confirmed.
 - Calculations match manually verified examples supplied or approved by the owner.
 - Retried submissions do not duplicate records; corrections update the intended record.
 - Spreadsheet integration respects the agreed official source and access rules.

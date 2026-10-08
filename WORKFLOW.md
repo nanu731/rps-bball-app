@@ -180,8 +180,11 @@ into the relevant later media prompt, preserving the manual-stats pilot priority
   actual 26.0-runtime execution remain unverified. Do not claim they passed.
 - Implementation reports successful push and remote HEAD verification; planning
   review did not repeat network verification.
-- Next proposed task: local player box-score entry only, after clarifying entry
-  layout, blank-versus-zero semantics, and entered-versus-calculated points.
+- Next task: local player box-score entry with both individual and roster-table
+  modes sharing records. Blanks remain missing and zero is explicit. Entered
+  points are checked against shot makes, with disagreements flagged. Matching
+  game totals must later reconcile with advanced-sheet points once possession
+  data is available/complete. Do not claim cross-sheet checks pass yet.
   Possession entry and connected approval/publishing remain separate tasks.
 - Before stats are persisted, give temporary players stable identities independent
   of jersey numbers; do not silently map them onto the eventual actual roster.

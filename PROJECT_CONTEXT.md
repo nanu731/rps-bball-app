@@ -3,7 +3,8 @@
 Last updated: 2026-10-08.
 Status: requirements draft; Step 2 complete at `5b74f2f`. Local game creation,
 temporary roster display, and minimum OS adjustment are implemented. Next task:
-local box-score entry after its remaining input decisions are resolved.
+local box-score entry with both player/table modes, blank-versus-zero semantics,
+and shot/points discrepancy flags. Cross-sheet comparison follows possession entry.
 
 ## Workspace and source of truth
 
@@ -54,6 +55,12 @@ Player game totals: points, offensive rebounds, defensive rebounds, assists,
 turnovers, steals, blocks, fouls, charges drawn, and made/missed counts for twos,
 threes, and free throws. Derive total rebounds from offensive + defensive.
 Record each of our players' game-total paint touches separately.
+
+Manual box scores support both individual-player and whole-roster table entry
+against the same records. Blank means not entered, not zero. Check entered points
+against shot makes; preserve discrepancies for correction rather than overwriting
+them. Compare game-total box-score points with advanced-sheet possession scoring
+when both matching datasets are complete; missing data is not a passed check.
 
 For each team's possessions: paint-touch count, offensive-rebound count,
 made/missed tallies by shot type, and turnover outcome. No shot sequence is
