@@ -53,7 +53,8 @@ Paint touch means intentionally establishing two feet in the paint with the ball
 Real Possessions is calculated separately for each team:
 `team possessions - team turnovers + team offensive rebounds`.
 The revised source notation `FTmade/attempted` yields misses = attempted - made.
-The revised PDF is pending; old makes-only FT notation cannot supply misses.
+A revised PDF draft is available as `rpsadvstatsdraft-revised.pdf`, pending owner
+confirmation; old makes-only FT notation cannot supply misses.
 
 Exclude 50/50 balls, ATOs, transition flags, shot-style classifications, timeouts,
 quarter-score checkpoints, and any other unrequested collection fields.
@@ -88,7 +89,9 @@ Before GitHub publication: `TODO_GITHUB_REPOSITORY` — existing URL or explicit
 owner/name and visibility for a new repository. No remote was configured at the
 planning inspection. Do not guess a destination or publish to an arbitrary repo.
 
-Before photo import: revised advanced PDF and marked shot/tally examples.
+Before photo import: owner confirmation of the revised advanced PDF and marked
+shot/tally examples. The actual roster can be supplied later; do not block the
+foundation on it or seed arbitrary template names/numbers.
 Before playbook/video work: editor controls, review details, and media limits.
 
 ## Development sequence

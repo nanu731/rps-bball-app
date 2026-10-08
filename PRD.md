@@ -197,7 +197,11 @@ requested; the confirmed opponent data is possession-level team data.
 - TODO_TEAM_ROSTER: actual player names and jersey numbers from the owner.
 - TODO_SOURCE_NOTATION: a marked example of box-score shot notation.
 - TODO_REVISED_ADVANCED_SHEET: obtain and review the owner's updated PDF with
-  `FTmade/attempted` notation; the existing PDF still uses makes-only notation.
+  `FTmade/attempted` notation. A revised draft, `rpsadvstatsdraft-revised.pdf`,
+  has been created and visually checked; owner confirmation is pending. It removes
+  the 50/50 section and possession-modifiers legend, expands paint-touch space,
+  and uses made/attempted FT notation. Other right-hand legend content is retained
+  as requested, but excluded shot-style fields remain outside app scope.
 - TODO_SOURCE_PAGE_MAPPING: whether paired row numbers represent each team's
   own nth possession, and how multiple pages/halves map into a full game.
 - TODO_PAINT_TOUCH_COUNTING: whether repeated qualifying touches by the same
