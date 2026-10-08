@@ -14,6 +14,17 @@ owner pastes there. The owner pastes its short handoff back into the planning
 chat. The planning chat reviews the handoff and supplies the next prompt when
 appropriate. Do not create or message other chats automatically.
 
+Implementation prompts must work in a fresh chat without prior conversation:
+include the workspace/project paths, document-reading order, current bounded
+task, constraints, checks, GitHub destination, and handoff format. Start the
+implementation chat locally in the same checkout; chat history and attachments
+are not assumed to transfer.
+
+After each implementation prompt, recommend a model and reasoning effort based
+on that task. Favor token efficiency and increase effort only for meaningful
+complexity. The owner's chosen planning-chat setting is GPT-6.1 Sol, medium.
+Recommendations do not themselves change the selected model/settings.
+
 ## Context documents
 
 - PRD.md: confirmed product requirements, proposed criteria, and unresolved TODOs.

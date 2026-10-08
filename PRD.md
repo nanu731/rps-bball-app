@@ -56,6 +56,7 @@ Reviewed both one-page PDFs visually and through text extraction on 2026-10-08:
 
 - Advanced sheet: `/Users/narayanlekhi/Library/Messages/Attachments/36/06/54D45273-0649-483A-A926-38B60C9B299B/rpsadvstatsdraft.pdf`.
 - Box-score sheet: `/Users/narayanlekhi/Downloads/boxscorestatsheet.pdf`.
+- Unchanged workspace copy for other local chats: `boxscorestatsheet.pdf`.
 
 These are blank templates, not completed game records or verified sample data.
 Do not seed player profiles, jersey numbers, school branding, or game statistics

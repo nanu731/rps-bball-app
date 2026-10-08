@@ -9,6 +9,7 @@ instruction to implement the entire app without further handoffs.
 Workspace: `/Users/narayanlekhi/Documents/ChatGPT/Basketball stats input app`.
 Existing Xcode project: `TeamStats/TeamStats.xcodeproj`.
 App source: `TeamStats/TeamStats/`.
+Owner-specified public GitHub repository: `https://github.com/nanu731/rps-bball-app`.
 Use this existing project and repository. Do not create a replacement project,
 nested Git repository, alternate app, or workspace outside this folder.
 
@@ -85,9 +86,15 @@ Before connected services: Supabase project details (public URL/key only in chat
 owner account identification, auth-provider setup, and Google Sheets destination.
 Never ask the owner to paste privileged keys into a handoff.
 
-Before GitHub publication: `TODO_GITHUB_REPOSITORY` — existing URL or explicit
-owner/name and visibility for a new repository. No remote was configured at the
-planning inspection. Do not guess a destination or publish to an arbitrary repo.
+For GitHub publication: use the owner-specified public repository above. No
+remote was configured at the earlier planning inspection; inspect current state
+and preserve any remote commits when connecting it.
+
+Local PDF references in the workspace root: `rpsadvstatsdraft-revised.pdf` and
+`boxscorestatsheet.pdf`. The latter is an unchanged copy of the supplied template.
+A fresh local chat in this same checkout can read these files without inheriting
+the planning chat's attachment history. Future supplied files must be saved in
+the workspace if they are to be reliably shared across chats.
 
 Before photo import: owner confirmation of the revised advanced PDF and marked
 shot/tally examples. The actual roster can be supplied later; do not block the
