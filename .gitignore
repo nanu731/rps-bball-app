@@ -60,3 +60,15 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# Local Xcode builds and macOS metadata
+DerivedData/
+build/
+*.xcuserstate
+*.xcresult
+.DS_Store
+
+# Local credentials
+.env
+.env.*
+!.env.example
