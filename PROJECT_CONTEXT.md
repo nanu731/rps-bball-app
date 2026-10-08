@@ -70,6 +70,18 @@ For each team's possessions: paint-touch count, offensive-rebound count,
 made/missed tallies by shot type, and turnover outcome. No shot sequence is
 collected. Offensive rebounds continue the same possession.
 
+Pair our team's nth possession on the left with the opponent's nth on the right;
+each team has independent numbering. Provide reversible entry-complete checkboxes
+for the team sheets; unchecked sheets leave the game labeled incomplete data.
+Legal possession groups all actions until the opponent legally possesses the
+ball, including free throws and offensive rebounds. Holding until period end
+does not count. Other period-ending cases and completion after edits need clarity.
+
+Visual direction: restrained native SwiftUI, system typography, clear forms and
+tables, consistent spacing and readable contrast. Avoid the owner's listed
+gradient/card/animation/font/copy tropes; see PRD.md for the explicit exclusions.
+No separate redesign is authorized by these preferences alone.
+
 Paint touch means intentionally establishing two feet in the paint with the ball.
 Real Possessions is calculated separately for each team:
 `team possessions - team turnovers + team offensive rebounds`.

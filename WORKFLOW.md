@@ -267,3 +267,14 @@ fixing only any demonstrated defect. Do not begin the next implementation step.
   Advanced-sheet reconciliation still awaits possession entry.
 - Next: resolve possession entry conventions, then authorize a bounded local
   entry task. Supabase, publishing, and media remain later milestones.
+
+## Possession and visual decisions (2026-10-08)
+
+- Owner confirmed independent team numbering paired left to right, our team then
+  opponent; reversible sheet-completion controls and incomplete game labels;
+  legal-possession grouping including free throws/OREB; holding until period
+  end excluded. PRD.md records remaining completion/period-ending edge cases.
+- Owner supplied explicit visual exclusions. Future prompts must honor PRD.md's
+  native, restrained visual direction without expanding into a separate redesign.
+- Next prompt waits for these narrow edge-case clarifications. No source changes
+  were made by the planning chat.

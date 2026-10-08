@@ -1,6 +1,6 @@
 # TeamStats — Product Requirements
 
-Status: working draft; Steps 1 and 2 are complete. Further implementation
+Status: working draft; Steps 1–3 are complete. Further implementation
 requires the next bounded prompt; open requirements remain unresolved.
 Last updated: 2026-10-08.
 
@@ -61,6 +61,19 @@ Plan for approximately 100 potential users, including coaches and players.
   names and numbers are now explicitly authorized for development. Label the
   temporary roster visibly and keep it replaceable; do not treat it as real data.
   An owner roster-management screen is not currently requested.
+
+## Visual direction
+
+Use a restrained native SwiftUI interface with system typography, readable
+contrast, consistent spacing, clear tables/forms, and purposeful system icons.
+The owner explicitly rejects purple-to-blue gradients, gradient hero text,
+emojis in headings, ubiquitous Inter or Lucide icons, colored-border cards,
+glassmorphism cards, low-contrast dark mode, badges above headlines, untouched
+shadcn UI, scroll fade-ins, cursor-following beams, buttons fading on hover,
+inconsistent spacing, excessive em dashes, generic buzzword copy, serif italic
+accents, Space Grotesk paired with Instrument Serif, and grain over gradients.
+Apply this direction to future work; do not start a separate redesign without
+an assigned task. School colors and branding remain owner-provided content.
 
 ## Reviewed input references
 
@@ -187,6 +200,16 @@ recovery can be considered separately; offline sync is not a pilot requirement.
 
 **Game possession data:**
 
+- Each team has its own sequence, paired left to right: our team's nth
+  possession beside the opponent's nth possession. This is an entry layout,
+  not a claim that both occurred simultaneously or in an exact shared order.
+- Provide a reversible entry-complete checkbox for each team's possession sheet.
+  Unchecked means incomplete data; the owner can uncheck it and edit again.
+  A checked sheet is marked complete. The game remains incomplete if either
+  team's sheet is unchecked. This is data-entry status, not owner approval or
+  publication. Completion behavior after subsequent edits and any box-score
+  completion requirement remain to be resolved before implementing the status.
+
 - Possession counts attributable to each team are needed for each team's Real
   Possessions. The latest clarification supersedes the earlier combined-only
   interpretation; the entry/derivation method for team counts remains open.
@@ -210,6 +233,11 @@ requested; the confirmed opponent data is possession-level team data.
   the paint. Preserve this team definition in labels and calculations.
 - An offensive rebound continues the same possession. Track its tally within
   that possession rather than automatically starting a new possession.
+- The owner's possession definition starts when a team legally has possession
+  and groups actions until the opponent legally has possession. This includes
+  free throws, offensive rebounds, and fouls; it does not add a foul collection
+  field to possession records. Holding the ball until the period ends does not
+  count as a possession. Other period-ending cases require clarification.
 - Revised possession free-throw notation is `FTmade/attempted`: the numerator is
   free throws made and the denominator is free throws attempted, not a percentage.
   Free throws missed = attempted - made. For example, `FT1/2` means one made,
@@ -238,12 +266,14 @@ requested; the confirmed opponent data is possession-level team data.
   the 50/50 section and possession-modifiers legend, expands paint-touch space,
   and uses made/attempted FT notation. Other right-hand legend content is retained
   as requested, but excluded shot-style fields remain outside app scope.
-- TODO_SOURCE_PAGE_MAPPING: whether paired row numbers represent each team's
-  own nth possession, and how multiple pages/halves map into a full game.
+- TODO_SOURCE_PAGE_MAPPING: paired row numbers represent each team's own nth
+  possession, now confirmed; multiple page/half mapping still needs agreement.
 - TODO_PAINT_TOUCH_COUNTING: whether repeated qualifying touches by the same
   player count separately, and whether possession touches identify players.
-- TODO_POSSESSION_BOUNDARIES: remaining start/end conventions, including
-  free throws and period endings; offensive-rebound continuation is settled.
+- TODO_POSSESSION_BOUNDARIES: legal-possession grouping and inclusion of free
+  throws are confirmed; a ball held until period end is excluded. Clarify other
+  period-ending cases, such as made free throws without a subsequent opponent
+  possession before the period ends.
 - TODO_POSSESSION_TOTAL_SOURCE: whether team counts are entered or derived from
   complete possession records, and whether a combined total is also displayed.
 - Use stable internal identifiers to associate games, players, and stat records;
