@@ -1,8 +1,8 @@
 # TeamStats — Project Context and Development Sequence
 
 Last updated: 2026-10-08.
-Status: requirements draft; foundation complete at `3404839`. Next bounded task
-awaits planning decisions; do not implement the entire app without further handoffs.
+Status: requirements draft; foundation complete at `3404839`. Game metadata,
+temporary roster permission, and minimum OS are settled for the next bounded task.
 
 ## Workspace and source of truth
 
@@ -23,6 +23,8 @@ rather than quietly inventing requirements.
 
 - High school basketball app for approximately 100 users, including players,
   managers, and coaches. Native Swift/SwiftUI, supporting iPhone and iPad.
+- Minimum iOS/iPadOS 26.0. Game fields: date, opponent, our team's home/away
+  status, and regular season/playoff. No scrimmages.
 - Supabase holds official stats. Google Sheets receives automatic one-way
   exports of published data and accepted corrections.
 - All statistical entry is after games. Manual entry first, photo autofill later.
@@ -59,7 +61,9 @@ confirmation; old makes-only FT notation cannot supply misses.
 
 Exclude 50/50 balls, ATOs, transition flags, shot-style classifications, timeouts,
 quarter-score checkpoints, and any other unrequested collection fields.
-Printed PDF names/numbers are arbitrary. Do not seed a roster or school branding.
+Printed PDF names/numbers are arbitrary. Temporary arbitrary roster names/numbers
+are explicitly permitted until the owner supplies the fixed roster after tryouts.
+Label that roster as temporary; do not invent actual school branding or game stats.
 Use obvious TODO markers and truthful empty states for missing owner content.
 
 ## Security and review
@@ -78,7 +82,7 @@ Do not add dependencies, restructure files, or delete work without owner approva
 
 Foundation can proceed with empty states; it does not require a roster or secrets.
 
-Before final entry/schema work: actual roster, completed notation examples,
+Before final entry/schema work: completed notation examples,
 possession/page mapping, remaining paint-touch/possession boundary definitions,
 player visibility, enrollment rules, and pending-edit/permission-granularity choices.
 
@@ -90,15 +94,16 @@ For GitHub publication: use the owner-specified public repository above. No
 remote was configured at the earlier planning inspection; inspect current state
 and preserve any remote commits when connecting it.
 
-Local PDF references in the workspace root: `rpsadvstatsdraft-revised.pdf` and
-`boxscorestatsheet.pdf`. The latter is an unchanged copy of the supplied template.
+Current PDF references in the workspace root: `rpsadvstatsdraft-revised.pdf` and
+`boxscorestatsheet-revised.pdf`. Both include game type and home/away checkboxes.
+`boxscorestatsheet.pdf` remains an unchanged copy of the original template.
 A fresh local chat in this same checkout can read these files without inheriting
 the planning chat's attachment history. Future supplied files must be saved in
 the workspace if they are to be reliably shared across chats.
 
 Before photo import: owner confirmation of the revised advanced PDF and marked
-shot/tally examples. The actual roster can be supplied later; do not block the
-foundation on it or seed arbitrary template names/numbers.
+shot/tally examples. The actual roster will be supplied later; labeled temporary
+names/numbers are authorized and must remain easy to replace.
 Before playbook/video work: editor controls, review details, and media limits.
 
 ## Development sequence
@@ -136,7 +141,8 @@ descriptive messages; never use a blanket commit to absorb unrelated work.
 No force pushes, history rewrites, or deletion of existing work.
 
 Step 1 handoff and verification limitations are recorded in WORKFLOW.md.
-Current iOS/iPadOS minimum is 26.4, pending owner device-coverage decision.
+Current app configuration is 26.4; the next implementation task must lower the
+minimum to the owner-confirmed iOS/iPadOS 26.0 and verify API compatibility.
 
 Return 150–250 words, maximum 300, with:
 `STEP`, `RESULT`, `CHECKS`, `GIT`, `DECISIONS`, `BLOCKERS / HUMAN INPUT`, `NEXT`.

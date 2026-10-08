@@ -52,7 +52,9 @@ authorization applies to plays and videos too; permission granularity is open.
 The initial pilot focuses on manual stats. Offline sync is low priority; begin
 with online submission. The supplied blank box-score and advanced PDFs have been
 reviewed; PRD.md preserves layout findings and explicit excluded fields. Printed
-names and jersey numbers are placeholders, not the team roster. Do not extend
+names and jersey numbers are placeholders, not the team roster. The owner now
+authorizes labeled temporary roster names/numbers until the fixed roster is
+provided after tryouts; no roster-management screen is requested. Do not extend
 scope from source legends or add excluded fields to manual entry/photo extraction.
 Collect offensive and defensive rebounds separately and derive total rebounds.
 The owner will revise the advanced sheet to use `FTmade/attempted`; derive missed
@@ -114,6 +116,7 @@ or approval is necessary, identify the exact decision and stop dependent work.
   dependency, or deleting work.
 - Preserve pre-existing changes and staged files. Do not commit unrelated work.
 - Never invent owner-supplied content or data; use obvious TODO markers.
+  Exception: the owner explicitly permits labeled temporary player names/numbers.
 - Do not expose secrets in prompts, logs, commits, or handoffs.
 - No empty commits for read-only inspection steps.
 
@@ -153,6 +156,9 @@ requirements. Keep subsequent prompts focused on the smallest useful next step.
   two remaining pre-existing personal Xcode files staged/dirty. Do not absorb them.
 - GitHub push was verified by implementation; planning review has not repeated
   the remote verification.
-- Current minimum iOS/iPadOS version is 26.4; owner device coverage needs resolution.
-- Next bounded task awaits game metadata and editable-roster decisions. Do not
-  assume that incomplete full-product requirements block independent local work.
+- App minimum is currently 26.4; owner has selected 26.0 onward for the next task.
+- Confirmed game fields: date, opponent, our team's home/away status, and regular
+  season/playoff. No scrimmages. A fixed real roster comes after tryouts; temporary
+  arbitrary names/numbers are permitted now, clearly labeled as development data.
+- Next bounded task: local game creation/viewing, temporary roster display, and
+  minimum OS adjustment. Full stat entry follows in a separate prompt.

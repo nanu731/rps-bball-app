@@ -1,74 +1,807 @@
 %PDF-1.4
-%“Œ‹ž ReportLab Generated PDF document (opensource)
+%âãÏÓ
 1 0 obj
 <<
-/F1 2 0 R /F2 3 0 R
+/Producer (pypdf)
 >>
 endobj
 2 0 obj
 <<
-/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+/Type /Pages
+/Count 1
+/Kids [ 4 0 R ]
 >>
 endobj
 3 0 obj
 <<
-/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+/Type /Catalog
+/Pages 2 0 R
 >>
 endobj
 4 0 obj
 <<
-/Contents 8 0 R /MediaBox [ 0 0 612 792 ] /Parent 7 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/Contents 5 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font <<
+/F1 6 0 R
+/F1-0 7 0 R
+/F2 8 0 R
+/F2-0 9 0 R
+>>
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Annots [ ]
+/Parent 2 0 R
 >>
 endobj
 5 0 obj
 <<
-/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+/Length 16165
 >>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+.7 w
+BT /F2 12 Tf 14.4 TL ET
+0 0 0 rg
+BT 1 0 0 1 221.646 713 Tm (Rutgers Prep Advanced Stats) Tj T* ET
+BT /F2 9 Tf 10.8 TL ET
+0 0 0 rg
+BT 1 0 0 1 72 690 Tm (Opponent: ___________________________) Tj T* ET
+BT /F2 9 Tf 10.8 TL ET
+0 0 0 rg
+BT 1 0 0 1 333 690 Tm (Date: _______________) Tj T* ET
+BT /F2 9 Tf 10.8 TL ET
+0 0 0 rg
+BT 1 0 0 1 471 690 Tm (Half: ______) Tj T* ET
+.933333 .933333 .933333 rg
+n 72 654 468 15 re f*
+0 0 0 RG
+n 72 654 468 15 re S
+BT /F2 8 Tf 9.6 TL ET
+0 0 0 rg
+BT 1 0 0 1 249.54 659 Tm (RPS Individual Paint Touches) Tj T* ET
+n 72 639 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 75 643.5 Tm (#0 William) Tj T* ET
+n 189 639 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 192 643.5 Tm (#5 Morgan) Tj T* ET
+n 306 639 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 309 643.5 Tm (#14 Christian) Tj T* ET
+n 423 639 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 426 643.5 Tm (#32 Paul) Tj T* ET
+n 72 624 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 75 628.5 Tm (#1 Dylan) Tj T* ET
+n 189 624 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 192 628.5 Tm (#10 Leo) Tj T* ET
+n 306 624 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 309 628.5 Tm (#20 Vik) Tj T* ET
+n 423 624 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 426 628.5 Tm (#55 Julian) Tj T* ET
+n 72 609 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 75 613.5 Tm (#3 Caiden) Tj T* ET
+n 189 609 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 192 613.5 Tm (#11 Rocco) Tj T* ET
+n 306 609 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 309 613.5 Tm (#23 Isaiah) Tj T* ET
+n 423 609 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 426 613.5 Tm (#24 Vihaan) Tj T* ET
+n 72 594 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 75 598.5 Tm (#4 Bryce) Tj T* ET
+n 189 594 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 192 598.5 Tm (#12 Oliver) Tj T* ET
+n 306 594 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 309 598.5 Tm  T* ET
+n 423 594 117 15 re S
+BT /F2 7.3 Tf 8.76 TL ET
+0 0 0 rg
+BT 1 0 0 1 426 598.5 Tm  T* ET
+BT /F2 10 Tf 12 TL ET
+0 0 0 rg
+BT 1 0 0 1 267.655 579 Tm (Possession Log) Tj T* ET
+.933333 .933333 .933333 rg
+n 72 534 18 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 74.3472 556 Tm (POS) Tj T* ET
+n 72 517.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 522.5 Tm (1) Tj T* ET
+n 72 501 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 506 Tm (2) Tj T* ET
+n 72 484.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 489.5 Tm (3) Tj T* ET
+n 72 468 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 473 Tm (4) Tj T* ET
+n 72 451.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 456.5 Tm (5) Tj T* ET
+n 72 435 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 440 Tm (6) Tj T* ET
+n 72 418.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 423.5 Tm (7) Tj T* ET
+n 72 402 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 407 Tm (8) Tj T* ET
+n 72 385.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 78.915 390.5 Tm (9) Tj T* ET
+n 72 369 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 374 Tm (10) Tj T* ET
+n 72 352.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 357.5 Tm (11) Tj T* ET
+n 72 336 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 341 Tm (12) Tj T* ET
+n 72 319.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 324.5 Tm (13) Tj T* ET
+n 72 303 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 308 Tm (14) Tj T* ET
+n 72 286.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 291.5 Tm (15) Tj T* ET
+n 72 270 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 275 Tm (16) Tj T* ET
+n 72 253.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 258.5 Tm (17) Tj T* ET
+n 72 237 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 242 Tm (18) Tj T* ET
+n 72 220.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 225.5 Tm (19) Tj T* ET
+n 72 204 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 76.83 209 Tm (20) Tj T* ET
+.933333 .933333 .933333 rg
+n 90 534 30 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 93.6222 556 Tm (RPS PT) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 95.72325 547 Tm (\(Tally\)) Tj T* ET
+n 90 517.5 30 16.5 re S
+n 90 501 30 16.5 re S
+n 90 484.5 30 16.5 re S
+n 90 468 30 16.5 re S
+n 90 451.5 30 16.5 re S
+n 90 435 30 16.5 re S
+n 90 418.5 30 16.5 re S
+n 90 402 30 16.5 re S
+n 90 385.5 30 16.5 re S
+n 90 369 30 16.5 re S
+n 90 352.5 30 16.5 re S
+n 90 336 30 16.5 re S
+n 90 319.5 30 16.5 re S
+n 90 303 30 16.5 re S
+n 90 286.5 30 16.5 re S
+n 90 270 30 16.5 re S
+n 90 253.5 30 16.5 re S
+n 90 237 30 16.5 re S
+n 90 220.5 30 16.5 re S
+n 90 204 30 16.5 re S
+.933333 .933333 .933333 rg
+n 120 534 28 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 121.9229 556 Tm (RPS OR) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 124.7233 547 Tm (\(Tally\)) Tj T* ET
+n 120 517.5 28 16.5 re S
+n 120 501 28 16.5 re S
+n 120 484.5 28 16.5 re S
+n 120 468 28 16.5 re S
+n 120 451.5 28 16.5 re S
+n 120 435 28 16.5 re S
+n 120 418.5 28 16.5 re S
+n 120 402 28 16.5 re S
+n 120 385.5 28 16.5 re S
+n 120 369 28 16.5 re S
+n 120 352.5 28 16.5 re S
+n 120 336 28 16.5 re S
+n 120 319.5 28 16.5 re S
+n 120 303 28 16.5 re S
+n 120 286.5 28 16.5 re S
+n 120 270 28 16.5 re S
+n 120 253.5 28 16.5 re S
+n 120 237 28 16.5 re S
+n 120 220.5 28 16.5 re S
+n 120 204 28 16.5 re S
+.933333 .933333 .933333 rg
+n 148 534 45 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 156.1486 556 Tm (RPS Shot) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 154.0476 547 Tm (\(2/3/FT/TO\)) Tj T* ET
+n 148 517.5 45 16.5 re S
+n 148 501 45 16.5 re S
+n 148 484.5 45 16.5 re S
+n 148 468 45 16.5 re S
+n 148 451.5 45 16.5 re S
+n 148 435 45 16.5 re S
+n 148 418.5 45 16.5 re S
+n 148 402 45 16.5 re S
+n 148 385.5 45 16.5 re S
+n 148 369 45 16.5 re S
+n 148 352.5 45 16.5 re S
+n 148 336 45 16.5 re S
+n 148 319.5 45 16.5 re S
+n 148 303 45 16.5 re S
+n 148 286.5 45 16.5 re S
+n 148 270 45 16.5 re S
+n 148 253.5 45 16.5 re S
+n 148 237 45 16.5 re S
+n 148 220.5 45 16.5 re S
+n 148 204 45 16.5 re S
+.933333 .933333 .933333 rg
+n 193 534 30 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 196.4458 556 Tm (OPP PT) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 198.7233 547 Tm (\(Tally\)) Tj T* ET
+n 193 517.5 30 16.5 re S
+n 193 501 30 16.5 re S
+n 193 484.5 30 16.5 re S
+n 193 468 30 16.5 re S
+n 193 451.5 30 16.5 re S
+n 193 435 30 16.5 re S
+n 193 418.5 30 16.5 re S
+n 193 402 30 16.5 re S
+n 193 385.5 30 16.5 re S
+n 193 369 30 16.5 re S
+n 193 352.5 30 16.5 re S
+n 193 336 30 16.5 re S
+n 193 319.5 30 16.5 re S
+n 193 303 30 16.5 re S
+n 193 286.5 30 16.5 re S
+n 193 270 30 16.5 re S
+n 193 253.5 30 16.5 re S
+n 193 237 30 16.5 re S
+n 193 220.5 30 16.5 re S
+n 193 204 30 16.5 re S
+.933333 .933333 .933333 rg
+n 223 534 28 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 224.7465 556 Tm (OPP OR) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 227.7233 547 Tm (\(Tally\)) Tj T* ET
+n 223 517.5 28 16.5 re S
+n 223 501 28 16.5 re S
+n 223 484.5 28 16.5 re S
+n 223 468 28 16.5 re S
+n 223 451.5 28 16.5 re S
+n 223 435 28 16.5 re S
+n 223 418.5 28 16.5 re S
+n 223 402 28 16.5 re S
+n 223 385.5 28 16.5 re S
+n 223 369 28 16.5 re S
+n 223 352.5 28 16.5 re S
+n 223 336 28 16.5 re S
+n 223 319.5 28 16.5 re S
+n 223 303 28 16.5 re S
+n 223 286.5 28 16.5 re S
+n 223 270 28 16.5 re S
+n 223 253.5 28 16.5 re S
+n 223 237 28 16.5 re S
+n 223 220.5 28 16.5 re S
+n 223 204 28 16.5 re S
+.933333 .933333 .933333 rg
+n 251 534 46 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 259.4722 556 Tm (OPP Shot) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 257.5476 547 Tm (\(2/3/FT/TO\)) Tj T* ET
+n 251 517.5 46 16.5 re S
+n 251 501 46 16.5 re S
+n 251 484.5 46 16.5 re S
+n 251 468 46 16.5 re S
+n 251 451.5 46 16.5 re S
+n 251 435 46 16.5 re S
+n 251 418.5 46 16.5 re S
+n 251 402 46 16.5 re S
+n 251 385.5 46 16.5 re S
+n 251 369 46 16.5 re S
+n 251 352.5 46 16.5 re S
+n 251 336 46 16.5 re S
+n 251 319.5 46 16.5 re S
+n 251 303 46 16.5 re S
+n 251 286.5 46 16.5 re S
+n 251 270 46 16.5 re S
+n 251 253.5 46 16.5 re S
+n 251 237 46 16.5 re S
+n 251 220.5 46 16.5 re S
+n 251 204 46 16.5 re S
+.933333 .933333 .933333 rg
+n 315 534 18 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 317.3472 556 Tm (POS) Tj T* ET
+n 315 517.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 522.5 Tm (21) Tj T* ET
+n 315 501 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 506 Tm (22) Tj T* ET
+n 315 484.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 489.5 Tm (23) Tj T* ET
+n 315 468 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 473 Tm (24) Tj T* ET
+n 315 451.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 456.5 Tm (25) Tj T* ET
+n 315 435 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 440 Tm (26) Tj T* ET
+n 315 418.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 423.5 Tm (27) Tj T* ET
+n 315 402 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 407 Tm (28) Tj T* ET
+n 315 385.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 390.5 Tm (29) Tj T* ET
+n 315 369 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 374 Tm (30) Tj T* ET
+n 315 352.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 357.5 Tm (31) Tj T* ET
+n 315 336 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 341 Tm (32) Tj T* ET
+n 315 319.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 324.5 Tm (33) Tj T* ET
+n 315 303 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 308 Tm (34) Tj T* ET
+n 315 286.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 291.5 Tm (35) Tj T* ET
+n 315 270 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 275 Tm (36) Tj T* ET
+n 315 253.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 258.5 Tm (37) Tj T* ET
+n 315 237 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 242 Tm (38) Tj T* ET
+n 315 220.5 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 225.5 Tm (39) Tj T* ET
+n 315 204 18 16.5 re S
+BT /F2 7.5 Tf 9 TL ET
+0 0 0 rg
+BT 1 0 0 1 319.83 209 Tm (40) Tj T* ET
+.933333 .933333 .933333 rg
+n 333 534 30 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 336.6222 556 Tm (RPS PT) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 338.7233 547 Tm (\(Tally\)) Tj T* ET
+n 333 517.5 30 16.5 re S
+n 333 501 30 16.5 re S
+n 333 484.5 30 16.5 re S
+n 333 468 30 16.5 re S
+n 333 451.5 30 16.5 re S
+n 333 435 30 16.5 re S
+n 333 418.5 30 16.5 re S
+n 333 402 30 16.5 re S
+n 333 385.5 30 16.5 re S
+n 333 369 30 16.5 re S
+n 333 352.5 30 16.5 re S
+n 333 336 30 16.5 re S
+n 333 319.5 30 16.5 re S
+n 333 303 30 16.5 re S
+n 333 286.5 30 16.5 re S
+n 333 270 30 16.5 re S
+n 333 253.5 30 16.5 re S
+n 333 237 30 16.5 re S
+n 333 220.5 30 16.5 re S
+n 333 204 30 16.5 re S
+.933333 .933333 .933333 rg
+n 363 534 28 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 364.9229 556 Tm (RPS OR) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 367.7233 547 Tm (\(Tally\)) Tj T* ET
+n 363 517.5 28 16.5 re S
+n 363 501 28 16.5 re S
+n 363 484.5 28 16.5 re S
+n 363 468 28 16.5 re S
+n 363 451.5 28 16.5 re S
+n 363 435 28 16.5 re S
+n 363 418.5 28 16.5 re S
+n 363 402 28 16.5 re S
+n 363 385.5 28 16.5 re S
+n 363 369 28 16.5 re S
+n 363 352.5 28 16.5 re S
+n 363 336 28 16.5 re S
+n 363 319.5 28 16.5 re S
+n 363 303 28 16.5 re S
+n 363 286.5 28 16.5 re S
+n 363 270 28 16.5 re S
+n 363 253.5 28 16.5 re S
+n 363 237 28 16.5 re S
+n 363 220.5 28 16.5 re S
+n 363 204 28 16.5 re S
+.933333 .933333 .933333 rg
+n 391 534 45 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 399.1486 556 Tm (RPS Shot) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 397.0476 547 Tm (\(2/3/FT/TO\)) Tj T* ET
+n 391 517.5 45 16.5 re S
+n 391 501 45 16.5 re S
+n 391 484.5 45 16.5 re S
+n 391 468 45 16.5 re S
+n 391 451.5 45 16.5 re S
+n 391 435 45 16.5 re S
+n 391 418.5 45 16.5 re S
+n 391 402 45 16.5 re S
+n 391 385.5 45 16.5 re S
+n 391 369 45 16.5 re S
+n 391 352.5 45 16.5 re S
+n 391 336 45 16.5 re S
+n 391 319.5 45 16.5 re S
+n 391 303 45 16.5 re S
+n 391 286.5 45 16.5 re S
+n 391 270 45 16.5 re S
+n 391 253.5 45 16.5 re S
+n 391 237 45 16.5 re S
+n 391 220.5 45 16.5 re S
+n 391 204 45 16.5 re S
+.933333 .933333 .933333 rg
+n 436 534 30 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 439.4458 556 Tm (OPP PT) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 441.7233 547 Tm (\(Tally\)) Tj T* ET
+n 436 517.5 30 16.5 re S
+n 436 501 30 16.5 re S
+n 436 484.5 30 16.5 re S
+n 436 468 30 16.5 re S
+n 436 451.5 30 16.5 re S
+n 436 435 30 16.5 re S
+n 436 418.5 30 16.5 re S
+n 436 402 30 16.5 re S
+n 436 385.5 30 16.5 re S
+n 436 369 30 16.5 re S
+n 436 352.5 30 16.5 re S
+n 436 336 30 16.5 re S
+n 436 319.5 30 16.5 re S
+n 436 303 30 16.5 re S
+n 436 286.5 30 16.5 re S
+n 436 270 30 16.5 re S
+n 436 253.5 30 16.5 re S
+n 436 237 30 16.5 re S
+n 436 220.5 30 16.5 re S
+n 436 204 30 16.5 re S
+.933333 .933333 .933333 rg
+n 466 534 28 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 467.7465 556 Tm (OPP OR) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 470.7233 547 Tm (\(Tally\)) Tj T* ET
+n 466 517.5 28 16.5 re S
+n 466 501 28 16.5 re S
+n 466 484.5 28 16.5 re S
+n 466 468 28 16.5 re S
+n 466 451.5 28 16.5 re S
+n 466 435 28 16.5 re S
+n 466 418.5 28 16.5 re S
+n 466 402 28 16.5 re S
+n 466 385.5 28 16.5 re S
+n 466 369 28 16.5 re S
+n 466 352.5 28 16.5 re S
+n 466 336 28 16.5 re S
+n 466 319.5 28 16.5 re S
+n 466 303 28 16.5 re S
+n 466 286.5 28 16.5 re S
+n 466 270 28 16.5 re S
+n 466 253.5 28 16.5 re S
+n 466 237 28 16.5 re S
+n 466 220.5 28 16.5 re S
+n 466 204 28 16.5 re S
+.933333 .933333 .933333 rg
+n 494 534 46 32 re B*
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 502.4722 556 Tm (OPP Shot) Tj T* ET
+BT /F2 6.3 Tf 7.56 TL ET
+0 0 0 rg
+BT 1 0 0 1 500.5476 547 Tm (\(2/3/FT/TO\)) Tj T* ET
+n 494 517.5 46 16.5 re S
+n 494 501 46 16.5 re S
+n 494 484.5 46 16.5 re S
+n 494 468 46 16.5 re S
+n 494 451.5 46 16.5 re S
+n 494 435 46 16.5 re S
+n 494 418.5 46 16.5 re S
+n 494 402 46 16.5 re S
+n 494 385.5 46 16.5 re S
+n 494 369 46 16.5 re S
+n 494 352.5 46 16.5 re S
+n 494 336 46 16.5 re S
+n 494 319.5 46 16.5 re S
+n 494 303 46 16.5 re S
+n 494 286.5 46 16.5 re S
+n 494 270 46 16.5 re S
+n 494 253.5 46 16.5 re S
+n 494 237 46 16.5 re S
+n 494 220.5 46 16.5 re S
+n 494 204 46 16.5 re S
+BT /F2 9 Tf 10.8 TL ET
+0 0 0 rg
+BT 1 0 0 1 250.236 189 Tm (Manager Tracking Legend) Tj T* ET
+.933333 .933333 .933333 rg
+n 72 164 468 17 re f*
+0 0 0 RG
+n 72 164 468 17 re S
+BT /F2 8 Tf 9.6 TL ET
+0 0 0 rg
+BT 1 0 0 1 210.672 170 Tm (SHOT TRACKING SHORTHAND \(On Shot Column\)) Tj T* ET
+n 72 92 468 72 re S
+BT /F1 7.2 Tf 8.64 TL ET
+0 0 0 rg
+BT 1 0 0 1 79 152 Tm (Plain Number \(2 or 3\): Shot taken off the dribble.) Tj T* ET
+BT /F1 7.2 Tf 8.64 TL ET
+0 0 0 rg
+BT 1 0 0 1 79 142 Tm (Underlined Number \(2 or 3\): Catch-and-shoot opportunity.) Tj T* ET
+BT /F1 7.2 Tf 8.64 TL ET
+0 0 0 rg
+BT 1 0 0 1 79 132 Tm (Circle around a shot \(2 or 3\): Made field goal.) Tj T* ET
+BT /F1 7.2 Tf 8.64 TL ET
+0 0 0 rg
+BT 1 0 0 1 79 122 Tm (FT made/attempted: Free throws made out of attempts \(FT1/1, FT1/2, FT2/2, etc.\).) Tj T* ET
+BT /F1 7.2 Tf 8.64 TL ET
+0 0 0 rg
+BT 1 0 0 1 79 112 Tm (Free throws missed = attempts - makes; FT1/2 means 1 made, 2 attempted, 1 missed.) Tj T* ET
+BT /F1 7.2 Tf 8.64 TL ET
+0 0 0 rg
+BT 1 0 0 1 79 102 Tm (TO: Turnover \(possession ended empty before generating a shot\).) Tj T* ET
+ 
+
+Q
+
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-0 12 Tf
+14.4 TL
+ET
+0.7 w
+n
+72 739 468 23 re
+S
+BT
+/F2-0 8 Tf
+9.6 TL
+ET
+BT
+1 0 0 1 80 747 Tm
+(Game type\072) Tj
+T*
+ET
+BT
+/F1-0 8 Tf
+9.6 TL
+ET
+n
+127 746 7 7 re
+S
+BT
+1 0 0 1 138 747 Tm
+(Regular season) Tj
+T*
+ET
+n
+218 746 7 7 re
+S
+BT
+1 0 0 1 229 747 Tm
+(Playoff) Tj
+T*
+ET
+BT
+/F2-0 8 Tf
+9.6 TL
+ET
+BT
+1 0 0 1 324 747 Tm
+(Our team\072) Tj
+T*
+ET
+BT
+/F1-0 8 Tf
+9.6 TL
+ET
+n
+372 746 7 7 re
+S
+BT
+1 0 0 1 383 747 Tm
+(Home) Tj
+T*
+ET
+n
+431 746 7 7 re
+S
+BT
+1 0 0 1 442 747 Tm
+(Away) Tj
+T*
+ET
+Q
+
+
+endstream
 endobj
 6 0 obj
 <<
-/Author () /CreationDate (D:20261008085802-04'00') /Creator (anonymous) /Keywords () /ModDate (D:20261008085802-04'00') /Producer (ReportLab PDF Library - \(opensource\)) 
-  /Subject (unspecified) /Title (Rutgers Prep Advanced Stats - Revised Draft) /Trapped /False
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 7 0 obj
 <<
-/Count 1 /Kids [ 4 0 R ] /Type /Pages
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 8 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 3234
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
 >>
-stream
-Gatm??#p\&&UihD9N>DLK(XNY(TBNI#o=5i/mC8[EE-b9f!^1ClWQm8o"WMpR9b5`7p"+UWXt\1Fnb=rll;Qc8kA\\iQq%H&0FC$m#r&SMp\Y'2R-``<W%:;,0@eG00j8E9"_jLo08oEJ6K!!Z^Jn"&YfU$nnP_FX1PpPm-7+2Ie'OS`q;`)0<3"hPo0I$N*cBPI>/@@A5_bcODBuD'!X)2+5<Z1(@T1krr91NZ5@(PBg,RUR\VnpXNf9Fm,r,,4+uFGQB]Dh'"b>":kO[%XftqO<%>I_gqN4J>lD[if0aP30<S!SI4JsR`4\0(bHPrPfA]FZRJrXMQISZ6<mtY(7dY5D?Z3)P88:bj<5+hY:Q/(R,l,0eGq(RbOq_(!,/q<pZe;^3fZKnF1+nD5ok'LhHu$@+WnC!RA/:NMaDs(nZJterS'Di!SO?MJ\3sA1Ru*)IbHm_$<RE^B<HPLW'_1^-[W<0cPF*%dPDpP[I'$Va+u(ON,3oqHMLS?Md^=m&J[JUX85o&>j_T.[rG'Ep4egNn/^CE]Uh5o;-3oiHSO=oHeW.\oK#AqNJuk0GS,[&+9riWP-8AZ--6$*h>P@rOY";g:m?"\[Xh,;i\u0OBQ6[r6?]pBgmJstg9n1\6=d,d8ISEjG[MC#9XC$Y:Y_/+#3%O[9djWD'b\a46&'*(/4.k-rq6Y"WfCnWgo.i2k)@GGpOmWiG]H0\d_DUCG\p'-N@]U+"J'(i4ED:aM\JRM_b*(T8PiC3K(V`L5GB6]bq__D"]Mu/PAZ/o'L:2eqY1se(?b%?=]aBT(Sd,^=8a'-m=.X#PjXCLSU4_3nnM1_\(%IRTiQ7CLn5@:2QT7AK]:hr]7TXJ"fiMLCn6($Wn16#I0Y%WS8<V?!Ni5&C:\/"IOr\:2()bo-&=Vr^UWVfC[2g_E44He7)-dq#1teS6aC6[OV&Cg24&kAu13hZ2-9G2)-G&bi33j:PU"\Ri_6"3@aUZj)7TZbATlRG+[Bu(4AN7i?4S8DlT9T<ED<-PoGA346lh0f85LWr!kXY@LUSUPbNHQ\L%F<+bQ_S:RHb+L1FfTo;cigN<p!!iR<"'\j@0Uo\."gOG@rT>[3,]X=C'G-nGQr@&B*Q=rQ,28YO[8Lg@rQ-!1d!u>4I7%F4j2c$ZS<m%$%km_NUH1.V*f=h;miIM.OhbX\%;1jlI>6$mQp<qe,2d]U27370",Wt#hP[W*#b%d>_d>R>*L6?&#2]V6>?u?D9<Hn:H98Oaq:dT3>em@&[#1Q3&E-UjH>5EXrQEsQ%RJg*$O]-]Y@rnJW@/&W?(:MZO;q5FmSdL]/[?6;k$>D5"2W$<hGed:SY8D`GXT0imG6<r2okS$.lWp*;YsG>i0QUqN`?7&#4&'6>?u?IEN5*D`JY_b7Umq3>d1f&[$$i3:ndmjH>5E[iFB'Q@mSo*$O]-]YAAX'.3l]R3gF]`N!i0/h\GkJ1?J0T!Z4J:'cBC9#/?G'ECG,!+8P1J=pWW0II)j:d*`F<Y0eSM?#=X#s_<]!14E'+K-dZ0ImMr:gF'g'*]SX1'#Ni!t[t:"0G:f2UMFW[op;mZ);@>Xn+n@(1hR@!!LgV*bMe\#c\=6F4pTseHUOaD#f0&!tV`l!!LgVJ2qHHJnbD'S2L@5[=O*9D#f0&"2LEb!("!n?qqYk3(b.R<!@-#S_C>_RFloIZ^1(4(i>qZj`6_H5k.,ZAD?jp'4)VS\CUoniO&[g#Aq6fL51C>?jNqF.,8S?L@EoIJV,jg#d4[S3+rDKnCiE0]f'7(Y72=.BEO"Yg44a,2IHf)\)G#KCV7J(j7"#>2g[-*A;KdNrLGUcL<$J49lR\e5D1+`ISGDaq>>[9[El#c9lR\m5D8KrIVifg(pADp^[h5D8e[`_p(-,/[pNc)G`:NEKO=QR3i<9ZGPm6c^#Q:(&j4>.n&)=lIpLJ*Vn;pqptk^'Op7!;rJ0kmj583h)r^]*iHsnJcs7UPr=@jgk.dV%2T#D7_Y<c=Tt<5*s6mk/#69MHg5$'N&AB4e(qOLXAcP3neI]OC>oPL%(rH#W!(1sIe/Vj%^D[4l\n`N;!CQX2'OVFm"o,i#R/h-253FW8R"J'4Pg,Tr+K,V)@FbP]5tq?pS-]1IRK.ju'*&.m!BeSp!$J3H!15PC5Yr*o0P:H;TI,2E=VCc<2$!\u-3+<d!W_@V!"_Yg!%*U\!DI*tF$O-=K1l90c'\PSW!VBjecYt=9`Vu!#loRG!.['C!!G.[4Ns5o+K,SHQnnb.:_Ng_B**UV-@gkS'*&.m!<@0f!!m<@!9QrT&4`,gVGqO;!`PE24!64gIcu:^`H)+_&9L1q@<Om9Jdr%dEruITF?fhn)\@Om!s0">!s0$U5QI/j&:gDU!l3TA!!F;RGaKK_J=luG^taG?"<A$Rjotr2NZ&I2GI:<%^magS#6`VX6_:Y5S'qQaW&F-!Wsq<jD#fsP"sBj&!6f-Z&6'TnR+2B`W&=Y"B`eoG)Z]$-!=5\7/0<B$2?6%N!FSYAJ=tTr0W,@F*2O*\QGmP?lOWUM)\CY,*n7Gt`bPYf<#^(LeHR.p2?:s8!t\EN!9UWh#c\=rb\@4k<#Yi"ZiLH4%01J'!!LgV*bMe\#c\=6F4pTseHUOaD#iQDD.$!U2]tYfIbk)k.cm?+!Yiri#XH`;JVVnZ!=1_/!6blX5gTN4?uA40Jdr&KbROnDciF/TDEn2R%L<&U!s0$U5i?'o5QHBG#QSoJ!YBH=!14]:JCkkRHoV'$G<2"GL2.V'LMp0kh:8&5Fk-9M[(-iWlas`r*:`\'Q1a%DbC),+lZh1V;.%@bQ]h.MGqbSg5@9Afkj&-B5JMUG9t5[YNBY,Wr__I`]P+O1`-FFK4u>@'min"Ts5N3fUBK\%QO[B^aS(%Q1G=GSK@=p&X/:mO^3o_7DOB0oU@!WEH1`d8?W98U7^TY6@W>b58N6V<@oathHi'2;]tsAg1TA">[&GEXmdk0J^40?EPIL/\es4WH5.99Vfh<2X;9;O'IQm/=ZW^=6]5/gg&p&Q%S,'g!'=[8UH8Z@ZD)I6oWC+s,,Os]dSlL\;rU@=q-h#!OY--T/mFjeei'b2!Q[11Y+.9a(5)n'[H6`?Gp+P.7e;J<eo.$ageJGVr_/qkbX7<ZAqR<W-TCr,c+h`-!X(LeVmn8'RZrgVU)\:ra;)QHle*,e^(bN@srIq+n>^o,^D.-M=chSi8e@2RGHag-CY$1T`*gUgC^5*U*"!9ZB1&~>endstream
+endobj
+9 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
+>>
 endobj
 xref
-0 9
+0 10
 0000000000 65535 f 
-0000000061 00000 n 
-0000000102 00000 n 
-0000000209 00000 n 
-0000000321 00000 n 
-0000000514 00000 n 
-0000000582 00000 n 
-0000000869 00000 n 
-0000000928 00000 n 
+0000000015 00000 n 
+0000000054 00000 n 
+0000000113 00000 n 
+0000000162 00000 n 
+0000000407 00000 n 
+0000016625 00000 n 
+0000016732 00000 n 
+0000016839 00000 n 
+0000016951 00000 n 
 trailer
 <<
-/ID 
-[<e74e3fa6342bfa580e0e341831b00a4a><e74e3fa6342bfa580e0e341831b00a4a>]
-% ReportLab generated PDF document -- digest (opensource)
-
-/Info 6 0 R
-/Root 5 0 R
-/Size 9
+/Size 10
+/Root 3 0 R
+/Info 1 0 R
 >>
 startxref
-4253
+17063
 %%EOF

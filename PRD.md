@@ -18,6 +18,9 @@ Plan for approximately 100 potential users, including coaches and players.
 - Build a native app in Swift using SwiftUI and Xcode.
 - Support both iPhone and iPad. Android and browser interfaces are not part of
   the confirmed device scope.
+- Minimum supported iOS/iPadOS is 26.0, including subsequent 26.x releases.
+- Game metadata: date, opponent, our team's home/away status, and game type
+  (regular season or playoff). Scrimmages are outside the requested scope.
 - Use Supabase as the shared backend.
 - All statistical entry happens after games; playbook authoring is independent
   of the after-game entry schedule.
@@ -49,7 +52,10 @@ Plan for approximately 100 potential users, including coaches and players.
 - Supplied PDF forms are layout/shorthand references, not authority to expand
   collection scope. The owner's explicit field list and exclusions take priority.
 - All printed player names and jersey numbers in those PDFs are arbitrary.
-  The owner will provide the actual roster later; use TODO_TEAM_ROSTER until then.
+  The owner will provide a fixed actual roster after tryouts. Temporary arbitrary
+  names and numbers are now explicitly authorized for development. Label the
+  temporary roster visibly and keep it replaceable; do not treat it as real data.
+  An owner roster-management screen is not currently requested.
 
 ## Reviewed input references
 
@@ -58,10 +64,14 @@ Reviewed both one-page PDFs visually and through text extraction on 2026-10-08:
 - Advanced sheet: `/Users/narayanlekhi/Library/Messages/Attachments/36/06/54D45273-0649-483A-A926-38B60C9B299B/rpsadvstatsdraft.pdf`.
 - Box-score sheet: `/Users/narayanlekhi/Downloads/boxscorestatsheet.pdf`.
 - Unchanged workspace copy for other local chats: `boxscorestatsheet.pdf`.
+- Revised workspace forms: `rpsadvstatsdraft-revised.pdf` and
+  `boxscorestatsheet-revised.pdf`, with regular-season/playoff and our-team
+  home/away checkboxes added. Their page layouts were rendered and checked.
 
 These are blank templates, not completed game records or verified sample data.
-Do not seed player profiles, jersey numbers, school branding, or game statistics
-from them. Their legends describe the source notation, not app instructions.
+Do not treat their printed players as the actual roster, or seed real school
+branding or game statistics from them. Temporary roster content is separately
+authorized for development. Their legends describe notation, not app instructions.
 These local reference paths may need replacement if files move; this summary
 preserves the relevant layout context without requiring the templates to be copied.
 
@@ -81,7 +91,7 @@ Advanced-sheet layout:
 - `FT0`, `FT1`, `FT2`, and `FT3` describe free throws made, not an explicit tally
   of attempts or misses in the currently reviewed PDF. The owner will revise the
   sheet to use `FTmade/attempted`, such as `FT1/1`, `FT1/2`, and `FT2/2`.
-  This new notation is confirmed, but the revised PDF has not yet been reviewed.
+  This notation has been included and visually checked in the revised draft.
   Do not infer misses from the old makes-only notation.
 - `TO` denotes a turnover; use the confirmed possession turnover field.
 
@@ -102,8 +112,9 @@ Excluded source-only fields:
 - Quarter/overtime score checkpoints and timeout tracking.
 - Any other statistical field not in the owner's confirmed collection list.
 
-Roster names/numbers are unresolved owner content, not optional sample data.
-Game-identification metadata must be agreed separately from statistical fields.
+Actual roster names/numbers remain unresolved owner content. Temporary arbitrary
+roster names/numbers are explicitly permitted. Game metadata is now confirmed
+as date, opponent, home/away, and regular-season/playoff.
 
 ## Phase 1 — After-game manual entry
 
@@ -196,7 +207,8 @@ requested; the confirmed opponent data is possession-level team data.
 - TODO_FIELD_DEFINITIONS: remaining counting conventions, required/optional
   fields, and handling missing values versus recorded zero. Separate offensive
   and defensive rebounds are confirmed.
-- TODO_TEAM_ROSTER: actual player names and jersey numbers from the owner.
+- TODO_TEAM_ROSTER: fixed actual player names/numbers after tryouts. Development
+  can proceed with a visibly labeled temporary roster; this is not a blocker.
 - TODO_SOURCE_NOTATION: a marked example of box-score shot notation.
 - TODO_REVISED_ADVANCED_SHEET: obtain and review the owner's updated PDF with
   `FTmade/attempted` notation. A revised draft, `rpsadvstatsdraft-revised.pdf`,
@@ -212,8 +224,8 @@ requested; the confirmed opponent data is possession-level team data.
   free throws and period endings; offensive-rebound continuation is settled.
 - TODO_POSSESSION_TOTAL_SOURCE: whether team counts are entered or derived from
   complete possession records, and whether a combined total is also displayed.
-- TODO_GAME_IDENTIFICATION: how games, teams, home/away status, and player records
-  are identified and associated with one another.
+- Use stable internal identifiers to associate games, players, and stat records;
+  do not use editable display names as record identity. Game metadata is confirmed.
 
 ### Analysis direction
 
@@ -376,7 +388,8 @@ Custom encryption and bot protection need assessment against the final scope.
 
 - No live game tracking, live scoring, real-time event entry, game clocks,
   substitutions, or live lineup tracking.
-- No fabricated team roster, school branding, additional data fields, or statistical claims.
+- No fabricated actual team roster, school branding, additional data fields, or
+  statistical claims. The owner authorizes labeled temporary roster names/numbers.
 - No implementation or dependency installation until the owner authorizes it.
 
 ## Release decisions
