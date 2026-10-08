@@ -18,6 +18,8 @@ appropriate. Do not create or message other chats automatically.
 
 - PRD.md: confirmed product requirements, proposed criteria, and unresolved TODOs.
 - WORKFLOW.md: coordination rules, execution preferences, and handoff format.
+- PROJECT_CONTEXT.md: concise project entry point, verified paths, milestone
+  sequence, and remaining inputs. Reference it in implementation prompts.
 - Read applicable AGENTS.md instructions before repository work.
 - Record decisions in their relevant document rather than repeating full context
   in every prompt. Keep both documents aligned with owner-approved changes.
@@ -65,11 +67,13 @@ or expose pending videos to ordinary team viewers before owner approval.
 
 This is a planning sequence, not authorization to start implementation.
 
-1. Use the reviewed sheet layouts and confirmed rebound/FT definitions; review
+1. Inspect the existing Xcode project and verify a baseline iPhone/iPad build;
+   establish a minimal app foundation using empty states. Resolve the GitHub
+   destination before publication; do not guess the owner's repository.
+2. Use the reviewed sheet layouts and confirmed rebound/FT definitions; review
    the revised advanced PDF when supplied. Resolve box-score shot shorthand,
    possession/page mapping, and remaining definitions. Obtain the owner's actual
    roster; settle export details, pilot scope, and pending-edit behavior.
-2. Inspect the existing Xcode project and verify a baseline iPhone/iPad build.
 3. Build manual entry and local record viewing against the agreed fields.
 4. Add Supabase signup/login, data storage, owner grants, and backend access rules.
 5. Connect stats submissions, owner review, authorized publication, corrections,
