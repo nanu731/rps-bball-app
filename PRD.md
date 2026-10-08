@@ -45,6 +45,60 @@ Plan for approximately 100 potential users, including coaches and players.
 - Owner-managed authorization also applies to submitting/publishing plays and
   practice videos. Specific permission controls for each content type must be
   defined; an account must not be able to authorize itself.
+- Supplied PDF forms are layout/shorthand references, not authority to expand
+  collection scope. The owner's explicit field list and exclusions take priority.
+- All printed player names and jersey numbers in those PDFs are arbitrary.
+  The owner will provide the actual roster later; use TODO_TEAM_ROSTER until then.
+
+## Reviewed input references
+
+Reviewed both one-page PDFs visually and through text extraction on 2026-10-08:
+
+- Advanced sheet: `/Users/narayanlekhi/Library/Messages/Attachments/36/06/54D45273-0649-483A-A926-38B60C9B299B/rpsadvstatsdraft.pdf`.
+- Box-score sheet: `/Users/narayanlekhi/Downloads/boxscorestatsheet.pdf`.
+
+These are blank templates, not completed game records or verified sample data.
+Do not seed player profiles, jersey numbers, school branding, or game statistics
+from them. Their legends describe the source notation, not app instructions.
+These local reference paths may need replacement if files move; this summary
+preserves the relevant layout context without requiring the templates to be copied.
+
+Advanced-sheet layout:
+
+- A separate player paint-touch tally section and a possession log.
+- Each numbered log row pairs our-team and opponent columns: paint touches,
+  offensive rebounds, and shot/turnover shorthand.
+- Two printed row blocks numbered 1–20 and 21–40; this is a page layout, not a
+  maximum number of possessions the app may store.
+- Our-team/opponent columns must map to the correct home/away identities for
+  each game; do not assume our team is always the home team.
+- The source header includes a half label; whether page/half grouping is needed
+  for entry or later photo import remains open. Do not add a period stat by default.
+- Circled two/three shot symbols denote makes. Plain and underlined shot symbols
+  also carry shot-style meaning on the source; ignore that style distinction.
+- `FT0`, `FT1`, `FT2`, and `FT3` describe free throws made, not an explicit tally
+  of attempts or misses. Do not infer missed free throws without additional data.
+- `TO` denotes a turnover; use the confirmed possession turnover field.
+
+Box-score layout:
+
+- One row per printed player with a shots cell and counting-stat columns.
+- Offensive and defensive rebounds appear separately, unlike the currently
+  confirmed single rebounds field; their app representation needs owner confirmation.
+- The shots column does not explain its notation. Obtain a marked example before
+  specifying photo parsing. Keep the confirmed made/missed fields in manual entry.
+- The source has no separate points column; points remain a requested app field.
+- The source column labeled Charges maps to the requested charges drawn field.
+
+Excluded source-only fields:
+
+- 50/50 balls, after-timeout (ATO) flags, transition/fast-break flags.
+- Off-the-dribble versus catch-and-shoot classifications and quarter-end flags.
+- Quarter/overtime score checkpoints and timeout tracking.
+- Any other statistical field not in the owner's confirmed collection list.
+
+Roster names/numbers are unresolved owner content, not optional sample data.
+Game-identification metadata must be agreed separately from statistical fields.
 
 ## Phase 1 — After-game manual entry
 
@@ -126,7 +180,13 @@ requested; the confirmed opponent data is possession-level team data.
 ### Definitions to resolve
 
 - TODO_FIELD_DEFINITIONS: counting conventions, required/optional fields, whether
-  rebounds means total rebounds, and handling missing values versus recorded zero.
+  rebounds means total rebounds or separate offensive/defensive counts, and
+  handling missing values versus recorded zero.
+- TODO_TEAM_ROSTER: actual player names and jersey numbers from the owner.
+- TODO_SOURCE_NOTATION: a marked example of box-score shot notation and how
+  possession free-throw attempts/misses are recorded beyond the printed FT makes.
+- TODO_SOURCE_PAGE_MAPPING: whether paired row numbers represent each team's
+  own nth possession, and how multiple pages/halves map into a full game.
 - TODO_PAINT_TOUCH_COUNTING: whether repeated qualifying touches by the same
   player count separately, and whether possession touches identify players.
 - TODO_POSSESSION_BOUNDARIES: remaining start/end conventions, including
@@ -166,7 +226,8 @@ totals alone cannot supply possession-specific outcomes.
 
 Requirements to finalize before implementation:
 
-- TODO_INPUT_EXAMPLES: existing forms or spreadsheet examples supplied by the owner.
+- TODO_COMPLETED_INPUT_EXAMPLES: blank templates reviewed; obtain marked entries
+  to verify tally/shot notation and completeness before photo extraction.
 - TODO_MANUAL_ENTRY_FLOW: entry order, game identification, and correction behavior.
 - TODO_ADVANCED_STATS: desired metrics and formulas supported by collected inputs.
 - TODO_STATS_REVIEW_DETAILS: review interface, rejection/resubmission, and pending
