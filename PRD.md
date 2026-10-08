@@ -1,6 +1,7 @@
 # TeamStats — Product Requirements
 
-Status: working draft; implementation has not been authorized.
+Status: working draft; Step 1 foundation is complete. Further implementation
+requires the next bounded prompt; open requirements remain unresolved.
 Last updated: 2026-10-08.
 
 ## Purpose and users

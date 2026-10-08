@@ -1,8 +1,8 @@
 # TeamStats — Project Context and Development Sequence
 
 Last updated: 2026-10-08.
-Status: requirements draft; ready for a bounded foundation task, not an
-instruction to implement the entire app without further handoffs.
+Status: requirements draft; foundation complete at `3404839`. Next bounded task
+awaits planning decisions; do not implement the entire app without further handoffs.
 
 ## Workspace and source of truth
 
@@ -134,6 +134,9 @@ must also be coordinated to prevent overlapping edits.
 Preserve existing work and staged changes. Commit only task-relevant files with
 descriptive messages; never use a blanket commit to absorb unrelated work.
 No force pushes, history rewrites, or deletion of existing work.
+
+Step 1 handoff and verification limitations are recorded in WORKFLOW.md.
+Current iOS/iPadOS minimum is 26.4, pending owner device-coverage decision.
 
 Return 150–250 words, maximum 300, with:
 `STEP`, `RESULT`, `CHECKS`, `GIT`, `DECISIONS`, `BLOCKERS / HUMAN INPUT`, `NEXT`.
