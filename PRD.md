@@ -11,6 +11,8 @@ data after games and players can easily view their box scores and advanced stats
 Also provide a shared playbook where coaches draw and save plays, team members
 view plays in motion, and practice videos are linked to the relevant plays under
 owner-controlled upload permissions.
+Provide a Game Film menu where coaches and managers upload recorded game videos
+and eligible team members view film associated with the corresponding game.
 Plan for approximately 100 potential users, including coaches and players.
 
 ## Confirmed decisions
@@ -29,7 +31,7 @@ Plan for approximately 100 potential users, including coaches and players.
 - Supabase holds the official stats; automatically export published data and
   accepted corrections to Google Sheets. Spreadsheet edits do not update the app.
 - The initial pilot focuses on after-game manual stats. Photo autofill, animated
-  plays, and practice videos remain required later components, not pilot blockers.
+  plays, practice videos, and game film remain required later components, not pilot blockers.
 - Offline entry is low priority. Start with online submission and do not build
   offline synchronization for the initial pilot unless a demonstrated need arises.
 - Collected fields are specified below; definitions and input examples still
@@ -49,6 +51,9 @@ Plan for approximately 100 potential users, including coaches and players.
 - Owner-managed authorization also applies to submitting/publishing plays and
   practice videos. Specific permission controls for each content type must be
   defined; an account must not be able to authorize itself.
+- Game Film is a required menu for coach/manager uploads. Apply the same owner
+  authorization and pending-review approach as practice videos; introduce it in
+  a later bounded task, not the currently assigned Step 2 or manual-stats pilot.
 - Supplied PDF forms are layout/shorthand references, not authority to expand
   collection scope. The owner's explicit field list and exclusions take priority.
 - All printed player names and jersey numbers in those PDFs are arbitrary.
@@ -366,13 +371,55 @@ Proposed acceptance criteria, pending owner confirmation:
 - Clips permitted for team viewing play within the corresponding play's view.
 - Unauthorized users cannot edit plays, approve clips, or retrieve restricted media.
 
+## Required component — Game Film
+
+Confirmed scope:
+
+- A Game Film menu/section supports recorded game-film uploads by coaches and
+  managers and viewing under the team's agreed access rules.
+- Link each film upload to the corresponding game using its stable game ID,
+  so it can be found with that game's date, opponent, type, and home/away status.
+- Owner-authorized uploaders need no case-by-case approval. Other eligible
+  uploaders submit pending film for owner review before team viewing, using
+  the same authorization approach as practice videos.
+- Enforce upload, approval, and viewing access in the backend and private storage.
+- This is recorded-video upload/playback, not livestreaming, live stat tracking,
+  or automatic video-to-stat extraction.
+- It is a later component, outside the initial manual-stats pilot.
+
+Proposed implementation direction:
+
+- Reuse common video upload, review, and playback behavior with practice clips;
+  keep game-film linkage separate from practice-video linkage to plays.
+- Show upload progress and failures honestly. Do not require creating a play
+  to upload film for a game.
+
+Open decisions before implementation:
+
+- TODO_GAME_FILM_ACCESS: how coach/manager eligibility is assigned and which
+  team accounts may view published film.
+- TODO_GAME_FILM_LIMITS: formats, file size/duration, storage budget, and whether
+  large games are uploaded as one video or multiple parts.
+- TODO_MEDIA_PERMISSION_SCOPE: whether owner upload grants cover both practice
+  videos and game film or are separate grants.
+- TODO_GAME_FILM_REVIEW: pending access, rejection/resubmission, replacements,
+  and removal rules; preserve owner approval for ordinary eligible uploaders.
+
+Proposed acceptance criteria:
+
+- An eligible coach/manager can select a game and submit film through Game Film.
+- Owner-authorized uploads bypass individual review; other eligible uploads
+  remain pending until owner approval and are inaccessible to ordinary viewers.
+- Eligible viewers can play published film and identify its linked game.
+- Unauthorized accounts cannot upload, approve, or retrieve restricted film.
+
 ## Security direction
 
 Use the Supabase publishable key in the app; keep privileged Supabase keys,
 AI credentials, and spreadsheet secrets on trusted server infrastructure.
 Enforce team and role access through database policies, including RLS on exposed
 tables, and protect role/approval fields from user tampering. Protect uploaded
-images and practice videos through storage policies. Owner-granted upload
+images, practice videos, and game film through storage policies. Owner-granted upload
 permissions and any required approval must be enforced by backend access
 controls, not only hidden in the interface. Store grants against authenticated
 account IDs, not editable email/phone strings, and do not let users grant

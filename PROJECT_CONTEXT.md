@@ -38,6 +38,10 @@ rather than quietly inventing requirements.
 - Coaches draw/save plays, and viewers see animated movement. Practice videos
   link to plays. Authorized users upload without individual review; other users
   upload pending clips that only the owner may approve for team viewing.
+- A Game Film menu lets coaches/managers upload recorded videos linked to games,
+  with the same owner-authorized upload bypass and pending review for other
+  eligible uploaders. It follows the manual-stats pilot; no livestreaming or
+  automatic video-to-stat extraction is requested.
 - Owner-managed permissions apply to stats, plays, and videos. Separate versus
   shared permission grants remains unresolved.
 
@@ -105,6 +109,8 @@ Before photo import: owner confirmation of the revised advanced PDF and marked
 shot/tally examples. The actual roster will be supplied later; labeled temporary
 names/numbers are authorized and must remain easy to replace.
 Before playbook/video work: editor controls, review details, and media limits.
+Before Game Film: eligible upload/view roles, large-file limits, storage budget,
+and whether practice/game video grants are shared or separate.
 
 ## Development sequence
 
@@ -126,8 +132,10 @@ task, verify it, commit relevant changes, and return the short handoff.
    Confirm whether export must precede the pilot or immediately follow it.
 7. Pilot manual stats on iPhone/iPad; resolve observed issues.
 8. Add photo extraction into the existing entry/review workflow.
-9. Add dynamic play authoring/viewing and linked practice videos with backend
-   permission enforcement. Their relative order can be refined later.
+9. Add dynamic play authoring/viewing, linked practice videos, and Game Film
+   uploads/playback linked to game IDs, with backend permission enforcement.
+   Reuse common media behavior; split these into bounded prompts. Their relative
+   order can be refined later.
 10. Verify the complete app, finish distribution requirements, and release more widely.
 
 ## Coordination and handoff

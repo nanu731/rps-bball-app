@@ -96,7 +96,8 @@ This is a planning sequence, not authorization to start implementation.
 7. Run the manual-stats pilot on iPhone/iPad and address observed issues.
 8. Add photo autofill through the existing forms and review flow.
 9. Add dynamic play authoring/viewing and linked practice videos with owner-managed
-   permissions. Relative order of these later features remains open.
+   permissions, plus Game Film uploads/playback linked to games. Relative order
+   of these later features remains open; use separate bounded prompts.
 10. Verify the completed app and proceed to the agreed wider distribution.
 
 Only one chat should edit app code at a time. Proposed coordination rule:
@@ -146,6 +147,10 @@ Update context with confirmed decisions; do not silently convert proposals into
 requirements. Keep subsequent prompts focused on the smallest useful next step.
 
 ## Progress — Step 1 complete (2026-10-08)
+
+Game Film scope was added while Step 2 was in progress. Do not interrupt or expand
+the assigned game/temporary-roster task. After its handoff, carry this requirement
+into the relevant later media prompt, preserving the manual-stats pilot priority.
 
 - Implementation handoff: Games/Players navigation and truthful empty states.
 - Commit `9bd184e` preserves remote initial history; `3404839` adds the foundation.
