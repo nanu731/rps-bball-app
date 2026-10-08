@@ -278,3 +278,14 @@ fixing only any demonstrated defect. Do not begin the next implementation step.
   native, restrained visual direction without expanding into a separate redesign.
 - Next prompt waits for these narrow edge-case clarifications. No source changes
   were made by the planning chat.
+
+## Step 4 authorized scope — local possession drafts (2026-10-08)
+
+- Owner confirmed period-ending possessions with actions count; no-action holds
+  until the buzzer do not. Completed datasets require edit requests approved by
+  the owner or an authorized dataset-editing reviewer; revisions need completion
+  again. Preserve accepted data while requests are pending.
+- Next bounded prompt implements paired local possession drafts only. Completion
+  and edit-request enforcement follow accounts/backend permissions, not simulated
+  local approval. Paint-touch player totals, reconciliations, and derived metrics
+  are separate bounded tasks. No new dependency or restructuring is authorized.

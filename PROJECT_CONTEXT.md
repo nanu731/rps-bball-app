@@ -6,8 +6,8 @@ Local game creation and both box-score entry modes are implemented, including
 blank-versus-zero semantics, draft storage, and shot/points discrepancy flags.
 The owner confirmed the remaining iPhone table scrolling/keyboard checks and
 iPad new-game Save/details checks passed. Simulator verification used 26.4;
-actual 26.0 and physical devices remain untested. Next: resolve possession entry
-conventions before a bounded implementation prompt. Cross-sheet comparison
+actual 26.0 and physical devices remain untested. Next: local paired possession
+draft entry only. Completion/edit requests follow backend authorization; cross-sheet comparison
 follows possession entry.
 
 ## Workspace and source of truth
@@ -74,8 +74,12 @@ Pair our team's nth possession on the left with the opponent's nth on the right;
 each team has independent numbering. Provide reversible entry-complete checkboxes
 for the team sheets; unchecked sheets leave the game labeled incomplete data.
 Legal possession groups all actions until the opponent legally possesses the
-ball, including free throws and offensive rebounds. Holding until period end
-does not count. Other period-ending cases and completion after edits need clarity.
+ball, including free throws and offensive rebounds. Period-ending possessions
+with actions count; no-action holds until the buzzer do not count.
+Completed datasets require an edit request approved by the owner or an authorized
+dataset-editing reviewer before changes; revised data needs completion again.
+Build drafts first; enforce completion/edit requests later with authenticated
+backend permissions. Reviewer scope and reopen details remain to be settled.
 
 Visual direction: restrained native SwiftUI, system typography, clear forms and
 tables, consistent spacing and readable contrast. Avoid the owner's listed

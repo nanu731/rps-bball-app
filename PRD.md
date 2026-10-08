@@ -204,11 +204,16 @@ recovery can be considered separately; offline sync is not a pilot requirement.
   possession beside the opponent's nth possession. This is an entry layout,
   not a claim that both occurred simultaneously or in an exact shared order.
 - Provide a reversible entry-complete checkbox for each team's possession sheet.
-  Unchecked means incomplete data; the owner can uncheck it and edit again.
+  Unchecked means incomplete data; returning completed data to editing requires
+  a request approved by the owner or an authorized dataset-editing reviewer.
   A checked sheet is marked complete. The game remains incomplete if either
   team's sheet is unchecked. This is data-entry status, not owner approval or
-  publication. Completion behavior after subsequent edits and any box-score
-  completion requirement remain to be resolved before implementing the status.
+  publication. Completed data must not be freely editable: approve the edit
+  request before allowing changes, and revised data requires completion again.
+  Preserve accepted data while requests are pending. Reviewer permission scope,
+  reopen/recompletion details, and any box-score completion requirement must be
+  resolved before connected implementation. Local draft entry comes first;
+  do not simulate secure approval with device-local flags.
 
 - Possession counts attributable to each team are needed for each team's Real
   Possessions. The latest clarification supersedes the earlier combined-only
@@ -237,7 +242,9 @@ requested; the confirmed opponent data is possession-level team data.
   and groups actions until the opponent legally has possession. This includes
   free throws, offensive rebounds, and fouls; it does not add a foul collection
   field to possession records. Holding the ball until the period ends does not
-  count as a possession. Other period-ending cases require clarification.
+  count as a possession when no actions occurred before the buzzer. A possession
+  with actions, including shots/free throws, counts even if the opponent never
+  legally possesses the ball before the period ends. Preserve this custom rule.
 - Revised possession free-throw notation is `FTmade/attempted`: the numerator is
   free throws made and the denominator is free throws attempted, not a percentage.
   Free throws missed = attempted - made. For example, `FT1/2` means one made,
@@ -270,10 +277,9 @@ requested; the confirmed opponent data is possession-level team data.
   possession, now confirmed; multiple page/half mapping still needs agreement.
 - TODO_PAINT_TOUCH_COUNTING: whether repeated qualifying touches by the same
   player count separately, and whether possession touches identify players.
-- TODO_POSSESSION_BOUNDARIES: legal-possession grouping and inclusion of free
-  throws are confirmed; a ball held until period end is excluded. Clarify other
-  period-ending cases, such as made free throws without a subsequent opponent
-  possession before the period ends.
+- Possession boundaries: legal-possession grouping and inclusion of free throws
+  are confirmed. Period-ending possessions with actions count; no-action holds
+  until the buzzer do not count.
 - TODO_POSSESSION_TOTAL_SOURCE: whether team counts are entered or derived from
   complete possession records, and whether a combined total is also displayed.
 - Use stable internal identifiers to associate games, players, and stat records;
