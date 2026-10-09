@@ -219,6 +219,7 @@ private struct GameDetailsView: View {
     let game: Game
     @State private var entryMode: BoxScoreEntryMode?
     @State private var showingPossessions = false
+    @State private var showingPlayerPaintTouches = false
 
     var body: some View {
         Form {
@@ -241,6 +242,7 @@ private struct GameDetailsView: View {
                     .foregroundStyle(.secondary)
             }
             Section {
+                Button("Player paint-touch drafts") { showingPlayerPaintTouches = true }
                 Button("Possession draft entry") { showingPossessions = true }
                 Text("Incomplete, unreviewed local drafts. Advanced-sheet reconciliation is unavailable.")
                     .foregroundStyle(.secondary)
@@ -252,6 +254,9 @@ private struct GameDetailsView: View {
         }
         .sheet(isPresented: $showingPossessions) {
             PossessionEditor(game: game)
+        }
+        .sheet(isPresented: $showingPlayerPaintTouches) {
+            PlayerPaintTouchEditor(game: game)
         }
     }
 }

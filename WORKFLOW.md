@@ -433,3 +433,53 @@ Finish this verification before authorizing the next implementation step.
 - Next bounded task: individual-player game-total paint-touch drafts, using the
   existing temporary roster and stable game/player identities. No attribution
   of possession touches to players or new counting conventions is implied.
+
+## Step 5 — player game-total paint-touch drafts (2026-10-09)
+
+- Added `PlayerPaintTouches.swift` and a game-details entry button. Native roster
+  form shows names/numbers, temporary-roster and incomplete/unreviewed labels,
+  the confirmed two-feet-with-ball definition and independently collected totals.
+  Direct typing and accessible +1/-1 reuse existing validation/counter semantics.
+  Missing totals stay missing; zero is explicit. No completion, metrics,
+  possession attribution, counting convention, or connected service was added.
+- Separate Codable JSON storage writes atomically, validates nonnegative totals
+  and unique game/player keys, updates existing records and shows load/save errors.
+  Saving untouched players retains optional missing totals, consistent with the
+  existing box-score draft approach. Temporary roster IDs remain unchanged.
+- Simulator build passed. Focused Foundation checks passed for blank/zero,
+  counters, invalid/overflow inputs, atomic save/reload, stable keys, edits without
+  duplicates, unrelated-record preservation, corrupt-record rejection and write
+  failure propagation. Model checks do not substitute for UI interaction.
+- iPhone 17 / iOS 26.4: blank + becomes 1, decrement becomes explicit 0 with
+  minus disabled; typed -1 blocks Save/counters with a visible error; entering 7
+  and clearing it passed. Save worked with the software keyboard visible; editing
+  and saving retained exactly five unique records (first player 0; others missing).
+  Those records remained in storage after terminate/relaunch; UI reopening is
+  still unverified. Existing games, box scores and possessions stayed byte-identical
+  on iPhone and iPad. No existing records were deleted or rewritten.
+- UI automation reported -10005 `noWindowsAvailable` while clearing (the clear
+  actually applied), then again on scrolling at larger iPhone text. Failing
+  actions were not repeated. Larger-text layout/scrolling and iPad form interaction
+  remain unverified. Original simulator text settings were restored. Actual iOS
+  26.0 and physical devices remain untested. Step 5 verification is PARTIAL.
+- Both personal Xcode files and their staged entries are excluded from this step.
+  UI-state working bytes changed during the run without an agent source edit;
+  the pre-task bytes were restored, with both versions retained temporarily.
+
+### Remaining Step 5 manual checklist
+
+1. iPhone: reopen `TEST ONLY Step 3 iPhone verification` → Player paint-touch
+   drafts after relaunch. Expected: Player 1 is explicit 0; Players 2–5 are blank.
+   Scroll to Player 5; enter 2, Save, reopen, change to 3, Save and relaunch.
+   Expected: Player 5 retains 3, earlier values remain, one total per player.
+2. iPad: open `TEST ONLY Step 3 iPad Save verification` → Player paint-touch
+   drafts. On a blank total tap + (1), minus (0, then disabled), type 2 then clear
+   (blank). Paste -1, 1.5, and an overflowing integer: error shown and Save disabled.
+   Enter 3, show the software keyboard and Save. Reopen/edit to 4, Save/relaunch;
+   expected 4 retained, other totals remain blank, existing data unchanged.
+3. Both devices: repeat reachability at a larger accessibility text size. Scroll
+   through all five players; every label, field and counter must be readable and
+   reachable. With keyboard visible, active input, Hide keyboard and Save must
+   remain reachable without overlap. Restore preferred text size afterward.
+
+Finish these bounded checks before beginning another implementation step.
