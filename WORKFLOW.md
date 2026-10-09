@@ -483,3 +483,14 @@ Finish this verification before authorizing the next implementation step.
    remain reachable without overlap. Restore preferred text size afterward.
 
 Finish these bounded checks before beginning another implementation step.
+
+## Step 5 closed — manual verification passed (2026-10-09)
+
+- Owner reported “both passed” for the remaining Step 5 manual checklist.
+  UI reopening, iPad entry/save/relaunch, and larger-text/keyboard reachability
+  passed. Step 5 is complete at `ab1047e`; no further fix or rebuild is required.
+- Actual 26.0-runtime and physical-device checks remain outstanding for pilot
+  validation. All stored stats remain local drafts, not reviewed/published data.
+- Next bounded task: read-only local game summary using existing stores, with
+  explicit missing values and draft subtotals. No completion, approval controls,
+  official metrics, cross-sheet reconciliation, or connected services in this task.

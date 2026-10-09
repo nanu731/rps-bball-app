@@ -1,7 +1,7 @@
 # TeamStats — Project Context and Development Sequence
 
 Last updated: 2026-10-09.
-Status: requirements draft; Steps 1–4 complete. Games, shared box scores, and paired possession drafts are
+Status: requirements draft; Steps 1–5 complete. Games, shared box scores, and paired possession drafts are
 stored locally. Possessions have independent team numbering, stable UUIDs,
 missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data
 is incomplete and unreviewed; no completion or approval controls are implemented.
@@ -15,17 +15,19 @@ manual swipe, larger-text, field reachability, keyboard and Save checklist.
 Owner previously confirmed vertical scrolling and iPad keyboard Save/relaunch.
 Actual 26.0 and physical devices remain untested. Completion/edit requests follow
 backend authorization; advanced metrics and cross-sheet comparison remain separate tasks.
-Step 5 local player game-total paint-touch drafts are implemented; UI verification
-is partial. The separate atomic `player-paint-touches.json` store uses stable
+Step 5 local player game-total paint-touch drafts are implemented and verified.
+The separate atomic `player-paint-touches.json` store uses stable
 game/player keys, retains missing versus zero, and never derives player totals
 from possessions. Existing temporary identities are unchanged. Build and focused
 model checks passed; iPhone counters, invalid-input blocking, direct entry/clearing,
 keyboard-visible Save and repeated saves passed. Five unique saved records remained
-after app relaunch; reopening them in the UI is still unverified. Existing games,
+after app relaunch; the owner confirmed UI reopening passed. Existing games,
 box scores and possessions stayed byte-identical on both simulators.
 Simulator UI scrolling failed with error -10005 (`noWindowsAvailable`); retries
-stopped. iPad interaction and larger-text/reachability checks remain manual;
-see WORKFLOW.md. No actual 26.0-runtime or physical-device testing was performed.
+stopped. Owner confirmed the remaining iPad interaction and both devices'
+larger-text/reachability checks passed. No actual 26.0-runtime or physical-device
+testing was performed. Next: read-only local game summary with honest draft and
+missing-data labels; completion, official metrics and reconciliation follow later.
 Next bounded task: finish Step 5's remaining manual verification before new features.
 
 ## Workspace and source of truth
