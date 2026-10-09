@@ -64,6 +64,12 @@ Plan for approximately 100 potential users, including coaches and players.
 
 ## Visual direction
 
+Owner-requested design reference: apply
+[apple-design](https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md)
+to this native SwiftUI app. Translate its interaction, typography, feedback,
+and accessibility principles to platform controls; do not introduce its web
+libraries or glass effects that conflict with the owner's explicit exclusions.
+
 Use a restrained native SwiftUI interface with system typography, readable
 contrast, consistent spacing, clear tables/forms, and purposeful system icons.
 The owner explicitly rejects purple-to-blue gradients, gradient hero text,
@@ -199,6 +205,21 @@ recovery can be considered separately; offline sync is not a pilot requirement.
 - Each of our players' total paint touches in the game.
 
 **Game possession data:**
+
+Latest possession-input clarification (supersedes unanswered-turnover defaults):
+- Numeric fields may stay blank; do not require tedious zero entry to save drafts.
+  Blank remains unentered, not silently stored or calculated as zero. Whether
+  completion will certify blank counts as no events needs agreement before metrics.
+- New possession records default turnover to No. Preserve historical stored
+  unanswered turnover values; do not rewrite existing data merely on opening it.
+- Provide accessible +1/-1 controls for every possession count alongside direct
+  numeric entry. From blank, + starts at 1; minus is disabled for blank/zero;
+  zero stays explicit. Clearing the field restores blank. Reject invalid/overflow
+  arithmetic, and do not silently correct invalid typed input.
+- Owner manual verification found vertical rows scroll but paired columns cannot
+  be swiped on either device. Investigate/fix horizontal access where content
+  overflows; no horizontal movement is needed when both columns genuinely fit.
+  iPad keyboard-visible save and relaunch persistence passed.
 
 - Each team has its own sequence, paired left to right: our team's nth
   possession beside the opponent's nth possession. This is an entry layout,

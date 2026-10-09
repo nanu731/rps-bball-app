@@ -87,6 +87,13 @@ Visual direction: restrained native SwiftUI, system typography, clear forms and
 tables, consistent spacing and readable contrast. Avoid the owner's listed
 gradient/card/animation/font/copy tropes; see PRD.md for the explicit exclusions.
 No separate redesign is authorized by these preferences alone.
+Owner requests the apple-design skill linked in PRD.md; translate its principles
+to native SwiftUI without web libraries or conflicting glass effects.
+Latest possession-entry defaults: new turnover No; numeric blanks allowed and
+still unentered. Add +1/-1 controls alongside direct entry. Preserve saved nil
+turnovers. Owner found horizontal access failing on both devices; vertical scroll
+and iPad keyboard-visible save/relaunch passed. Next is a bounded Step 4 fix,
+not metrics or backend work.
 
 Paint touch means intentionally establishing two feet in the paint with the ball.
 Real Possessions is calculated separately for each team:

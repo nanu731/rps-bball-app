@@ -339,3 +339,14 @@ in the same record, with opponent still at zero records. Report any failed step.
 Do not delete the test records. These manual gesture/iPad keyboard/relaunch
 checks are outstanding, not presumed passing. Larger-text and landscape layouts
 also remain untested. Finish verification before the next implementation task.
+# Step 4 owner feedback — fix before closing
+
+- Owner confirmed vertical scrolling on both devices and iPad keyboard-visible
+  saving/relaunch persistence. Horizontal swipes do not move paired columns on
+  either device. Diagnose overflow and gesture behavior rather than assuming
+  every device needs scrolling when both columns fit.
+- Updated requirements: numeric blanks remain allowed; new turnover defaults No;
+  each count gets +1/-1 controls alongside direct typing. Preserve historical
+  missing values. Blank-as-zero at completion is not yet confirmed.
+- Apply the owner-linked apple-design skill to the possession UI using native
+  SwiftUI, respecting explicit visual exclusions. Next task is this bounded fix.
