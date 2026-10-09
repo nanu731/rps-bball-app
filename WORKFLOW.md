@@ -361,3 +361,63 @@ also remain untested. Finish verification before the next implementation task.
   possession records are converted; empty paired placeholders are not records.
 - Record for the later authenticated completion task. The current Step 4
   usability-fix prompt remains unchanged; do not add completion scope to it.
+
+
+## Step 4 usability fix — implementation complete, verification partial (2026-10-08)
+
+- Read the owner-linked [apple-design skill](https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md).
+  Applied immediate value feedback, familiar native buttons, minimum 44-point
+  touch targets, explicit accessibility labels/values, system type and Dynamic
+  Type scaling. No custom gesture physics, web libraries, glass cards, or animations.
+- Diagnosed lazy-stack sizing: fixed-width paired children overflowed visually
+  without an explicit paired content width. The stack now declares the full
+  measured width (two scaled columns, spacing, padding), retaining native two-axis
+  scrolling. Default 264-point columns fit the inspected normal iPad sheet; where
+  both columns fit, horizontal movement is unnecessary. Larger text expands them.
+- Each numeric field retains direct entry beside +1/-1. Blank + becomes 1;
+  minus is disabled for blank/0, 1 minus becomes explicit 0, and clearing restores
+  missing. Invalid typed text disables counter arithmetic without correcting it;
+  Int overflow is checked, with no basketball-frequency cap. Draft saving never
+  converts missing counts to zeros. Only new possessions default turnover to No;
+  loading passes saved optional answers through without migration.
+- Final generic simulator build passed at target 26.0. Foundation checks passed
+  counter boundaries, whitespace blanks, invalid input/overflow, clearing, stable
+  unique updates and preserved historical nil/Yes/No turnover values.
+- iPhone 17 on 26.4: blank→1→0 counter feedback and disabled decrement passed;
+  number-keyboard typing, clearing, keyboard-visible Save, save/edit, and relaunch
+  passed. A new labeled test-game possession (our #3) saved blank counts and No.
+  Every original possession record stayed identical, including historical answers;
+  no duplicate IDs. Relaunch restored counts 3/1 and cleared input as Unentered.
+- Layout checks: normal iPad A16 sheet displays both columns/counters fully. Focus
+  scrolling brings opponent fields fully into view on iPhone and at larger iPad
+  text (accessibility-extra-large). iPhone maximum text size was inspected and
+  Save activated successfully. Original text-size settings were restored.
+- Automated iPhone horizontal drag produced no movement. Gesture retries stopped;
+  programmatic horizontal access passed, but real swipe behavior and exhaustive
+  every-field reachability are not claimed verified. Owner's prior vertical and
+  iPad keyboard-visible Save/relaunch results remain recorded; final counter layout
+  still needs the short manual check below. Actual 26.0 and physical devices remain
+  untested. No new metrics, completion, approvals, reconciliation or services.
+- Games and box-score files stayed byte-identical on both simulators. All original
+  possession records stayed unchanged (iPad possession file also byte-identical).
+  Both personal Xcode files remain excluded. The original UI-state staged blob
+  is unchanged; its working bytes changed during the run without an agent edit.
+  Leave that current personal state untouched rather than overwrite it.
+
+### Remaining usability-fix manual checklist
+
+1. iPhone labeled test game → Possession draft entry: swipe horizontally across
+   a field label/gap to opponent, then back. Expected: both complete columns and
+   their +1/-1, input, Add next and turnover controls become reachable. Swipe
+   vertically to the last paired row and check all eight numeric fields plus
+   turnover. At normal iPad text both columns should already fit; no horizontal
+   movement is required there. With larger text, verify the same horizontal access.
+2. Repeat at a larger text size on both devices, including software keyboard shown.
+   Expected: text remains readable, active input and Save are reachable without
+   overlap, and both counter buttons can be tapped. On a labeled test record use
+   a blank count: + gives 1, minus gives 0 and disables, clearing restores blank.
+   Save/reopen should retain blank and should not rewrite historical turnover.
+   Restore the preferred text size afterward. Report the device, text size and
+   exact unreachable control if any check fails; do not delete existing records.
+
+Finish this verification before authorizing the next implementation step.

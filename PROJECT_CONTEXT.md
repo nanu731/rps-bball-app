@@ -6,9 +6,14 @@ verification partial. Games, shared box scores, and paired possession drafts are
 stored locally. Possessions have independent team numbering, stable UUIDs,
 missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data
 is incomplete and unreviewed; no completion or approval controls are implemented.
-Build/model checks and iPhone save/edit/relaunch checks passed on Simulator 26.4;
-iPad layout, independent addition, validation blocking, and draft Save were checked.
-Manual scrolling and iPad keyboard usability remain to be verified; see WORKFLOW.md.
+Step 4 usability changes add accessible +1/-1 controls beside typing, Dynamic Type
+column sizing, explicit horizontal content bounds, and No only for new turnovers.
+Existing unanswered/Yes/No values stay intact; draft blanks remain missing.
+Build/model checks and iPhone counter/typing/clearing/save/relaunch checks passed.
+Normal iPad columns fit; larger iPad text and iPhone overflow can be brought fully
+into view by focus scrolling. Native swipe verification remains outstanding because
+automated swipe injection produced no movement; see WORKFLOW.md's manual checklist.
+Owner previously confirmed vertical scrolling and iPad keyboard Save/relaunch.
 Actual 26.0 and physical devices remain untested. Completion/edit requests follow
 backend authorization; advanced metrics and cross-sheet comparison remain separate tasks.
 

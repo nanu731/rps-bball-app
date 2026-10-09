@@ -51,6 +51,21 @@ struct PossessionDraft: Identifiable {
     }
 }
 
+// Invalid input is never repaired by counters; arithmetic stays within Int's range.
+func adjustedPossessionCount(_ text: String, by delta: Int) -> String? {
+    guard delta == 1 || delta == -1 else { return nil }
+    switch BoxScoreCount(text) {
+    case .missing:
+        return delta == 1 ? "1" : nil
+    case .invalid:
+        return nil
+    case .value(let number):
+        let next = number.addingReportingOverflow(delta)
+        guard !next.overflow, next.partialValue >= 0 else { return nil }
+        return String(next.partialValue)
+    }
+}
+
 enum PossessionStorage {
     static func fileURL() throws -> URL {
         try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
@@ -98,6 +113,7 @@ struct PossessionEditor: View {
     @State private var hasChanges = false
     @State private var saved = false
     @FocusState private var focusedField: String?
+    @ScaledMetric(relativeTo: .body) private var columnWidth = 264.0
 
     private func teamDrafts(_ team: PossessionTeam) -> [PossessionDraft] {
         drafts.filter { $0.team == team }.sorted { $0.number < $1.number }
@@ -144,6 +160,8 @@ struct PossessionEditor: View {
                                         Divider()
                                     }
                                 }
+                                // Include overflowing columns in the scroll view's measured content width.
+                                .frame(width: max(geometry.size.width - 32, columnWidth * 2 + 16), alignment: .leading)
                                 .padding()
                             }
                             .defaultScrollAnchor(.topLeading)
@@ -176,7 +194,7 @@ struct PossessionEditor: View {
             Text("Incomplete, unreviewed local draft").font(.headline)
             Text("After-game entry only. Row n pairs each team's independent nth possession, not chronological alignment.")
             Text("From legal team possession until the opponent legally possesses the ball. Free throws and offensive rebounds stay within it. Period-ending possessions with actions count; no-action holds until the buzzer do not.")
-            Text("Paint touch: intentionally establish two feet in the paint with the ball. Blank counts and unanswered turnovers remain unentered; enter 0 explicitly.")
+            Text("Paint touch: intentionally establish two feet in the paint with the ball. Blank counts remain unentered. New turnovers default to No; saved unanswered values stay unanswered.")
         }
         .font(.footnote)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -192,7 +210,7 @@ struct PossessionEditor: View {
                 .buttonStyle(.bordered)
                 .disabled(!loaded)
         }
-        .frame(width: 280, alignment: .leading)
+        .frame(width: columnWidth, alignment: .leading)
     }
 
     @ViewBuilder private func possessionCell(_ team: PossessionTeam, number: Int) -> some View {
@@ -200,24 +218,27 @@ struct PossessionEditor: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("\(team.label) possession \(number)").font(.headline)
                 ForEach(PossessionField.allCases, id: \.self) { field in
-                    HStack {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(field.label)
-                        Spacer()
-                        TextField("Unentered", text: Binding(
-                            get: { drafts[index].values[field.rawValue] ?? "" },
-                            set: { text in
-                                guard (drafts[index].values[field.rawValue] ?? "") != text else { return }
-                                drafts[index].values[field.rawValue] = text
-                                changed()
-                            }
-                        ))
-                        .keyboardType(.numberPad)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 100)
-                        .focused($focusedField, equals: "\(drafts[index].id).\(field.rawValue)")
-                        .id("\(drafts[index].id).\(field.rawValue)")
-                        .accessibilityLabel("\(team.label) possession \(number), \(field.label)")
-                        .accessibilityIdentifier("\(team.rawValue).\(number).\(field.rawValue)")
+                        HStack(spacing: 8) {
+                            counter(index, field: field, delta: -1)
+                            TextField("Unentered", text: Binding(
+                                get: { drafts[index].values[field.rawValue] ?? "" },
+                                set: { text in
+                                    guard (drafts[index].values[field.rawValue] ?? "") != text else { return }
+                                    drafts[index].values[field.rawValue] = text
+                                    changed()
+                                }
+                            ))
+                            .keyboardType(.numberPad)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(minWidth: 100, minHeight: 44)
+                            .focused($focusedField, equals: "\(drafts[index].id).\(field.rawValue)")
+                            .id("\(drafts[index].id).\(field.rawValue)")
+                            .accessibilityLabel("\(team.label) possession \(number), \(field.label)")
+                            .accessibilityIdentifier("\(team.rawValue).\(number).\(field.rawValue)")
+                            counter(index, field: field, delta: 1)
+                        }
                     }
                 }
                 LabeledContent("Turnover") {
@@ -240,12 +261,31 @@ struct PossessionEditor: View {
                     Text("Invalid \(field.label.lowercased()).").font(.caption).foregroundStyle(.red)
                 }
             }
-            .frame(width: 280, alignment: .leading)
+            .frame(width: columnWidth, alignment: .leading)
         } else {
             Text("\(team.label) possession \(number) not added.")
                 .foregroundStyle(.secondary)
-                .frame(width: 280, alignment: .leading)
+                .frame(width: columnWidth, alignment: .leading)
         }
+    }
+
+    private func counter(_ index: Int, field: PossessionField, delta: Int) -> some View {
+        let draft = drafts[index]
+        let text = draft.values[field.rawValue] ?? ""
+        let next = adjustedPossessionCount(text, by: delta)
+        return Button {
+            guard let next = adjustedPossessionCount(drafts[index].values[field.rawValue] ?? "", by: delta) else { return }
+            drafts[index].values[field.rawValue] = next
+            changed()
+        } label: {
+            Image(systemName: delta == 1 ? "plus" : "minus")
+                .frame(minWidth: 44, minHeight: 44)
+        }
+        .buttonStyle(.bordered)
+        .disabled(next == nil)
+        .accessibilityLabel("\(delta == 1 ? "Increase" : "Decrease") \(draft.team.label) possession \(draft.number), \(field.label), by 1")
+        .accessibilityValue(BoxScoreCount(text) == .missing ? "Unentered" : text)
+        .accessibilityIdentifier("\(draft.team.rawValue).\(draft.number).\(field.rawValue).\(delta == 1 ? "increase" : "decrease")")
     }
 
     private var saveBar: some View {
@@ -284,7 +324,7 @@ struct PossessionEditor: View {
             saveError = "Possession numbering exceeds the supported range."
             return
         }
-        drafts.append(PossessionDraft(id: UUID(), team: team, number: next.partialValue))
+        drafts.append(PossessionDraft(id: UUID(), team: team, number: next.partialValue, turnover: false))
         changed()
     }
 
