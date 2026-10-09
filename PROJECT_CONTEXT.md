@@ -45,6 +45,19 @@ byte-identical. No source fix/rebuild was needed. Actual 26.0 and physical-devic
 testing remain unverified. Next: planning review and a bounded next-step definition;
 do not infer authorization for another feature.
 
+Individual shot/points validation fix: the prior check returned incomplete before
+calculating entered makes, so partial contradictions were missed; notices were
+also below the form/at the table's far right. The shared check now detects entered
+scoring lower bounds greater than points, compares exact equality only with all
+made-shot categories, and reports other incomplete/invalid/overflow states honestly.
+Text/icon warnings appear beside scoring fields and before summary fields; table
+scoring columns scale with text size. Blanks remain missing and discrepancies
+remain saveable. Build/model checks passed. Normal-size warnings were inspected
+in both modes and summary on both simulators, with larger-text summary inspection.
+Full larger-text entry and scrolling to later made-shot fields remain manual after
+an automated scroll produced no movement; see WORKFLOW.md. All existing records
+and personal Xcode working/staged state were preserved. No next feature started.
+
 ## Workspace and source of truth
 
 Workspace: `/Users/narayanlekhi/Documents/ChatGPT/Basketball stats input app`.

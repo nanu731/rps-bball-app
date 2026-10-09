@@ -156,6 +156,16 @@ Confirmed manual box-score behavior:
 - Points must agree with shot makes. Keep the entered value visible and flag
   discrepancies with `2 * two-point makes + 3 * three-point makes + FT makes`;
   never silently overwrite source values or treat missing inputs as zero.
+- For incomplete made-shot inputs, sum only valid entered makes as a scoring
+  lower bound. If that bound exceeds entered points, warn immediately with
+  “Points disagree: entered 4; entered made shots imply at least 21.” for points
+  4 / three-point makes 7 / other makes blank. Blanks remain unentered in storage.
+  Without a proven contradiction show “Check incomplete”, never a match.
+- With points and all three made-shot categories entered, compare exact equality.
+  Missing points, invalid scoring inputs and arithmetic overflow must give honest
+  incomplete/unavailable states. Misses contribute no points and are not required.
+  Share the check across individual entry, roster table and summary; show prominent
+  text/icon discrepancies beside scoring inputs. Discrepancies stay saveable drafts.
 - Game-total box-score points must agree with the corresponding team's total
   points derived from made shots on the advanced possession sheet. Perform that
   comparison only when the required matching datasets are available/complete.

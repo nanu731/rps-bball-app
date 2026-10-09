@@ -584,3 +584,54 @@ Finish only these verification gaps before authorizing another implementation st
   Actual 26.0-runtime and physical-device pilot testing remain unverified.
 - Next bounded task: planning review and definition of the next authorized step.
   No subsequent implementation, services, metrics, completion or approvals started.
+
+## Individual shot/points validation fix (2026-10-09)
+
+- Diagnosed `boxScoreShotCheck`: it exited as incomplete before any made-shot
+  calculation unless points and every made-shot category were present. The notice
+  also sat below all individual fields or at the table's far-right end. Thus the
+  reported partial case could not produce a discrepancy warning.
+- Shared logic now computes checked contributions only from valid entered makes.
+  A partial scoring lower bound greater than points warns with “at least”; other
+  partial cases stay Check incomplete. Exact comparison requires points and all
+  three made-shot categories. Invalid inputs and arithmetic overflow report Check
+  unavailable; missing points report incomplete. Misses do not participate.
+- `ShotCheckNotice` uses bold system text plus a warning symbol, rather than color
+  alone. Individual warnings sit directly after affected scoring fields; table
+  warnings sit beneath their scoring inputs in wider Dynamic Type columns. Summary
+  places the same notice before saved fields, close to Points. No popup, correction,
+  blank-to-zero conversion, completion, service or reconciliation behavior added.
+- Simulator build passed. Focused checks passed: reported 4 points / 7 threes /
+  other makes blank => lower bound 21; other partial contradictions; incomplete
+  noncontradictory/equal-lower-bound cases; missing points; full exact match/mismatch;
+  explicit zeros; invalid/overflow input; multiplication/sum overflow; ignored
+  misses; blank-preserving persistence. Existing Step 6 error checks not repeated.
+- Used isolated test apps (`com.narayanlekhi.TeamStats.ShotVerification`) on iPhone
+  17 and iPad A16 / 26.4, with a labeled TEST ONLY shot discrepancy game. Normal
+  individual/table/summary warnings were inspected on both devices. On iPad,
+  typing points 3 updated the warning immediately; Save succeeded with the
+  disagreement and retained missing twos/free throws in five unique draft records.
+  Accessibility-medium summary warnings wrapped fully/readably on both devices.
+- An automated iPad native scroll produced no movement; retries stopped. Larger
+  text entry-mode scrolling, later made-shot-field warnings and horizontal table
+  access still need the check below. Verification is PARTIAL; implementation/model
+  checks passed. Actual 26.0 and physical devices remain untested.
+- All original JSON on both simulators stayed byte-identical. Original text sizes
+  and apps were restored; isolated fixtures retained without deletion. Both personal
+  Xcode files' working bytes and staged entries were preserved and excluded.
+  Original simulator apps were updated from the passing build without clearing
+  data so the remaining manual check uses this fix.
+
+### Remaining warning-layout manual check
+
+On each device use a clearly labeled test game/player: points 4, threes made 7,
+twos/free-throw makes blank. At a larger accessibility text size, inspect individual
+and table entry. Expected: the complete bold warning with symbol is readable beside
+Points and each made-shot input; scroll vertically/horizontally as needed. Clear
+threes: Check incomplete, no match. Re-enter 7: immediate at-least-21 warning.
+Enter twos 0/free throws 0: exact mismatch. Change points to 21: exact match.
+Save/reopen summary: same saved result, blanks preserved when left blank, and no
+automatic correction. Check keyboard-visible reachability of warning and Save.
+Restore preferred text size. Report any exact field/message that cannot be reached.
+
+Finish only this validation-fix verification before another implementation step.

@@ -135,11 +135,11 @@ private struct PlayerSummaryView: View {
                         .foregroundStyle(.red)
                 } else {
                     let values = boxScore?.values ?? [:]
+                    ShotCheckNotice(message: summaryShotCheck(values))
                     ForEach(BoxScoreField.allCases, id: \.self) { field in
                         LabeledContent(field.label, value: summaryCount(values[field.rawValue]))
                     }
                     LabeledContent("Total rebounds", value: summaryRebounds(values))
-                    Text(summaryShotCheck(values))
                 }
             }
             Section("Independent player game total") {

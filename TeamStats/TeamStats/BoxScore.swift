@@ -116,21 +116,50 @@ func boxScoreSum(_ numbers: [Int]) -> Int? {
 func boxScoreShotCheck(_ values: [String: String]) -> String {
     let fields: [BoxScoreField] = [.points, .twosMade, .threesMade, .freeThrowsMade]
     let counts = fields.map { BoxScoreCount(values[$0.rawValue] ?? "") }
-    if counts.contains(.invalid) { return "Shot check unavailable: fix invalid inputs." }
-    let numbers = counts.compactMap(\.number)
-    guard numbers.count == fields.count else {
-        return "Shot check incomplete: enter points and all three made-shot counts."
+    if counts.contains(.invalid) { return "Check unavailable: fix invalid points or made-shot inputs." }
+    var contributions: [Int] = []
+    for (count, weight) in zip(counts.dropFirst(), [2, 3, 1]) {
+        // Only entered makes contribute to this lower bound; blanks remain missing.
+        guard let number = count.number else { continue }
+        let product = number.multipliedReportingOverflow(by: weight)
+        guard !product.overflow else { return "Check unavailable: counts exceed the supported calculation range." }
+        contributions.append(product.partialValue)
     }
-    let twos = numbers[1].multipliedReportingOverflow(by: 2)
-    let threes = numbers[2].multipliedReportingOverflow(by: 3)
-    guard !twos.overflow, !threes.overflow,
-          let implied = boxScoreSum([twos.partialValue, threes.partialValue, numbers[3]]) else {
-        return "Shot check unavailable: counts exceed the supported calculation range."
+    guard let implied = boxScoreSum(contributions) else {
+        return "Check unavailable: counts exceed the supported calculation range."
     }
-    if numbers[0] != implied {
-        return "Points disagree: entered \(numbers[0]); made shots imply \(implied)."
+    guard let points = counts[0].number else { return "Check incomplete: points not entered." }
+    if counts.dropFirst().contains(.missing) {
+        if implied > points {
+            return "Points disagree: entered \(points); entered made shots imply at least \(implied)."
+        }
+        return "Check incomplete: not all made-shot counts entered."
+    }
+    if points != implied {
+        return "Points disagree: entered \(points); made shots imply \(implied)."
     }
     return "Points match made shots (\(implied))."
+}
+
+struct ShotCheckNotice: View {
+    let message: String
+
+    var body: some View {
+        Group {
+            if message.hasPrefix("Points disagree") {
+                Label(message, systemImage: "exclamationmark.triangle")
+                    .font(.headline)
+            } else {
+                Text(message).foregroundStyle(.secondary)
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityIdentifier("shot-points-check")
+    }
+}
+
+private func isScoringInput(_ field: BoxScoreField) -> Bool {
+    [.points, .twosMade, .threesMade, .freeThrowsMade].contains(field)
 }
 
 enum BoxScoreEntryMode: String, CaseIterable, Identifiable {
@@ -150,6 +179,7 @@ struct BoxScoreEditor: View {
     @State private var loaded = false
     @State private var hasChanges = false
     @State private var saved = false
+    @ScaledMetric(relativeTo: .body) private var scoringColumnWidth = 220
 
     init(gameID: UUID, initialMode: BoxScoreEntryMode) {
         self.gameID = gameID
@@ -248,11 +278,14 @@ struct BoxScoreEditor: View {
                 Section("Player box score") {
                     ForEach(BoxScoreField.allCases, id: \.self) { field in
                         LabeledContent(field.label) { entry(player, field).frame(width: 95) }
+                        if isScoringInput(field), boxScoreShotCheck(drafts[player.id] ?? [:]).hasPrefix("Points disagree") {
+                            ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
+                        }
                     }
                     LabeledContent("Total rebounds", value: rebounds(player))
                 }
                 Section("Points check") {
-                    Text(boxScoreShotCheck(drafts[player.id] ?? [:]))
+                    ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
                 }
             }
         }
@@ -264,7 +297,7 @@ struct BoxScoreEditor: View {
                 GridRow {
                     Text("Temporary player").frame(width: 170, alignment: .leading)
                     ForEach(BoxScoreField.allCases, id: \.self) { field in
-                        Text(field.label).frame(width: 95)
+                        Text(field.label).frame(width: isScoringInput(field) ? scoringColumnWidth : 95)
                     }
                     Text("Total rebounds").frame(width: 130)
                     Text("Points check").frame(width: 270, alignment: .leading)
@@ -274,11 +307,17 @@ struct BoxScoreEditor: View {
                         Text("\(player.name) #\(player.number)")
                             .frame(width: 170, alignment: .leading)
                         ForEach(BoxScoreField.allCases, id: \.self) { field in
-                            entry(player, field).frame(width: 95)
+                            VStack(alignment: .leading, spacing: 8) {
+                                entry(player, field)
+                                if isScoringInput(field), boxScoreShotCheck(drafts[player.id] ?? [:]).hasPrefix("Points disagree") {
+                                    ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
+                                }
+                            }
+                            .frame(width: isScoringInput(field) ? scoringColumnWidth : 95)
                         }
                         Text(rebounds(player)).frame(width: 130)
-                        Text(boxScoreShotCheck(drafts[player.id] ?? [:]))
-                            .font(.caption).frame(width: 270, alignment: .leading)
+                        ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
+                            .frame(width: 270, alignment: .leading)
                     }
                 }
             }.padding()
