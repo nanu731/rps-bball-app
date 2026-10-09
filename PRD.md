@@ -164,8 +164,14 @@ Confirmed manual box-score behavior:
 - With points and all three made-shot categories entered, compare exact equality.
   Missing points, invalid scoring inputs and arithmetic overflow must give honest
   incomplete/unavailable states. Misses contribute no points and are not required.
-  Share the check across individual entry, roster table and summary; show prominent
-  text/icon discrepancies beside scoring inputs. Discrepancies stay saveable drafts.
+  Share the check across individual entry, roster table and summary. In entry,
+  show one red text/icon warning below the navigation title and above mode controls:
+  “Points don’t align with made baskets.” List selected-player discrepancies in
+  individual mode and all affected players in table mode, distinguishing exact
+  mismatches from partial lower bounds. Update immediately and hide when none
+  exist. Avoid repeated field warnings; retain incomplete/invalid check information.
+  Keep the header scrollable/adaptive at larger text sizes. Read-only summary
+  presentation is unchanged. Discrepancies stay saveable drafts.
 - Game-total box-score points must agree with the corresponding team's total
   points derived from made shots on the advanced possession sheet. Perform that
   comparison only when the required matching datasets are available/complete.

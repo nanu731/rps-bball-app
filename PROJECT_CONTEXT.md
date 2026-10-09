@@ -50,13 +50,15 @@ calculating entered makes, so partial contradictions were missed; notices were
 also below the form/at the table's far right. The shared check now detects entered
 scoring lower bounds greater than points, compares exact equality only with all
 made-shot categories, and reports other incomplete/invalid/overflow states honestly.
-Text/icon warnings appear beside scoring fields and before summary fields; table
-scoring columns scale with text size. Blanks remain missing and discrepancies
-remain saveable. Build/model checks passed. Normal-size warnings were inspected
-in both modes and summary on both simulators, with larger-text summary inspection.
-Full larger-text entry and scrolling to later made-shot fields remain manual after
-an automated scroll produced no movement; see WORKFLOW.md. All existing records
-and personal Xcode working/staged state were preserved. No next feature started.
+Owner confirmed larger-text field reachability and keyboard-visible Save passed
+on both devices for `56d0777`, closing that fix's remaining layout checks.
+Scoring-warning presentation now uses one overarching red text/icon banner above
+entry-mode controls, scoped to the selected player or all roster discrepancies.
+Exact mismatches and partial lower bounds are distinguished. The header scrolls
+and adapts to available height; redundant entry warnings are removed while useful
+incomplete/invalid checks remain. Validation/storage and read-only summary are
+unchanged. See WORKFLOW.md for verification results and any remaining limitations.
+
 
 ## Workspace and source of truth
 

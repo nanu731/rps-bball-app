@@ -158,8 +158,12 @@ struct ShotCheckNotice: View {
     }
 }
 
-private func isScoringInput(_ field: BoxScoreField) -> Bool {
-    [.points, .twosMade, .threesMade, .freeThrowsMade].contains(field)
+func boxScoreDiscrepancyDetail(_ values: [String: String]) -> String? {
+    let message = boxScoreShotCheck(values)
+    let prefix = "Points disagree: "
+    guard message.hasPrefix(prefix) else { return nil }
+    let kind = message.contains("at least") ? "Partial lower bound" : "Exact mismatch"
+    return "\(kind): \(message.dropFirst(prefix.count))"
 }
 
 enum BoxScoreEntryMode: String, CaseIterable, Identifiable {
@@ -179,7 +183,7 @@ struct BoxScoreEditor: View {
     @State private var loaded = false
     @State private var hasChanges = false
     @State private var saved = false
-    @ScaledMetric(relativeTo: .body) private var scoringColumnWidth = 220
+    @State private var headerHeight: CGFloat = 0
 
     init(gameID: UUID, initialMode: BoxScoreEntryMode) {
         self.gameID = gameID
@@ -208,32 +212,25 @@ struct BoxScoreEditor: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
-                if let loadError {
-                    ContentUnavailableView {
-                        Label("Could not load box scores", systemImage: "exclamationmark.triangle")
-                    } description: {
-                        Text(loadError)
-                    } actions: {
-                        Button("Retry", action: load)
+            GeometryReader { geometry in
+                VStack(spacing: 12) {
+                    if let loadError {
+                        ContentUnavailableView {
+                            Label("Could not load box scores", systemImage: "exclamationmark.triangle")
+                        } description: {
+                            Text(loadError)
+                        } actions: {
+                            Button("Retry", action: load)
+                        }
+                    } else if loaded {
+                        ScrollView {
+                            entryHeader
+                                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
+                        }
+                        .frame(height: min(headerHeight, geometry.size.height * 0.45))
+                        .scrollBounceBehavior(.basedOnSize)
+                        if mode == .player { playerForm } else { rosterTable }
                     }
-                } else if loaded {
-                    Picker("Entry mode", selection: $mode) {
-                        ForEach(BoxScoreEntryMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Temporary roster · Local draft").font(.headline)
-                        Text("Blank = not entered. Enter 0 explicitly. Nonnegative whole numbers only.")
-                        Text(scoringSummary)
-                        Text("Advanced-sheet reconciliation unavailable; possession drafts are incomplete and unreviewed.")
-                            .foregroundStyle(.secondary)
-                    }
-                    .font(.footnote)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                    if mode == .player { playerForm } else { rosterTable }
                 }
             }
             .navigationTitle("Box-score draft")
@@ -269,6 +266,43 @@ struct BoxScoreEditor: View {
         .task { load() }
     }
 
+    private var entryHeader: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            let players = temporaryRoster.filter { mode == .table || $0.id == selectedPlayerID }
+            let affected = players.filter { boxScoreDiscrepancyDetail(drafts[$0.id] ?? [:]) != nil }
+            if !affected.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Points don’t align with made baskets.", systemImage: "exclamationmark.triangle")
+                        .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                    ForEach(affected) { player in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(player.name).fontWeight(.semibold)
+                            Text(boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) ?? "")
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+                .foregroundStyle(.red)
+                .accessibilityIdentifier("scoring-discrepancy-warning")
+            }
+            Picker("Entry mode", selection: $mode) {
+                ForEach(BoxScoreEntryMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Temporary roster · Local draft").font(.headline)
+                Text("Blank = not entered. Enter 0 explicitly. Nonnegative whole numbers only.")
+                Text(scoringSummary)
+                Text("Advanced-sheet reconciliation unavailable; possession drafts are incomplete and unreviewed.")
+                    .foregroundStyle(.secondary)
+            }
+            .font(.footnote)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal)
+    }
+
     private var playerForm: some View {
         Form {
             Picker("Player", selection: $selectedPlayerID) {
@@ -278,14 +312,13 @@ struct BoxScoreEditor: View {
                 Section("Player box score") {
                     ForEach(BoxScoreField.allCases, id: \.self) { field in
                         LabeledContent(field.label) { entry(player, field).frame(width: 95) }
-                        if isScoringInput(field), boxScoreShotCheck(drafts[player.id] ?? [:]).hasPrefix("Points disagree") {
-                            ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
-                        }
                     }
                     LabeledContent("Total rebounds", value: rebounds(player))
                 }
-                Section("Points check") {
-                    ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
+                if boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) == nil {
+                    Section("Points check") {
+                        ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
+                    }
                 }
             }
         }
@@ -297,7 +330,7 @@ struct BoxScoreEditor: View {
                 GridRow {
                     Text("Temporary player").frame(width: 170, alignment: .leading)
                     ForEach(BoxScoreField.allCases, id: \.self) { field in
-                        Text(field.label).frame(width: isScoringInput(field) ? scoringColumnWidth : 95)
+                        Text(field.label).frame(width: 95)
                     }
                     Text("Total rebounds").frame(width: 130)
                     Text("Points check").frame(width: 270, alignment: .leading)
@@ -307,17 +340,14 @@ struct BoxScoreEditor: View {
                         Text("\(player.name) #\(player.number)")
                             .frame(width: 170, alignment: .leading)
                         ForEach(BoxScoreField.allCases, id: \.self) { field in
-                            VStack(alignment: .leading, spacing: 8) {
-                                entry(player, field)
-                                if isScoringInput(field), boxScoreShotCheck(drafts[player.id] ?? [:]).hasPrefix("Points disagree") {
-                                    ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
-                                }
-                            }
-                            .frame(width: isScoringInput(field) ? scoringColumnWidth : 95)
+                            entry(player, field).frame(width: 95)
                         }
                         Text(rebounds(player)).frame(width: 130)
-                        ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
-                            .frame(width: 270, alignment: .leading)
+                        Group {
+                            if boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) == nil {
+                                ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
+                            }
+                        }.frame(width: 270, alignment: .leading)
                     }
                 }
             }.padding()

@@ -635,3 +635,58 @@ automatic correction. Check keyboard-visible reachability of warning and Save.
 Restore preferred text size. Report any exact field/message that cannot be reached.
 
 Finish only this validation-fix verification before another implementation step.
+
+## Scoring-warning presentation refinement (2026-10-09)
+
+- Owner confirmed larger-text field reachability and keyboard-visible Save passed
+  on both devices for `56d0777`. That closes the prior fix's remaining layout
+  checks; the new presentation below has separate verification limits.
+- Box-score entry now uses one red warning above the entry-mode controls with
+  the exact heading “Points don’t align with made baskets.” A warning symbol and
+  accessible player-name/detail text distinguish exact mismatches from partial
+  lower bounds. Individual mode lists only the selected player's discrepancy;
+  table mode lists every affected player. The list derives from current draft
+  values and disappears when no proven discrepancies remain.
+- Removed redundant entry-field/far-right discrepancy messages. Useful match,
+  incomplete/unavailable checks and invalid-number validation remain. The header
+  scrolls, using its measured natural height capped at 45% of available content
+  height so larger text/multiple players/keyboard leave room for entry. This is
+  native scrolling, not custom gesture behavior or a fixed-height warning card.
+- Validation function and GameSummary source remain unchanged. Blanks stay
+  missing, invalid/overflow input is honest, and discrepancies remain saveable.
+  No dependencies, migration, completion controls or unrelated features added.
+- Final sequential simulator build passed. An overlapping build attempt initially
+  hit a build-database lock; the active build was allowed to finish before the
+  successful final check. Focused model/source-expression checks passed for
+  exact/partial detail labels, no warnings for incomplete/matching/invalid/overflow
+  data, selected/all-player scope, multiple affected players, and removal after
+  value changes. These checks do not substitute for actual UI interaction.
+- Prepared labeled isolated banner fixtures on both 26.4 simulators (separate
+  `com.narayanlekhi.TeamStats.BannerVerification` app). UI control failed with
+  -10005 stale-element error while switching the Simulator Window menu; failing
+  actions were not repeated. Actual appearance/removal, live mode switching and
+  new larger-text layout/keyboard reachability remain UNVERIFIED. Status PARTIAL.
+  Actual 26.0-runtime and physical-device testing also remain unverified.
+- Original records and personal Xcode working/staged entries were preserved;
+  fixtures retained without deletion. Original simulator apps were updated from
+  the passing build for the manual checks below, without clearing saved data.
+
+### Remaining banner presentation manual checklist
+
+1. If Simulator's Window menu is stuck, close it manually. Use a clearly labeled
+   test game. Player 1: points 4, threes made 7, other makes blank. Expected: one
+   red heading/icon above mode controls, Player 1 listed with Partial lower bound
+   and at least 21. Change points to 21: banner hides, Check incomplete remains.
+   Change back to 4: banner appears immediately.
+2. Player 2: points 2, twos/threes made 0, free throws made 3. Expected: Exact
+   mismatch detail. Table mode lists both affected players once; individual mode
+   lists only the selected affected player. Select an unaffected player: no banner.
+   Change both players to noncontradictory/matching inputs: banner hides.
+3. On iPhone and iPad at larger accessibility text, scroll the warning header to
+   read every name/detail and reach mode controls. Scroll entry fields/table and
+   show keyboard. Expected: readable text without truncation, fields and Save
+   reachable, no repeated per-field warnings. Save/reopen preserves blanks and
+   discrepancies; read-only summary retains its prior presentation. Restore text
+   size afterward. Report the exact unreachable field/control if any check fails.
+
+Finish only this presentation verification before another feature.
