@@ -421,3 +421,15 @@ also remain untested. Finish verification before the next implementation task.
    exact unreachable control if any check fails; do not delete existing records.
 
 Finish this verification before authorizing the next implementation step.
+
+## Step 4 closed — manual usability passed (2026-10-09)
+
+- Owner reported “both passed” for the remaining usability-fix checklist above.
+  Horizontal access where overflowing, vertical reachability, larger-text controls,
+  keyboard and Save access are verified by the owner on both devices.
+- Step 4 is complete at implementation commit `6f96cd4`. No further source fix
+  or rebuild is required by this confirmation. Historical partial entries remain
+  for evidence; actual 26.0-runtime and physical-device testing remain unverified.
+- Next bounded task: individual-player game-total paint-touch drafts, using the
+  existing temporary roster and stable game/player identities. No attribution
+  of possession touches to players or new counting conventions is implied.

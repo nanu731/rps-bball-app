@@ -1,8 +1,7 @@
 # TeamStats — Project Context and Development Sequence
 
-Last updated: 2026-10-08.
-Status: requirements draft; Steps 1–3 complete; Step 4 possession drafts implemented,
-verification partial. Games, shared box scores, and paired possession drafts are
+Last updated: 2026-10-09.
+Status: requirements draft; Steps 1–4 complete. Games, shared box scores, and paired possession drafts are
 stored locally. Possessions have independent team numbering, stable UUIDs,
 missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data
 is incomplete and unreviewed; no completion or approval controls are implemented.
@@ -11,11 +10,12 @@ column sizing, explicit horizontal content bounds, and No only for new turnovers
 Existing unanswered/Yes/No values stay intact; draft blanks remain missing.
 Build/model checks and iPhone counter/typing/clearing/save/relaunch checks passed.
 Normal iPad columns fit; larger iPad text and iPhone overflow can be brought fully
-into view by focus scrolling. Native swipe verification remains outstanding because
-automated swipe injection produced no movement; see WORKFLOW.md's manual checklist.
+into view by focus scrolling. Owner confirmed both devices passed the remaining
+manual swipe, larger-text, field reachability, keyboard and Save checklist.
 Owner previously confirmed vertical scrolling and iPad keyboard Save/relaunch.
 Actual 26.0 and physical devices remain untested. Completion/edit requests follow
 backend authorization; advanced metrics and cross-sheet comparison remain separate tasks.
+Next bounded task: local individual-player game-total paint-touch draft entry.
 
 ## Workspace and source of truth
 
