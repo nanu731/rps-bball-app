@@ -494,3 +494,62 @@ Finish these bounded checks before beginning another implementation step.
 - Next bounded task: read-only local game summary using existing stores, with
   explicit missing values and draft subtotals. No completion, approval controls,
   official metrics, cross-sheet reconciliation, or connected services in this task.
+
+## Step 6 — read-only local game summary (2026-10-09)
+
+- Added `GameSummary.swift` and a game-details summary button. Native lists show
+  metadata and “Local draft — incomplete and unreviewed”, temporary-player
+  detail links with all saved box-score fields, derived rebounds, shot/points
+  checks and independently stored paint-touch totals. Separate team sections
+  show counts explicitly as records entered, not final game possessions, and
+  links to each saved possession's counts/turnover answer. No statistical aggregate
+  or new metric was added; no reconciliation/completion/publication is claimed.
+- Missing values display “Not entered”, zero remains 0, rebounds require both
+  component inputs, and shared arithmetic detects overflow. Historical unanswered
+  turnovers remain missing. No writes/migration/edit controls exist in the summary.
+- Each store loads independently; failures clear that store's displayed snapshot,
+  show the actual error and Retry, while other data stays inspectable. Empty
+  successful loads get explicit empty messages. Opening the summary reloads all
+  three stores; player/possession detail pages show that saved snapshot.
+- Simulator build passed. Focused checks using isolated `/tmp` fixtures passed:
+  missing versus zero; rebounds missing/complete/overflow; shot match/disagreement/
+  incomplete/overflow; game filtering; read preservation; fresh reload after an
+  edit; historical unanswered turnovers; empty versus corrupt loads for all stores.
+- iPhone 17 / 26.4: metadata/status and saved Player 1 points 7, offensive rebounds
+  0, defensive rebounds 2, and missing fields were accurately exposed/displayed.
+  iPad A16 / 26.4: entered our-team count 8 matched saved records; possession 1
+  paint touches 1, missing counts and turnover Yes were accurately exposed.
+  An existing second game displayed the empty player-paint-touch message.
+  Visible accessibility-extra-large layouts wrapped readably on both devices;
+  original text sizes restored. Actual 26.0 and physical-device checks not performed.
+- Automated iPhone list scroll and native swipe produced no movement. Gesture
+  retries stopped. Full lower-content access, both-team counts/all records at
+  larger text, UI refresh after edits and error/Retry UI remain unverified. These
+  limits do not establish a source defect; no speculative gesture fix was added.
+  Step 6 implementation is complete; verification remains PARTIAL.
+- All existing games, box-score, possession and player-paint-touch JSON remained
+  byte-identical on both simulators. Personal Xcode files and staged entries were
+  preserved and excluded; pre-task UI working bytes were restored if they changed
+  during the run, with the intervening version retained temporarily.
+
+### Remaining Step 6 verification
+
+1. On each device, open a labeled test game's Local game summary. Scroll through
+   both teams' Records entered sections and open each possession, including the
+   last one. Expected: counts match saved entries (independent numbering), every
+   field is reachable, blanks read Not entered, explicit zeros read 0, and saved
+   Yes/No/unanswered turnover answers remain unchanged.
+2. Open each player; scroll to total rebounds, shot check and game-total paint
+   touches. Expected: rebounds only when both inputs exist; shots show incomplete,
+   match or disagreement as appropriate; paint touches match the independent
+   player entry screen. Repeat scrolling at larger accessibility text on both
+   devices, then restore preferred text size. Back/Done must remain reachable.
+3. Close the summary, change a clearly labeled test draft in an existing entry
+   screen and Save, then reopen the summary. Expected: new saved value appears;
+   other records remain unchanged. No edit controls should exist in the summary.
+4. Error/Retry UI needs an isolated test-data environment: a broken store must
+   show an error, not an empty count/missing values; unaffected stores stay visible.
+   Restoring valid data then Retry must recover. Do not corrupt the owner's saved
+   stores to perform this check. Model error handling already passed.
+
+Finish only these verification gaps before authorizing another implementation step.

@@ -28,7 +28,19 @@ stopped. Owner confirmed the remaining iPad interaction and both devices'
 larger-text/reachability checks passed. No actual 26.0-runtime or physical-device
 testing was performed. Next: read-only local game summary with honest draft and
 missing-data labels; completion, official metrics and reconciliation follow later.
-Next bounded task: finish Step 5's remaining manual verification before new features.
+Step 6 read-only local game summary is implemented; verification is partial.
+It reads the three existing stores independently, displays metadata/draft status,
+saved player fields and independent paint touches, safe rebound/shot checks,
+entered possession-record counts and inspectable possession records. Missing
+values stay “Not entered”; viewing never writes or converts values. Empty stores
+and errors are distinct, with Retry; every reopening reloads saved data.
+Build/model checks passed. iPhone saved player values and iPad possession values/
+entered count were inspected; larger-text visible layouts wrap readably. Automated
+scroll/swipe actions produced no movement, so lower-content reachability and full
+larger-text scrolling remain manual. UI refresh after edits and error/Retry UI
+also remain unverified; isolated storage/refresh/error model checks passed.
+All existing simulator JSON remained byte-identical. Next bounded task: finish
+the Step 6 verification checklist in WORKFLOW.md before another implementation step.
 
 ## Workspace and source of truth
 
