@@ -347,6 +347,17 @@ also remain untested. Finish verification before the next implementation task.
   every device needs scrolling when both columns fit.
 - Updated requirements: numeric blanks remain allowed; new turnover defaults No;
   each count gets +1/-1 controls alongside direct typing. Preserve historical
-  missing values. Blank-as-zero at completion is not yet confirmed.
+  missing values. Subsequent confirmation below settles blank-as-zero at completion.
 - Apply the owner-linked apple-design skill to the possession UI using native
   SwiftUI, respecting explicit visual exclusions. Next task is this bounded fix.
+
+## Possession completion confirmation decision (2026-10-08)
+
+- Owner confirmed blank numeric fields mean no events at completion. Show a popup
+  warning of conversion to explicit zeros, with Confirm/Go back and per-user
+  “Don't show this again.” Draft blanks remain missing until completion.
+- Suppressing the popup skips only that warning on future explicit completion;
+  it never bypasses validation, approval, or editing permissions. Only existing
+  possession records are converted; empty paired placeholders are not records.
+- Record for the later authenticated completion task. The current Step 4
+  usability-fix prompt remains unchanged; do not add completion scope to it.

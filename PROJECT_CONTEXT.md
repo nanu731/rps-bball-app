@@ -94,6 +94,11 @@ still unentered. Add +1/-1 controls alongside direct entry. Preserve saved nil
 turnovers. Owner found horizontal access failing on both devices; vertical scroll
 and iPad keyboard-visible save/relaunch passed. Next is a bounded Step 4 fix,
 not metrics or backend work.
+At possession-sheet completion, blank numeric fields become saved zeros. Warn
+with Confirm/Go back and a per-user “Don't show this again” option. Suppression
+applies to this warning only; validation/permissions still apply. No conversion
+during draft saving or for unadded paired placeholders; box-score semantics stay
+unchanged. Implement this later with authenticated completion, not the Step 4 fix.
 
 Paint touch means intentionally establishing two feet in the paint with the ball.
 Real Possessions is calculated separately for each team:

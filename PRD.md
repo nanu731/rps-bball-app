@@ -208,8 +208,9 @@ recovery can be considered separately; offline sync is not a pilot requirement.
 
 Latest possession-input clarification (supersedes unanswered-turnover defaults):
 - Numeric fields may stay blank; do not require tedious zero entry to save drafts.
-  Blank remains unentered, not silently stored or calculated as zero. Whether
-  completion will certify blank counts as no events needs agreement before metrics.
+  Blank remains unentered while drafting. At possession-sheet completion, blank
+  numeric fields mean no events and are explicitly saved as zero after the
+  confirmation flow below. This does not change box-score blank semantics.
 - New possession records default turnover to No. Preserve historical stored
   unanswered turnover values; do not rewrite existing data merely on opening it.
 - Provide accessible +1/-1 controls for every possession count alongside direct
@@ -220,6 +221,21 @@ Latest possession-input clarification (supersedes unanswered-turnover defaults):
   be swiped on either device. Investigate/fix horizontal access where content
   overflows; no horizontal movement is needed when both columns genuinely fit.
   iPad keyboard-visible save and relaunch persistence passed.
+
+Possession-sheet completion confirmation:
+- If added possession records have blank numeric fields, show a popup explaining
+  that these fields will become zero. Offer Confirm and Go back. Go back leaves
+  values and completion unchanged; confirmation saves zeros and completion together.
+- Include “Don't show this again” as a per-user preference. Persist it only after
+  confirmation. Later explicit completion actions by that user may convert blanks
+  to zeros without repeating this popup. This does not bypass validation, editing
+  permissions, review, or publication approval.
+- Apply zero conversion only to numeric fields in existing records for the sheet
+  being completed; never create possessions from empty paired placeholders.
+  This does not convert historical unanswered turnover values to No.
+- If validation or saving fails, do not claim completion succeeded. Draft saving
+  alone never converts blanks to zeros. Secure completion and preferences follow
+  authenticated-account implementation, not the current local draft task.
 
 - Each team has its own sequence, paired left to right: our team's nth
   possession beside the opponent's nth possession. This is an entry layout,
