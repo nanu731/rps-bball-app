@@ -1,7 +1,7 @@
 # TeamStats — Project Context and Development Sequence
 
 Last updated: 2026-10-09.
-Status: requirements draft; Steps 1–5 complete. Games, shared box scores, and paired possession drafts are
+Status: requirements draft; Steps 1–6 complete. Games, shared box scores, and paired possession drafts are
 stored locally. Possessions have independent team numbering, stable UUIDs,
 missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data
 is incomplete and unreviewed; no completion or approval controls are implemented.
@@ -28,19 +28,22 @@ stopped. Owner confirmed the remaining iPad interaction and both devices'
 larger-text/reachability checks passed. No actual 26.0-runtime or physical-device
 testing was performed. Next: read-only local game summary with honest draft and
 missing-data labels; completion, official metrics and reconciliation follow later.
-Step 6 read-only local game summary is implemented; verification is partial.
+Step 6 read-only local game summary is implemented and verified.
 It reads the three existing stores independently, displays metadata/draft status,
 saved player fields and independent paint touches, safe rebound/shot checks,
 entered possession-record counts and inspectable possession records. Missing
 values stay “Not entered”; viewing never writes or converts values. Empty stores
 and errors are distinct, with Retry; every reopening reloads saved data.
 Build/model checks passed. iPhone saved player values and iPad possession values/
-entered count were inspected; larger-text visible layouts wrap readably. Automated
-scroll/swipe actions produced no movement, so lower-content reachability and full
-larger-text scrolling remain manual. UI refresh after edits and error/Retry UI
-also remain unverified; isolated storage/refresh/error model checks passed.
-All existing simulator JSON remained byte-identical. Next bounded task: finish
-the Step 6 verification checklist in WORKFLOW.md before another implementation step.
+entered count were inspected; larger-text visible layouts wrap readably. Owner
+confirmed remaining reachability and refresh-after-edit checks passed on both
+devices. Actual error/Retry interaction passed on iPad 26.4 using the unchanged
+build in a separately identified test app/container: each of the three stores
+showed an error instead of empty data; unaffected sections remained usable; Retry
+recovered after repairing each isolated fixture. Original simulator records stayed
+byte-identical. No source fix/rebuild was needed. Actual 26.0 and physical-device
+testing remain unverified. Next: planning review and a bounded next-step definition;
+do not infer authorization for another feature.
 
 ## Workspace and source of truth
 

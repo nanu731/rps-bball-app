@@ -553,3 +553,34 @@ Finish these bounded checks before beginning another implementation step.
    stores to perform this check. Model error handling already passed.
 
 Finish only these verification gaps before authorizing another implementation step.
+
+## Step 6 closed — remaining verification passed (2026-10-09)
+
+- Owner confirmed both devices passed the remaining manual reachability and
+  refresh-after-edit checks, including larger-text navigation/content access.
+  This closes checklist items 1–3 above; earlier partial entries remain as history.
+- Error/Retry UI passed on iPad A16 / iOS 26.4 using the existing `dfadedb` build
+  copied to `/tmp` and installed under a separate test-only bundle identifier,
+  `com.narayanlekhi.TeamStats.RetryVerification` (display name TeamStats TEST ONLY).
+  Only the copied bundle metadata/signature changed; app source/binary behavior
+  was unchanged. The isolated game is labeled TEST ONLY isolated error Retry.
+  Test data used its separate container, never the owner's saved stores.
+- Malformed box-score JSON displayed the actual load error and Retry rather than
+  an empty-data message. Player paint touches 7 remained inspectable and the
+  entered possession count 1 remained available. After restoring valid fixture
+  JSON, clicking Retry removed the error and player points 0 were displayed.
+- Malformed player-total JSON likewise showed its own error/Retry; player points
+  0 remained inspectable and possession count 1 remained available. Restoring
+  valid data and clicking Retry cleared that error. A separate possession failure
+  then displayed its own error instead of empty team counts while player detail
+  navigation remained usable. Restoring its fixture and clicking Retry restored
+  count 1 and record inspection: paint touches 0, missing counts, turnover No.
+- No source defect was demonstrated; no source change or redundant rebuild was
+  made. Both original simulator containers' JSON stayed byte-identical. Personal
+  Xcode working bytes/staged entries were preserved. The isolated app was stopped,
+  the original app brought back, and test artifacts retained without deletion.
+- Step 6 is COMPLETE at implementation `dfadedb` plus this documentation update.
+  Error/Retry UI was tested on iPad; it was not separately repeated on iPhone.
+  Actual 26.0-runtime and physical-device pilot testing remain unverified.
+- Next bounded task: planning review and definition of the next authorized step.
+  No subsequent implementation, services, metrics, completion or approvals started.
