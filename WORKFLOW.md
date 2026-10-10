@@ -693,6 +693,58 @@ Finish only this presentation verification before another feature.
 
 ## Project readiness audit (2026-10-10)
 
+## Security checklist audit (2026-10-10)
+
+Scope: the TeamStats native SwiftUI repository, not a deployed website. No
+website URL, connected backend, auth configuration, or hosted infrastructure was
+provided or inspected. Current source has no networking/auth/upload/AI/payment
+implementation. Pending means implement/configure and test at that milestone;
+it does not mean an exposed vulnerability was demonstrated in the local prototype.
+
+| Original items | Combined control | Relevance/status and action |
+|---|---|---|
+| 1, 3 | Secret isolation and public client key | No common key literals found. Before backend: only publishable Supabase key in app; privileged secrets server-side. Build env vars do not hide bundled secrets. |
+| 2 | Secret exposure/history response | Limited local Git text-patch heuristic scan found no private-key markers, common provider/Supabase secret prefixes, AWS access IDs or JWT literals. Not a full secret scan. No purge indicated; if exposure found, rotate/revoke first, coordinate cleanup without unauthorized history rewriting. |
+| 4, 6, 7, 8, 40 | Authenticated access, RLS, grants and protected fields | Required before shared use; unimplemented. Enforce team membership, record visibility, owner grants, completion locks, reviewer authority, publication fields and storage policies server-side. Test denied requests, not only UI. |
+| 5 | Encryption and token storage | Review before real users: local file protection/backup behavior, Keychain tokens, HTTPS and backend/private media storage. No explicit file-protection or Keychain implementation found; OS sandbox/atomic writes are not a full audit. |
+| 9, 39 | Cookie security | Browser-only for cookie-based sessions: Secure/HttpOnly/appropriate SameSite. No such sessions here. Native tokens require secure storage instead. |
+| 10 | Password hashing | If passwords chosen, use Supabase Auth hashing; do not build/store password hashes ourselves. Auth is not implemented; passwordless flow choice is unresolved. |
+| 11, 12, 32, 37 | Login/reset abuse controls | Configure/test auth endpoint limits, OTP/SMS/email abuse budgets and recovery limits. Add bot challenge if warranted by enrollment/exposure. Do not blindly add permanent account lockout that enables denial of service. |
+| 13 | Parameterized database operations | No SQL execution now. Use parameterized SDK/API/RPC operations; never concatenate user values into SQL. Test backend when added. |
+| 14, 33 | Input validation and safe canonicalization | Numeric/count and stored-record validation exists. Server validation, bounded strings/batches and permitted fields remain pending. Do not blanket-strip/escape data on storage or erase draft missing semantics. |
+| 15 | Context-safe content rendering | Current views use SwiftUI text, not HTML execution. Escaping for HTML/JS matters if adding web views/exported HTML; untrusted content remains data. |
+| 16, 26, 31 | Upload/request constraints | Required for photo/video/API endpoints later: type allowlist, content/signature validation, size/count/duration limits, ownership and private storage policies. No endpoint exists now. |
+| 17 | Minimal API responses | Pending backend: return only authorized/needed fields; paginate and bound results. Hiding response fields in UI is not protection. |
+| 18, 21 | Browser security headers/HSTS | For future hosted website/custom web endpoints. No website here to test; do not claim headers pass. HTTPS native API calls remain required separately. |
+| 19 | HTTPS | Required before network integration. No API calls or explicit ATS exception found in inspected app source/config; no live endpoint/TLS behavior audited. |
+| 20 | Dependency scanning | No third-party package reference found in current Xcode project. Establish pinned/reviewed SDK and vulnerability checks when dependencies are added; Xcode/OS updates still matter. |
+| 22 | CSRF protection | Needed for future cookie-authenticated browser mutations. No cookie-based web application here. Token-authenticated native API still needs authorization; do not add meaningless CSRF tokens. |
+| 23 | Session revocation on password/security changes | Pending Auth: verify configured revocation, refresh-token behavior, residual JWT validity and sensitive-action checks. Do not promise instant revocation solely from a password change. |
+| 24, 25 | Recovery expiry and enumeration resistance | Pending chosen auth flow: expiring single-use links/OTPs, restricted redirects, generic recovery responses; verify actual provider/UI behavior. |
+| 27, 28 | Payment integrity | Not applicable: no payments requested. Revisit only if payments enter scope. |
+| 29, 30 | AI trust boundaries and cost limits | Required at photo autofill: images/OCR are untrusted data, no tool privileges from extracted text, structured output validation, review before saving, per-user quotas/timeouts and spending caps. No AI integration now. |
+| 34 | CORS | Browser cross-origin policy for future custom APIs; not native access control. Restrict owned web endpoints as applicable; never rely on CORS to reject attackers/native clients. |
+| 35, 36 | Hosting/admin surface | No web directory/admin route present. Future deployment must avoid exposed artifacts/debug routes and enforce admin authorization. Owner screens themselves are necessary, not routes to delete blindly. |
+| 38 | Security event logging | Pending backend: log grants, review/publication decisions, denied access and authentication/security events without secrets/full student records. Local visible errors/Retry are not an audit log. |
+
+Sources: [Supabase keys](https://supabase.com/docs/guides/getting-started/api-keys),
+[production checklist](https://supabase.com/docs/guides/deployment/going-into-prod),
+[rate limits](https://supabase.com/docs/guides/auth/rate-limits),
+[sessions](https://supabase.com/docs/guides/auth/sessions),
+[password security](https://supabase.com/docs/guides/auth/password-security),
+[OWASP input validation](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html),
+[uploads](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html),
+[CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).
+
+Sequence: finish current UI checks; settle account/access rules; implement/test
+server auth, RLS and field grants in nonproduction; verify transport, token/local
+protection, abuse limits, recovery/session controls and audit logs; then verify
+production configuration before real team use. Upload/AI controls belong to their
+later milestones. Browser/payment controls remain conditional. A separate website
+requires its URL, source/deployment context and an explicitly scoped audit.
+
+## Project readiness audit details (2026-10-10)
+
 This is a staged checklist, not a requirement to finish production infrastructure
 before developing local screens. Latest source: `84556ab`; banner manual checks
 remain pending. No app code or dependencies were changed by this audit.
