@@ -1,8 +1,9 @@
 # TeamStats — Product Requirements
 
-Status: working draft; Steps 1–3 are complete. Further implementation
+Status: working draft; Steps 1–6 are complete; scoring-warning presentation
+refinement awaits manual verification. Further implementation
 requires the next bounded prompt; open requirements remain unresolved.
-Last updated: 2026-10-08.
+Last updated: 2026-10-10.
 
 ## Purpose and users
 
@@ -14,6 +15,17 @@ owner-controlled upload permissions.
 Provide a Game Film menu where coaches and managers upload recorded game videos
 and eligible team members view film associated with the corresponding game.
 Plan for approximately 100 potential users, including coaches and players.
+
+## Value, pain, and intended audience
+
+- Value: one accessible team app for entering, checking, reviewing, and viewing
+  after-game statistics, with plays and corresponding videos added later.
+- Pain addressed: the owner collects paper-form data and needs an easier input
+  and player-viewing workflow, including detection of inconsistent scoring data.
+  No measured time savings or unsupported claims about current usage are asserted.
+- Intended audience (ICP): this high-school basketball team, approximately 100
+  potential users. Managers/coaches contribute; players view; the owner manages
+  approvals and grants. This is not a general commercial customer acquisition plan.
 
 ## Confirmed decisions
 
@@ -63,6 +75,24 @@ Plan for approximately 100 potential users, including coaches and players.
   An owner roster-management screen is not currently requested.
 
 ## Visual direction
+
+### Lightweight brand and UI standards
+
+Working product name: TeamStats. School colors, logo, and final app icon:
+`TODO_TEAM_BRAND_ASSETS`. Actual roster: `TODO_TEAM_ROSTER`. Use factual, short
+labels tied to basketball tasks; never invent school identity or outcomes.
+No separate brand document is needed until these owner assets are available.
+
+Use system text styles with Dynamic Type, semantic foreground/background colors,
+and clear light/dark contrast. Prefer native navigation, forms, lists, buttons,
+pickers, alerts, and counters. Target at least 44-point interactive areas.
+Use a consistent spacing rhythm (8/16/24 points where appropriate), adapting
+for accessibility rather than forcing fixed dimensions. Numeric displays may
+use monospaced digits. Error text must have a textual/icon cue, not color alone.
+Reserve red for errors/discrepancies; do not invent a school accent color.
+Use native scrolling, keyboard-safe Save, and accessibility labels identifying
+player/team/field. These are forward standards, not authorization for a broad
+refactor. The owner-approved consolidated scoring warning is a reusable pattern.
 
 Owner-requested design reference: apply
 [apple-design](https://github.com/emilkowalski/skills/blob/main/skills/apple-design/SKILL.md)

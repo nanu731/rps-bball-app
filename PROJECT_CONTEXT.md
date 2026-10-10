@@ -1,6 +1,11 @@
 # TeamStats — Project Context and Development Sequence
 
-Last updated: 2026-10-09.
+Last updated: 2026-10-10.
+Read WORKFLOW.md's Project readiness audit for the 20-item checklist and remaining
+sequence. PRD.md now states value/pain/audience and lean brand/UI standards;
+README.md describes actual setup/status. Backend/auth, environment separation,
+and centralized monitoring are still unimplemented. Finish banner manual checks
+before connected implementation; no additional plugins or redesign are required.
 Status: requirements draft; Steps 1–6 complete. Games, shared box scores, and paired possession drafts are
 stored locally. Possessions have independent team numbering, stable UUIDs,
 missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data

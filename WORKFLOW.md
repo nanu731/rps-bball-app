@@ -690,3 +690,63 @@ Finish only this validation-fix verification before another implementation step.
    size afterward. Report the exact unreachable field/control if any check fails.
 
 Finish only this presentation verification before another feature.
+
+## Project readiness audit (2026-10-10)
+
+This is a staged checklist, not a requirement to finish production infrastructure
+before developing local screens. Latest source: `84556ab`; banner manual checks
+remain pending. No app code or dependencies were changed by this audit.
+
+| # | Item | Status and action |
+|---|---|---|
+| 1 | PRD | Done: PRD.md; remaining decisions stay explicit. |
+| 2 | Value, pain, ICP | Done for this team: explicit section added to PRD.md. |
+| 3 | PRD in Markdown | Done: PRD.md is already native Markdown. |
+| 4 | Load PRD into Codex | Done through prompts requiring a fresh read; repeat for fresh chats. |
+| 5 | Direction/context Markdown | Done: PROJECT_CONTEXT.md and this workflow. |
+| 6 | Install plugins | Optional: use available tools; no blanket installation or extra plugin required now. |
+| 7 | Connect GitHub | Done: configured origin and verified pushes in implementation handoffs. |
+| 8 | .gitignore | Done: Swift/Xcode/build/env exclusions. Tracked/staged files still need explicit care. |
+| 9 | Brand doc | Lean version done in PRD.md; logo/colors/icon await owner input. No separate doc needed. |
+| 10 | Tech stack | Core fixed: SwiftUI/Xcode, Supabase, one-way Sheets. Photo/media providers deferred. |
+| 11 | Design system | Lean native standards recorded in PRD.md; no component-library dependency or broad refactor. |
+| 12 | PRD into tasks | Done: milestone sequence and bounded prompt/handoff history. Refine connected tasks next. |
+| 13 | Database/auth | Not implemented. Next major milestone after access/completion decisions. |
+| 14 | Keys/config | No backend keys introduced. Plan server secrets and client public config before integration. |
+| 15 | Staging/prod | Not set up. Separate nonproduction from production backend/config before shared pilot data. |
+| 16 | README | Expanded with setup, actual status, planning links, and configuration policy. |
+| 17 | Folder structure | Keep current feature Swift files and root planning docs. Plan backend paths before adding them; ask before reorganization. |
+| 18 | Error tracking | Visible local errors/Retry implemented; centralized monitoring not implemented. Choose before external pilot; dependency requires approval. |
+| 19 | What not to build | Done in PRD: no live tracking, unrequested stats, Android/web, bidirectional Sheets. Offline sync deferred, not permanently excluded. |
+| 20 | Small commits | Done throughout; continue explicit-path commits, preserving personal Xcode state. |
+
+### Remaining sequence
+
+1. Finish existing scoring-banner manual checks; fix only demonstrated issues.
+2. Resolve team enrollment, player visibility, independent permission grants,
+   reviewer authority, and completion/reopening requirements (including whether
+   box-score/player totals need separate completion). Obtain Supabase project
+   access/config and owner-account identity without sharing privileged secrets.
+3. Plan schema, server-enforced grants/RLS and development/staging versus production
+   configuration. Confirm SDK dependency before installation and any new backend
+   directory structure before introducing it. Keep current local data intact;
+   migration strategy is an explicit task, not an automatic bulk upload.
+4. Implement and verify Auth, team access, shared drafts, completion with the
+   per-user blank-to-zero warning, approved edit requests and publication. Test
+   permissions with distinct users; hiding UI alone is insufficient.
+5. Implement complete-data reconciliation (player/team scoring and made/missed
+   shot categories across sources), Real Possessions and agreed metrics. Validate
+   formulas against owner-approved examples; do not invent new player attribution.
+6. Add one-way Sheets export and retry/duplicate handling at the agreed pilot point.
+7. Add appropriate error monitoring without secrets, full student records or
+   private media in logs. Validate representative physical devices, lowest OS,
+   signup/recovery and end-to-end workflows. Resolve pilot distribution and budget.
+8. Run manual-stat pilot; improve observed problems. Then photo autofill, playbook,
+   practice videos and game film as separate milestones. Branding assets can be
+   supplied before distribution rather than blocking data work now.
+
+Skip marketing personas, a large brand manual, plugin installation for its own
+sake, web design frameworks, and speculative file reorganization. Defer advanced
+offline sync, photo provider selection, Hudl integration and production media
+infrastructure until their milestone. Security and access enforcement are required
+before real shared team use regardless of the approximately 100-user audience.
