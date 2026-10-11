@@ -21,15 +21,19 @@ five independent analyses, five anonymous fresh-agent reviews and chairman
 synthesis were performed. Provider capabilities still require primary research.
 Read WORKFLOW.md's Project readiness audit for the 20-item checklist and remaining
 sequence. PRD.md now states value/pain/audience and lean brand/UI standards;
-README.md describes actual setup/status. Native Auth now supports email/phone OTP,
+README.md describes actual setup/status. Native Auth now supports PKCE email links and email/phone OTP,
 private Keychain configuration/session restore, Retry and sign-out; remote SMS is
-disabled. Fifteen isolated native account tests passed, including real simulator
+disabled. Twenty isolated native account tests passed, including real simulator
 Keychain operations in a signed test host. These SDK fixtures do not prove hosted
 delivery or deployed authorization. Server membership/grant/delegation/roster
 source passed81 actual Postgres17.11 pgTAP checks after local tooling approval.
 Required administration revisions reject stale/NULL requests. Real Auth gateway checks passed40 checks, with26 additional owner/session checks.
 An opt-in native test verified real local Auth, Keychain session restoration and
 roster create/edit/archive/history through the SDK. Hosted integration remains blocked.
+Actual default-email-link PKCE verification and restart/session handling passed
+on the isolated local stack through the native Account model. New Free projects
+cannot customize default email templates; use the verified email-link route
+without upgrading or adding a paid sender. Hosted delivery remains unverified.
 Hosted configuration and centralized monitoring remain unavailable. Continue
 independent work while banner interaction checks remain open.
 Status: requirements draft; Steps 1–6 complete. Games, shared box scores, and paired possession drafts are

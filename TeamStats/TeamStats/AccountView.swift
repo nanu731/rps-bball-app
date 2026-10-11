@@ -66,10 +66,10 @@ struct AccountView: View {
                              : "Phone signup is supported, but remote sending is disabled while zero-cost delivery is unverified.")
                         .foregroundStyle(.secondary)
                     } else {
-                        Text("Request a code only from your authorized server. Its email template must include a typed OTP; email delivery must stay within the $0 budget.")
+                        Text("Open the sign-in email link on this device. If your authorized server sends a typed code, you can enter it below. Delivery must stay within the $0 budget.")
                             .foregroundStyle(.secondary)
                     }
-                    Button("Request code") {
+                    Button(method == .email ? "Request sign-in email" : "Request code") {
                         focusedField = nil
                         code = ""
                         Task { await account.requestCode(method: method, identifier: identifier) }
@@ -81,7 +81,7 @@ struct AccountView: View {
 
                 if let pendingMethod = account.pendingMethod {
                     Section("Verify \(pendingMethod.rawValue) code") {
-                        Text("If the server accepted the request, use the code from your message. Sending a code does not sign you in.")
+                        Text(pendingMethod == .email ? "Open the email link on this device, or enter a code if your server provided one. The server must allow this app’s email redirect." : "Use the code from your message. Requesting a code does not sign you in.")
                             .foregroundStyle(.secondary)
                         TextField("Verification code", text: $code)
                             .keyboardType(.numberPad)
@@ -177,7 +177,7 @@ struct AccountView: View {
         switch account.state {
         case .unconfigured: "Account server not configured"
         case .signedOut: "Signed out"
-        case .pendingVerification: "Code requested; verification pending"
+        case .pendingVerification: "Sign-in requested; verification pending"
         case .authenticated: "Account verified"
         case .error: "Account request needs attention"
         }

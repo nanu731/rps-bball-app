@@ -95,11 +95,16 @@ struct ContentView: View {
             NavigationStack {
                 AccountView(account: account)
             }
+            .id(account.verifiedUserID)
             .tabItem {
                 Label("Account", systemImage: "person.crop.circle")
             }
         }
         .task { loadGames() }
+        .onOpenURL { url in
+            guard url.scheme == BackendAccount.emailRedirectURL.scheme else { return }
+            Task { await account.handleEmailLink(url) }
+        }
     }
 
     private func loadGames() {

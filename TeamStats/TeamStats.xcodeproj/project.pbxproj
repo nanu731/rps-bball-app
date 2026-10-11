@@ -15,9 +15,18 @@
 		CC0000000000000000000012 /* TeamStatsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TeamStatsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+        CC0000000000000000000020 /* Info.plist exception */ = {
+            isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+            membershipExceptions = (Info.plist,);
+            target = 8EDFB4AA30777C7C00F9B480 /* TeamStats */;
+        };
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8EDFB4AD30777C7C00F9B480 /* TeamStats */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (CC0000000000000000000020 /* Info.plist exception */,);
 			path = TeamStats;
 			sourceTree = "<group>";
 		};
@@ -285,6 +294,7 @@
 				DEVELOPMENT_TEAM = 9U9VZ2TCRJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TeamStats/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -317,6 +327,7 @@
 				DEVELOPMENT_TEAM = 9U9VZ2TCRJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TeamStats/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -21,6 +21,65 @@ final class AccountTests: XCTestCase {
         XCTAssertEqual(account.state, .pendingVerification(.email))
         XCTAssertNil(account.verifiedUserID)
     }
+    func testEmailRequestIncludesNativeRedirectAndPKCEChallenge() async throws {
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: fixtureHTTPSession(mode: "requireEmailRedirect"))
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        XCTAssertNil(account.issue)
+        XCTAssertEqual(account.state, .pendingVerification(.email))
+    }
+
+    func testEmailLinkAuthenticatesAfterAppRestartWithSavedDeviceChallenge() async throws {
+        let storage = FixtureAccountStorage()
+        let first = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await first.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await first.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        let restarted = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await restarted.handleEmailLink(URL(string: "com.narayanlekhi.teamstats://auth/callback?code=synthetic-pkce-code")!)
+        XCTAssertEqual(restarted.verifiedUserID, fixtureUserID)
+        XCTAssertNil(restarted.issue)
+        let after = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await after.restore()
+        XCTAssertEqual(after.verifiedUserID, fixtureUserID)
+    }
+
+    func testEmailLinkRejectsWrongRouteBearerTokensAndUnrequestedChallenges() async throws {
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: fixtureHTTPSession())
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        let valid = URL(string: "com.narayanlekhi.teamstats://auth/callback?code=synthetic-pkce-code")!
+        await account.handleEmailLink(valid)
+        XCTAssertEqual(account.issue, .invalidEmailLink)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        for url in ["com.narayanlekhi.teamstats://wrong/callback?code=synthetic", "com.narayanlekhi.teamstats://auth/callback#access_token=synthetic", "com.narayanlekhi.teamstats://auth/callback?code=synthetic&code=other"] {
+            await account.handleEmailLink(URL(string: url)!)
+            XCTAssertEqual(account.issue, .invalidEmailLink)
+            XCTAssertNil(account.verifiedUserID)
+        }
+    }
+
+    func testEmailLinkCannotAuthenticateDifferentContactAndLeavesNoRestorableSession() async throws {
+        let storage = FixtureAccountStorage()
+        let account = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "different@example.invalid")
+        await account.handleEmailLink(URL(string: "com.narayanlekhi.teamstats://auth/callback?code=synthetic-pkce-code")!)
+        XCTAssertEqual(account.issue, .invalidEmailLink)
+        XCTAssertNil(account.verifiedUserID)
+        let after = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await after.restore()
+        XCTAssertEqual(after.state, .signedOut)
+    }
+
+    func testSigningOutBeforeEmailLinkInvalidatesPendingDeviceChallenge() async throws {
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: fixtureHTTPSession())
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await account.signOut()
+        await account.handleEmailLink(URL(string: "com.narayanlekhi.teamstats://auth/callback?code=synthetic-pkce-code")!)
+        XCTAssertEqual(account.issue, .invalidEmailLink)
+        XCTAssertNil(account.verifiedUserID)
+    }
+
     func testVerifiedEmailSessionSurvivesRestartAndSignOutClearsIt() async throws {
         let storage = FixtureAccountStorage()
         let first = BackendAccount(storage: storage, session: fixtureHTTPSession())
@@ -201,7 +260,7 @@ private final class FixtureAccountStorage: AuthLocalStorage, @unchecked Sendable
     init(failSessionWrites: Bool = false) { self.failSessionWrites = failSessionWrites }
     func store(key: String, value: Data) throws {
         lock.lock(); defer { lock.unlock() }
-        if failSessionWrites && key.hasPrefix("session.v1.") { throw AccountIssue.storage }
+        if failSessionWrites && key.hasPrefix("session.v1.") && !key.hasSuffix("-code-verifier") && !key.hasSuffix(".email-link") { throw AccountIssue.storage }
         values[key] = value
     }
     func retrieve(key: String) throws -> Data? {
@@ -229,7 +288,9 @@ private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable 
         let denied = mode == "revoked" && request.url?.path.hasSuffix("/user") == true
         let logoutFailure = mode == "logoutFailure" && request.url?.path.hasSuffix("/logout") == true
         let refreshFailure = mode == "refreshFailure" && request.url?.path.hasSuffix("/token") == true
-        let failed = request.url?.host == "failure.invalid" || denied || logoutFailure || refreshFailure
+        let missingEmailRedirect = mode == "requireEmailRedirect" && request.url?.path.hasSuffix("/otp") == true
+            && URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "redirect_to" })?.value != "com.narayanlekhi.teamstats://auth/callback"
+        let failed = request.url?.host == "failure.invalid" || denied || logoutFailure || refreshFailure || missingEmailRedirect
         let status = denied ? 401 : (failed ? 503 : 200)
         let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)

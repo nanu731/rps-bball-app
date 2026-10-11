@@ -940,3 +940,18 @@ pointer/audit/export-outbox enqueue are atomic; outbox enqueue is not Sheets
 delivery. The full final migration source was also checked transactionally in
 an isolated synthetic schema and rolled back. Native connected entry/viewing
 integration is still in progress. No hosted migration or owner bootstrap occurred.
+
+
+Email-link budget correction: the official June3,2026 change prevents newly
+created Free projects from editing templates while using the default sender.
+The private setup guide was corrected; no upgrade or external sender enabled.
+Native Account now requests its exact custom redirect, verifies PKCE callbacks
+against a saved device/email challenge, rejects token-fragment/wrong-route links,
+and clears challenges on sign-out or changed contact. Failed same-target resend
+retains the earlier verifier. A new redirect regression first failed; all20
+Account tests then passed. The built app manifest includes the exact URL scheme.
+An actual locally captured default email supplied a verification link; the real
+Auth redirect/PKCE exchange, restarted Account model and sign-out passed in an
+opt-in signed iPhone26.4 test. This test captured the redirect without UI taps;
+actual external delivery, link-to-app interaction and hosted configuration remain
+unverified. [Official change](https://supabase.com/changelog/46599-changes-to-email-template-customisation-on-free-tier).

@@ -161,3 +161,11 @@ This proves the SDK/server seam, not external delivery or the Account UI. Its
 configuration and synthetic identities; never supply privileged keys or real data.
 Default runs skip it. See `statistics.md` for the statistical lifecycle contract
 and actual isolated SQL results; Sheet delivery remains unimplemented.
+
+
+The local config allows the exact native email callback. Its actual captured
+default-email link → Auth redirect → native PKCE exchange test passed, including
+restoring the pending device challenge after recreating Account. Email codes
+remain supported for senders that provide them; new Free projects cannot alter
+default templates as of June3,2026. No external sender, SMS or paid service was
+enabled. Capture of a redirect does not establish actual OS link-opening UI.

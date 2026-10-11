@@ -11,15 +11,18 @@ summaries are implemented. Scoring checks flag exact mismatches and proven
 partial-score contradictions. The latest consolidated warning presentation still
 awaits owner manual verification. All data is currently local and unreviewed.
 
-The Account tab implements email/phone code requests, verification, secure session
-restore, retry and sign-out. Enter an authorized nonproduction server's URL and
-publishable key privately on the device; do not use a secret/service-role key.
-Remote SMS is disabled under the strict $0 budget. Actual hosted delivery and
-delivery is not yet verified. Server access/roster source and isolated
-SQL tests are in `supabase/`; actual local database, Auth/gateway and native SDK
-checks passed. Hosted integration is not configured.
-Shared storage, completion/review, reconciliation, Google Sheets export, photo
-autofill, animated plays and videos remain incomplete.
+The Account tab implements email-link and code verification, secure session
+restore, retry and sign-out. Configure an authorized nonproduction server's URL
+and publishable key privately on the device. Allow the exact email redirect
+`com.narayanlekhi.teamstats://auth/callback` in Supabase Authentication's URL
+Configuration. Request a sign-in email and open its link on the same device; PKCE
+binds the exchange to that device's Keychain challenge. Typed email codes remain
+supported when the configured sender supplies them. New Free projects using the
+default sender cannot edit templates; do not upgrade for codes. Remote SMS stays
+disabled under the $0 budget. Actual local Auth/gateway/native SDK tests passed;
+hosted delivery and setup remain unverified. Shared entry/review source is being
+integrated. Sheets delivery, photo autofill, animated plays and videos remain
+incomplete.
 There is no live tracking in any phase.
 
 ## Project and planning

@@ -51,7 +51,7 @@ struct AccountConfiguration: Codable, Equatable, Sendable {
 enum AccountIssue: Error, LocalizedError, Equatable {
     case invalidConfiguration, privilegedOrInvalidKey, invalidEmail, invalidPhone, invalidCode
     case phoneDeliveryDisabled, noPendingCode, noVerifiedSession, storage, provider, configurationWhileSignedIn
-    case signOutRemoteFailure
+    case signOutRemoteFailure, invalidEmailLink
 
     var errorDescription: String? {
         switch self {
@@ -66,6 +66,7 @@ enum AccountIssue: Error, LocalizedError, Equatable {
         case .storage: "Secure account storage is unavailable. Unlock the device and retry."
         case .provider: "The account server could not complete this request. Check its setup or connection and retry."
         case .configurationWhileSignedIn: "Sign out before changing the account server."
+        case .invalidEmailLink: "This email link is unavailable or was not requested on this device. Request a new sign-in email, then open its link on the same device."
         case .signOutRemoteFailure: "Signed out on this device. The server could not confirm session revocation; an existing access token may remain valid until it expires."
         }
     }
@@ -87,6 +88,8 @@ enum AccountState: Equatable {
 /// must be read/checked by authorized server commands, never derived from contact data.
 @MainActor @Observable
 final class BackendAccount {
+    static let emailRedirectURL = URL(string: "com.narayanlekhi.teamstats://auth/callback")!
+
     private(set) var configuration: AccountConfiguration?
     private(set) var state: AccountState = .unconfigured
     private(set) var isBusy = false
@@ -139,6 +142,7 @@ final class BackendAccount {
             catch {
                 pendingMethod = nil
                 pendingIdentifier = nil
+                try clearEmailLink(configuration)
                 throw error
             }
             // A new target cannot reuse the previous target's verification challenge.
@@ -146,10 +150,25 @@ final class BackendAccount {
             if method != pendingMethod || contact != pendingIdentifier {
                 pendingMethod = nil
                 pendingIdentifier = nil
+                try clearEmailLink(configuration)
             }
             if method == .phone && !configuration.phoneDeliveryAllowed { throw AccountIssue.phoneDeliveryDisabled }
             if method == .email {
-                try await client.auth.signInWithOTP(email: contact)
+                let verifierKey = sessionKey(configuration) + "-code-verifier"
+                let previousVerifier = try read(key: verifierKey)
+                do {
+                    try await client.auth.signInWithOTP(email: contact, redirectTo: Self.emailRedirectURL)
+                } catch {
+                    // A failed resend must not invalidate a previously delivered link.
+                    if let previousVerifier {
+                        do { try storage.store(key: verifierKey, value: previousVerifier) }
+                        catch { throw AccountIssue.storage }
+                    }
+                    throw error
+                }
+                guard try read(key: verifierKey) != nil else { throw AccountIssue.storage }
+                do { try storage.store(key: emailLinkKey(configuration), value: Data(contact.utf8)) }
+                catch { throw AccountIssue.storage }
             } else {
                 try await client.auth.signInWithOTP(phone: contact, channel: .sms)
             }
@@ -219,9 +238,58 @@ final class BackendAccount {
             do { try storage.store(key: sessionKey(configuration), value: JSONEncoder().encode(session)) }
             catch { throw AccountIssue.storage }
             try await acceptSession(from: client)
+            try clearEmailLink(configuration)
             pendingMethod = nil
             pendingIdentifier = nil
         } catch { fail(error as? AccountIssue ?? .provider) }
+    }
+
+    /// Accept only a PKCE code for this exact app route and this device's saved
+    /// email request. Bearer tokens in callbacks are never accepted or logged.
+    func handleEmailLink(_ url: URL) async {
+        guard !isBusy, verifiedUserID == nil else { return }
+        await restoreIfNeeded()
+        guard !isBusy, verifiedUserID == nil else { return }
+        isBusy = true
+        defer { isBusy = false }
+        var receivedSession = false
+        do {
+            guard let configuration, let client,
+                  let route = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                  route.scheme == Self.emailRedirectURL.scheme,
+                  route.host == "auth", route.path == "/callback",
+                  route.user == nil, route.password == nil, route.fragment == nil,
+                  let items = route.queryItems, items.count == 1,
+                  items[0].name == "code", let code = items[0].value,
+                  !code.isEmpty, code.count <= 512,
+                  code.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") }),
+                  let target = try read(key: emailLinkKey(configuration)),
+                  let email = String(data: target, encoding: .utf8),
+                  try read(key: sessionKey(configuration) + "-code-verifier") != nil else {
+                throw AccountIssue.invalidEmailLink
+            }
+            let session = try await client.auth.session(from: url)
+            receivedSession = true
+            do { try storage.store(key: sessionKey(configuration), value: JSONEncoder().encode(session)) }
+            catch { throw AccountIssue.storage }
+            try await acceptSession(from: client, expectedEmail: email)
+            try clearEmailLink(configuration)
+            pendingMethod = nil
+            pendingIdentifier = nil
+        } catch {
+            let issue = error as? AccountIssue ?? .provider
+            if receivedSession, let configuration {
+                try? await client?.auth.signOut(scope: .local)
+                do {
+                    try storage.remove(key: sessionKey(configuration))
+                    try clearEmailLink(configuration)
+                } catch { fail(.storage); return }
+                client = makeClient(configuration)
+                pendingMethod = nil
+                pendingIdentifier = nil
+            }
+            fail(issue)
+        }
     }
 
     func resendCode() async {
@@ -255,7 +323,10 @@ final class BackendAccount {
         var remoteFailure = false
         do { try await oldClient?.auth.signOut(scope: .local) }
         catch { remoteFailure = true }
-        do { try storage.remove(key: sessionKey(configuration)) }
+        do {
+            try storage.remove(key: sessionKey(configuration))
+            try clearEmailLink(configuration)
+        }
         catch { fail(.storage); return }
         client = nil
         pendingMethod = nil
@@ -265,13 +336,17 @@ final class BackendAccount {
         client = makeClient(configuration)
     }
 
-    private func acceptSession(from client: SupabaseClient) async throws {
+    private func acceptSession(from client: SupabaseClient, expectedEmail: String? = nil) async throws {
         guard let configuration else { throw AccountIssue.invalidConfiguration }
         _ = try read(key: sessionKey(configuration))
         let session = try await client.auth.session
         let verifiedUser = try await client.auth.user(jwt: session.accessToken)
         guard !verifiedUser.isAnonymous, verifiedUser.id == session.user.id,
               !session.accessToken.isEmpty, !session.refreshToken.isEmpty else { throw AccountIssue.noVerifiedSession }
+        if let expectedEmail {
+            guard verifiedUser.emailConfirmedAt != nil,
+                  verifiedUser.email?.lowercased() == expectedEmail.lowercased() else { throw AccountIssue.invalidEmailLink }
+        }
         do { try storage.store(key: sessionKey(configuration), value: JSONEncoder().encode(session)) }
         catch { throw AccountIssue.storage }
         issue = nil
@@ -288,6 +363,15 @@ final class BackendAccount {
             auth: .init(storage: storage, storageKey: sessionKey(value), autoRefreshToken: false, emitLocalSessionAsInitialSession: true),
             global: .init(session: httpSession, logger: nil)
         ))
+    }
+
+    private func emailLinkKey(_ value: AccountConfiguration) -> String { sessionKey(value) + ".email-link" }
+
+    private func clearEmailLink(_ value: AccountConfiguration) throws {
+        do {
+            try storage.remove(key: emailLinkKey(value))
+            try storage.remove(key: sessionKey(value) + "-code-verifier")
+        } catch { throw AccountIssue.storage }
     }
 
     private func sessionKey(_ value: AccountConfiguration) -> String {
