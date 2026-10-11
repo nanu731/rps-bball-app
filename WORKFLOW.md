@@ -1,5 +1,23 @@
 # TeamStats — Planning and Implementation Workflow
 
+## Current end-to-end authorization (2026-10-11)
+
+The owner's current completion request supersedes older bounded-prompt stopping
+rules and the old roster-screen exclusion. Continue through dependency-ordered
+vertical slices on `codex/teamstats-completion`; no production release/deployment,
+paid commitments, dependencies or restructuring beyond explicit approvals.
+Structure/default local labels and official supabase-swift are approved. Private
+tickets/spec/coverage are ignored under `.scratch/`; do not publish internal plans.
+Every ticket records actual checks and blocking access; a scaffold is not complete.
+
+Council completed five independent advisor analyses, five fresh anonymous reviews
+and chairman synthesis. Adopted compact defaults are in the first ADR. This does
+not verify provider capabilities or complete integrations. Separate permissions,
+bounded revocable owner delegation, preserved published versions, independent
+dataset statuses and missingness remain acceptance criteria. Root integrator owns
+Xcode changes; independent agents use isolated worktrees. Personal Xcode staged
+entries and working bytes, existing local records and temporary IDs are preserved.
+
 Last updated: 2026-10-08.
 
 ## Chat responsibilities

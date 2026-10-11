@@ -1,6 +1,6 @@
 # TeamStats — Project Context and Development Sequence
 
-Latest owner steering (2026-10-11): forthcoming prompt authorizes end-to-end
+Latest owner steering (2026-10-11): current prompt authorizes end-to-end
 completion with installed Matt Pocock skills and LLM Council resolving ambiguous
 design/product choices. Add owner roster management and grant/revoke/delegate
 capability administration; enforce bounded delegation server-side and preserve
@@ -10,6 +10,14 @@ paid-service budget, real branding/roster and release authorization remain human
 inputs, not facts Council can invent. See PRD.md's latest owner-administration section.
 
 Last updated: 2026-10-10.
+Completion work is on `codex/teamstats-completion`. Private task graph/acceptance
+and coverage live in ignored `.scratch/teamstats-completion/spec.md`; generic
+engineering configuration is in docs/agents. Structure/default local labels and
+the official Supabase Swift SDK are owner-approved. Actual service configuration,
+budget, signing and release approval remain human inputs. Adopted Council defaults
+are summarized in docs/adr/0001-reviewed-dataset-versions-and-bounded-grants.md;
+five independent analyses, five anonymous fresh-agent reviews and chairman
+synthesis were performed. Provider capabilities still require primary research.
 Read WORKFLOW.md's Project readiness audit for the 20-item checklist and remaining
 sequence. PRD.md now states value/pain/audience and lean brand/UI standards;
 README.md describes actual setup/status. Backend/auth, environment separation,

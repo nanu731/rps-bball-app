@@ -1,0 +1,32 @@
+# TeamStats
+
+Language for after-game team statistics and reviewed team content.
+
+## Language
+
+**Game**: An after-game record identified independently of its date or opponent label.
+
+**Temporary player**: A visibly provisional roster identity that is never reused for a real player.
+
+**Paint touch**: A player intentionally establishes two feet in the paint with the ball.
+Repeated-touch counting remains unresolved; no player attribution is inferred from team records.
+
+**Possession**: Actions from legal team possession until the opponent legally possesses the ball;
+free throws and offensive rebounds remain within it. Period-ending actions count; no-action holds do not.
+
+**Paired row**: Each team's independently numbered nth possession displayed side by side.
+_Avoid_: Chronological pair, simultaneous possessions
+
+**Draft**: Unfinished editable collected data; blank numeric inputs remain unentered.
+_Avoid_: Published record, completed dataset
+
+**Completed dataset**: Data explicitly marked entry-complete; this does not establish review or publication.
+_Avoid_: Approved data, official statistics
+
+**Published dataset**: An accepted shared version confirmed by the server and visible to authorized viewers.
+_Avoid_: Submitted draft
+
+**Edit request**: A request for authorized approval to reopen a completed dataset for revision.
+
+**Real Possessions**: The owner's team-specific metric: game possessions minus turnovers plus offensive rebounds.
+_Avoid_: Estimated basketball possession formula

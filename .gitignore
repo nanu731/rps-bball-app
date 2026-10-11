@@ -72,3 +72,7 @@ build/
 .env
 .env.*
 !.env.example
+# Private implementation planning; keep internal tickets out of the public repository.
+/.scratch/
+/ENGINEERING_SETUP.local.md
+/COMPLETION_SPEC.local.md
