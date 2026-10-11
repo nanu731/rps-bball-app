@@ -36,6 +36,9 @@ struct AccountView: View {
                     Text(userID.uuidString)
                         .textSelection(.enabled)
                         .accessibilityLabel("Verified Auth account identifier, \(userID.uuidString)")
+                    NavigationLink("Team access and administration") {
+                        TeamAdministrationView(account: account)
+                    }
                     Button("Check session again") { Task { await account.restore() } }
                         .frame(minHeight: 44)
                     Button("Sign out", role: .destructive) {
