@@ -66,7 +66,8 @@ enable_confirmations = true
 max_frequency = "60s"
 template = "LOCAL TEST ONLY: {{ .Code }}"
 
-# A reserved fictional phone identity; this tests Auth code verification, not SMS.
+# Reserved fictional fixture only: native Auth currently rejects it while phone is disabled.
+# The configured code is not verified phone authentication or SMS-delivery evidence.
 [auth.sms.test_otp]
 "15555550101" = "123456"
 

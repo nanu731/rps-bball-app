@@ -2,21 +2,24 @@
 
 This directory contains a Postgres migration and synthetic behavior tests for
 team membership, capabilities, bounded owner delegation and roster history.
-It is a source draft until it has run against actual Supabase Auth/Postgres.
+The slice has passed actual local Supabase Auth/Postgres and signed gateway tests;
+hosted operation and complete native-app integration remain unverified.
 No hosted configuration, real owner identity, student data or automatic local
 record upload is included. This slice does not implement shared statistical
 submissions, completion, publication, exports, plays or media storage.
 
 The strict budget is $0. The configuration is for a disposable local runtime:
 email is captured by the local inbox, real SMS providers and delivery hooks are
-disabled, and one reserved fictional phone number has a local test code. That
-code is not SMS-delivery evidence. Default local email may contain a magic link;
+disabled, and one reserved fictional phone number has a configured local test code. In the
+verified native runtime, Auth reports phone disabled and rejects this request with
+`phone_provider_disabled`; the map alone has not established phone verification.
+No SMS-delivery evidence is claimed. Default local email may contain a magic link;
 typed email OTP template parity remains unverified. The pinned native runtime
 rejects custom email-template `content_path`, so this draft does not enable it.
 The setting names follow the [official v2.120.0 template](https://github.com/supabase/cli/blob/v2.120.0/apps/cli-go/pkg/config/templates/config.toml),
-including `local_smtp`; actual CLI validation is still required. Do not apply this configuration to a hosted
-project or enable paid providers. Native CLI installation and runtime
-setup require owner approval; neither is installed by this source draft.
+including `local_smtp`; the pinned CLI accepted this configuration locally. Do not apply this configuration to a hosted
+project or enable paid providers. The owner-approved CLI and its four pinned native service bundles are isolated
+local tooling; no hosted project or additional dependency is configured here.
 
 ## Trust and bootstrap
 
@@ -96,19 +99,54 @@ Capability names are `stats.review`, `stats.publish`, `datasets.reopen`,
 versions `40001`, and invalid command arguments `22023` (table constraints may
 also return standard Postgres validation errors).
 
-## Verification frontier
+## Local verification and remaining limits
 
-`tests/team_access.sql` exercises real SQL commands and RLS using synthetic Auth
-users/sessions in a transaction that is rolled back. It is intended for Supabase's
-local pgTAP runner. Its trusted fixture setup is test-only; it is not proof of real
-email/phone verification or provider delivery. Before this migration exists, the
-suite is expected to fail at the absent team table. No database execution has
-been claimed as part of authoring this draft.
+On 2026-10-11 the owner-approved CLI 2.120.0 started actual native services:
+Postgres 17.11.0.004-r1, PostgREST v16.4-r0, Auth v2.197.0-r0 and Mailpit v1.31.3-r0.
+The clean startup applied this migration, and the required `auth.users` and
+`auth.sessions` columns were verified. Bundled `pg_prove` executed
+`tests/team_access.sql`: **81/81 passed**, including RLS, bounded grants, owner
+protection, stale/NULL administration revisions, roster history and session denial.
+SQL fixture users/sessions remain synthetic and transactional; these tests do not
+establish provider verification or delivery.
 
-Required next evidence: CLI configuration validation, a clean local migration,
-actual SQL behavior/RLS tests, then gateway requests under independently acquired
-local Auth sessions (email, synthetic phone, pending/nonmember/revoked users).
-Concurrent grant/revocation and stale commands need real database verification;
-locks in source are not measurement. Hosted project configuration, real account
-admission, actual SMS delivery, physical-device/network testing and deployment
-remain separately unverified and require their own access/approval.
+The real gateway harness obtained two independent signed Auth sessions through
+actual locally captured default email verification links, and another through an
+explicit trusted local TEST ONLY generated link. It passed 40 checks covering
+pending/nonmember reads, admission, roster persistence, protected direct writes,
+stale membership commands, removal and actual Auth logout followed by denial with
+the old still-unexpired signed JWT. A separate synthetic-owner experiment passed
+26 checks covering stale capability revocation, owner logout, denied administration
+and actual reauthentication retaining the same owner UUID. These check counts
+include setup/snapshot checks; they are not distinct product-feature counts.
+
+The reusable `tests/team_access_gateway.py` runs the real Auth/REST/SQL seams with
+Python 3.11+ standard-library modules, the already-approved CLI and bundled `psql`.
+It requires `--cli` and `--runtime-home`, accepts `--workdir`, and can write explicitly
+requested `--evidence` or TEST ONLY `--client-config` files. Outputs are sanitized;
+keys/tokens stay in memory. Optional files are created with mode 0600 and never
+overwritten; destinations must remain private/ignored. The harness rejects external
+endpoints and enabled SMTP/SMS providers/hooks, uses a fresh synthetic namespace,
+and preserves existing records. It does not install dependencies or configure
+hosted services. Do not run it against real student data or a hosted project.
+
+Observed transport details: access denials returned `42501` with HTTP 403;
+anonymous RPC denial used HTTP 401. PostgREST v16.4 mapped stale `40001` to HTTP 500.
+Clients must recognize the SQLSTATE and reload before retrying, without assuming
+HTTP 409. Default captured emails provided links, not typed codes. An optional
+admin-generated code is a local TEST ONLY native-client fixture; generating it
+alone does not prove typed-code verification, the application's email-request-to-inbox
+flow or external delivery.
+Phone verification remains blocked while all real senders stay disabled.
+
+Native Postgres initially failed when its cache path contained spaces. Its pinned
+launcher resolves symlinks physically and passes a bare key-helper pathname to
+pgsodium's shell execution. Copying the verified cache to a fresh short physical
+runtime home resolved startup, preserving the original cache/state. This is a
+local tooling workaround, not a TeamStats application fix. All observed service
+listeners were loopback-only and telemetry was disabled.
+
+Remaining evidence: concurrent grant/revocation measurements, full native UI and
+session integration, production/hosted configuration, real email/phone delivery,
+physical-device/network checks, statistical publication/exports and deployment.
+None of those is established by these local tests; release approval remains separate.
