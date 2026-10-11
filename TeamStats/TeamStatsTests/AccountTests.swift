@@ -52,6 +52,36 @@ final class AccountTests: XCTestCase {
         XCTAssertEqual(local.verifiedUserID, fixtureUserID)
     }
 
+    func testFailedNewContactRequestCannotVerifyOldChallenge() async throws {
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: fixtureHTTPSession())
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        XCTAssertEqual(account.pendingMethod, .email)
+        await account.requestCode(method: .phone, identifier: "+12025550100")
+        XCTAssertEqual(account.issue, .phoneDeliveryDisabled)
+        XCTAssertNil(account.pendingMethod)
+        await account.verifyCode("123456")
+        XCTAssertEqual(account.issue, .noPendingCode)
+        XCTAssertNil(account.verifiedUserID)
+    }
+
+    func testInitialSecureStorageFailureCanRecoverByExplicitRetry() async throws {
+        let storage = FixtureAccountStorage()
+        let first = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await first.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await first.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await first.verifyCode("123456")
+        storage.rejectReads(true)
+        let restarted = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await restarted.restoreIfNeeded()
+        XCTAssertEqual(restarted.issue, .storage)
+        XCTAssertNil(restarted.configuration)
+        storage.rejectReads(false)
+        await restarted.restore()
+        XCTAssertEqual(restarted.verifiedUserID, fixtureUserID)
+        XCTAssertNil(restarted.issue)
+    }
+
     func testConfirmationOnlyResponseNeverAuthenticates() async throws {
         let account = BackendAccount(storage: FixtureAccountStorage(), session: fixtureHTTPSession())
         await account.configure(url: "https://confirmation.invalid", publicKey: fixtureKey, environment: .nonproduction)
@@ -164,6 +194,10 @@ private final class FixtureAccountStorage: AuthLocalStorage, @unchecked Sendable
     private let lock = NSLock()
     private var values: [String: Data] = [:]
     private let failSessionWrites: Bool
+    private var failReads = false
+    func rejectReads(_ reject: Bool) {
+        lock.lock(); defer { lock.unlock() }; failReads = reject
+    }
     init(failSessionWrites: Bool = false) { self.failSessionWrites = failSessionWrites }
     func store(key: String, value: Data) throws {
         lock.lock(); defer { lock.unlock() }
@@ -171,7 +205,9 @@ private final class FixtureAccountStorage: AuthLocalStorage, @unchecked Sendable
         values[key] = value
     }
     func retrieve(key: String) throws -> Data? {
-        lock.lock(); defer { lock.unlock() }; return values[key]
+        lock.lock(); defer { lock.unlock() }
+        if failReads { throw AccountIssue.storage }
+        return values[key]
     }
     func remove(key: String) throws {
         lock.lock(); defer { lock.unlock() }; values[key] = nil

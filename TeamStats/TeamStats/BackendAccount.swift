@@ -134,7 +134,19 @@ final class BackendAccount {
         isBusy = true
         defer { isBusy = false }
         do {
-            let contact = try normalized(identifier, method: method)
+            let contact: String
+            do { contact = try normalized(identifier, method: method) }
+            catch {
+                pendingMethod = nil
+                pendingIdentifier = nil
+                throw error
+            }
+            // A new target cannot reuse the previous target's verification challenge.
+            // Retain the same challenge on a failed resend so an existing code still works.
+            if method != pendingMethod || contact != pendingIdentifier {
+                pendingMethod = nil
+                pendingIdentifier = nil
+            }
             if method == .phone && !configuration.phoneDeliveryAllowed { throw AccountIssue.phoneDeliveryDisabled }
             if method == .email {
                 try await client.auth.signInWithOTP(email: contact)

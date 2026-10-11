@@ -101,10 +101,14 @@ struct AccountView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                if account.state == .error {
-                    Section {
-                        Button("Retry saved session") { Task { await account.restore() } }
-                            .frame(minHeight: 44)
+            }
+
+            if account.state == .error {
+                Section {
+                    Button("Retry saved session") { Task { await account.restore() } }
+                        .frame(minHeight: 44)
+                        .accessibilityIdentifier("account.retrySession")
+                    if account.configuration != nil {
                         Button("Sign out on this device", role: .destructive) { Task { await account.signOut() } }
                             .frame(minHeight: 44)
                     }
