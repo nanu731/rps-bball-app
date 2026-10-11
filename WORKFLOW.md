@@ -955,3 +955,26 @@ Auth redirect/PKCE exchange, restarted Account model and sign-out passed in an
 opt-in signed iPhone26.4 test. This test captured the redirect without UI taps;
 actual external delivery, link-to-app interaction and hosted configuration remain
 unverified. [Official change](https://supabase.com/changelog/46599-changes-to-email-template-customisation-on-free-tier).
+
+
+Connected statistical entry/viewing is wired from Account → Team administration
+→ Shared games and statistics. Local records/temporary identities stay separate.
+Source covers four-field game creation, shared box-score modes, independent player
+paint totals/paired possession batches, explicit dataset completion, submission,
+review, approved reopening and accepted-version summaries. Values display missing
+versus zero; only confirmed possession completion converts blanks. Completed data
+is read-only until an approved revision. Metrics/reconciliation consume matching
+accepted pointers; queued export items are not claimed delivered.
+
+Integrated signed iPhone26.4 run passed65 native fixture/regression tests, including
+all14 connected SDK transport tests; the opt-in real-server test was skipped
+without its private fixture. These fixtures are not real provider integration.
+Separately,81 actual signed statistical gateway checks passed using fresh synthetic
+Auth/team/game/roster records: paired rollback, missing/zero completion, private
+versus published visibility, reviewed correction/preserved history, generation
+outbox and revoked-session denial. Standards and Spec reviews of the server
+lifecycle each found0 actionable issues. Current native connected workflows and
+two-device larger-text/rotation/keyboard/VoiceOver interactions remain unverified.
+Native app screen control returned but reports the Mac locked; the owner was
+asked to unlock, and repeated blocked attempts stopped. Original iPhone games,
+box scores, possessions and paint-touch JSON remained byte-identical on recheck.

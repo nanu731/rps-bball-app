@@ -35,7 +35,13 @@ on the isolated local stack through the native Account model. New Free projects
 cannot customize default email templates; use the verified email-link route
 without upgrading or adding a paid sender. Hosted delivery remains unverified.
 Hosted configuration and centralized monitoring remain unavailable. Continue
-independent work while banner interaction checks remain open.
+independent work while banner interaction checks remain open. Shared games and
+statistical lifecycle screens are now wired from Account/team administration;
+the integrated build and65 native fixture tests passed. The actual local signed
+statistical gateway passed81 checks; native connected workflow integration and
+locked-Mac UI checks are still outstanding. Metrics use accepted pointers only.
+The server retains immutable corrections and atomic export enqueue, while Sheets
+delivery remains unimplemented.
 Status: requirements draft; Steps 1–6 complete. Games, shared box scores, and paired possession drafts are
 stored locally. Possessions have independent team numbering, stable UUIDs,
 missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data

@@ -38,6 +38,9 @@ struct TeamAdministrationView: View {
             if let team = model.selectedTeam, let access = model.access {
                 Section(team.name) {
                     Text(access.isOwner ? "Owner access confirmed by server" : "Active membership confirmed by server")
+                    NavigationLink("Shared games and statistics") {
+                        ConnectedGamesView(account: account, teamID: team.id)
+                    }
                     NavigationLink("Roster") { AdministrationRosterView(model: model) }
                     if access.can(.membersManage) {
                         NavigationLink("Membership") { AdministrationMembershipView(model: model) }
