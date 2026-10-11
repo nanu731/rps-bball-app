@@ -15,8 +15,10 @@ struct TeamAdministrationView: View {
         Form {
             AdministrationFeedback(model: model)
             Section("Teams") {
-                if model.teams.isEmpty {
+                if model.teams.isEmpty && model.didLoadTeams {
                     Text("No active team is available from the server.").foregroundStyle(.secondary)
+                } else if !model.didLoadTeams && !model.isBusy {
+                    Text("The team list has not loaded. Reload to check server data.").foregroundStyle(.secondary)
                 }
                 ForEach(model.teams) { team in
                     Button {
@@ -109,28 +111,36 @@ private struct AdministrationRosterView: View {
             if model.access?.can(.rosterManage) == true {
                 Section { NavigationLink("Add actual player") { AdministrationRosterEditor(model: model, entry: nil) } }
             }
-            Section("Active roster") {
-                let entries = model.roster.filter { $0.archivedAt == nil }
-                if entries.isEmpty { Text("No actual server roster entries.").foregroundStyle(.secondary) }
-                ForEach(entries) { entry in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(entry.displayName).font(.headline)
-                        Text("Jersey \(entry.jerseyNumber)")
-                        if model.access?.can(.rosterManage) == true {
-                            NavigationLink("Edit player") { AdministrationRosterEditor(model: model, entry: entry) }
-                            Button("Archive player", role: .destructive) { archiveCandidate = entry }
-                                .disabled(model.isBusy)
-                        }
-                    }.padding(.vertical, 4)
+            if model.access == nil {
+                Section {
+                    Text("Roster data is unavailable until the team reloads successfully.")
+                        .foregroundStyle(.secondary)
+                    Button("Reload team") { Task { await model.reload() } }.disabled(model.isBusy)
                 }
-            }
-            Section("Archived roster") {
-                let entries = model.roster.filter { $0.archivedAt != nil }
-                if entries.isEmpty { Text("No archived entries.").foregroundStyle(.secondary) }
-                ForEach(entries) { entry in
-                    VStack(alignment: .leading) {
-                        Text(entry.displayName)
-                        Text("Jersey \(entry.jerseyNumber) • Archived").foregroundStyle(.secondary)
+            } else {
+                Section("Active roster") {
+                    let entries = model.roster.filter { $0.archivedAt == nil }
+                    if entries.isEmpty { Text("No actual server roster entries.").foregroundStyle(.secondary) }
+                    ForEach(entries) { entry in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(entry.displayName).font(.headline)
+                            Text("Jersey \(entry.jerseyNumber)")
+                            if model.access?.can(.rosterManage) == true {
+                                NavigationLink("Edit player") { AdministrationRosterEditor(model: model, entry: entry) }
+                                Button("Archive player", role: .destructive) { archiveCandidate = entry }
+                                    .disabled(model.isBusy)
+                            }
+                        }.padding(.vertical, 4)
+                    }
+                }
+                Section("Archived roster") {
+                    let entries = model.roster.filter { $0.archivedAt != nil }
+                    if entries.isEmpty { Text("No archived entries.").foregroundStyle(.secondary) }
+                    ForEach(entries) { entry in
+                        VStack(alignment: .leading) {
+                            Text(entry.displayName)
+                            Text("Jersey \(entry.jerseyNumber) • Archived").foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

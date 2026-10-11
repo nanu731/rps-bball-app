@@ -149,6 +149,7 @@ enum AdministrationIssue: Error, LocalizedError, Equatable {
 @MainActor @Observable
 final class TeamAdministration {
     private(set) var teams: [ServerTeam] = []
+    private(set) var didLoadTeams = false
     private(set) var selectedTeam: ServerTeam?
     private(set) var access: TeamAccess?
     private(set) var roster: [ServerRosterEntry] = []
@@ -174,6 +175,7 @@ final class TeamAdministration {
     func loadTeams() async {
         guard !isBusy else { return }
         isBusy = true
+        didLoadTeams = false
         issue = nil
         retryTeamID = nil
         retryAdmissionID = nil
@@ -181,6 +183,7 @@ final class TeamAdministration {
         do {
             let client = try await authenticatedClient()
             teams = try await readPages(client: client, table: "teams", columns: "id,name,owner_auth_uuid,access_revision", order: "id")
+            didLoadTeams = true
             if let selectedTeam, !teams.contains(where: { $0.id == selectedTeam.id }) { clearSelection() }
         } catch { teams = []; clearSelection(); fail(error) }
     }

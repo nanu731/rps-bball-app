@@ -25,6 +25,20 @@ final class AdministrationTests: XCTestCase {
         XCTAssertNil(model.issue)
     }
 
+    func testTeamDiscoveryDistinguishesUnavailableFromConfirmedEmpty() async {
+        let failed = TeamAdministration(authenticatedClient: { throw AccountIssue.provider })
+        XCTAssertFalse(failed.didLoadTeams)
+        await failed.loadTeams()
+        XCTAssertFalse(failed.didLoadTeams)
+        XCTAssertNotNil(failed.issue)
+        let fixture = AdministrationFixture(mode: .empty)
+        let empty = fixture.model()
+        await empty.loadTeams()
+        XCTAssertTrue(empty.didLoadTeams)
+        XCTAssertTrue(empty.teams.isEmpty)
+        XCTAssertNil(empty.issue)
+    }
+
     func testRosterSaveUsesFreshServerIdentityAndLoadedAccessRevision() async throws {
         let fixture = AdministrationFixture()
         let model = fixture.model()
