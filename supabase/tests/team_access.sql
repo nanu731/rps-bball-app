@@ -26,6 +26,8 @@ create temporary table test_roster_result (id uuid);
 grant select, insert on test_roster_result to authenticated;
 create temporary table test_audit_result (event_count bigint);
 grant select, insert on test_audit_result to authenticated;
+create temporary table test_access_snapshot (scenario text primary key, revision bigint);
+grant select, insert on test_access_snapshot to authenticated;
 -- Trusted setup after verified Auth UUID; not an authenticated bootstrap RPC.
 insert into public.teams (id, name, owner_auth_uuid)
 values ('20000000-0000-4000-8000-000000000001', 'SYNTHETIC TEST TEAM',
@@ -47,17 +49,19 @@ select is((select count(*)::int from public.teams), 0, 'pending member cannot re
 select is((select count(*)::int from public.roster_entries),0,'pending member cannot read existing roster data');
 select throws_ok($$select public.team_access('20000000-0000-4000-8000-000000000001')$$,
   '42501', null, 'pending member cannot read access');
-select throws_ok($$select public.team_save_roster('20000000-0000-4000-8000-000000000001', 'SYNTHETIC PLAYER', '1')$$,
+select throws_ok($$select public.team_save_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_display_name => 'SYNTHETIC PLAYER',p_jersey_number => '1',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'pending member cannot manage roster');
 select pg_temp.login(1);
-select lives_ok($$select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','active')$$,
+select is((public.team_access('20000000-0000-4000-8000-000000000001')->>'access_revision')::bigint,2::bigint,
+  'new pending admission increments revision once; its retry does not');
+select lives_ok($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   'owner admits verified pending account');
 select pg_temp.login(2);
 select is((select count(*)::int from public.teams), 1, 'active member reads team');
 select is((select count(*)::int from public.roster_entries),1,'active member reads existing roster data');
 select is((public.team_access('20000000-0000-4000-8000-000000000001')->>'can_propose_stats')::boolean,
   true, 'stats proposals are active-member baseline');
-select throws_ok($$select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','active')$$,
+select throws_ok($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'ordinary member cannot admit others');
 select throws_ok($$insert into public.team_memberships(team_id,user_id,status) values ('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','active')$$,
   '42501', null, 'direct self-role table write denied');
@@ -66,91 +70,90 @@ select is((select count(*)::int from public.roster_entries),0,'nonmember cannot 
 select throws_ok($$select public.team_access('20000000-0000-4000-8000-000000000001')$$,
   '42501', null, 'nonmember access command denied');
 select pg_temp.login(1);
-select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','active');
-select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004','active');
-select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','roster.manage',true);
+select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000004',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_capability => 'roster.manage',p_enabled => true,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select pg_temp.login(2);
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','roster.manage',true)$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_capability => 'roster.manage',p_enabled => true,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'operational permission cannot grant permissions');
-select throws_ok($$select public.team_delegate('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003',array['roster.manage'],now()+interval '1 day')$$,
+select throws_ok($$select public.team_delegate(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_allowed_capabilities => array['roster.manage'],p_expires_at => now()+interval '1 day',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'operational permission cannot create delegation');
 select pg_temp.login(1);
-select public.team_delegate('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002',array['roster.manage'],now()+interval '1 hour');
-select public.team_set_membership('20000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000002','active');
-select public.team_set_membership('20000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','active');
+select public.team_delegate(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_allowed_capabilities => array['roster.manage'],p_expires_at => now()+interval '1 hour',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000002',p_user_id => '00000000-0000-4000-8000-000000000002',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000002'));
+select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000002',p_user_id => '00000000-0000-4000-8000-000000000003',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000002'));
 select pg_temp.login(2);
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000003','roster.manage',true,now()+interval '5 minutes')$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000002',p_user_id => '00000000-0000-4000-8000-000000000003',p_capability => 'roster.manage',p_enabled => true,p_expires_at => now()+interval '5 minutes',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000002'))$$,
   '42501', null, 'delegation cannot cross team scope');
-select lives_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','roster.manage',true,now()+interval '30 minutes')$$,
+select lives_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_capability => 'roster.manage',p_enabled => true,p_expires_at => now()+interval '30 minutes',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   'delegate grants enumerated capability to another active member');
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','roster.manage',true,now()+interval '30 minutes')$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_capability => 'roster.manage',p_enabled => true,p_expires_at => now()+interval '30 minutes',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'delegate self-grant denied');
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','stats.publish',true,now()+interval '30 minutes')$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_capability => 'stats.publish',p_enabled => true,p_expires_at => now()+interval '30 minutes',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'delegate over-capability grant denied');
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','roster.manage',true,now()+interval '2 days')$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_capability => 'roster.manage',p_enabled => true,p_expires_at => now()+interval '2 days',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'delegate cannot extend grant beyond envelope expiry');
-select throws_ok($$select public.team_delegate('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003',array['roster.manage'],now()+interval '1 day')$$,
+select throws_ok($$select public.team_delegate(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_allowed_capabilities => array['roster.manage'],p_expires_at => now()+interval '1 day',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'delegate cannot delegate onward');
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000001','roster.manage',false)$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000001',p_capability => 'roster.manage',p_enabled => false,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'delegate cannot alter owner');
 select pg_temp.login(1);
-select throws_ok($$select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000001','removed')$$,
+select throws_ok($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000001',p_status => 'removed',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'owner cannot be removed');
-select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','members.manage',true);
+select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_capability => 'members.manage',p_enabled => true,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select pg_temp.login(2);
-select throws_ok($$select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000001','removed')$$,
+select throws_ok($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000001',p_status => 'removed',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'membership administrator cannot remove owner');
-select throws_ok($$select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','active')$$,
+select throws_ok($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'membership administrator cannot change own admission');
 select pg_temp.login(3);
-insert into test_roster_result select public.team_save_roster('20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER','1');
-select lives_ok(format('select public.team_save_roster(%L,%L,%L,%L,1)',
-  '20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER EDIT','2', (select id from test_roster_result)),
+insert into test_roster_result select public.team_save_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_display_name => 'SYNTHETIC PLAYER',p_jersey_number => '1',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+select lives_ok(format('select public.team_save_roster(p_team_id => %L,p_display_name => %L,p_jersey_number => %L,p_roster_id => %L,p_expected_version => 1,p_expected_access_revision => %L)',
+  '20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER EDIT','2', (select id from test_roster_result), (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001')),
   'authorized roster edit retains identity');
-select throws_ok(format('select public.team_save_roster(%L,%L,%L,%L,1)',
-  '20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER STALE','3', (select id from test_roster_result)),
+select throws_ok(format('select public.team_save_roster(p_team_id => %L,p_display_name => %L,p_jersey_number => %L,p_roster_id => %L,p_expected_version => 1,p_expected_access_revision => %L)',
+  '20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER STALE','3', (select id from test_roster_result), (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001')),
   '40001', null, 'stale roster save rejected');
-select public.team_archive_roster('20000000-0000-4000-8000-000000000001', (select id from test_roster_result), 2);
+select public.team_archive_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_roster_id => (select id from test_roster_result),p_expected_version => 2,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select is((select count(*)::int from public.roster_entries where id=(select id from test_roster_result) and archived_at is not null),1,
   'archived roster identity remains readable for historical references');
 select is((select count(*)::int from public.roster_entry_revisions where roster_id=(select id from test_roster_result)),3,
   'add, edit and archive retain all roster revisions');
 select is((select display_name from public.roster_entry_revisions where roster_id=(select id from test_roster_result) and version=1),
   'SYNTHETIC PLAYER','roster edit preserves original historical label');
-select isnt(public.team_save_roster('20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER EDIT','2')::text,
+select isnt(public.team_save_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_display_name => 'SYNTHETIC PLAYER EDIT',p_jersey_number => '2',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))::text,
   (select id::text from test_roster_result), 'new real player gets fresh identity despite matching display values');
-select throws_ok(format('select public.team_save_roster(%L,%L,%L,%L,3)',
-  '20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER','4', (select id from test_roster_result)),
+select throws_ok(format('select public.team_save_roster(p_team_id => %L,p_display_name => %L,p_jersey_number => %L,p_roster_id => %L,p_expected_version => 3,p_expected_access_revision => %L)',
+  '20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER','4', (select id from test_roster_result), (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001')),
   '42501', null, 'archived identity cannot be repurposed');
 select pg_temp.login(1);
-select public.team_revoke_delegation('20000000-0000-4000-8000-000000000001',
-  (select id from public.delegation_envelopes where delegate_user_id='00000000-0000-4000-8000-000000000002' and revoked_at is null));
+select public.team_revoke_delegation(p_team_id => '20000000-0000-4000-8000-000000000001',p_envelope_id => (select id from public.delegation_envelopes where delegate_user_id='00000000-0000-4000-8000-000000000002' and revoked_at is null),p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select pg_temp.login(2);
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004','roster.manage',true,now()+interval '5 minutes')$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000004',p_capability => 'roster.manage',p_enabled => true,p_expires_at => now()+interval '5 minutes',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'revoked delegate cannot grant');
 select pg_temp.login(3);
-select throws_ok($$select public.team_save_roster('20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER','5')$$,
+select throws_ok($$select public.team_save_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_display_name => 'SYNTHETIC PLAYER',p_jersey_number => '5',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'revoking envelope disables grants derived from it');
 reset role;
 -- Trusted fixture advances an envelope into the past; no wait or fake command implementation.
 select pg_temp.login(1);
 set local role authenticated;
-select public.team_delegate('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004',array['roster.manage'],now()+interval '1 hour');
+select public.team_delegate(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000004',p_allowed_capabilities => array['roster.manage'],p_expires_at => now()+interval '1 hour',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 reset role;
 update public.delegation_envelopes set expires_at=now()-interval '1 second'
 where delegate_user_id='00000000-0000-4000-8000-000000000004';
 set local role authenticated;
 select pg_temp.login(4);
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','roster.manage',true,now()+interval '5 minutes')$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_capability => 'roster.manage',p_enabled => true,p_expires_at => now()+interval '5 minutes',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'expired delegate cannot grant');
 select pg_temp.login(1);
-select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','roster.manage',false);
+select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_capability => 'roster.manage',p_enabled => false,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select pg_temp.login(2);
-select throws_ok($$select public.team_save_roster('20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER','6')$$,
+select throws_ok($$select public.team_save_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_display_name => 'SYNTHETIC PLAYER',p_jersey_number => '6',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'revoked direct operational grant denies roster mutation');
 select pg_temp.login(1);
-select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004','roster.manage',true);
-select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004','removed');
+select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000004',p_capability => 'roster.manage',p_enabled => true,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000004',p_status => 'removed',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select pg_temp.login(4);
 select is((select count(*)::int from public.teams),0,'removed member immediately loses team reads');
 select is(public.team_request_membership('20000000-0000-4000-8000-000000000001'),'removed',
@@ -158,15 +161,15 @@ select is(public.team_request_membership('20000000-0000-4000-8000-000000000001')
 select throws_ok($$select public.team_access('20000000-0000-4000-8000-000000000001')$$,
   '42501', null, 'removed member access command denied');
 select pg_temp.login(1);
-select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000004','active');
+select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000004',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select pg_temp.login(4);
-select throws_ok($$select public.team_save_roster('20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER','7')$$,
+select throws_ok($$select public.team_save_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_display_name => 'SYNTHETIC PLAYER',p_jersey_number => '7',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'readmission never restores old capabilities');
 select is(jsonb_array_length(public.team_access('20000000-0000-4000-8000-000000000001')->'grant_envelopes'),0,
   'readmission never restores old delegation');
 select set_config('request.jwt.claims', (current_setting('request.jwt.claims')::jsonb ||
   jsonb_build_object('user_metadata',jsonb_build_object('role','owner','capabilities',array['members.manage'])))::text,true);
-select throws_ok($$select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000005','active')$$,
+select throws_ok($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000005',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'writable role/capability metadata cannot grant authority');
 select throws_ok($$insert into public.teams(name,owner_auth_uuid) values ('SYNTHETIC FORGED TEAM','00000000-0000-4000-8000-000000000004')$$,
   '42501', null, 'authenticated user cannot bootstrap owner authority');
@@ -181,11 +184,52 @@ select throws_ok($$delete from public.roster_entries$$,
 select throws_ok($$update public.roster_entry_revisions set display_name='SYNTHETIC FORGED HISTORY'$$,
   '42501', null, 'direct history rewriting denied');
 select pg_temp.login(1);
+-- Two owner screens captured actual server revisions; later commands must not undo newer changes.
+select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000005',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+insert into test_access_snapshot values ('membership',
+  (public.team_access('20000000-0000-4000-8000-000000000001')->>'access_revision')::bigint);
+select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000005',p_status => 'removed',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+select throws_ok($$select public.team_set_membership(
+  p_team_id => '20000000-0000-4000-8000-000000000001',
+  p_user_id => '00000000-0000-4000-8000-000000000005', p_status => 'active',
+  p_expected_access_revision => (select revision from test_access_snapshot where scenario='membership'))$$,
+  '40001', null, 'old membership screen cannot undo a newer removal');
+select is((select status from public.team_memberships where team_id='20000000-0000-4000-8000-000000000001'
+  and user_id='00000000-0000-4000-8000-000000000005'),'removed','stale admission leaves current removal intact');
+select is((public.team_access('20000000-0000-4000-8000-000000000001')->>'access_revision')::bigint,
+  (select revision+1 from test_access_snapshot where scenario='membership'),
+  'newer removal increments revision once and stale membership command changes nothing');
+select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000004',p_capability => 'plays.author',p_enabled => true,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+insert into test_access_snapshot values ('capability',
+  (public.team_access('20000000-0000-4000-8000-000000000001')->>'access_revision')::bigint);
+select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000004',p_capability => 'plays.author',p_enabled => false,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+select throws_ok($$select public.team_set_capability(
+  p_team_id => '20000000-0000-4000-8000-000000000001',
+  p_user_id => '00000000-0000-4000-8000-000000000004',p_capability => 'plays.author',p_enabled => true,
+  p_expected_access_revision => (select revision from test_access_snapshot where scenario='capability'))$$,
+  '40001', null, 'old grant screen cannot undo a newer revocation');
+select is((select count(*)::int from public.capability_grants where team_id='20000000-0000-4000-8000-000000000001'
+  and user_id='00000000-0000-4000-8000-000000000004' and capability='plays.author' and revoked_at is null),0,
+  'stale grant leaves revoked capability intact');
+select throws_ok($$select public.team_set_capability(
+  p_team_id => '20000000-0000-4000-8000-000000000001',
+  p_user_id => '00000000-0000-4000-8000-000000000004',p_capability => 'plays.author',p_enabled => true,
+  p_expected_access_revision => null)$$,
+  '40001', null, 'null expected access revision cannot bypass stale-command protection');
+select is((public.team_access('20000000-0000-4000-8000-000000000001')->>'access_revision')::bigint,
+  (select revision+1 from test_access_snapshot where scenario='capability'),
+  'newer revocation increments revision once; stale/null grant commands change nothing');
+select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_capability => 'plays.author',p_enabled => true,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
+select is((select status from public.team_memberships where team_id='20000000-0000-4000-8000-000000000001'
+  and user_id='00000000-0000-4000-8000-000000000005'),'removed','fresh unrelated command preserves newer membership removal');
+select is((select count(*)::int from public.capability_grants where team_id='20000000-0000-4000-8000-000000000001'
+  and user_id='00000000-0000-4000-8000-000000000004' and capability='plays.author' and revoked_at is null),0,
+  'fresh unrelated command preserves another member capability revocation');
 insert into test_audit_result select count(*) from public.team_audit_events;
-select public.team_save_roster('20000000-0000-4000-8000-000000000001','SYNTHETIC AUDITED PLAYER','9');
+select public.team_save_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_display_name => 'SYNTHETIC AUDITED PLAYER',p_jersey_number => '9',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select is((select count(*) from public.team_audit_events), (select event_count+1 from test_audit_result),
   'successful public roster command appends exactly one audit event');
-select throws_ok($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000001','stats.publish',true)$$,
+select throws_ok($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000001',p_capability => 'stats.publish',p_enabled => true,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'owner self-grant also denied');
 select is((select count(*) from public.team_audit_events), (select event_count+1 from test_audit_result),
   'denied command leaves audit and mutations unchanged');
@@ -225,7 +269,7 @@ reset role;
 update auth.sessions set not_after=now()-interval '1 second' where user_id='00000000-0000-4000-8000-000000000001';
 set local role authenticated;
 select pg_temp.login(1);
-select throws_ok($$select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000005','active')$$,
+select throws_ok($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000005',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'expired server session cannot administer');
 reset role;
 set local role anon;
@@ -236,12 +280,12 @@ select throws_ok($$select * from public.teams$$,
   '42501', null, 'anonymous table access denied');
 select throws_ok(command,'42501',null,description) from (values
   ($$select public.team_request_membership('20000000-0000-4000-8000-000000000001')$$,'anonymous admission RPC denied'),
-  ($$select public.team_set_membership('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','active')$$,'anonymous membership RPC denied'),
-  ($$select public.team_set_capability('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002','stats.publish',true)$$,'anonymous grant RPC denied'),
-  ($$select public.team_delegate('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002',array['roster.manage'],now()+interval '1 hour')$$,'anonymous delegation RPC denied'),
-  ($$select public.team_revoke_delegation('20000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000001')$$,'anonymous delegation revocation RPC denied'),
-  ($$select public.team_save_roster('20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER','8')$$,'anonymous roster save RPC denied'),
-  ($$select public.team_archive_roster('20000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000001',1)$$,'anonymous roster archive RPC denied')
+  ($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_status => 'active',p_expected_access_revision => 1)$$,'anonymous membership RPC denied'),
+  ($$select public.team_set_capability(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_capability => 'stats.publish',p_enabled => true,p_expected_access_revision => 1)$$,'anonymous grant RPC denied'),
+  ($$select public.team_delegate(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000002',p_allowed_capabilities => array['roster.manage'],p_expires_at => now()+interval '1 hour',p_expected_access_revision => 1)$$,'anonymous delegation RPC denied'),
+  ($$select public.team_revoke_delegation(p_team_id => '20000000-0000-4000-8000-000000000001',p_envelope_id => '30000000-0000-4000-8000-000000000001',p_expected_access_revision => 1)$$,'anonymous delegation revocation RPC denied'),
+  ($$select public.team_save_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_display_name => 'SYNTHETIC PLAYER',p_jersey_number => '8',p_expected_access_revision => 1)$$,'anonymous roster save RPC denied'),
+  ($$select public.team_archive_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_roster_id => '30000000-0000-4000-8000-000000000001',p_expected_version => 1,p_expected_access_revision => 1)$$,'anonymous roster archive RPC denied')
 ) cases(command,description);
 reset role;
 select * from finish();

@@ -14,6 +14,7 @@ create table public.teams (
   id uuid primary key default gen_random_uuid(),
   name text not null check (length(btrim(name)) between 1 and 100),
   owner_auth_uuid uuid not null references auth.users(id) on delete restrict,
+  access_revision bigint not null default 1 check (access_revision > 0),
   created_at timestamptz not null default now()
 );
 create table public.team_memberships (
@@ -143,11 +144,11 @@ language sql stable security definer set search_path = pg_catalog as $$
 $$;
 -- Serialize commands on the team before rechecking current membership/grants.
 -- Hold the Auth session row too, so concurrent session removal waits for this command.
-create function team_private.command_actor(p_team uuid) returns uuid
+create function team_private.command_actor(p_team uuid,p_expected_access_revision bigint) returns uuid
 language plpgsql security definer set search_path = pg_catalog as $$
-declare v_actor uuid;
+declare v_actor uuid; v_revision bigint;
 begin
-  perform 1 from public.teams where id=p_team for update;
+  select access_revision into v_revision from public.teams where id=p_team for update;
   if not found then raise exception 'Team access denied' using errcode='42501'; end if;
   v_actor := team_private.actor();
   if v_actor is null then raise exception 'Verified session required' using errcode='42501'; end if;
@@ -156,8 +157,16 @@ begin
   if not found or team_private.actor() is null or not team_private.is_active(p_team,v_actor) then
     raise exception 'Active membership required' using errcode='42501';
   end if;
+  if p_expected_access_revision is distinct from v_revision then
+    raise exception 'Team access revision changed; reload before administration' using errcode='40001';
+  end if;
   return v_actor;
 end $$;
+-- Separate from audit: future statistical commands must not change administration revisions.
+create function team_private.advance_access_revision(p_team uuid) returns void
+language sql security definer set search_path = pg_catalog as $$
+  update public.teams set access_revision=access_revision+1 where id=p_team
+$$;
 create function team_private.audit(p_team uuid,p_actor uuid,p_action text,p_target uuid default null,p_cap text default null)
 returns void language sql security definer set search_path = pg_catalog as $$
   insert into public.team_audit_events(team_id,actor_user_id,action,target_id,capability)
@@ -235,12 +244,15 @@ begin
   if not found or team_private.actor() is null then raise exception 'Verified session required' using errcode='42501'; end if;
   insert into public.team_memberships(team_id,user_id,status) values(p_team_id,v_actor,'pending')
   on conflict(team_id,user_id) do nothing;
-  if found then perform team_private.audit(p_team_id,v_actor,'membership.requested',v_actor); end if;
+  if found then
+    perform team_private.audit(p_team_id,v_actor,'membership.requested',v_actor);
+    perform team_private.advance_access_revision(p_team_id);
+  end if;
   return (select status from public.team_memberships where team_id=p_team_id and user_id=v_actor);
 end $$;
-create function public.team_set_membership(p_team_id uuid,p_user_id uuid,p_status text) returns void
+create function public.team_set_membership(p_team_id uuid,p_user_id uuid,p_status text,p_expected_access_revision bigint) returns void
 language plpgsql security definer set search_path = pg_catalog as $$
-declare v_actor uuid := team_private.command_actor(p_team_id);
+declare v_actor uuid := team_private.command_actor(p_team_id,p_expected_access_revision);
 begin
   if not team_private.has_capability(p_team_id,v_actor,'members.manage') or p_user_id=v_actor
     or team_private.is_owner(p_team_id,p_user_id) then
@@ -261,11 +273,12 @@ begin
     update public.delegation_envelopes set revoked_at=now() where team_id=p_team_id and delegate_user_id=p_user_id and revoked_at is null;
   end if;
   perform team_private.audit(p_team_id,v_actor,'membership.'||p_status,p_user_id);
+  perform team_private.advance_access_revision(p_team_id);
 end $$;
 
-create function public.team_delegate(p_team_id uuid,p_user_id uuid,p_allowed_capabilities text[],p_expires_at timestamptz)
+create function public.team_delegate(p_team_id uuid,p_user_id uuid,p_allowed_capabilities text[],p_expires_at timestamptz,p_expected_access_revision bigint)
 returns uuid language plpgsql security definer set search_path = pg_catalog as $$
-declare v_actor uuid := team_private.command_actor(p_team_id); v_id uuid;
+declare v_actor uuid := team_private.command_actor(p_team_id,p_expected_access_revision); v_id uuid;
 begin
   if not team_private.is_owner(p_team_id,v_actor) or p_user_id=v_actor
     or not team_private.is_active(p_team_id,p_user_id) then
@@ -280,11 +293,12 @@ begin
   insert into public.delegation_envelopes(team_id,delegate_user_id,allowed_capabilities,expires_at,issued_by)
   values(p_team_id,p_user_id,p_allowed_capabilities,p_expires_at,v_actor) returning id into v_id;
   perform team_private.audit(p_team_id,v_actor,'delegation.issued',v_id);
+  perform team_private.advance_access_revision(p_team_id);
   return v_id;
 end $$;
-create function public.team_revoke_delegation(p_team_id uuid,p_envelope_id uuid) returns void
+create function public.team_revoke_delegation(p_team_id uuid,p_envelope_id uuid,p_expected_access_revision bigint) returns void
 language plpgsql security definer set search_path = pg_catalog as $$
-declare v_actor uuid := team_private.command_actor(p_team_id);
+declare v_actor uuid := team_private.command_actor(p_team_id,p_expected_access_revision);
 begin
   if not team_private.is_owner(p_team_id,v_actor) then
     raise exception 'Only owner may revoke delegation' using errcode='42501';
@@ -292,10 +306,11 @@ begin
   update public.delegation_envelopes set revoked_at=coalesce(revoked_at,now()) where team_id=p_team_id and id=p_envelope_id;
   if not found then raise exception 'Delegation not found' using errcode='22023'; end if;
   perform team_private.audit(p_team_id,v_actor,'delegation.revoked',p_envelope_id);
+  perform team_private.advance_access_revision(p_team_id);
 end $$;
-create function public.team_set_capability(p_team_id uuid,p_user_id uuid,p_capability text,p_enabled boolean,p_expires_at timestamptz default null)
+create function public.team_set_capability(p_team_id uuid,p_user_id uuid,p_capability text,p_enabled boolean,p_expected_access_revision bigint,p_expires_at timestamptz default null)
 returns void language plpgsql security definer set search_path = pg_catalog as $$
-declare v_actor uuid := team_private.command_actor(p_team_id); v_envelope uuid; v_expiry timestamptz := p_expires_at;
+declare v_actor uuid := team_private.command_actor(p_team_id,p_expected_access_revision); v_envelope uuid; v_expiry timestamptz := p_expires_at;
 begin
   if p_user_id=v_actor or team_private.is_owner(p_team_id,p_user_id) or not team_private.is_active(p_team_id,p_user_id) then
     raise exception 'Grant target must be another active nonowner member' using errcode='42501';
@@ -321,11 +336,12 @@ begin
     values(p_team_id,p_user_id,p_capability,v_actor,v_envelope,v_expiry);
   end if;
   perform team_private.audit(p_team_id,v_actor,case when p_enabled then 'capability.granted' else 'capability.revoked' end,p_user_id,p_capability);
+  perform team_private.advance_access_revision(p_team_id);
 end $$;
 
-create function public.team_save_roster(p_team_id uuid,p_display_name text,p_jersey_number text,p_roster_id uuid default null,p_expected_version bigint default null)
+create function public.team_save_roster(p_team_id uuid,p_display_name text,p_jersey_number text,p_expected_access_revision bigint,p_roster_id uuid default null,p_expected_version bigint default null)
 returns uuid language plpgsql security definer set search_path = pg_catalog as $$
-declare v_actor uuid := team_private.command_actor(p_team_id); v_entry public.roster_entries; v_id uuid;
+declare v_actor uuid := team_private.command_actor(p_team_id,p_expected_access_revision); v_entry public.roster_entries; v_id uuid;
 begin
   if not team_private.has_capability(p_team_id,v_actor,'roster.manage') then
     raise exception 'Roster administration denied' using errcode='42501';
@@ -348,11 +364,12 @@ begin
     v_id := p_roster_id;
   end if;
   perform team_private.audit(p_team_id,v_actor,case when p_roster_id is null then 'roster.added' else 'roster.edited' end,v_id);
+  perform team_private.advance_access_revision(p_team_id);
   return v_id;
 end $$;
-create function public.team_archive_roster(p_team_id uuid,p_roster_id uuid,p_expected_version bigint) returns void
+create function public.team_archive_roster(p_team_id uuid,p_roster_id uuid,p_expected_version bigint,p_expected_access_revision bigint) returns void
 language plpgsql security definer set search_path = pg_catalog as $$
-declare v_actor uuid := team_private.command_actor(p_team_id); v_entry public.roster_entries;
+declare v_actor uuid := team_private.command_actor(p_team_id,p_expected_access_revision); v_entry public.roster_entries;
 begin
   if not team_private.has_capability(p_team_id,v_actor,'roster.manage') then
     raise exception 'Roster administration denied' using errcode='42501';
@@ -362,6 +379,7 @@ begin
   if p_expected_version is null or v_entry.version<>p_expected_version then raise exception 'Roster version changed' using errcode='40001'; end if;
   update public.roster_entries set archived_at=now(),version=version+1 where team_id=p_team_id and id=p_roster_id;
   perform team_private.audit(p_team_id,v_actor,'roster.archived',p_roster_id);
+  perform team_private.advance_access_revision(p_team_id);
 end $$;
 create function public.team_access(p_team_id uuid) returns jsonb
 language plpgsql stable security definer set search_path = pg_catalog as $$
@@ -376,7 +394,8 @@ begin
   into v_envelopes from public.delegation_envelopes
   where team_id=p_team_id and delegate_user_id=v_actor and revoked_at is null and expires_at>clock_timestamp();
   return jsonb_build_object('team_id',p_team_id,'user_id',v_actor,'is_owner',team_private.is_owner(p_team_id,v_actor),
-    'can_propose_stats',true,'capabilities',v_caps,'grant_envelopes',v_envelopes);
+    'can_propose_stats',true,'capabilities',v_caps,'grant_envelopes',v_envelopes,
+    'access_revision',(select access_revision from public.teams where id=p_team_id));
 end $$;
 
 alter table public.teams enable row level security;
@@ -404,12 +423,12 @@ revoke execute on all functions in schema team_private from public,anon,authenti
 grant usage on schema team_private to authenticated;
 grant execute on function team_private.can_read(uuid),team_private.can_admin_read(uuid),
   team_private.can_owner_read(uuid) to authenticated;
-revoke execute on function public.team_request_membership(uuid),public.team_set_membership(uuid,uuid,text),
-  public.team_delegate(uuid,uuid,text[],timestamptz),public.team_revoke_delegation(uuid,uuid),
-  public.team_set_capability(uuid,uuid,text,boolean,timestamptz),public.team_save_roster(uuid,text,text,uuid,bigint),
-  public.team_archive_roster(uuid,uuid,bigint),public.team_access(uuid) from public,anon,authenticated;
-grant execute on function public.team_request_membership(uuid),public.team_set_membership(uuid,uuid,text),
-  public.team_delegate(uuid,uuid,text[],timestamptz),public.team_revoke_delegation(uuid,uuid),
-  public.team_set_capability(uuid,uuid,text,boolean,timestamptz),public.team_save_roster(uuid,text,text,uuid,bigint),
-  public.team_archive_roster(uuid,uuid,bigint),public.team_access(uuid) to authenticated;
+revoke execute on function public.team_request_membership(uuid),public.team_set_membership(uuid,uuid,text,bigint),
+  public.team_delegate(uuid,uuid,text[],timestamptz,bigint),public.team_revoke_delegation(uuid,uuid,bigint),
+  public.team_set_capability(uuid,uuid,text,boolean,bigint,timestamptz),public.team_save_roster(uuid,text,text,bigint,uuid,bigint),
+  public.team_archive_roster(uuid,uuid,bigint,bigint),public.team_access(uuid) from public,anon,authenticated;
+grant execute on function public.team_request_membership(uuid),public.team_set_membership(uuid,uuid,text,bigint),
+  public.team_delegate(uuid,uuid,text[],timestamptz,bigint),public.team_revoke_delegation(uuid,uuid,bigint),
+  public.team_set_capability(uuid,uuid,text,boolean,bigint,timestamptz),public.team_save_roster(uuid,text,text,bigint,uuid,bigint),
+  public.team_archive_roster(uuid,uuid,bigint,bigint),public.team_access(uuid) to authenticated;
 commit;

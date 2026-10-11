@@ -32,7 +32,7 @@ Owner UUIDs are immutable and owner membership cannot be removed or downgraded.
 All client table writes are revoked; administration goes through fixed-search-path
 security-definer commands. Each mutating command serializes on the team, checks
 its verified server session and current active membership, checks current grant
-authority, performs its change and appends an audit event in one transaction.
+authority and the expected access revision, performs its change and appends an audit event in one transaction.
 Expired/removed Auth sessions deny access even when a JWT has not expired yet.
 The signed JWT is still validated by the Supabase gateway; callers cannot be
 allowed to choose database claims themselves in a deployed runtime.
@@ -56,13 +56,23 @@ PostgREST RPC argument names; dates are finite timestamp strings and IDs are UUI
 | RPC | Parameters and result |
 | --- | --- |
 | `team_request_membership` | `p_team_id`; requests own pending admission, never activates it; own current status string |
-| `team_set_membership` | `p_team_id`, `p_user_id`, `p_status` (`pending`, `active`, `removed`); owner or `members.manage`; void |
-| `team_access` | `p_team_id`; own current `user_id`, `is_owner`, `can_propose_stats`, effective `capabilities`, current `grant_envelopes`; JSON |
-| `team_set_capability` | `p_team_id`, `p_user_id`, `p_capability`, `p_enabled`, optional `p_expires_at`; separate owner/envelope authority; void |
-| `team_delegate` | `p_team_id`, `p_user_id`, `p_allowed_capabilities` (string array), `p_expires_at`; owner only; new envelope UUID |
-| `team_revoke_delegation` | `p_team_id`, `p_envelope_id`; owner only; void |
-| `team_save_roster` | `p_team_id`, `p_display_name`, `p_jersey_number`, optional `p_roster_id`, `p_expected_version`; `roster.manage`; roster UUID |
-| `team_archive_roster` | `p_team_id`, `p_roster_id`, `p_expected_version`; `roster.manage`; void |
+| `team_set_membership` | `p_team_id`, `p_user_id`, `p_status` (`pending`, `active`, `removed`), `p_expected_access_revision`; owner or `members.manage`; void |
+| `team_access` | `p_team_id`; own current `user_id`, `is_owner`, `can_propose_stats`, effective `capabilities`, current `grant_envelopes`, `access_revision`; JSON |
+| `team_set_capability` | `p_team_id`, `p_user_id`, `p_capability`, `p_enabled`, `p_expected_access_revision`, optional `p_expires_at`; separate owner/envelope authority; void |
+| `team_delegate` | `p_team_id`, `p_user_id`, `p_allowed_capabilities` (string array), `p_expires_at`, `p_expected_access_revision`; owner only; new envelope UUID |
+| `team_revoke_delegation` | `p_team_id`, `p_envelope_id`, `p_expected_access_revision`; owner only; void |
+| `team_save_roster` | `p_team_id`, `p_display_name`, `p_jersey_number`, `p_expected_access_revision`, optional `p_roster_id`, `p_expected_version`; `roster.manage`; roster UUID |
+| `team_archive_roster` | `p_team_id`, `p_roster_id`, `p_expected_version`, `p_expected_access_revision`; `roster.manage`; void |
+
+Every administration mutation requires the `p_expected_access_revision` captured
+from `team_access` when the administration screen loaded. It has no default and
+NULL cannot bypass the check. Under the team lock, a mismatch raises `40001` and
+leaves membership, grants, roster and audit unchanged; reload before retrying. A
+successful mutation increments `teams.access_revision` in the same transaction.
+Bootstrap starts at 1. A new pending admission request increments it; an
+idempotent admission retry leaves it unchanged. This revision concerns
+administration; future statistical changes do not use it. Roster entry
+`p_expected_version` remains an additional independent check.
 
 `team_save_roster` without an entry ID creates a fresh real server UUID. Existing
 entries require their expected version. Temporary IDs are never converted or
@@ -82,7 +92,7 @@ are a baseline access flag, not a publication permission or a submission RPC.
 Capability names are `stats.review`, `stats.publish`, `datasets.reopen`,
 `roster.manage`, `members.manage`, `plays.author`, `plays.review`, `plays.publish`,
 `practice.upload`, `practice.review`, `practice.publish`, `film.upload`,
-`film.review`, `film.publish`. Access failures use SQLSTATE `42501`, stale roster
+`film.review`, `film.publish`. Access failures use SQLSTATE `42501`, stale administration/roster
 versions `40001`, and invalid command arguments `22023` (table constraints may
 also return standard Postgres validation errors).
 
