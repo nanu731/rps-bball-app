@@ -341,6 +341,27 @@ checks are outstanding, not presumed passing. Larger-text and landscape layouts
 also remain untested. Finish verification before the next implementation task.
 # Step 4 owner feedback — fix before closing
 
+## End-to-end workflow authorization (2026-10-11)
+
+- Owner requests a completion prompt combining installed Matt Pocock engineering
+  skills and LLM Council for ambiguous decisions. Future prompt may continue
+  across milestones rather than stopping after each feature; preserve historical
+  verification limits and do not declare unfinished services complete.
+- Owner roster management and bounded delegated capability administration are
+  required. New instructions override older roster-screen exclusions.
+- Use Council for consequential unresolved choices, batching related questions;
+  skip trivial implementation facts. Keep advisors read-only, independently
+  reasoned, anonymously peer-reviewed, followed by synthesis. Same-model agreement
+  is not factual verification. Record adopted decisions compactly.
+- Backend performance checks: batch related writes, atomic completion operations,
+  measure auth/API/transfer/render latency, bound payloads, and use responsive
+  pending UI with failure recovery. Confirm server success before showing
+  approval/publication. Inspect compression only when actual payloads warrant it.
+  HTML rebuilding is irrelevant to this native app.
+- Completion requires a feature recap, PRD coverage and verification matrix,
+  permission/security test evidence, UI/accessibility review, Git state, remaining
+  human setup and release steps. No real secrets/student data in public GitHub.
+
 - Owner confirmed vertical scrolling on both devices and iPad keyboard-visible
   saving/relaunch persistence. Horizontal swipes do not move paired columns on
   either device. Diagnose overflow and gesture behavior rather than assuming

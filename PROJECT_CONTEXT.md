@@ -1,5 +1,14 @@
 # TeamStats — Project Context and Development Sequence
 
+Latest owner steering (2026-10-11): forthcoming prompt authorizes end-to-end
+completion with installed Matt Pocock skills and LLM Council resolving ambiguous
+design/product choices. Add owner roster management and grant/revoke/delegate
+capability administration; enforce bounded delegation server-side and preserve
+historical data. This supersedes earlier statements excluding roster management
+or requiring a fresh bounded prompt for each feature. External credentials,
+paid-service budget, real branding/roster and release authorization remain human
+inputs, not facts Council can invent. See PRD.md's latest owner-administration section.
+
 Last updated: 2026-10-10.
 Read WORKFLOW.md's Project readiness audit for the 20-item checklist and remaining
 sequence. PRD.md now states value/pain/audience and lean brand/UI standards;

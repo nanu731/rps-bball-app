@@ -72,7 +72,27 @@ Plan for approximately 100 potential users, including coaches and players.
   The owner will provide a fixed actual roster after tryouts. Temporary arbitrary
   names and numbers are now explicitly authorized for development. Label the
   temporary roster visibly and keep it replaceable; do not treat it as real data.
-  An owner roster-management screen is not currently requested.
+  Latest owner instruction requires roster management: add/edit/archive players,
+  preserving historical stats and stable identities. Temporary identities must
+  not silently become actual players.
+
+### Owner administration and delegated completion workflow (2026-10-11)
+
+The owner now authorizes an end-to-end Matt Pocock engineering workflow with
+LLM Council choosing unresolved product/technical defaults within explicit scope.
+This replaces the one-bounded-feature stopping rule for the forthcoming completion
+prompt; existing requirements, verified data and security boundaries still apply.
+Council must not invent actual roster/branding, credentials, budgets or results.
+
+Provide an owner administration UI to grant/revoke capabilities, manage the
+roster, and delegate selected authorization administration to other members.
+Delegation must be bounded and revocable, server-enforced and auditable; delegated
+admins cannot expand their own authority or remove/replace the owner. Choose
+the detailed capability model through Council and record the decision before coding.
+Archive roster entries without erasing historical statistics. Actual destructive
+deletion remains subject to the owner's existing approval preference.
+No live tracking, extra statistical collection fields, or automatic expansion
+into web/Android is authorized. Council decisions cannot override those exclusions.
 
 ## Visual direction
 
