@@ -20,7 +20,8 @@ There is no live tracking in any phase.
 Open `TeamStats/TeamStats.xcodeproj` in Xcode. Select an iPhone/iPad simulator
 to run; physical-device signing requires the developer's own Apple account.
 Most simulator verification has used 26.4; actual 26.0 and physical devices remain
-untested. No third-party app dependencies have been added.
+untested. The approved official Supabase Swift SDK is pinned to 2.55.3; connected
+account/data workflows are not yet implemented or configured.
 
 - [PRD](PRD.md): product scope, data definitions, design direction, open decisions.
 - [Project context](PROJECT_CONTEXT.md): current state and implementation sequence.
@@ -41,3 +42,6 @@ Separate development/staging and production configuration before shared pilot
 data. No backend credentials or environment files are needed for current local
 development. `.gitignore` excludes local environment files and Xcode user state;
 already staged personal files must still be excluded explicitly from commits.
+The operating budget is strictly $0: paid delivery, AI calls and services with
+possible overages remain disabled unless separately authorized. Private local
+completion tickets/configuration are excluded from the public repository.

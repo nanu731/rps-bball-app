@@ -20,6 +20,28 @@ entries and working bytes, existing local records and temporary IDs are preserve
 
 Last updated: 2026-10-08.
 
+### Completion execution evidence
+
+- Setup/coverage/task graph and compact Council defaults committed as `8f6050c`.
+  Independent Standards and Spec reviews reported zero findings for that slice.
+- Official Supabase Swift 2.55.3 is exactly pinned; package resolution and arm64
+  simulator build passed. This is dependency preparation, not completed Auth/data
+  integration. Credential-free local workflows remain available.
+- Owner requires a strictly $0 operating budget. Real SMS, paid AI and possible
+  overage configurations remain disabled. Login identifiers and account settings
+  stay private; trusted owner bootstrap requires verified Auth UUID, never a
+  submitted identifier. No real local records are automatically uploaded.
+- Private nonproduction Sheets destination created and readback verified: native,
+  empty, no public/domain grant; intended recipient has full editing authority.
+  Its configuration is ignored local state. Automatic export remains unimplemented.
+- Google browser initialization emitted an account label in its tool snapshot;
+  this was not stored in source/project logs. Subsequent readbacks were redacted.
+- Pending consolidated banner: isolated iPhone test confirms correct initial
+  heading/selected-player detail and disappearance after changing points to a
+  noncontradictory partial value. An AX cannotComplete error was returned despite
+  applying the change; native keyboard input then produced no update. Further
+  live scope/larger-text/table checks remain pending, not historical passes.
+
 ## Chat responsibilities
 
 The planning chat owns brainstorming, requirement clarification, PRD decisions,
