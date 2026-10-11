@@ -12,6 +12,7 @@
 
 /* Begin PBXFileReference section */
 		8EDFB4AB30777C7C00F9B480 /* TeamStats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TeamStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC0000000000000000000012 /* TeamStatsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TeamStatsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -20,6 +21,7 @@
 			path = TeamStats;
 			sourceTree = "<group>";
 		};
+		CC0000000000000000000011 /* TeamStatsTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = TeamStatsTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,6 +33,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC0000000000000000000014 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -38,6 +41,7 @@
 			isa = PBXGroup;
 			children = (
 				8EDFB4AD30777C7C00F9B480 /* TeamStats */,
+				CC0000000000000000000011 /* TeamStatsTests */,
 				8EDFB4AC30777C7C00F9B480 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,6 +50,7 @@
 			isa = PBXGroup;
 			children = (
 				8EDFB4AB30777C7C00F9B480 /* TeamStats.app */,
+				CC0000000000000000000012 /* TeamStatsTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -75,6 +80,18 @@
 			productName = TeamStats;
 			productReference = 8EDFB4AB30777C7C00F9B480 /* TeamStats.app */;
 			productType = "com.apple.product-type.application";
+		};
+		CC0000000000000000000010 /* TeamStatsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC0000000000000000000016;
+			buildPhases = (CC0000000000000000000013, CC0000000000000000000014, CC0000000000000000000015);
+			buildRules = ();
+			dependencies = (CC000000000000000000001A);
+			fileSystemSynchronizedGroups = (CC0000000000000000000011);
+			name = TeamStatsTests;
+			productName = TeamStatsTests;
+			productReference = CC0000000000000000000012;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -109,6 +126,7 @@
 			projectRoot = "";
 			targets = (
 				8EDFB4AA30777C7C00F9B480 /* TeamStats */,
+				CC0000000000000000000010 /* TeamStatsTests */,
 			);
 		};
 /* End PBXProject section */
@@ -121,6 +139,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC0000000000000000000015 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -131,6 +150,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC0000000000000000000013 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -319,6 +339,38 @@
 			};
 			name = Release;
 		};
+		CC0000000000000000000017 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.narayanlekhi.TeamStatsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TeamStats.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TeamStats";
+			};
+			name = Debug;
+		};
+		CC0000000000000000000018 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.narayanlekhi.TeamStatsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TeamStats.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TeamStats";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -340,6 +392,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		CC0000000000000000000016 = {isa = XCConfigurationList; buildConfigurations = (CC0000000000000000000017, CC0000000000000000000018); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 /* Begin XCRemoteSwiftPackageReference section */
 		CC0000000000000000000002 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
@@ -352,6 +405,14 @@
 /* Begin XCSwiftPackageProductDependency section */
 		CC0000000000000000000003 /* Supabase */ = {isa = XCSwiftPackageProductDependency; package = CC0000000000000000000002 /* XCRemoteSwiftPackageReference "supabase-swift" */; productName = Supabase; };
 /* End XCSwiftPackageProductDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		CC0000000000000000000019 = {isa = PBXContainerItemProxy; containerPortal = 8EDFB4A330777C7C00F9B480; proxyType = 1; remoteGlobalIDString = 8EDFB4AA30777C7C00F9B480; remoteInfo = TeamStats; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		CC000000000000000000001A = {isa = PBXTargetDependency; target = 8EDFB4AA30777C7C00F9B480; targetProxy = CC0000000000000000000019; };
+/* End PBXTargetDependency section */
 
 	};
 	rootObject = 8EDFB4A330777C7C00F9B480 /* Project object */;

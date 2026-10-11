@@ -36,6 +36,11 @@ Last updated: 2026-10-08.
   Its configuration is ignored local state. Automatic export remains unimplemented.
 - Google browser initialization emitted an account label in its tool snapshot;
   this was not stored in source/project logs. Subsequent readbacks were redacted.
+- Native XCTest target/shared scheme added with owner-approved structure. Three
+  meaningful regression tests passed on iPhone17 /26.4 using isolated temporary
+  files: lower-bound scoring/incomplete/overflow, missing-preserving draft edits
+  and unrelated-game preservation, and paint-touch missing versus zero reload.
+  UI automation and test-host runs must be serialized on a given simulator.
 - Pending consolidated banner: isolated iPhone test confirms correct initial
   heading/selected-player detail and disappearance after changing points to a
   noncontradictory partial value. An AX cannotComplete error was returned despite
