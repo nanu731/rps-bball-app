@@ -9,6 +9,7 @@ import SwiftUI
 import Foundation
 
 struct ContentView: View {
+    @State private var account = BackendAccount()
     @State private var games: [Game] = []
     @State private var loadError: String?
     @State private var showingNewGame = false
@@ -89,6 +90,13 @@ struct ContentView: View {
             }
             .tabItem {
                 Label("Players", systemImage: "person.3")
+            }
+
+            NavigationStack {
+                AccountView(account: account)
+            }
+            .tabItem {
+                Label("Account", systemImage: "person.crop.circle")
             }
         }
         .task { loadGames() }
