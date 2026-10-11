@@ -150,3 +150,14 @@ Remaining evidence: concurrent grant/revocation measurements, full native UI and
 session integration, production/hosted configuration, real email/phone delivery,
 physical-device/network checks, statistical publication/exports and deployment.
 None of those is established by these local tests; release approval remains separate.
+
+
+An opt-in native `LocalServerIntegrationTests` check passed against the actual
+loopback stack. It used a trusted synthetic generated email OTP, restored its
+session from Keychain in a new SDK client, and created/edited/archived one clearly
+labeled roster fixture while verifying retained unrelated identities and history.
+This proves the SDK/server seam, not external delivery or the Account UI. Its
+`TEAMSTATS_LOCAL_TEST_FIXTURE` environment JSON must contain only loopback/public
+configuration and synthetic identities; never supply privileged keys or real data.
+Default runs skip it. See `statistics.md` for the statistical lifecycle contract
+and actual isolated SQL results; Sheet delivery remains unimplemented.

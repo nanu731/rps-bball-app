@@ -868,3 +868,75 @@ sake, web design frameworks, and speculative file reorganization. Defer advanced
 offline sync, photo provider selection, Hudl integration and production media
 infrastructure until their milestone. Security and access enforcement are required
 before real shared team use regardless of the approximately 100-user audience.
+
+
+## Completion frontier — 2026-10-11
+
+Owner approved the concrete engineering/test structure and official Supabase SDK.
+SDK2.55.3 resolves to its verified release commit; simulator build passed. Budget
+is strictly $0: paid SMS/AI, payment details and possible overages are prohibited.
+Native Account supports OTP requests/verification, private configuration and
+session storage, retry, restart recovery and sign-out. Integrated signed iPhone
+26.4 test host passed all15 account tests using synthetic SDK responses, including
+actual Keychain namespace/read/write/remove, rejected sessions, refresh success/
+failure and unavailable storage. Hosted email, actual SMS, physical lock/unlock
+and real server-session revocation remain unverified; remote SMS is disabled.
+Three native local-draft tests passed for missing/zero, lower-bound scoring and
+atomic editing without duplicate/lost unrelated records. Fixtures use separate
+paths; no original simulator records were deliberately edited.
+
+Server team access source/threat tests have now run against isolated local services. Standards review
+found no documented breaches (optional duplicated session-guard observation).
+Spec review found missing stale-administration protection; required access-revision
+checks now reject stale/NULL administration requests. The owner approved official
+CLI2.120.0/native runtime; executable checksum matched. Native runtime has an
+unquoted-path failure when cached beneath a path with spaces. A fresh physical
+short temporary runtime home preserves original files and starts successfully;
+service listeners are loopback-only. Actual Postgres17.11 applied the migration;
+all81 pgTAP checks passed, including RLS, owner protection, bounded delegation,
+revocation, history and stale/NULL requests. Signed Auth gateway checks passed40, with26 additional owner/session checks;
+synthetic Auth-table fixture tests alone do not prove real account acquisition. No hosted project or verified real owner
+Auth UUID exists in this work session; contact identifiers cannot grant authority.
+
+The authorized private nonproduction Sheet was created and its intended user's
+full editing ownership verified. It is empty; its destination is ignored local
+configuration. This is destination setup only, not automated export evidence.
+
+Consolidated scoring banner: isolated iPhone26.4 UI showed selected-player partial
+warning above mode controls; changing points4 to21 hid it while the check stayed
+incomplete. Remaining mode/scope/multiple-player, two-device larger-text/rotation,
+scroll/keyboard Save checks are unverified. UI control is absent from the current
+tool session. Do not reuse prior 56d0777 layout approval as current-banner proof.
+Local stats/summary behavior already verified in Steps1–6 is not being repeated.
+
+Native integration: Account, administration and calculation source builds; all45
+native tests passed on iPhone26.4. Account spec review identified initial Keychain
+Retry visibility and changed-contact challenge safety. A new regression first
+proved the old email challenge could authenticate after a failed phone request;
+the fix clears a changed target and preserves same-target resends. Retry is now
+outside the loaded-configuration condition; explicit recovery tested. Standards
+review found0 hard violations; the two spec findings are fixed/tested, with UI
+interaction checks still pending. Administration forms use real SDK commands and
+server revisions;12 tests cover pending admission, stale/denied requests, payloads,
+pagination and confirmed-save/reload failures. Sixteen calculation tests cover
+safe totals, shooting, independently derived Real Possessions and reconciliation;
+these calculations are not yet connected to completed/published datasets.
+
+
+Actual local SDK integration passed one opt-in signed iPhone26.4 test: trusted
+TEST ONLY generated OTP verification, real Auth UUID, fresh SDK/Keychain session
+restore, roster creation, edit without duplicate identity, archive and immutable
+versions1/2/3. Existing unrelated roster identities were preserved. The default
+test run skips this test without its synthetic loopback fixture. This does not
+prove typed inbox delivery, hosted services, phone delivery or UI interactions.
+Administration initial/unavailable data now displays loading/error recovery rather
+than a false empty roster; its affected12-test suite passed.
+
+Local statistical lifecycle source passed136 actual Postgres17.11 checks:
+independent drafts, atomic paired writes, missing/zero validation, real historical
+roster coverage, explicit completion, review/publication, approved revisions,
+immutable accepted data, RLS, stale versions and live revocation. Published
+pointer/audit/export-outbox enqueue are atomic; outbox enqueue is not Sheets
+delivery. The full final migration source was also checked transactionally in
+an isolated synthetic schema and rolled back. Native connected entry/viewing
+integration is still in progress. No hosted migration or owner bootstrap occurred.

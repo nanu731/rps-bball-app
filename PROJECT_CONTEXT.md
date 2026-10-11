@@ -9,20 +9,29 @@ or requiring a fresh bounded prompt for each feature. External credentials,
 paid-service budget, real branding/roster and release authorization remain human
 inputs, not facts Council can invent. See PRD.md's latest owner-administration section.
 
-Last updated: 2026-10-10.
+Last updated: 2026-10-11.
 Completion work is on `codex/teamstats-completion`. Private task graph/acceptance
 and coverage live in ignored `.scratch/teamstats-completion/spec.md`; generic
 engineering configuration is in docs/agents. Structure/default local labels and
 the official Supabase Swift SDK are owner-approved. Actual service configuration,
-budget, signing and release approval remain human inputs. Adopted Council defaults
+signing and release approval remain human inputs. The owner set a strict $0 budget;
+paid SMS/AI and possible overages are not authorized. Adopted Council defaults
 are summarized in docs/adr/0001-reviewed-dataset-versions-and-bounded-grants.md;
 five independent analyses, five anonymous fresh-agent reviews and chairman
 synthesis were performed. Provider capabilities still require primary research.
 Read WORKFLOW.md's Project readiness audit for the 20-item checklist and remaining
 sequence. PRD.md now states value/pain/audience and lean brand/UI standards;
-README.md describes actual setup/status. Backend/auth, environment separation,
-and centralized monitoring are still unimplemented. Finish banner manual checks
-before connected implementation; no additional plugins or redesign are required.
+README.md describes actual setup/status. Native Auth now supports email/phone OTP,
+private Keychain configuration/session restore, Retry and sign-out; remote SMS is
+disabled. Fifteen isolated native account tests passed, including real simulator
+Keychain operations in a signed test host. These SDK fixtures do not prove hosted
+delivery or deployed authorization. Server membership/grant/delegation/roster
+source passed81 actual Postgres17.11 pgTAP checks after local tooling approval.
+Required administration revisions reject stale/NULL requests. Real Auth gateway checks passed40 checks, with26 additional owner/session checks.
+An opt-in native test verified real local Auth, Keychain session restoration and
+roster create/edit/archive/history through the SDK. Hosted integration remains blocked.
+Hosted configuration and centralized monitoring remain unavailable. Continue
+independent work while banner interaction checks remain open.
 Status: requirements draft; Steps 1–6 complete. Games, shared box scores, and paired possession drafts are
 stored locally. Possessions have independent team numbering, stable UUIDs,
 missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data

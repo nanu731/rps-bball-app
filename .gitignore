@@ -76,3 +76,4 @@ build/
 /.scratch/
 /ENGINEERING_SETUP.local.md
 /COMPLETION_SPEC.local.md
+/supabase/.temp/
