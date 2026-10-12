@@ -190,9 +190,13 @@ struct PossessionEditor: View {
         .task { load() }
         .sheet(item: $photoRecord) { record in
             PhotoDraftImportSheet(targetLabel: "\(game.opponent) · \(record.team.label) possession \(record.number)",
-                fields: PossessionField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) }) { reviewed in
+                fields: PossessionField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) } +
+                    [PhotoDraftField(id: "turnover", label: "Turnover", kind: .turnover)]) { reviewed in
                 guard let index = drafts.firstIndex(where: { $0.id == record.id }) else { return }
-                drafts[index].values.merge(reviewed) { _, new in new }
+                drafts[index].values.merge(reviewed.filter { $0.key != "turnover" }) { _, new in new }
+                if let answer = reviewed["turnover"] {
+                    drafts[index].turnover = answer.isEmpty ? nil : answer == "yes"
+                }
                 changed()
             }
         }

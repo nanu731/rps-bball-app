@@ -1,26 +1,78 @@
 import Foundation
+import Darwin
+
+nonisolated enum PhotoDraftFileReader {
+    static let maximumBytes = 25 * 1_024 * 1_024
+
+    static func read(_ url: URL) throws -> Data {
+        try Task.checkCancellation()
+        guard url.isFileURL else { throw PhotoDraftImportError.unreadableImage }
+        // Nonblocking/no-follow prevents special files or a swapped symlink from bypassing the bound.
+        let descriptor = open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK)
+        guard descriptor >= 0 else { throw PhotoDraftImportError.unreadableImage }
+        let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
+        defer { try? handle.close() }
+        var before = stat()
+        guard fstat(descriptor, &before) == 0, before.st_mode & S_IFMT == S_IFREG, before.st_size > 0 else {
+            throw PhotoDraftImportError.unreadableImage
+        }
+        guard before.st_size <= maximumBytes else { throw PhotoDraftImportError.imageTooLarge }
+        var data = Data()
+        while data.count <= maximumBytes {
+            try Task.checkCancellation()
+            let remaining = maximumBytes + 1 - data.count
+            guard let chunk = try handle.read(upToCount: min(65_536, remaining)), !chunk.isEmpty else { break }
+            data.append(chunk)
+            guard data.count <= maximumBytes else { throw PhotoDraftImportError.imageTooLarge }
+        }
+        var after = stat()
+        guard fstat(descriptor, &after) == 0 else { throw PhotoDraftImportError.unreadableImage }
+        guard after.st_size <= maximumBytes else { throw PhotoDraftImportError.imageTooLarge }
+        guard after.st_size == before.st_size, data.count == before.st_size else {
+            throw PhotoDraftImportError.unreadableImage
+        }
+        try Task.checkCancellation()
+        return data
+    }
+}
+
+enum PhotoDraftFieldKind: Equatable, Sendable {
+    case count, turnover
+}
 
 struct PhotoDraftField: Identifiable, Equatable, Sendable {
     let id: String
     let label: String
+    let kind: PhotoDraftFieldKind
+
+    init(id: String, label: String, kind: PhotoDraftFieldKind = .count) {
+        self.id = id
+        self.label = label
+        self.kind = kind
+    }
 }
 
 struct PhotoDraftProposal: Identifiable, Equatable, Sendable {
     let id = UUID()
     let sourceText: String
-    var fieldID: String?
-    var value = ""
+    var fieldID: String? {
+        didSet { if fieldID != oldValue { isConfirmed = false } }
+    }
+    var value = "" {
+        didSet { if value != oldValue { isConfirmed = false } }
+    }
     var isConfirmed = false
 }
 
 enum PhotoDraftImportError: LocalizedError, Equatable {
-    case unresolved, invalidNumber, duplicateField, invalidTarget
+    case unresolved, invalidNumber, invalidTurnover, duplicateField, invalidTarget
     case unsupportedImage, imageTooLarge, unreadableImage, noText, tooMuchText, recognitionFailed, timedOut
 
     var errorDescription: String? {
         switch self {
         case .unresolved: "Choose each field and confirm every value before applying."
         case .invalidNumber: "Enter a nonnegative whole number within the supported integer range, or leave blank."
+        case .invalidTurnover: "Choose Unanswered, Yes or No. A number or recognized notation is not a turnover answer."
         case .duplicateField: "Choose each field only once. Review the duplicate mappings."
         case .invalidTarget: "The available fields changed. Close photo review and reopen the entry screen."
         case .unsupportedImage: "Choose a single JPEG, PNG, HEIC or HEIF image. Other formats are not supported."
@@ -41,6 +93,16 @@ enum PhotoDraftReview {
         return text
     }
 
+    static func validationIssue(value: String, kind: PhotoDraftFieldKind) -> PhotoDraftImportError? {
+        let text = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch kind {
+        case .count:
+            return text.isEmpty || (text.utf8.allSatisfy { (48...57).contains($0) } && Int(text) != nil) ? nil : .invalidNumber
+        case .turnover:
+            return ["", "yes", "no"].contains(text) ? nil : .invalidTurnover
+        }
+    }
+
     // No notation or identity inference: only explicitly mapped, reviewed fields cross this seam.
     static func confirmedValues(_ proposals: [PhotoDraftProposal], fields: [PhotoDraftField]) throws -> [String: String] {
         let known = Set(fields.map(\.id))
@@ -51,12 +113,10 @@ enum PhotoDraftReview {
         var values: [String: String] = [:]
         for proposal in proposals {
             guard proposal.isConfirmed, let field = proposal.fieldID else { throw PhotoDraftImportError.unresolved }
-            guard known.contains(field) else { throw PhotoDraftImportError.invalidTarget }
+            guard let target = fields.first(where: { $0.id == field }) else { throw PhotoDraftImportError.invalidTarget }
             guard values[field] == nil else { throw PhotoDraftImportError.duplicateField }
             let text = proposal.value.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard text.isEmpty || (text.utf8.allSatisfy { (48...57).contains($0) } && Int(text) != nil) else {
-                throw PhotoDraftImportError.invalidNumber
-            }
+            if let issue = validationIssue(value: text, kind: target.kind) { throw issue }
             values[field] = text
         }
         return values
@@ -64,6 +124,7 @@ enum PhotoDraftReview {
 }
 
 #if canImport(UIKit)
+import CoreTransferable
 import ImageIO
 import PhotosUI
 import SwiftUI
@@ -81,8 +142,21 @@ struct PhotoRecognitionResult: Sendable {
     let previewJPEG: Data
 }
 
+// Read inside the provider callback: its temporary URL is not guaranteed after importing returns.
+nonisolated private enum PhotoImportedImage: Transferable, Sendable {
+    case image(Data)
+    case rejected(PhotoDraftImportError)
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(importedContentType: .image, shouldAttemptToOpenInPlace: false) { received in
+            do { return .image(try PhotoDraftFileReader.read(received.file)) }
+            catch let issue as PhotoDraftImportError { return .rejected(issue) }
+        }
+    }
+}
+
 nonisolated enum PhotoTextRecognizer {
-    static let maximumBytes = 25 * 1_024 * 1_024
+    static let maximumBytes = PhotoDraftFileReader.maximumBytes
 
     static func recognize(_ data: Data) async throws -> PhotoRecognitionResult {
         try Task.checkCancellation()
@@ -221,7 +295,7 @@ struct PhotoDraftImportSheet: View {
                             .frame(minHeight: 44)
                     }
                     .disabled(isRecognizing || !proposals.isEmpty)
-                    Text("Processed on this device. No image or recognized text is saved or uploaded. Choosing an iCloud photo may download it through Photos.")
+                    Text("Processed on this device. The app does not persist or upload the image or recognized text. Photos may download an iCloud image or cache a temporary file.")
                         .font(.footnote).foregroundStyle(.secondary)
                     if isRecognizing {
                         ProgressView("Reading photo…")
@@ -260,27 +334,38 @@ struct PhotoDraftImportSheet: View {
                 ForEach($proposals) { $proposal in
                     Section("Review value") {
                         Text("Source: \(proposal.sourceText)").textSelection(.enabled)
-                        if PhotoDraftReview.numericCandidate(from: proposal.sourceText) == nil && !proposal.isConfirmed {
-                            Label("Value unresolved — review the photo and enter a count, or explicitly confirm blank.", systemImage: "questionmark.circle")
-                                .foregroundStyle(.secondary)
-                        }
                         Picker("Existing field", selection: $proposal.fieldID) {
                             Text("Unresolved — choose field").tag(String?.none)
                             ForEach(fields) { field in Text(field.label).tag(Optional(field.id)) }
                         }
-                        TextField("Reviewed value; blank = not entered", text: $proposal.value)
-                            .keyboardType(.numberPad).focused($numericField, equals: proposal.id)
-                            .accessibilityLabel("Reviewed value for \(fields.first { $0.id == proposal.fieldID }?.label ?? "unresolved field")")
+                        if fields.first(where: { $0.id == proposal.fieldID })?.kind == .turnover {
+                            Picker("Reviewed turnover answer", selection: $proposal.value) {
+                                if !["", "yes", "no"].contains(proposal.value) {
+                                    Text("Unresolved — choose answer").tag(proposal.value)
+                                }
+                                Text("Unanswered").tag("")
+                                Text("Yes").tag("yes")
+                                Text("No").tag("no")
+                            }
+                            Text("Unanswered stays missing. Yes and No are explicit answers; neither is inferred from the photo.")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        } else {
+                            if PhotoDraftReview.numericCandidate(from: proposal.sourceText) == nil && !proposal.isConfirmed {
+                                Label("Value unresolved — review the photo and enter a count, or explicitly confirm blank.", systemImage: "questionmark.circle")
+                                    .foregroundStyle(.secondary)
+                            }
+                            TextField("Reviewed value; blank = not entered", text: $proposal.value)
+                                .keyboardType(.numberPad).focused($numericField, equals: proposal.id)
+                                .accessibilityLabel("Reviewed value for \(fields.first { $0.id == proposal.fieldID }?.label ?? "unresolved field")")
+                            Text("Confirmed blank replaces this field with Not entered. Explicit 0 remains 0.")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
                         if let validation = validationIssue(proposal) {
                             Label(validation, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
                         }
                         Toggle("I checked this field and value against the photo", isOn: $proposal.isConfirmed)
                             .disabled(proposal.fieldID == nil || validationIssue(proposal) != nil)
-                        Text("Confirmed blank replaces this field with Not entered. Explicit 0 remains 0.")
-                            .font(.footnote).foregroundStyle(.secondary)
                     }
-                    .onChange(of: proposal.fieldID) { _, _ in proposal.isConfirmed = false }
-                    .onChange(of: proposal.value) { _, _ in proposal.isConfirmed = false }
                 }
                 if !proposals.isEmpty {
                     Section {
@@ -317,9 +402,9 @@ struct PhotoDraftImportSheet: View {
     }
 
     private func validationIssue(_ proposal: PhotoDraftProposal) -> String? {
-        let text = proposal.value.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !text.isEmpty && (!text.utf8.allSatisfy { (48...57).contains($0) } || Int(text) == nil) {
-            return PhotoDraftImportError.invalidNumber.localizedDescription
+        if let field = fields.first(where: { $0.id == proposal.fieldID }),
+           let issue = PhotoDraftReview.validationIssue(value: proposal.value, kind: field.kind) {
+            return issue.localizedDescription
         }
         if let field = proposal.fieldID, proposals.filter({ $0.fieldID == field }).count > 1 {
             return PhotoDraftImportError.duplicateField.localizedDescription
@@ -336,7 +421,14 @@ struct PhotoDraftImportSheet: View {
         issue = nil; lines = []; preview = nil
         recognitionTask = Task {
             do {
-                guard let data = try await item.loadTransferable(type: Data.self) else { throw PhotoDraftImportError.unreadableImage }
+                guard let imported = try await item.loadTransferable(type: PhotoImportedImage.self) else {
+                    throw PhotoDraftImportError.unreadableImage
+                }
+                let data: Data
+                switch imported {
+                case .image(let boundedData): data = boundedData
+                case .rejected(let issue): throw issue
+                }
                 try Task.checkCancellation()
                 let result = try await PhotoTextRecognizer.recognize(data)
                 guard requestID == id, !Task.isCancelled else { return }

@@ -1079,3 +1079,12 @@ Photo Spec review found eager image Data allocation before the size limit. Nativ
 file-transfer/bounded-read repair passed11 photo checks, including original-file
 preservation, oversized rejection and actual synthetic Vision. This is source
 verification, not picker/Cancel/apply or real-form accuracy evidence.
+
+Photo review repair/field coverage:14 integrated tests passed after the bounded
+FileRepresentation read and explicit turnover mapping. Original provider files
+stay untouched; oversized input fails before image allocation. Photo proposal
+mapping/value changes reset confirmation. Numeric/unknown turnover tokens fail
+validation; confirmed unanswered, Yes and No remain distinct in local/shared
+existing-possession buffers. No save, completion, publication or OCR inference
+occurs during apply. Picker/keyboard/Cancel/apply navigation and both-device
+large-text interaction remain unverified while native UI control is locked.

@@ -66,6 +66,60 @@ final class PhotoDraftImportTests: XCTestCase {
         XCTAssertEqual(try PhotoDraftReview.confirmedValues([proposal], fields: fields), ["points": "3"])
     }
 
+    @MainActor
+    func testConfirmedTurnoverPreservesUnansweredYesAndNo() throws {
+        let turnover = [PhotoDraftField(id: "turnover", label: "Turnover", kind: .turnover)]
+        for answer in ["", "yes", "no"] {
+            let proposal = PhotoDraftProposal(sourceText: "untrusted notation", fieldID: "turnover", value: answer, isConfirmed: true)
+            XCTAssertEqual(try PhotoDraftReview.confirmedValues([proposal], fields: turnover), ["turnover": answer])
+        }
+    }
+
+    @MainActor
+    func testTurnoverRejectsNumericAndUnknownAnswersWithoutInference() throws {
+        let turnover = [PhotoDraftField(id: "turnover", label: "Turnover", kind: .turnover)]
+        for answer in ["0", "1", "7", "TO", "true", "false", "unknown", "Yes"] {
+            let proposal = PhotoDraftProposal(sourceText: "TO 1", fieldID: "turnover", value: answer, isConfirmed: true)
+            XCTAssertThrowsError(try PhotoDraftReview.confirmedValues([proposal], fields: turnover)) {
+                XCTAssertEqual($0 as? PhotoDraftImportError, .invalidTurnover, answer)
+            }
+        }
+        XCTAssertNil(PhotoDraftReview.numericCandidate(from: "TO"))
+        let unanswered = PhotoDraftProposal(sourceText: "TO", fieldID: "turnover")
+        XCTAssertThrowsError(try PhotoDraftReview.confirmedValues([unanswered], fields: turnover))
+    }
+
+    @MainActor
+    func testChangingMappingOrReviewedValueRequiresFreshConfirmation() throws {
+        var proposal = PhotoDraftProposal(sourceText: "7", fieldID: "points", value: "7", isConfirmed: true)
+        proposal.fieldID = "turnover"
+        XCTAssertFalse(proposal.isConfirmed)
+        proposal.value = "no"
+        proposal.isConfirmed = true
+        proposal.value = "yes"
+        XCTAssertFalse(proposal.isConfirmed)
+    }
+
+    func testBoundedProviderFileReadRejectsOversizeAndPreservesOriginal() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("TEST_ONLY_photo_oversized_" + UUID().uuidString)
+        XCTAssertTrue(FileManager.default.createFile(atPath: url.path, contents: nil))
+        let handle = try FileHandle(forWritingTo: url)
+        try handle.truncate(atOffset: UInt64(PhotoDraftFileReader.maximumBytes + 1))
+        try handle.close()
+        XCTAssertThrowsError(try PhotoDraftFileReader.read(url)) {
+            XCTAssertEqual($0 as? PhotoDraftImportError, .imageTooLarge)
+        }
+        XCTAssertEqual(try url.resourceValues(forKeys: [.fileSizeKey]).fileSize, PhotoDraftFileReader.maximumBytes + 1)
+    }
+
+    func testBoundedProviderFileReadReturnsValidBytesWithoutChangingFile() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("TEST_ONLY_photo_bounded_" + UUID().uuidString)
+        let expected = Data("TEST ONLY synthetic provider bytes".utf8)
+        try expected.write(to: url)
+        XCTAssertEqual(try PhotoDraftFileReader.read(url), expected)
+        XCTAssertEqual(try Data(contentsOf: url), expected)
+    }
+
     func testUnreadableAndOversizedImagesGiveUsefulErrors() async {
         do {
             _ = try await PhotoTextRecognizer.recognize(Data("not an image".utf8))

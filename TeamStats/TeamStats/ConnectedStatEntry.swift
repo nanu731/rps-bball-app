@@ -408,7 +408,10 @@ struct ConnectedStatEntryView: View {
             paint[player.id.uuidString] = total
         case .possession(let id, _, _):
             guard let index = possessions.firstIndex(where: { $0.id == id }) else { return }
-            possessions[index].values.merge(reviewed) { _, new in new }
+            possessions[index].values.merge(reviewed.filter { $0.key != "turnover" }) { _, new in new }
+            if let answer = reviewed["turnover"] {
+                possessions[index].turnover = answer.isEmpty ? nil : answer == "yes"
+            }
         }
         changed.insert(target.kind)
     }
@@ -571,7 +574,8 @@ private enum ConnectedPhotoTarget: Identifiable {
         switch self {
         case .box: BoxScoreField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) }
         case .paint: [PhotoDraftField(id: "total", label: "Game-total paint touches")]
-        case .possession: PossessionField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) }
+        case .possession: PossessionField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) } +
+            [PhotoDraftField(id: "turnover", label: "Turnover", kind: .turnover)]
         }
     }
 }

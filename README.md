@@ -35,7 +35,9 @@ Photo review is available inside local/shared player and possession drafts. Choo
 a photo, review recognized text, map existing fields and confirm values; applying
 changes only the unsaved buffer. Whole-form notation/player mapping is not inferred.
 On-device recognition can misread zero as O; representative marked-form accuracy
-and device interactions remain unverified. No photo/text is saved or uploaded.
+and device interactions remain unverified. No app photo/text persistence or upload occurs; Photos may create temporary
+provider files. Possession turnover answers require explicit Unanswered/Yes/No
+review; they are never inferred from recognized text.
 There is no live tracking in any phase.
 
 ## Project and planning

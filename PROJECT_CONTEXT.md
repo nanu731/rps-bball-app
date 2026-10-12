@@ -339,3 +339,8 @@ stale-draft defect. Explicit retained-history recovery fixes it;37 additional
 actual SQL checks and8 native play tests passed. Both play/media editors retain
 unsaved buffers after intentional recovery; actual recovery navigation still
 requires device inspection.
+
+Photo import now reads bounded native provider files before allocating image Data;
+all14 integrated photo tests passed. Possession review includes explicit
+Unanswered/Yes/No turnover mapping, never inferred from text or numeric0.
+Counts and optional Boolean answers enter only the existing unsaved record.
