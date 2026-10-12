@@ -929,6 +929,42 @@ before real shared team use regardless of the approximately 100-user audience.
 
 ## Completion frontier — 2026-10-11
 
+### Owner polish rubric: f682cfe audit and source repairs
+
+Audited all11 PRD polish items before changing source. Coherent repairs cover
+unsaved Cancel/Back/swipe handling, pending input locks/progress, stable admin
+destinations, useful empty/admission actions, and access-denied concealment.
+Permission, approval, completion and publication remain server-confirmed. No
+connected disk cache, automatic privileged retry or full offline sync was added;
+the strict$0 budget and existing provider/release gates remain unchanged.
+
+Verification:
+- Play/media denied-save tests first failed with protected rows/access retained;
+  a transient-save control passed. After repair,70 affected fixtures passed:
+  administration12, statistics20, media15, photo14 and play model9.
+- Statistics denied-save → failed Reload failed8 assertions; its ordinary
+  transient control passed. Current-owner export denial failed9 assertions;
+  stale-response control passed. After minimal repairs, all23 statistics cases
+  passed, including successful authorized recovery and independent transient/
+  stale export reads. These are synthetic SDK fixtures, not hosted integration.
+- Standards review:0 violations. Spec review:2 concrete gaps in shared-entry
+  retained header/footer visibility and busy completion choices; repaired and
+  re-reviewed with0 remaining concrete findings. Pending-save court drag is an
+  unverified targeted interaction, not a confirmed defect or speculative repair.
+- Final iPad26.4 simulator build passed. Original four snapshotted iPhone JSON
+  files and both personal Xcode working files/index entries checked unchanged.
+- Native UI observation recovered to the simulator home screen; opening the
+  separately identified POLISH TEST app then failed with
+  `-10005: noWindowsAvailable`. Repeated attempts stopped; no current gestures,
+  keyboard/large-text, suspension or light/dark checks are claimed passed.
+
+Private audit/manual checklist now explicitly covers delayed/failed Save, duplicate
+taps, dirty Back/swipe/Keep editing, replacement confirmation, denied→failed→
+authorized Retry, independent errors, pending admission, keyboard Save, Dynamic
+Type, VoiceOver and light/dark. Physical slow-network, low-power, process
+termination and actual26.0 testing remain separate. Restore a visible unlocked
+Simulator window and use clearly labeled isolated fixtures to finish these gates.
+
 Owner approved the concrete engineering/test structure and official Supabase SDK.
 SDK2.55.3 resolves to its verified release commit; simulator build passed. Budget
 is strictly $0: paid SMS/AI, payment details and possible overages are prohibited.

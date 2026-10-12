@@ -67,10 +67,18 @@ This branch is not a completed hosted integration or release. Nonproduction
 project setup, verified owner bootstrap, team email delivery, trusted Google
 worker configuration and actual video upload/transfer enforcement remain blocked.
 New UI needs iPhone/iPad rotation, larger text, VoiceOver, keyboard/Save and
-recovery/photo interaction checks; Mac UI control is locked. Earlier owner
+recovery/photo interaction checks. Simulator inspection recovered, but native
+input failed with `-10005: noWindowsAvailable`; those interactions remain unverified. Earlier owner
 verification does not verify new screens. Real branding/icon, signing/distribution
 and explicit production/release approval remain outstanding. No paid service,
 public submission or automatic production-data upload is enabled.
+
+The owner-requested polish audit added unsaved-navigation confirmations, pending
+field locks/progress, clearer admission next actions and protected-content hiding
+after confirmed server denial. Recovery buffers remain private until an authorized
+reload; no persistent connected cache or full offline sync was added. Native
+regressions and simulator compilation passed, while slow-network, background/
+termination, accessibility and physical-device acceptance remain separate checks.
 
 A consumer Gmail sender with eligible app-password access is a documented no-cost
 SMTP candidate for team email on Free; it is not configured or verified delivery.

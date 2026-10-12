@@ -33,11 +33,28 @@ These are locally tested implementations, not a completed hosted release.
 | Photo | 14 native tests, including bounded file reads and actual synthetic Vision. Explicit mapping/confirmation only; no identity inference or persistent photo/text copy. Marked-form accuracy and picker interactions unverified. |
 | Video links | 78 actual SQL and 14 native checks; actual local SDK practice/film lifecycle passed with target filtering. File uploads, private playback, quota/transfer enforcement and Hudl access remain incomplete. |
 | Sheets | Private empty destination verified; worker source and outbox tests passed, Google delivery disabled. Trusted service identity/runtime and billing-disabled proof remain unavailable. |
-| Device/release | Mac UI control reports locked; precise checklist is private. Current rotation, large text, VoiceOver, keyboard/recovery checks remain pending; actual 26.0 and physical devices untested. Signing/production/release approval not available. |
+| Device/release | Simulator inspection recovered, but input failed with `-10005: noWindowsAvailable`; attempts stopped. Updated private checklist covers polish/navigation, rotation, large text, VoiceOver and keyboard/recovery. Actual26.0/physical devices and signing/production/release approval remain unverified. |
 
 The owner requested guidance for a new Free project; private guide/wizard are
 prepared and syntax-checked, not run against an account. Real identifiers stay
 out of public files/logs; bootstrap requires trusted verification of Auth UUID.
+
+The f682cfe polish rubric was audited before changes. Demonstrated fixes protect
+unsaved navigation in local/shared game creation, play/media/photo review and
+roster editing; pending requests freeze affected fields and show native progress.
+Administration destinations survive model reloads, and admission messages distinguish
+pending, active and removed responses. Confirmed server denial conceals cached
+statistics/play/media content, including entry headers and completion rosters;
+transient failures preserve recoverable buffers. A failed Retry after denial cannot
+restore protected content. Current-context owner export denial also conceals it;
+ordinary export errors and obsolete responses remain independent.
+Seventy affected native fixtures passed; after the statistics repairs, all23
+statistics fixtures passed. Final iPad simulator build passed. Standards review
+found0 breaches; Spec found2 presentation/locking gaps, repaired and re-reviewed
+with0 remaining concrete findings. Court dragging during pending Save remains a
+targeted UI check. No new persistent connected cache or termination-restoration
+promise was added; full offline synchronization remains deferred. The strict$0
+budget and server-confirmed permissions/approvals are unchanged.
 Additional local Storage/Functions/Imgproxy test tooling is awaiting approval.
 The integrated native suite passed111 tests, with two opt-in local-server tests
 skipped in that run. Actual local-server workflows are verified separately.
