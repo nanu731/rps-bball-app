@@ -1,5 +1,11 @@
 # TeamStats — Project Context and Development Sequence
 
+Owner added Lincoln Devine's polish guide as a UI acceptance reference; PRD.md's
+Human-use polish section records the rubric and native/security adaptations.
+Guide successfully read on 2026-10-11; token-bearing URL intentionally excluded.
+Audit results are not assumed passes. Incorporate the rubric into remaining
+UI/recovery/physical-device validation without changing the $0 or offline scope.
+
 Latest owner steering (2026-10-11): current prompt authorizes end-to-end
 completion with installed Matt Pocock skills and LLM Council resolving ambiguous
 design/product choices. Add owner roster management and grant/revoke/delegate

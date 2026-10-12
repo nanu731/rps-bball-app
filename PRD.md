@@ -96,6 +96,40 @@ into web/Android is authorized. Council decisions cannot override those exclusio
 
 ## Visual direction
 
+### Human-use polish reference (2026-10-11)
+
+Owner-requested reference: Lincoln Devine,
+[11 tells that your app was vibe coded](https://lincolndevine.com/guides/polish/).
+Read successfully in browser; do not commit its token-bearing access URL or copy
+the article/prompts into the repository. Use the following as an audit rubric,
+not evidence these behaviors already pass:
+
+1. Immediate feedback for pending saves; safe rollback on failure.
+2. Distinct loading states without misleading blank screens.
+3. Consider safe cached viewing for returning users.
+4. Native pressed/disabled feedback and comfortable touch targets.
+5. Connection failures preserve recoverable input.
+6. Empty screens explain the next permitted action.
+7. Duplicate taps/retries must not create duplicate operations.
+8. Plain-language errors with a recovery action.
+9. Keyboard-safe fields and Save controls.
+10. Consistent readable light/dark appearance.
+11. Navigation/backgrounding must not silently discard drafts.
+
+Apply to native SwiftUI and the actual membership/review workflow. Pending
+membership is different from an empty roster; show the appropriate next step.
+Never optimistically assert a permission grant, completed sheet, approved edit,
+published statistic or accepted video before server confirmation. Any cache or
+draft recovery must be account/team scoped, protected and cleared/inaccessible
+after sign-out, account change or revoked access. Credentials are not form drafts;
+keep raw sensitive diagnostics out of logs. Bound retries and use server-enforced
+idempotency/revision checks where applicable. Do not automatically replay privileged
+actions after reconnection. Existing offline-sync deferral still applies.
+
+Audit existing flows first, fix demonstrated gaps in coherent slices, and record
+physical-device/slow-network/low-power tests separately from simulator evidence.
+Do not add decorative loading effects or blanket parallel screen rewrites.
+
 ### Lightweight brand and UI standards
 
 Working product name: TeamStats. School colors, logo, and final app icon:
