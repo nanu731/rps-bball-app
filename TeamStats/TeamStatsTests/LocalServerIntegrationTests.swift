@@ -215,7 +215,7 @@ final class LocalServerIntegrationTests: XCTestCase {
             let linkDraft = try XCTUnwrap(openedLink)
             var input = MediaLinkInput()
             input.title = "TEST ONLY native \(kind.rawValue) link"
-            input.linkURL = "https://video.example.invalid/watch"
+            input.linkURL = kind == .film ? "https://www.hudl.com/video/synthetic-never-opened" : "https://video.example.invalid/watch"
             input.notes = "Synthetic metadata only; no provider playback or rights verified."
             let savedLink = await links.save(linkDraft, input: input)
             let savedVersion = try XCTUnwrap(savedLink)

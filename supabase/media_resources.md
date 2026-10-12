@@ -10,6 +10,32 @@ userinfo, non-HTTPS, malformed percent escapes and oversized values are rejected
 URLs use the default HTTPS port or443; URL2048/title120/notes1000 are request bounds,
 not basketball/media-duration limits. Incomplete drafts may have empty title/link.
 
+## Game Film: supported Hudl shortcuts
+
+Migration `202610120001_hudl_shortcuts.sql` restricts new game-film draft saves,
+submissions and publication to safe HTTPS destinations on `hudl.com` or
+`www.hudl.com` (default port or443). This deliberately narrow host allowlist is
+based on Hudl's documented team-library sharing route, not a claim that every
+Hudl product/subdomain is supported. Lookalikes, trailing-dot/encoded authorities,
+unsupported subdomains and credential-bearing URLs fail closed. A supported host
+does not prove that an individual path exists or that the user can access it.
+
+The additive guard leaves existing links, revisions, publication pointers, grants
+and audit records untouched. Historical non-Hudl links remain readable and are
+explicitly labeled earlier provider links in native detail. Copying an earlier
+proposal into a successor preserves saved text; its next Save/submission requires
+an explicitly replaced supported destination or blank incomplete draft. A pending
+unsupported historical link cannot be newly approved; the owner can reject it with
+guidance without altering its URL. Generic historical-response validation remains
+separate from stricter new-input validation, so old records do not break loading.
+
+Film stays on Hudl: no full-game file upload, embedding, scraping, export or offline
+film download is provided. Opening requires an explicit tap. Hudl separately
+requires its account/team access; TeamStats membership/publication cannot confer
+that authority. See [Hudl Share Video & Data](https://support.hudl.com/s/article/share-video-and-data-new-hudl-fb?language=en_US&topic=Review_and_Share_Video_V3).
+Real authorized-link opening, sign-in, unavailable-link and denied-provider cases
+on both device types remain acceptance gates. Synthetic URLs are never opened.
+
 ## Identity and authority
 
 Practice resources target a stable **currently published play** in the same team;
@@ -96,7 +122,7 @@ A future trusted upload service must establish **known current project capacity*
 and free-plan status before authorizing bytes. No payment details, paid SMS/AI,
 overages or plan upgrade are authorized. Unknown/stale budget status fails closed.
 The provider's50MB ceiling is not an app allowance: choose a lower application
-limit and make it explicit; no promise that full game film fits Free storage.
+limit and make it explicit; full game film is excluded from TeamStats storage.
 
 Reserve storage bytes and conservative transfer allowances atomically, keyed by
 stable resource/version/user/team with finite expiry. Concurrent upload requests
@@ -114,8 +140,8 @@ before issuing bounded access. Unknown quota, provider rights or capability is a
 blocked operation, not a successful upload/playback. No silent compression,
 deletions, eviction, public bucket or external transfer workaround. Raw private
 provider tokens stay trusted; no service-role/Google/media secrets ship in iOS.
-Actual Storage/Functions/Imgproxy tooling and trusted capacity enforcement remain
-separately gated. Link tests cannot substitute for actual object upload/download,
+Necessary free Storage/Functions/Imgproxy tooling is now owner-authorized; actual
+installation and trusted capacity enforcement remain separately verified. Link tests cannot substitute for actual object upload/download,
 provider rights, billing-disabled evidence, hosted RLS or device playback checks.
 
 ## Evidence
@@ -129,3 +155,16 @@ passed with the explicit FK embedding. Native SDK
 fixtures exercise validation/save/retry/current authority; device interaction,
 hosted services and actual external-provider access are separate checks. No
 existing runtime/simulator records are overwritten by these tests.
+
+### Hudl-only shortcut slice — 2026-10-12
+
+The native Save tracer first failed because a film accepted an unrelated HTTPS
+host. After kind-specific validation, all18 native media tests passed on iPhone
+Simulator26.4, including host/blank validation and historical-film recovery without
+rewriting saved links. The actual loopback command tracer also failed before the
+additive guard; after it,24 Hudl checks and78 existing media regression checks
+passed. Each SQL run rolled back fixture rows and migration DDL; postflight
+confirmed the new validator was absent from that existing runtime. No hosted
+migration, provider-link opening or actual Hudl/device UI acceptance is claimed.
+The existing opt-in SDK lifecycle fixture now supplies a never-opened Hudl URL
+for film; that named real SDK workflow has not been rerun for this slice.

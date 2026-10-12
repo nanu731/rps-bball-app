@@ -5,6 +5,60 @@ import Supabase
 
 @MainActor
 final class MediaResourcesTests: XCTestCase {
+    func testFilmDraftRejectsNonHudlBeforeSave() async throws {
+        let fixture = MediaFixture(mode: .filmContributor)
+        let model = fixture.model(kind: .film); await model.load()
+        let draft = try mediaRequired(await model.openDraft(resourceID: mediaResourceID))
+        var input = MediaLinkInput(draft)
+        input.title = "SYNTHETIC FILM SHORTCUT"
+        input.linkURL = "https://video.example.invalid/watch"
+        let commandCount = fixture.commands.count
+        assertMediaNil(await model.save(draft, input: input))
+        XCTAssertEqual(model.issue, .invalidInput)
+        XCTAssertEqual(fixture.commands.count, commandCount)
+        input.linkURL = "https://www.hudl.com/video/synthetic-never-opened"
+        let saved = try mediaRequired(await model.save(draft, input: input))
+        XCTAssertEqual(saved.linkURL, input.linkURL)
+        XCTAssertEqual(saved.revision, 2)
+    }
+    func testHudlShortcutValidationKeepsDraftBlanksAndRejectsLookalikes() {
+        var input = MediaLinkInput()
+        XCTAssertTrue(input.validDraft(for: .film)); XCTAssertFalse(input.readyToSubmit(for: .film))
+        input.title = "SYNTHETIC SHORTCUT"
+        for supported in ["https://hudl.com/v/synthetic", "https://www.hudl.com/video/synthetic", "https://HUDL.COM:443/video/synthetic?view=team"] {
+            input.linkURL = supported
+            XCTAssertTrue(input.readyToSubmit(for: .film), supported)
+            XCTAssertNotNil(MediaLinkInput.hudlURL(supported))
+        }
+        for unsupported in ["https://hudl.com.evil.invalid/video", "https://evilhudl.com/video", "https://hudl.com./video", "https://unverified.hudl.com/video", "https://%68udl.com/video", "https://user@hudl.com/video", "https://hudl.com:8443/video", "https://hudl.com/video#private", "https://hudl.com/video?access_token=synthetic", "http://hudl.com/video"] {
+            input.linkURL = unsupported
+            XCTAssertFalse(input.validDraft(for: .film), unsupported)
+            XCTAssertNil(MediaLinkInput.hudlURL(unsupported))
+        }
+        input.linkURL = "https://video.example.invalid/watch"
+        XCTAssertTrue(input.readyToSubmit(for: .practice))
+        XCTAssertFalse(input.readyToSubmit(for: .film))
+    }
+    func testHistoricalFilmLoadsAndRecoveryRetainsItsLinkUntilExplicitReplacement() async throws {
+        let fixture = MediaFixture(mode: .staleDraft); let model = fixture.model(kind: .film)
+        await model.load()
+        XCTAssertTrue(model.didLoad)
+        let historical = try XCTUnwrap(model.published.first)
+        XCTAssertEqual(historical.linkURL, "https://video.example.invalid/my-proposal")
+        XCTAssertNotNil(historical.externalURL); XCTAssertNil(MediaLinkInput.hudlURL(historical.linkURL))
+        let previous = try XCTUnwrap(model.ownDrafts.first)
+        let resumed = try mediaRequired(await model.resumeDraft(previous))
+        XCTAssertEqual(resumed.linkURL, previous.linkURL)
+        XCTAssertEqual(model.versions.first { $0.id == previous.id }?.status, .superseded)
+        assertMediaNil(await model.save(resumed, input: MediaLinkInput(resumed)))
+        XCTAssertEqual(model.issue, .invalidInput)
+        assertMediaNil(await model.transition(resumed, action: "submit"))
+        var revised = MediaLinkInput(resumed); revised.linkURL = "https://hudl.com/v/synthetic-never-opened"
+        let saved = try mediaRequired(await model.save(resumed, input: revised))
+        XCTAssertEqual(saved.linkURL, revised.linkURL)
+        XCTAssertEqual(model.published.first?.id, historical.id)
+        XCTAssertEqual(model.versions.first { $0.id == previous.id }?.linkURL, previous.linkURL)
+    }
     func testConfirmedDenialConcealsLoadedMediaUntilAuthorizedReload() async throws {
         let fixture = MediaFixture(); let model = fixture.model(); await model.load()
         let draft = try mediaRequired(await model.openDraft(resourceID: mediaResourceID))
@@ -222,7 +276,7 @@ private let mediaPriorID = UUID(uuidString: "d7000000-0000-4000-8000-00000000000
 private let mediaResumedID = UUID(uuidString: "d8000000-0000-4000-8000-000000000001")!
 private let mediaVersionID = UUID(uuidString: "d5000000-0000-4000-8000-000000000001")!
 private final class MediaFixture: @unchecked Sendable {
-    enum Mode { case standard, conflict, failure, malformed, loadFailureOnce, filmPublishOnly, ownerPending, inspectorPending, staleDraft, lostResumeAck, ambiguousRecovery, staleRecovery, missingRecoveryLineage, chainedRecovery, validRecoveryChain, cyclicRecovery, revokedRecovery }
+    enum Mode { case filmContributor, standard, conflict, failure, malformed, loadFailureOnce, filmPublishOnly, ownerPending, inspectorPending, staleDraft, lostResumeAck, ambiguousRecovery, staleRecovery, missingRecoveryLineage, chainedRecovery, validRecoveryChain, cyclicRecovery, revokedRecovery }
     struct Command { let name: String; let parameters: [String: Any] }
     let key = UUID().uuidString
     private let mode: Mode
@@ -263,7 +317,7 @@ private final class MediaFixture: @unchecked Sendable {
             if name == "team_access" {
                 if unavailableRead { return json(["code": "XX000", "message": "Synthetic unavailable"], status: 500) }
                 if mode == .loadFailureOnce && !failed { failed = true; return json(["code": "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 500) }
-                let capabilities: [String] = mode == .filmPublishOnly ? ["film.publish"] : mode == .inspectorPending ? ["practice.review"] : mode == .revokedRecovery && !resumed ? ["film.upload"] : []
+                let capabilities: [String] = (mode == .filmContributor || (kind == .film && mode == .staleDraft)) ? ["film.upload"] : mode == .filmPublishOnly ? ["film.publish"] : mode == .inspectorPending ? ["practice.review"] : mode == .revokedRecovery && !resumed ? ["film.upload"] : []
                 return json(["team_id": mediaTeamID.uuidString, "user_id": mediaActorID.uuidString, "is_owner": mode == .ownerPending,
                              "access_revision": 1, "capabilities": capabilities, "grant_envelopes": []])
             }

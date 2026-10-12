@@ -4,7 +4,7 @@ import Supabase
 
 enum MediaResourceKind: String, Codable, Sendable {
     case practice, film
-    var label: String { self == .practice ? "Practice video links" : "Game film links" }
+    var label: String { self == .practice ? "Practice video links" : "Game Film — Hudl" }
     var inspection: TeamCapability { self == .practice ? .practiceReview : .filmReview }
     var publication: TeamCapability { self == .practice ? .practicePublish : .filmPublish }
 }
@@ -67,6 +67,19 @@ struct MediaLinkInput: Equatable, Sendable {
         (linkURL.isEmpty || Self.validURL(linkURL) != nil)
     }
     var readyToSubmit: Bool { validDraft && !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && Self.validURL(linkURL) != nil }
+    func validDraft(for kind: MediaResourceKind) -> Bool {
+        validDraft && (kind != .film || linkURL.isEmpty || Self.hudlURL(linkURL) != nil)
+    }
+    func readyToSubmit(for kind: MediaResourceKind) -> Bool {
+        readyToSubmit && validDraft(for: kind)
+    }
+    /// Deliberately narrow supported hosts; no inference from suffixes or redirects.
+    static func hudlURL(_ text: String) -> URL? {
+        guard let url = validURL(text) else { return nil }
+        let authority = text.dropFirst(8).prefix { $0 != "/" && $0 != "?" }.lowercased()
+        guard ["hudl.com", "www.hudl.com", "hudl.com:443", "www.hudl.com:443"].contains(authority) else { return nil }
+        return url
+    }
     static func validURL(_ text: String) -> URL? {
         guard text.count <= 2048, text.hasPrefix("https://"),
               text.unicodeScalars.allSatisfy({ $0.value >= 33 && $0.value <= 126 }),
@@ -225,7 +238,7 @@ final class MediaResources {
     }
     @discardableResult
     func save(_ version: MediaResourceVersion, input: MediaLinkInput) async -> MediaResourceVersion? {
-        guard input.validDraft else { issue = .invalidInput; confirmation = nil; return nil }
+        guard input.validDraft(for: kind) else { issue = .invalidInput; confirmation = nil; return nil }
         guard version.status == .draft, version.authorUserID == access?.userID, canContribute, version.revision < Int64.max else { issue = .denied; return nil }
         return await command("media_save_draft", resourceID: version.resourceID, expectedStatus: .draft, version: version, values: [
             "p_title": .string(input.title), "p_link_url": .string(input.linkURL), "p_notes": .string(input.notes)])
@@ -237,7 +250,7 @@ final class MediaResources {
         guard (action == "submit" && own && canContribute && version.status == .draft) ||
               (action == "publish" && own && canPublishOwn && version.status == .draft) ||
               (["approve", "reject"].contains(action) && access?.isOwner == true && version.status == .submitted) else { issue = .denied; return nil }
-        guard action == "reject" || MediaLinkInput(version).readyToSubmit else { issue = .invalidInput; return nil }
+        guard action == "reject" || MediaLinkInput(version).readyToSubmit(for: kind) else { issue = .invalidInput; return nil }
         let expected: MediaResourceStatus = action == "submit" ? .submitted : action == "reject" ? .rejected : .published
         return await command("media_transition", resourceID: version.resourceID, expectedStatus: expected, version: version, values: ["p_action": .string(action), "p_reason": .string(reason)])
     }
