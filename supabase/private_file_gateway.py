@@ -140,9 +140,28 @@ class TrustedValidator:
         resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
+    @staticmethod
+    def group_members(group: int) -> list[tuple[int, int]]:
+        try:
+            usage = subprocess.run(['/bin/ps', '-eo', 'pid=,pgid=,rss='], capture_output=True, text=True, timeout=3)
+            if usage.returncode != 0 or not isinstance(usage.stdout, str) or not usage.stdout.strip():
+                raise ValueError()
+            members = []
+            for line in usage.stdout.splitlines():
+                parts = line.split()
+                if len(parts) != 3 or any(not value.isdecimal() for value in parts):
+                    raise ValueError()
+                pid, pgid, rss = map(int, parts)
+                if pgid == group:
+                    members.append((pid, rss))
+            return members
+        except (OSError, subprocess.TimeoutExpired, ValueError):
+            raise FileFailure('validation_monitor_unavailable', 503) from None
+
     def validate(self, kind: str, data: bytes) -> dict:
         if not self.lock.acquire(timeout=1):
             raise FileFailure('validator_busy', 503)
+        lease_safe = True
         try:
             # Pin is rechecked before execution, not just at startup.
             if hashlib.sha256(self.command.read_bytes()).hexdigest() != self.pin:
@@ -155,26 +174,48 @@ class TrustedValidator:
                 with tempfile.TemporaryFile(dir=self.directory) as output, tempfile.TemporaryFile(dir=self.directory) as diagnostics:
                     process = subprocess.Popen([str(self.command)], stdin=subprocess.PIPE, stdout=output, stderr=diagnostics,
                                                env=self.environment, start_new_session=True, preexec_fn=self.limits)
-                    process.stdin.write(request); process.stdin.close()
-                    deadline = time.monotonic() + 60
-                    while process.poll() is None:
-                        usage = subprocess.run(['/bin/ps', '-eo', 'pgid=,rss='], capture_output=True, text=True, timeout=3)
-                        rss = sum(int(parts[1]) for line in usage.stdout.splitlines()
-                                  if len(parts := line.split()) == 2 and parts[0] == str(process.pid))
-                        if time.monotonic() > deadline or rss > 512 * 1024:
-                            os.killpg(process.pid, signal.SIGKILL); process.wait()
-                            raise FileFailure('validation_resource_limit', 422)
-                        time.sleep(0.05)
-                    output.seek(0); result = output.read(8193)
-                    if process.returncode != 0 or len(result) > 8192:
-                        raise FileFailure('validation_unavailable', 503)
+                    lease_safe = False
                     try:
-                        reply = json.loads(result)
-                    except ValueError:
-                        raise FileFailure('validation_unavailable', 503) from None
-                    return verified_validation(kind, data, reply)
+                        process.stdin.write(request); process.stdin.close()
+                        deadline = time.monotonic() + 60
+                        while process.poll() is None:
+                            members = self.group_members(process.pid)
+                            if time.monotonic() > deadline or sum(rss for _, rss in members) > 512 * 1024:
+                                raise FileFailure('validation_resource_limit', 422)
+                            time.sleep(0.05)
+                        if any(pid != process.pid for pid, _ in self.group_members(process.pid)):
+                            raise FileFailure('validation_child_process_unconfirmed', 503)
+                        output.seek(0); result = output.read(8193)
+                        if process.returncode != 0 or len(result) > 8192:
+                            raise FileFailure('validation_unavailable', 503)
+                        try:
+                            reply = json.loads(result)
+                        except ValueError:
+                            raise FileFailure('validation_unavailable', 503) from None
+                        return verified_validation(kind, data, reply)
+                    finally:
+                        # Parent exit is not proof that renderer children exited. Always
+                        # terminate the owned group and reap its parent before releasing
+                        # the single-parser lease, including monitoring/output failures.
+                        try:
+                            os.killpg(process.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                        process.wait(timeout=3)
+                        deadline = time.monotonic() + 3
+                        while True:
+                            try:
+                                os.killpg(process.pid, 0)
+                            except ProcessLookupError:
+                                lease_safe = True
+                                break
+                            if time.monotonic() > deadline:
+                                raise FileFailure('validation_cleanup_unconfirmed', 503)
+                            time.sleep(0.01)
         finally:
-            self.lock.release()
+            # Unconfirmed cleanup keeps this parser unavailable until operator restart.
+            if lease_safe:
+                self.lock.release()
 
 def verified_validation(kind: str, data: bytes, reply: dict) -> dict:
     if not isinstance(reply, dict) or reply.get('valid') is not True:

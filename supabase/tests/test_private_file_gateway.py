@@ -10,6 +10,7 @@ import io
 import json
 import os
 import socket
+import signal
 import subprocess
 import sys
 import time
@@ -19,6 +20,7 @@ from pathlib import Path
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 import uuid
 
 SPEC = importlib.util.spec_from_file_location('private_file_gateway', Path(__file__).parents[1] / 'private_file_gateway.py')
@@ -148,6 +150,56 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
         gateway=MODULE.FileGateway(MODULE.Providers(config),MODULE.TrustedValidator(config))
         self.failure(lambda:gateway.upload('SYNTHETIC USER',OPERATION,io.BytesIO(DATA),len(DATA)),'validator_receipt_mismatch')
         self.assertEqual(self.objects,{});self.assertEqual(self.receipt['status'],'failed')
+    def monitor_failure(self, fault):
+        pid_file=Path(self.temp.name)/'validator-child-pids'
+        self.write_validator("import os,subprocess,time\nchild=subprocess.Popen(['/bin/sleep','30'])\nopen("+repr(str(pid_file))+",'w').write(str(os.getpid())+' '+str(child.pid))\ntime.sleep(30)")
+        config=dict(self.config,validator_sha256=hashlib.sha256(self.validator_path.read_bytes()).hexdigest())
+        validator=MODULE.TrustedValidator(config)
+        real_run=subprocess.run
+        def failed_monitor(command,*args,**kwargs):
+            if command[0]=='/bin/ps':
+                deadline=time.monotonic()+2
+                while not pid_file.exists() and time.monotonic()<deadline:time.sleep(.01)
+                if isinstance(fault,Exception):raise fault
+                return fault
+            return real_run(command,*args,**kwargs)
+        try:
+            with patch.object(MODULE.subprocess,'run',side_effect=failed_monitor):
+                with self.assertRaises(MODULE.FileFailure) as caught:validator.validate('scouting',DATA)
+                self.assertEqual(caught.exception.code,'validation_monitor_unavailable')
+            parent,child=map(int,pid_file.read_text().split())
+            for pid in (parent,child):
+                with self.assertRaises(ProcessLookupError):os.kill(pid,0)
+        finally:
+            if pid_file.exists():
+                parent=int(pid_file.read_text().split()[0])
+                try:os.killpg(parent,signal.SIGKILL)
+                except ProcessLookupError:pass
+    def test_monitor_timeout_terminates_actual_child_group(self):
+        self.monitor_failure(subprocess.TimeoutExpired(['/bin/ps'],3))
+    def test_monitor_oserror_terminates_actual_child_group(self):
+        self.monitor_failure(OSError('SYNTHETIC monitor unavailable'))
+    def test_monitor_nonzero_exit_terminates_actual_child_group(self):
+        self.monitor_failure(subprocess.CompletedProcess(['/bin/ps'],1,stdout=''))
+    def test_monitor_malformed_rows_terminate_actual_child_group(self):
+        self.monitor_failure(subprocess.CompletedProcess(['/bin/ps'],0,stdout='malformed row'))
+    def test_orphan_renderer_is_not_a_successful_validation(self):
+        pid_file=Path(self.temp.name)/'orphan-renderer'
+        self.write_validator("import os,subprocess\nchild=subprocess.Popen(['/bin/sleep','30'])\nopen("+repr(str(pid_file))+",'w').write(str(os.getpid())+' '+str(child.pid))")
+        config=dict(self.config,validator_sha256=hashlib.sha256(self.validator_path.read_bytes()).hexdigest())
+        validator=MODULE.TrustedValidator(config)
+        try:
+            with self.assertRaises(MODULE.FileFailure) as caught:validator.validate('scouting',DATA)
+            self.assertEqual(caught.exception.code,'validation_child_process_unconfirmed')
+            parent,child=map(int,pid_file.read_text().split())
+            for pid in (parent,child):
+                with self.assertRaises(ProcessLookupError):os.kill(pid,0)
+        finally:
+            if pid_file.exists():
+                parent=int(pid_file.read_text().split()[0])
+                try:os.killpg(parent,signal.SIGKILL)
+                except ProcessLookupError:pass
+
     def test_external_endpoint_configuration_is_denied(self):
         self.failure(lambda:MODULE.Providers(dict(self.config,rest_url='https://external.example.invalid/rest')),'local_endpoint_required')
     def test_credentials_in_endpoint_are_denied(self):

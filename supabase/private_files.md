@@ -16,7 +16,8 @@ is exposed. Scouting requires separate `scouting.upload` / `scouting.read` grant
 these names extend the whitelist without issuing any live grants. Only the owner
 approves scouting publication. Current published scouting viewing needs read
 permission; archived/previous accepted document retrieval is owner-only. Currently eligible authors
-can inspect their own pending/failed/rejected metadata for recovery; losing a
+can inspect their own pending/failed metadata for recovery; rejected scouting history is
+owner-only. Losing a
 scouting-upload grant conceals these records and blocks pending-byte retrieval.
 
 All active members can propose pending practice clips. For the **new byte feature**,
@@ -127,17 +128,20 @@ authority. This is not full offline shared-stat synchronization.
 ## Evidence and remaining gates
 
 The missing-command tracer failed before implementation. The rollback SQL suite
-passed67 checks against the actual approved local Postgres instance: authenticated
+passed69 checks against the actual approved local Postgres instance: authenticated
 commands, missing/zero/oversized/overflow/target validation, state/revision/approval,
 RLS and service-only receipt denial, retained budget accounting, session/revocation,
 archive/history and transfer exhaustion. Its injected **protocol receipts are not
 actual Storage or content-validation evidence**. It rolls back the entire new schema
 and every synthetic identity/audit row; existing records are untouched.
 
-Eighteen stdlib HTTP/subprocess gateway tests passed, covering exact-length actual
+Twenty-three stdlib HTTP/subprocess gateway tests passed, covering exact-length actual
 HTTP route response, durable readback/digest, interruption, lost acknowledgment,
 explicit reconciliation without overwrite, denial/revocation, private error
-sanitization and pins. The provider and validator are explicitly synthetic external
+sanitization and pins, plus five previously failing monitoring/orphan-child cases. Monitoring
+failure denies validation; every launched group is killed and its parent reaped
+before the parser lease is released. Unconfirmed cleanup keeps the parser blocked
+until trusted operator recovery. The provider and validator are explicitly synthetic external
 fixtures; they do not establish real Storage, PDF/AV decode, hosted enforcement or
 device playback. Actual local Storage/native-validator integration, concurrent
 signed accounts, native upload/download/restart/space/UI and hosted capacity/cost

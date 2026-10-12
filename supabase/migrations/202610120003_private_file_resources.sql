@@ -51,7 +51,7 @@ $$;
 create function team_private.file_visible(t uuid,v uuid) returns boolean language sql stable security definer set search_path=pg_catalog as $$
  select team_private.can_read(t) and exists(select 1 from public.file_resource_versions x join public.file_resources r on r.id=x.resource_id where x.id=v and x.team_id=t
  and (team_private.is_owner(t,team_private.actor()) or (r.archived_at is null and
- ((x.author_user_id=team_private.actor() and team_private.file_eligible(t,team_private.actor(),r.kind) and x.status<>'published') or (r.published_version_id=x.id and x.status='published' and (r.kind='practice' or team_private.has_capability(t,team_private.actor(),'scouting.read')))))))
+ ((x.author_user_id=team_private.actor() and team_private.file_eligible(t,team_private.actor(),r.kind) and ((r.kind='practice' and x.status<>'published') or (r.kind='scouting' and x.status in ('uploading','ready','submitted','failed')))) or (r.published_version_id=x.id and x.status='published' and (r.kind='practice' or team_private.has_capability(t,team_private.actor(),'scouting.read')))))))
 $$;
 create function team_private.file_parent_visible(t uuid,r uuid) returns boolean language sql stable security definer set search_path=pg_catalog as $$select exists(select 1 from public.file_resource_versions x where x.team_id=t and x.resource_id=r and team_private.file_visible(t,x.id))$$;
 alter table public.file_resources enable row level security;
