@@ -342,7 +342,7 @@ final class ConnectedStatistics {
             didLoadGames = true; reloadRequired = false
         } catch { games = []; fail(error) }
     }
-    /// Delivery is independent of the statistics snapshot; its failure must not hide saved data.
+    /// Transient delivery failures stay independent; current server-denied access conceals the snapshot.
     func loadExportStatus() async {
         guard !isLoadingExportStatus else { return }
         exportStatus = []; didLoadExportStatus = false; exportIssue = nil
@@ -363,7 +363,8 @@ final class ConnectedStatistics {
             didLoadExportStatus = true
         } catch {
             guard exportReadContext == context, selectedGame?.id == game.id, didLoadGame else { return }
-            exportIssue = Self.mappedIssue(error)
+            let failure = Self.mappedIssue(error)
+            if failure == .denied { fail(error) } else { exportIssue = failure }
         }
     }
     @discardableResult
@@ -647,6 +648,11 @@ final class ConnectedStatistics {
     private func fail(_ error: Error) {
         confirmation = nil
         issue = Self.mappedIssue(error)
+        if issue == .denied {
+            // A later transient Retry must not expose a snapshot whose access was denied.
+            // Keep retryGame private and editor-owned entry buffers outside this model.
+            games = []; didLoadGames = false; clearGame(); reloadRequired = true
+        }
     }
     private static func mappedIssue(_ error: Error) -> ConnectedStatisticsIssue {
         if let error = error as? ConnectedStatisticsIssue { return error }

@@ -81,6 +81,7 @@ struct ConnectedStatEntryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(!changed.isEmpty)
         .safeAreaInset(edge: .bottom) { saveBar }
+        .onChange(of: unavailable) { _, hidden in if hidden { focused = nil } }
         .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { focused = nil } } }
         .task { if !loaded { hydrateInitial() } }
         .sheet(item: $completionKind) { kind in
@@ -93,7 +94,7 @@ struct ConnectedStatEntryView: View {
             }
         }
         .sheet(item: $photoTarget) { target in
-            PhotoDraftImportSheet(targetLabel: "\(game.opponent) · \(target.label)", fields: target.fields) {
+            PhotoDraftImportSheet(targetLabel: unavailable ? "Shared entry unavailable" : "\(game.opponent) · \(target.label)", fields: target.fields) {
                 applyPhoto($0, to: target)
             }
         }
@@ -110,12 +111,6 @@ struct ConnectedStatEntryView: View {
 
     private var entryHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if initialDataset == .boxScores { discrepancyBanner }
-            if initialDataset == .boxScores {
-                Picker("Entry mode", selection: $mode) {
-                    ForEach(BoxScoreEntryMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.segmented)
-            }
             if model.isBusy { ProgressView("Contacting statistics server…") }
             if let issue = model.issue {
                 Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
@@ -124,22 +119,30 @@ struct ConnectedStatEntryView: View {
             Text("Reload keeps this screen's entries. If an approved recovery exists, explicitly attach these entries or load its saved values. Neither action repeats approval.")
                 .font(.footnote).foregroundStyle(.secondary)
             if let confirmation = model.confirmation { Label(confirmation, systemImage: "checkmark.circle") }
-            Text(game.opponent).font(.headline)
-            Text("Blank = not entered. Enter 0 explicitly. Use nonnegative whole numbers within the supported range.")
-                .font(.footnote).foregroundStyle(.secondary)
-            if isPaired {
-                Text("Each team's numbering is independent. These paired rows do not mean simultaneous or chronological possessions.")
-                Text("A possession runs from legal team possession until the opponent legally possesses the ball. Free throws, offensive rebounds and fouls remain within it. Period-ending actions count; a no-action hold does not.")
+            if !unavailable {
+                if initialDataset == .boxScores { discrepancyBanner }
+                if initialDataset == .boxScores {
+                    Picker("Entry mode", selection: $mode) {
+                        ForEach(BoxScoreEntryMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }.pickerStyle(.segmented).disabled(model.isBusy)
+                }
+                Text(game.opponent).font(.headline)
+                Text("Blank = not entered. Enter 0 explicitly. Use nonnegative whole numbers within the supported range.")
                     .font(.footnote).foregroundStyle(.secondary)
-            } else if initialDataset == .playerPaintTouches {
-                Text("A paint touch is when a player intentionally establishes two feet in the paint with the ball.")
-                Text("Enter independently collected game totals. No player attribution or repeated-touch interpretation is inferred from possessions.")
-                    .font(.footnote).foregroundStyle(.secondary)
-            } else {
-                Text("Draft discrepancies remain saveable. Completion requires valid entered values and no proven scoring contradiction. Optional missing values stay missing.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                if isPaired {
+                    Text("Each team's numbering is independent. These paired rows do not mean simultaneous or chronological possessions.")
+                    Text("A possession runs from legal team possession until the opponent legally possesses the ball. Free throws, offensive rebounds and fouls remain within it. Period-ending actions count; a no-action hold does not.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                } else if initialDataset == .playerPaintTouches {
+                    Text("A paint touch is when a player intentionally establishes two feet in the paint with the ball.")
+                    Text("Enter independently collected game totals. No player attribution or repeated-touch interpretation is inferred from possessions.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                } else {
+                    Text("Draft discrepancies remain saveable. Completion requires valid entered values and no proven scoring contradiction. Optional missing values stay missing.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                ForEach(kinds, id: \.self) { kind in datasetControls(kind) }
             }
-            ForEach(kinds, id: \.self) { kind in datasetControls(kind) }
         }
         .padding(.horizontal).padding(.vertical, 8)
         .fixedSize(horizontal: false, vertical: true)
@@ -222,8 +225,8 @@ struct ConnectedStatEntryView: View {
 
     private var saveBar: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if let preparationIssue { Label(preparationIssue, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.red) }
-            if !invalidMessages.isEmpty {
+            if !unavailable, let preparationIssue { Label(preparationIssue, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.red) }
+            if !unavailable && !invalidMessages.isEmpty {
                 Label("Fix invalid numbers: \(invalidMessages.joined(separator: "; ")).", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.red).font(.caption)
             }
@@ -627,31 +630,38 @@ private struct ConnectedCompletionSheet: View {
         NavigationStack {
             Form {
                 ConnectedStatisticsFeedback(model: model)
-                Section("Complete this dataset") {
-                    Text(version.datasetType.label).font(.headline)
-                    Text("This finishes entry and makes this saved version read-only. Submission or publication remains a separate action.")
-                    if isPlayerDataset {
-                        Text("Optional numeric blanks remain Not entered. Confirm the actual roster covered by this dataset.")
-                        ForEach(labels) { player in Text("\(player.name) · #\(player.jerseyNumber) · Version \(player.version)") }
-                        Toggle("I confirm this covered actual roster", isOn: $confirmedRoster)
-                    } else if showZeroWarning {
-                        Label("Blank numeric fields in added possession records will become 0 when you confirm.", systemImage: "exclamationmark.triangle")
-                            .font(.headline)
-                        Text("Only existing records on this team sheet are affected. Unanswered turnovers must be answered; no opposite-side records are added.")
-                        Toggle("Don't show this again", isOn: $suppressWarning)
-                        Text("This preference is saved for your account only after successful confirmed completion.").font(.footnote).foregroundStyle(.secondary)
-                    } else if !isPlayerDataset && hasNumericBlanks {
-                        Text("Your saved preference allows blank numeric fields in added records to become 0 on this explicit completion action. Turnovers still require Yes or No.")
+                if !model.didLoadGame || model.selectedGame?.id != version.gameID {
+                    Section {
+                        Label("This dataset is unavailable with current access.", systemImage: "lock")
+                        Button("Reload and check access") { Task { await model.reload() } }.disabled(model.isBusy)
                     }
-                    Button(showZeroWarning ? "Confirm" : "Confirm completion") {
-                        Task {
-                            if await model.complete(version, confirmRoster: isPlayerDataset && confirmedRoster,
-                                confirmNumericZeros: showZeroWarning, suppressNumericWarning: showZeroWarning && suppressWarning) {
-                                onComplete()
-                                dismiss()
-                            }
+                } else {
+                    Section("Complete this dataset") {
+                        Text(version.datasetType.label).font(.headline)
+                        Text("This finishes entry and makes this saved version read-only. Submission or publication remains a separate action.")
+                        if isPlayerDataset {
+                            Text("Optional numeric blanks remain Not entered. Confirm the actual roster covered by this dataset.")
+                            ForEach(labels) { player in Text("\(player.name) · #\(player.jerseyNumber) · Version \(player.version)") }
+                            Toggle("I confirm this covered actual roster", isOn: $confirmedRoster)
+                        } else if showZeroWarning {
+                            Label("Blank numeric fields in added possession records will become 0 when you confirm.", systemImage: "exclamationmark.triangle")
+                                .font(.headline)
+                            Text("Only existing records on this team sheet are affected. Unanswered turnovers must be answered; no opposite-side records are added.")
+                            Toggle("Don't show this again", isOn: $suppressWarning)
+                            Text("This preference is saved for your account only after successful confirmed completion.").font(.footnote).foregroundStyle(.secondary)
+                        } else if !isPlayerDataset && hasNumericBlanks {
+                            Text("Your saved preference allows blank numeric fields in added records to become 0 on this explicit completion action. Turnovers still require Yes or No.")
                         }
-                    }.disabled(model.isBusy || model.reloadRequired || (isPlayerDataset && (!confirmedRoster || labels.isEmpty)))
+                        Button(showZeroWarning ? "Confirm" : "Confirm completion") {
+                            Task {
+                                if await model.complete(version, confirmRoster: isPlayerDataset && confirmedRoster,
+                                    confirmNumericZeros: showZeroWarning, suppressNumericWarning: showZeroWarning && suppressWarning) {
+                                    onComplete()
+                                    dismiss()
+                                }
+                            }
+                        }.disabled(model.isBusy || model.reloadRequired || (isPlayerDataset && (!confirmedRoster || labels.isEmpty)))
+                    }.disabled(model.isBusy)
                 }
             }
             .navigationTitle("Complete dataset")

@@ -6,26 +6,31 @@ import Supabase
 @MainActor
 final class ConnectedStatisticsTests: XCTestCase {
     func testPendingExportReadDoesNotBlockNextGameOrReplaceReopenedSnapshot() async throws {
-        for sameGame in [false, true] {
-            let fixture = StatisticsFixture(mode: .delayedExport)
-            let model = fixture.model()
-            await model.loadGames()
-            let first = try XCTUnwrap(model.games.first)
-            await model.loadGame(first)
-            let pending = Task { await model.loadExportStatus() }
-            for _ in 0..<100 where fixture.exportRequestCount == 0 {
-                try await Task.sleep(for: .milliseconds(5))
+        for deniedResponse in [false, true] {
+            for sameGame in [false, true] {
+                let fixture = StatisticsFixture(mode: .delayedExport)
+                if deniedResponse { fixture.denyNextExport() }
+                let model = fixture.model()
+                await model.loadGames()
+                let first = try XCTUnwrap(model.games.first)
+                await model.loadGame(first)
+                let pending = Task { await model.loadExportStatus() }
+                for _ in 0..<100 where fixture.exportRequestCount == 0 {
+                    try await Task.sleep(for: .milliseconds(5))
+                }
+                XCTAssertEqual(fixture.exportRequestCount, 1)
+                await model.loadGame(sameGame ? first : try XCTUnwrap(model.games.last))
+                XCTAssertNil(model.issue)
+                await model.loadExportStatus()
+                await pending.value
+                XCTAssertTrue(model.didLoadGame)
+                XCTAssertNil(model.issue)
+                XCTAssertTrue(model.didLoadExportStatus)
+                XCTAssertFalse(model.isLoadingExportStatus)
+                XCTAssertEqual(fixture.exportRequestCount, 2)
+                XCTAssertEqual(model.exportStatus.first?.gameID, model.selectedGame?.id)
+                XCTAssertEqual(model.exportStatus.first?.publicationGeneration, 2)
             }
-            XCTAssertEqual(fixture.exportRequestCount, 1)
-            await model.loadGame(sameGame ? first : try XCTUnwrap(model.games.last))
-            XCTAssertNil(model.issue)
-            await model.loadExportStatus()
-            await pending.value
-            XCTAssertTrue(model.didLoadExportStatus)
-            XCTAssertFalse(model.isLoadingExportStatus)
-            XCTAssertEqual(fixture.exportRequestCount, 2)
-            XCTAssertEqual(model.exportStatus.first?.gameID, model.selectedGame?.id)
-            XCTAssertEqual(model.exportStatus.first?.publicationGeneration, 2)
         }
     }
     func testExportStatusShowsServerDeliveryRatherThanAssumingOutboxWasDelivered() async throws {
@@ -59,6 +64,32 @@ final class ConnectedStatisticsTests: XCTestCase {
         XCTAssertNil(model.exportIssue)
         XCTAssertEqual(model.exportStatus.count, 3)
     }
+    func testDeniedCurrentOwnerExportResponseConcealsProtectedStatistics() async throws {
+        let fixture = StatisticsFixture()
+        let model = fixture.model()
+        await model.loadGames()
+        await model.loadGame(try XCTUnwrap(model.games.first))
+        XCTAssertTrue(model.access?.isOwner == true)
+        XCTAssertFalse(model.versions.isEmpty)
+        fixture.denyNextExport()
+        await model.loadExportStatus()
+        XCTAssertEqual(fixture.exportRequestCount, 1)
+        XCTAssertEqual(model.issue, .denied)
+        XCTAssertFalse(model.didLoadGames)
+        XCTAssertTrue(model.games.isEmpty)
+        XCTAssertFalse(model.didLoadGame)
+        XCTAssertNil(model.selectedGame)
+        XCTAssertNil(model.access)
+        XCTAssertTrue(model.roster.isEmpty)
+        XCTAssertTrue(model.versions.isEmpty)
+        XCTAssertTrue(model.datasets.isEmpty)
+        XCTAssertTrue(model.editRequests.isEmpty)
+        XCTAssertTrue(model.exportOutbox.isEmpty)
+        XCTAssertFalse(model.didLoadExportStatus)
+        XCTAssertTrue(model.exportStatus.isEmpty)
+        XCTAssertFalse(model.isLoadingExportStatus)
+        XCTAssertEqual(fixture.commands.filter { $0.name == "stats_export_status" }.count, 1)
+    }
     func testGameDiscoveryAndStableIdentityRetryUseServerRows() async throws {
         let fixture = StatisticsFixture()
         let model = fixture.model()
@@ -71,6 +102,66 @@ final class ConnectedStatisticsTests: XCTestCase {
         XCTAssertTrue(first); XCTAssertTrue(second)
         XCTAssertEqual(fixture.commands.map { $0.parameters["p_game_id"] as? String }, [id.uuidString, id.uuidString])
         XCTAssertEqual(model.games.count, 1)
+    }
+    func testDeniedMutationKeepsCachedMetadataConcealedAcrossFailedReloadUntilAuthorizedRead() async throws {
+        let fixture = StatisticsFixture()
+        let model = fixture.model()
+        await model.loadGames()
+        let game = try XCTUnwrap(model.games.first)
+        await model.loadGame(game)
+        let version = try XCTUnwrap(model.ownVersions.first)
+        let retainedEntries = try version.boxScores()
+        let save = try ConnectedDraftSave(version: version, boxScores: retainedEntries, coveredRoster: version.coveredRoster)
+        fixture.denyNextSave()
+        let saved = await model.saveDraftBatch([save])
+        XCTAssertFalse(saved)
+        XCTAssertEqual(model.issue, .denied)
+        XCTAssertFalse(model.didLoadGames)
+        XCTAssertTrue(model.games.isEmpty)
+        XCTAssertFalse(model.didLoadGame)
+        XCTAssertNil(model.selectedGame)
+        XCTAssertNil(model.access)
+        XCTAssertTrue(model.versions.isEmpty)
+        XCTAssertTrue(model.roster.isEmpty)
+
+        fixture.setReadsUnavailable(true)
+        await model.reload()
+        XCTAssertEqual(model.issue, .server)
+        XCTAssertFalse(model.didLoadGames)
+        XCTAssertTrue(model.games.isEmpty)
+        XCTAssertFalse(model.didLoadGame)
+        XCTAssertNil(model.selectedGame)
+        XCTAssertTrue(model.versions.isEmpty)
+        // Editor-owned values are outside the model's concealed server snapshot.
+        XCTAssertNil(retainedEntries.first?.values["points"])
+        XCTAssertEqual(retainedEntries.first?.values["twosMade"], 0)
+
+        fixture.setReadsUnavailable(false)
+        await model.reload()
+        XCTAssertNil(model.issue)
+        XCTAssertTrue(model.didLoadGame)
+        XCTAssertEqual(model.selectedGame?.id, game.id)
+        XCTAssertEqual(model.ownVersions.first?.id, version.id)
+        XCTAssertFalse(model.didLoadGames)
+        // Discovery has its own explicit recovery; a game read never guesses a team list.
+        await model.loadGames()
+        XCTAssertTrue(model.didLoadGames)
+        XCTAssertEqual(model.games.first?.id, game.id)
+        XCTAssertEqual(fixture.commands.filter { $0.name == "stats_save_drafts" }.count, 1)
+    }
+    func testTransientReloadBeforeAnyDenialDoesNotRevokePreviouslyConfirmedDiscovery() async throws {
+        let fixture = StatisticsFixture()
+        let model = fixture.model()
+        await model.loadGames()
+        let game = try XCTUnwrap(model.games.first)
+        await model.loadGame(game)
+        fixture.setReadsUnavailable(true)
+        await model.reload()
+        XCTAssertEqual(model.issue, .server)
+        XCTAssertFalse(model.didLoadGame)
+        XCTAssertTrue(model.didLoadGames)
+        XCTAssertEqual(model.games.map(\.id), [game.id])
+        XCTAssertTrue(fixture.commands.isEmpty)
     }
     func testSnapshotPreservesNullZeroAndHistoricalCoveredRosterLabels() async throws {
         let fixture = StatisticsFixture()
@@ -365,6 +456,12 @@ private final class StatisticsFixture: @unchecked Sendable {
     func allowRecoveryRead() { lock.withLock { recoveryReadDenied = false } }
     func setLineageFault(_ fault: LineageFault) { lock.withLock { lineageFault = fault } }
     func revokeAccess() { lock.withLock { accessRevoked = true } }
+    private var denyExport = false
+    func denyNextExport() { lock.withLock { denyExport = true } }
+    private var denySave = false
+    private var readsUnavailable = false
+    func denyNextSave() { lock.withLock { denySave = true } }
+    func setReadsUnavailable(_ unavailable: Bool) { lock.withLock { readsUnavailable = unavailable } }
     private var didFail = false
     private var requests = 0
     private var exportReads = 0
@@ -398,14 +495,25 @@ private final class StatisticsFixture: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         requests += 1
         let name = request.url!.lastPathComponent
+        if request.httpMethod == "GET" && readsUnavailable {
+            return json(["code": "XX000", "message": "Synthetic transient read failure"], status: 500)
+        }
         if request.url!.path.contains("/rpc/") {
             if name == "team_access", accessRevoked { return json(["code": "42501", "message": "Synthetic revoked access"], status: 403) }
             if name == "team_access" { return json(["team_id": statsTeamID.uuidString, "user_id": statsUserID.uuidString, "is_owner": true, "access_revision": 7, "capabilities": [], "grant_envelopes": []]) }
             if name == "stats_preferences" { return json(["suppress_numeric_warning": suppressWarning]) }
             let parameters = (try? JSONSerialization.jsonObject(with: request.httpBody ?? body(request.httpBodyStream))) as? [String: Any] ?? [:]
             commandValues.append(Command(name: name, parameters: parameters))
+            if name == "stats_save_drafts" && denySave {
+                denySave = false
+                return json(["code": "42501", "message": "Synthetic denied save"], status: 403)
+            }
             if name == "stats_export_status" {
                 exportReads += 1
+                if denyExport {
+                    denyExport = false
+                    return json(["code": "42501", "message": "Synthetic revoked export access"], status: 403)
+                }
                 if mode == .delayedExport {
                     return json([statsGameID, statsOtherGameID].map { gameID in
                         ["job_id": gameID.uuidString, "game_id": gameID.uuidString,
