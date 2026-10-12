@@ -2,6 +2,19 @@
 
 ## Authorized implementation continuation — 2026-10-12
 
+Administrator-identification slice9326a14 integrated in02fe958. Actual isolated
+SQL checks20/20 and native AdministrationTests17/17 passed; Standards identified
+a security-map documentation gap now recorded in SECURITY.md, Spec0 findings.
+Contacts are trusted/confirmed and admin-only, with UUID fallback and independent
+load errors. Hosted migration and rendered interaction remain separate acceptance.
+
+Council completed five independent analyses, five fresh anonymous peer reviews
+and chairman synthesis for private bytes/offline clips; ADR0004 records adoption.
+Clip development limits10 MiB/30 seconds/1080p are provisional, not real workload
+or$0 capacity evidence. Complete-file authenticated delivery avoids bearer URLs
+and AVPlayer remote-range bookkeeping; explicit retention supports optional offline
+playback. Local implementation proceeds; hosted capacity/validator acceptance stays gated.
+
 Baseline5ea4ac8 preserved2 personal working/staged files, unrelated project.pbxproj
 working/index bytes,8 original JSON hashes and temporary identities. Existing
 verification stays recorded. Necessary free tooling now approved; source/license,
