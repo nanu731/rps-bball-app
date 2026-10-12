@@ -10,6 +10,30 @@ paid-service budget, real branding/roster and release authorization remain human
 inputs, not facts Council can invent. See PRD.md's latest owner-administration section.
 
 Last updated: 2026-10-11.
+
+## Current completion checkpoint
+
+The older Step 1–6 notes below are historical. The end-to-end branch now includes
+native Account, team/roster/capability administration, shared games/statistical
+version workflows, accepted metrics/reconciliation, owner export status, reviewed
+play animation, transient on-device photo review and private video-link metadata.
+These are locally tested implementations, not a completed hosted release.
+
+| Area | Evidence and remaining limit |
+| --- | --- |
+| Identity/access | 21 native Account fixtures; actual local email-link PKCE/restore and distinct-user Auth/RLS checks. Hosted Free project and verified owner UUID not yet available; real SMS disabled. |
+| Shared statistics | Existing SQL 136 and signed gateway 81 checks; actual local SDK draft/completion/publication/metrics workflow passed. Current-version edit-request recovery is under regression investigation. |
+| Plays | 11 integrated geometry/play tests and 54 baseline +37 recovery SQL checks. Explicit Reload/Attach preserves buffers after uncertain recovery; device interactions unverified. |
+| Photo | 14 native tests, including bounded file reads and actual synthetic Vision. Explicit mapping/confirmation only; no identity inference or persistent photo/text copy. Marked-form accuracy and picker interactions unverified. |
+| Video links | 78 actual SQL and 14 native checks; actual local SDK practice/film lifecycle passed with target filtering. File uploads, private playback, quota/transfer enforcement and Hudl access remain incomplete. |
+| Sheets | Private empty destination verified; worker source and outbox tests passed, Google delivery disabled. Trusted service identity/runtime and billing-disabled proof remain unavailable. |
+| Device/release | Mac UI control reports locked; precise checklist is private. Current rotation, large text, VoiceOver, keyboard/recovery checks remain pending; actual 26.0 and physical devices untested. Signing/production/release approval not available. |
+
+The owner requested guidance for a new Free project; private guide/wizard are
+prepared and syntax-checked, not run against an account. Real identifiers stay
+out of public files/logs; bootstrap requires trusted verification of Auth UUID.
+Additional local Storage/Functions/Imgproxy test tooling is awaiting approval.
+
 Completion work is on `codex/teamstats-completion`. Private task graph/acceptance
 and coverage live in ignored `.scratch/teamstats-completion/spec.md`; generic
 engineering configuration is in docs/agents. Structure/default local labels and

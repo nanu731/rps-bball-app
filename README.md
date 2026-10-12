@@ -40,6 +40,35 @@ provider files. Possession turnover answers require explicit Unanswered/Yes/No
 review; they are never inferred from recognized text.
 There is no live tracking in any phase.
 
+### Where to find connected features
+
+| Feature | Path and current limit |
+| --- | --- |
+| Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Hosted setup pending; real SMS disabled. |
+| Owner administration | Account → Team administration; membership admission, roster add/edit/archive, separate grants and bounded delegation. Historical identities retained. |
+| Shared statistics | Team administration → Shared games and statistics; games, individual/table box scores, independent paired possessions and player paint totals. No automatic upload of local records. |
+| Completion and review | Shared game details; server-confirmed independent completion, approved edit requests, review/publication and accepted summaries. Possession zero conversion uses the confirmed warning flow. |
+| Metrics | Accepted shared summaries; missing inputs stay unavailable. Only accepted versions affect agreed metrics and reconciliation. |
+| Sheets status | Shared game details, owner only; server outbox status and Retry. Live Google delivery disabled and unverified. |
+| Photo review | Existing local/shared drafts; map/confirm recognized values, apply to unsaved input, then explicitly Save. Real form accuracy unverified. |
+| Plays and video links | Team administration → Playbook; authored movement and reviewed revisions. Published plays link practice resources; shared games link Game Film. Video files/playback incomplete. |
+
+Saved play/media recovery preserves earlier proposals as read-only history.
+After an uncertain response, explicitly Reload and confirm attachment to a
+validated recovered draft; input buffers are retained and Save remains separate.
+Media history is filtered by selected play/game before transfer.
+
+### Release readiness
+
+This branch is not a completed hosted integration or release. Nonproduction
+project setup, verified owner bootstrap, team email delivery, trusted Google
+worker configuration and actual video upload/transfer enforcement remain blocked.
+New UI needs iPhone/iPad rotation, larger text, VoiceOver, keyboard/Save and
+recovery/photo interaction checks; Mac UI control is locked. Earlier owner
+verification does not verify new screens. Real branding/icon, signing/distribution
+and explicit production/release approval remain outstanding. No paid service,
+public submission or automatic production-data upload is enabled.
+
 ## Project and planning
 
 Open `TeamStats/TeamStats.xcodeproj` in Xcode. Select an iPhone/iPad simulator

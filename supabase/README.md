@@ -1,12 +1,15 @@
-# Local team access slice
+# Local backend source and verification
 
-This directory contains a Postgres migration and synthetic behavior tests for
-team membership, capabilities, bounded owner delegation and roster history.
+This directory contains incremental Postgres migrations and synthetic behavior
+tests for team membership, capabilities, bounded owner delegation and roster
+history, shared statistics/review, export outbox, plays and private video links.
 The slice has passed actual local Supabase Auth/Postgres and signed gateway tests;
 hosted operation and complete native-app integration remain unverified.
 No hosted configuration, real owner identity, student data or automatic local
-record upload is included. This slice does not implement shared statistical
-submissions, completion, publication, exports, plays or media storage.
+record upload is included. See statistics.md, exports.md, plays.md and
+media_resources.md for each contract and its actual evidence. Trusted export-worker
+source is disabled for Google by default. Video links are not implemented object
+storage, uploads or playback.
 
 The strict budget is $0. The configuration is for a disposable local runtime:
 email is captured by the local inbox, real SMS providers and delivery hooks are

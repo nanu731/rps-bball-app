@@ -22,6 +22,28 @@ Last updated: 2026-10-08.
 
 ### Completion execution evidence
 
+Latest checkpoint (2026-10-11; older entries below retain their original scope):
+play recovery after uncertain replies and failed follow-up reads preserves
+buffers through explicit Reload/Attach. Eleven geometry/play tests passed across
+integration runs. Media recovery now has immutable exact lineage, including
+repeated recovery chains; all14 media fixtures passed. SQL migration008 and78
+rollback checks preserve historical missing lineage and one recovered successor.
+The selected-target media-query regression failed before its FK-filter repair;
+actual local Auth/PostgREST/SDK practice/film workflow then passed (one named test,
+2.254 seconds). An earlier misspelled filter selected zero cases and is excluded
+from evidence. Standards review:0 documented breaches, one optional repeated
+fixture predicate. Spec review:0 findings for95ffe16...5520149. Photo re-review
+reported the eager-allocation defect fixed and0 remaining findings.
+
+Owner-facing membership administrators can copy the private team UUID; it requests
+admission and never grants access automatically. No real account identifiers or
+provider configuration are committed. The owner has no hosted project yet;
+private Free guide/wizard are prepared, syntax-checked, not run. Current UI control
+is blocked by locked Mac/failed automatic unlock, so repeated attempts stopped.
+New device/rotation/large-text/VoiceOver/keyboard/recovery/photo checks remain
+explicitly pending. Existing local simulator JSON and both staged personal entries
+must be rechecked before each handoff.
+
 - Setup/coverage/task graph and compact Council defaults committed as `8f6050c`.
   Independent Standards and Spec reviews reported zero findings for that slice.
 - Official Supabase Swift 2.55.3 is exactly pinned; package resolution and arm64
