@@ -305,3 +305,6 @@ SDK fixture tests passed, and the actual local native workflow confirmed four
 queued, undelivered jobs after four dataset publications. UI interaction and
 actual Google delivery remain unverified. The owner has no hosted project yet;
 a private Free-only setup guide is prepared, with no billing/SMS configuration.
+
+Export-status navigation race fixed after review;17 affected tests passed.
+Snapshot-scoped reads prevent stale results after switching/reopening games.

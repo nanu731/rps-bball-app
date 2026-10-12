@@ -5,6 +5,29 @@ import Supabase
 
 @MainActor
 final class ConnectedStatisticsTests: XCTestCase {
+    func testPendingExportReadDoesNotBlockNextGameOrReplaceReopenedSnapshot() async throws {
+        for sameGame in [false, true] {
+            let fixture = StatisticsFixture(mode: .delayedExport)
+            let model = fixture.model()
+            await model.loadGames()
+            let first = try XCTUnwrap(model.games.first)
+            await model.loadGame(first)
+            let pending = Task { await model.loadExportStatus() }
+            for _ in 0..<100 where fixture.exportRequestCount == 0 {
+                try await Task.sleep(for: .milliseconds(5))
+            }
+            XCTAssertEqual(fixture.exportRequestCount, 1)
+            await model.loadGame(sameGame ? first : try XCTUnwrap(model.games.last))
+            XCTAssertNil(model.issue)
+            await model.loadExportStatus()
+            await pending.value
+            XCTAssertTrue(model.didLoadExportStatus)
+            XCTAssertFalse(model.isLoadingExportStatus)
+            XCTAssertEqual(fixture.exportRequestCount, 2)
+            XCTAssertEqual(model.exportStatus.first?.gameID, model.selectedGame?.id)
+            XCTAssertEqual(model.exportStatus.first?.publicationGeneration, 2)
+        }
+    }
     func testExportStatusShowsServerDeliveryRatherThanAssumingOutboxWasDelivered() async throws {
         let fixture = StatisticsFixture(mode: .exportStates)
         let model = fixture.model()
@@ -251,6 +274,7 @@ final class ConnectedStatisticsTests: XCTestCase {
 private let statsTeamID = UUID(uuidString: "22222222-2222-4222-8222-222222222222")!
 
 private let statsGameID = UUID(uuidString: "33333333-3333-4333-8333-333333333333")!
+private let statsOtherGameID = UUID(uuidString: "33333333-3333-4333-8333-333333333334")!
 private let statsUserID = UUID(uuidString: "11111111-1111-4111-8111-111111111111")!
 private let statsPlayerID = UUID(uuidString: "AAAA4444-4444-4444-8444-444444444444")!
 private let statsVersionID = UUID(uuidString: "55555555-5555-4555-8555-555555555555")!
@@ -262,11 +286,17 @@ private let statsSecondVersionID = UUID(uuidString: "AAAAAAAA-AAAA-4AAA-8AAA-AAA
 private let statsPossessionID = UUID(uuidString: "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB")!
 // Synthetic HTTP responses verify the real SDK/model seam, not deployed authorization or delivery.
 private final class StatisticsFixture: @unchecked Sendable {
-    enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination, exportStates, exportFailureOnce }
+    enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination, exportStates, exportFailureOnce, delayedExport }
     private let mode: Mode
     init(mode: Mode = .standard) { self.mode = mode }
     private var didFail = false
     private var requests = 0
+    private var exportReads = 0
+    private var fixtureGameID = statsGameID
+    var exportRequestCount: Int { lock.withLock { exportReads } }
+    func responseDelay(_ request: URLRequest) -> TimeInterval {
+        lock.withLock { mode == .delayedExport && request.url?.lastPathComponent == "stats_export_status" && exportReads == 1 ? 0.3 : 0 }
+    }
     private var offsets: [Int] = []
     private var suppressWarning = false
     struct Command { let name: String; let parameters: [String: Any] }
@@ -298,13 +328,22 @@ private final class StatisticsFixture: @unchecked Sendable {
             let parameters = (try? JSONSerialization.jsonObject(with: request.httpBody ?? body(request.httpBodyStream))) as? [String: Any] ?? [:]
             commandValues.append(Command(name: name, parameters: parameters))
             if name == "stats_export_status" {
+                exportReads += 1
+                if mode == .delayedExport {
+                    return json([statsGameID, statsOtherGameID].map { gameID in
+                        ["job_id": gameID.uuidString, "game_id": gameID.uuidString,
+                         "accepted_version_id": statsVersionID.uuidString, "dataset_type": "box_scores",
+                         "publication_generation": exportReads, "state": "queued", "attempts": 0,
+                         "error_code": NSNull(), "delivered_at": NSNull()] as [String: Any]
+                    })
+                }
                 if mode == .exportFailureOnce && !didFail {
                     didFail = true
                     return json(["code": "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 500)
                 }
                 return json(["queued", "failed", "delivered"].enumerated().map { index, state in
                     ["job_id": String(format: "CCCCCCCC-CCCC-4CCC-8CCC-%012d", index),
-                     "game_id": statsGameID.uuidString, "accepted_version_id": statsVersionID.uuidString,
+                     "game_id": fixtureGameID.uuidString, "accepted_version_id": statsVersionID.uuidString,
                      "dataset_type": "box_scores", "publication_generation": index + 1,
                      "state": state, "attempts": index,
                      "error_code": state == "failed" ? "budget_disabled" : NSNull(),
@@ -339,6 +378,13 @@ private final class StatisticsFixture: @unchecked Sendable {
             return json(version(status: versionStatus, revision: revision))
         }
         if name == "games" {
+            if mode == .delayedExport {
+                let requested = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "id" }?.value
+                if let requested, let id = UUID(uuidString: String(requested.dropFirst(3))) { fixtureGameID = id }
+                return json([statsGameID, statsOtherGameID].filter { requested == nil || requested == "eq." + $0.uuidString }.map { id in
+                    var row = game(); row["id"] = id.uuidString; return row
+                })
+            }
             let offset = Int(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "offset" })?.value ?? "0") ?? 0
             offsets.append(offset)
             if mode == .pagination {
@@ -352,7 +398,7 @@ private final class StatisticsFixture: @unchecked Sendable {
         if name == "roster_entry_revisions" { return json([["roster_id": statsPlayerID.uuidString, "team_id": statsTeamID.uuidString, "display_name": "Original synthetic name", "jersey_number": "12", "version": 1]]) }
         if name == "stat_versions" { return json([version(status: versionStatus, revision: revision)] + (workingVersion.map { [$0] } ?? []) + (mode == .paired ? [secondVersion()] : [])) }
         if name == "stat_edit_requests" { return json(editStatus == nil ? [] : [editRequest()]) }
-        if name == "stat_datasets" { return json([["id": statsDatasetID.uuidString, "team_id": statsTeamID.uuidString, "game_id": statsGameID.uuidString, "dataset_type": mode == .possession ? "our_possessions" : "box_scores", "published_version_id": versionStatus == "published" ? statsVersionID.uuidString as Any : NSNull()]] + (mode == .paired ? [["id": statsSecondDatasetID.uuidString, "team_id": statsTeamID.uuidString, "game_id": statsGameID.uuidString, "dataset_type": "opponent_possessions", "published_version_id": NSNull()]] : [])) }
+        if name == "stat_datasets" { return json([["id": statsDatasetID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_type": mode == .possession ? "our_possessions" : "box_scores", "published_version_id": versionStatus == "published" ? statsVersionID.uuidString as Any : NSNull()]] + (mode == .paired ? [["id": statsSecondDatasetID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_type": "opponent_possessions", "published_version_id": NSNull()]] : [])) }
         return json([])
     }
     func version(status: String = "draft", revision: Int = 1) -> [String: Any] {
@@ -365,13 +411,13 @@ private final class StatisticsFixture: @unchecked Sendable {
             result["records"] = [record]
             return result
         }
-        return ["id": statsVersionID.uuidString, "team_id": statsTeamID.uuidString, "game_id": statsGameID.uuidString, "dataset_id": statsDatasetID.uuidString, "dataset_type": "box_scores", "author_user_id": statsUserID.uuidString, "revision": revision, "status": status, "records": [["gameID": statsGameID.uuidString, "playerID": mode == .lowercaseIdentity ? statsPlayerID.uuidString.lowercased() : statsPlayerID.uuidString, "values": ["points": NSNull(), "twosMade": mode == .negativeCount ? -1 : 0]]], "covered_roster": [["id": statsPlayerID.uuidString, "version": 1]], "base_published_version_id": NSNull()]
+        return ["id": statsVersionID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_id": statsDatasetID.uuidString, "dataset_type": "box_scores", "author_user_id": statsUserID.uuidString, "revision": revision, "status": status, "records": [["gameID": fixtureGameID.uuidString, "playerID": mode == .lowercaseIdentity ? statsPlayerID.uuidString.lowercased() : statsPlayerID.uuidString, "values": ["points": NSNull(), "twosMade": mode == .negativeCount ? -1 : 0]]], "covered_roster": [["id": statsPlayerID.uuidString, "version": 1]], "base_published_version_id": NSNull()]
     }
     private func possessionRecord(team: String) -> [String: Any] {
-        ["id": statsPossessionID.uuidString, "gameID": statsGameID.uuidString, "team": team, "number": 1, "values": [:] as [String: Any], "turnover": false]
+        ["id": statsPossessionID.uuidString, "gameID": fixtureGameID.uuidString, "team": team, "number": 1, "values": [:] as [String: Any], "turnover": false]
     }
     private func secondVersion() -> [String: Any] {
-        ["id": statsSecondVersionID.uuidString, "team_id": statsTeamID.uuidString, "game_id": statsGameID.uuidString,
+        ["id": statsSecondVersionID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString,
          "dataset_id": statsSecondDatasetID.uuidString, "dataset_type": "opponent_possessions", "author_user_id": statsUserID.uuidString,
          "revision": revision, "status": "draft", "records": [possessionRecord(team: "opponent")], "covered_roster": [], "base_published_version_id": NSNull()]
     }
@@ -402,6 +448,12 @@ private final class StatisticsProtocol: URLProtocol, @unchecked Sendable {
     override func startLoading() {
         guard let fixture = Self.registry.get(request.value(forHTTPHeaderField: "X-Statistics-Fixture") ?? "") else { client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse)); return }
         let (status, body) = fixture.response(request)
+        let delay = fixture.responseDelay(request)
+        if delay > 0 {
+            DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [self] in deliver(status: status, body: body) }
+        } else { deliver(status: status, body: body) }
+    }
+    private func deliver(status: Int, body: Data) {
         client?.urlProtocol(self, didReceive: HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: body); client?.urlProtocolDidFinishLoading(self)
     }

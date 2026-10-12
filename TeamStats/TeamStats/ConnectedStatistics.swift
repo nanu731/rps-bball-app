@@ -275,6 +275,7 @@ final class ConnectedStatistics {
     private(set) var didLoadExportStatus = false
     private(set) var isLoadingExportStatus = false
     private(set) var exportIssue: ConnectedStatisticsIssue?
+    @ObservationIgnored private var exportReadContext = UUID()
     private(set) var didLoadGame = false
     private(set) var suppressNumericWarning = false
     private(set) var reloadRequired = false
@@ -344,8 +345,9 @@ final class ConnectedStatistics {
         guard !isLoadingExportStatus else { return }
         exportStatus = []; didLoadExportStatus = false; exportIssue = nil
         guard didLoadGame, access?.isOwner == true, let game = selectedGame else { exportIssue = .denied; return }
+        let context = exportReadContext
         isLoadingExportStatus = true
-        defer { isLoadingExportStatus = false }
+        defer { if exportReadContext == context { isLoadingExportStatus = false } }
         do {
             let rows: [ConnectedExportStatus] = try await command(authenticatedClient(), "stats_export_status", [:])
             guard rows.count <= 5_000 else { throw ConnectedStatisticsIssue.tooManyRecords }
@@ -354,11 +356,11 @@ final class ConnectedStatistics {
                       (($0.state == .delivered) == ($0.deliveredAt != nil)) }) else {
                 throw ConnectedStatisticsIssue.invalidResponse
             }
-            guard selectedGame?.id == game.id, didLoadGame else { return }
+            guard exportReadContext == context, selectedGame?.id == game.id, didLoadGame else { return }
             exportStatus = rows.filter { $0.gameID == game.id }
             didLoadExportStatus = true
         } catch {
-            guard selectedGame?.id == game.id, didLoadGame else { return }
+            guard exportReadContext == context, selectedGame?.id == game.id, didLoadGame else { return }
             exportIssue = Self.mappedIssue(error)
         }
     }
@@ -572,12 +574,17 @@ final class ConnectedStatistics {
         versions = loadedVersions; datasets = loadedDatasets
         editRequests = requests.filter { request in loadedVersions.contains { $0.id == request.sourceVersionID } }
         exportOutbox = outbox; suppressNumericWarning = preferences.suppressNumericWarning
-        exportStatus = []; didLoadExportStatus = false; exportIssue = nil
+        resetExportStatus()
         didLoadGame = true; reloadRequired = false
     }
     private func clearGame() {
         selectedGame = nil; access = nil; roster = []; historicalRoster = []; versions = []; datasets = []
         editRequests = []; exportOutbox = []; suppressNumericWarning = false; didLoadGame = false
+        resetExportStatus()
+    }
+    private func resetExportStatus() {
+        // A fresh game snapshot supersedes pending delivery reads, including same-game reopening.
+        exportReadContext = UUID(); isLoadingExportStatus = false
         exportStatus = []; didLoadExportStatus = false; exportIssue = nil
     }
     private func pages<T: Decodable>(_ client: SupabaseClient, table: String, order: String, gameID: UUID? = nil) async throws -> [T] {

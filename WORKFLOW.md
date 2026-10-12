@@ -1022,3 +1022,10 @@ export states and no claimed delivery. Build-for-testing passed on iPhone26.4.
 Actual screen interaction remains unavailable while the Mac is locked; actual
 Google delivery, billing-disabled proof and trusted runtime configuration remain
 blocked. Earlier media/UI/runtime limitations remain in force.
+
+Export-status review: Standards0 findings. Spec found1 delayed-navigation race;
+a regression demonstrated stale same-game results. Reads now belong to each loaded
+snapshot, and obsolete responses cannot block/replace a reopened game or clear a
+new request’s loading state. All17 affected tests passed after coherent two-game
+fixture correction. Spec re-review found0 remaining issues. Original four local
+JSON files and both staged personal Xcode entries checked unchanged.
