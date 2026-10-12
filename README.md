@@ -44,7 +44,7 @@ There is no live tracking in any phase.
 
 | Feature | Path and current limit |
 | --- | --- |
-| Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Hosted setup pending; real SMS disabled. |
+| Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Trusted hosted activation pending; real SMS disabled. |
 | Owner administration | Account → Team administration; membership admission, roster add/edit/archive, separate grants and bounded delegation. Historical identities retained. |
 | Shared statistics | Team administration → Shared games and statistics; games, individual/table box scores, independent paired possessions and player paint totals. No automatic upload of local records. |
 | Completion and review | Shared game details; server-confirmed independent completion, approved edit requests, review/publication and accepted summaries. Possession zero conversion uses the confirmed warning flow. |
@@ -91,10 +91,13 @@ and [Google app passwords](https://support.google.com/accounts/answer/185833).
 
 Open `TeamStats/TeamStats.xcodeproj` in Xcode. Select an iPhone/iPad simulator
 to run; physical-device signing requires the developer's own Apple account.
+Owner reports successful private Free nonproduction sign-in and matching app/Auth
+Users UUID. Independent trusted verification, migrations/owner bootstrap and hosted
+access checks await administrative access; this is not hosted activation proof.
 Most simulator verification has used 26.4; actual 26.0 and physical devices remain
 untested. The approved official Supabase Swift SDK is pinned to 2.55.3; connected
-account source is implemented and tested with isolated SDK responses; a hosted
-project is not configured and shared workflows have passed isolated local integration, not hosted verification.
+account source is implemented and tested with isolated SDK responses; trusted hosted
+activation remains pending, and shared workflows have passed isolated local integration, not hosted verification.
 
 - [PRD](PRD.md): product scope, data definitions, design direction, open decisions.
 - [Project context](PROJECT_CONTEXT.md): current state and implementation sequence.

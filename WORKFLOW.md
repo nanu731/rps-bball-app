@@ -931,6 +931,20 @@ before real shared team use regardless of the approximately 100-user audience.
 
 ### Owner polish rubric: f682cfe audit and source repairs
 
+Hosted activation frontier: owner reports private Free setup, successful TeamStats
+sign-in and matching app/Auth Users UUID, and authorizes nonproduction migrations
+and trusted owner bootstrap. Independent re-verification and actual hosted writes
+have not occurred. Administrative CLI authentication/private hosted configuration
+are absent; the connected provider dashboard is awaiting sign-in. The nine
+unchanged committed migrations are pinned in a private manifest; inspect target,
+Free plan, SMS settings and existing migration/schema state before application.
+Recheck verified nonanonymous account/live session before atomic audited owner
+bootstrap. Then test hosted signed/anonymous/nonmember and protected-write access
+using isolated synthetic fixtures. The loopback-only test harness is not a hosted
+runner; do not disable its safeguards or use the owner's account for revocation
+tests. Keep local records untouched and retain the11-item polish acceptance gate.
+No hosted success, account identifiers, credentials or paid configuration claimed.
+
 Audited all11 PRD polish items before changing source. Coherent repairs cover
 unsaved Cancel/Back/swipe handling, pending input locks/progress, stable admin
 destinations, useful empty/admission actions, and access-denied concealment.
