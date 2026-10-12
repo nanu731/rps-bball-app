@@ -27,7 +27,7 @@ These are locally tested implementations, not a completed hosted release.
 
 | Area | Evidence and remaining limit |
 | --- | --- |
-| Identity/access | 21 native Account fixtures; actual local email-link PKCE/restore and distinct-user Auth/RLS checks. Owner now reports Free nonproduction setup, successful app sign-in and matching app/Auth Users UUID. Trusted independent re-verification/bootstrap and hosted access checks await administrative access; real SMS stays disabled. |
+| Identity/access | 21 native Account fixtures and actual local Auth/RLS checks. Owner confirmed hosted app/Auth Users UUID match; trusted hosted SQL now verifies confirmed/nonanonymous account, no ban/deletion and a live session. Dashboard shows Free/email enabled/phone disabled. Atomic migrations/owner bootstrap prepared, awaiting browser grant confirmation; hosted access tests remain pending. |
 | Shared statistics | SQL 136 baseline +37 approved-recovery checks and signed gateway 81 checks; actual local SDK workflow passed. Approved current-source corrections retain stale drafts read-only; explicit attachment preserves unsaved buffers. |
 | Plays | 11 integrated geometry/play tests and 54 baseline +37 recovery SQL checks. Explicit Reload/Attach preserves buffers after uncertain recovery; device interactions unverified. |
 | Photo | 14 native tests, including bounded file reads and actual synthetic Vision. Explicit mapping/confirmation only; no identity inference or persistent photo/text copy. Marked-form accuracy and picker interactions unverified. |
@@ -35,15 +35,18 @@ These are locally tested implementations, not a completed hosted release.
 | Sheets | Private empty destination verified; worker source and outbox tests passed, Google delivery disabled. Trusted service identity/runtime and billing-disabled proof remain unavailable. |
 | Device/release | Simulator inspection recovered, but input failed with `-10005: noWindowsAvailable`; attempts stopped. Updated private checklist covers polish/navigation, rotation, large text, VoiceOver and keyboard/recovery. Actual26.0/physical devices and signing/production/release approval remain unverified. |
 
-The owner completed private Free setup and confirmed the app's verified Auth UUID
-matches Authentication → Users. This is owner-confirmed evidence. The agent has
-not independently verified that account or granted owner authority: CLI admin
-authentication and an ignored hosted setup file are unavailable, and the connected
-dashboard is awaiting sign-in. Nine unchanged tested migrations are pinned in a
-private manifest; target/schema inspection must precede application. Private
-activation gates require trusted account re-verification and audited bootstrap,
-followed by hosted signed access checks. No local upload or production deployment.
-Real identifiers stay out of public files/logs; $0 and SMS-disabled limits remain.
+The connected dashboard now exposes the selected nonproduction project. The
+owner's app/Auth Users UUID comparison was followed by a trusted SQL recheck:
+confirmed, nonanonymous, not banned/deleted, with a live Auth session. Dashboard
+Free and phone-disabled indicators were observed; no provider setting changed.
+TeamStats tables and migration history are absent. The complete nine-migration
+transaction is prepared and verified against the editor contents; it records
+canonical migration versions and repeats verification before the atomic owner
+membership/audit bootstrap. Hosted execution awaits the browser-control policy's
+security-sensitive grant confirmation. No owner authority granted yet; hosted
+signed access checks remain pending. A local fail-closed rehearsal rejected an
+existing schema before writes and preserved existing rows. Real identifiers and
+the prepared SQL stay private/ignored. No local upload, paid or production action.
 
 The f682cfe polish rubric was audited before changes. Demonstrated fixes protect
 unsaved navigation in local/shared game creation, play/media/photo review and

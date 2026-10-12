@@ -931,19 +931,22 @@ before real shared team use regardless of the approximately 100-user audience.
 
 ### Owner polish rubric: f682cfe audit and source repairs
 
-Hosted activation frontier: owner reports private Free setup, successful TeamStats
-sign-in and matching app/Auth Users UUID, and authorizes nonproduction migrations
-and trusted owner bootstrap. Independent re-verification and actual hosted writes
-have not occurred. Administrative CLI authentication/private hosted configuration
-are absent; the connected provider dashboard is awaiting sign-in. The nine
-unchanged committed migrations are pinned in a private manifest; inspect target,
-Free plan, SMS settings and existing migration/schema state before application.
-Recheck verified nonanonymous account/live session before atomic audited owner
-bootstrap. Then test hosted signed/anonymous/nonmember and protected-write access
-using isolated synthetic fixtures. The loopback-only test harness is not a hosted
-runner; do not disable its safeguards or use the owner's account for revocation
-tests. Keep local records untouched and retain the11-item polish acceptance gate.
-No hosted success, account identifiers, credentials or paid configuration claimed.
+Hosted activation frontier: connected nonproduction dashboard is accessible.
+Owner-confirmed app/Auth Users UUID match was rechecked through trusted SQL:
+confirmed/nonanonymous account, no ban/deletion, live Auth session. Free badge,
+email enabled and phone disabled observed; no provider configuration changed.
+Read-only schema preflight found TeamStats tables and migration history absent.
+Nine unchanged migrations were checksum-verified, prepared in one transaction
+with canonical version/name history, and checked against the complete editor
+contents. Account/session checks repeat inside the transaction before owner team,
+active membership and bootstrap audit. Local rehearsal rejected a nonempty schema
+before writes; local rows stayed unchanged. Hosted Run awaits the browser-control
+policy's explicit security-sensitive grant confirmation; owner authority, applied
+migrations and hosted access tests are not yet claimed. Then test signed owner,
+anonymous/nonmember and protected client-write access with isolated synthetic
+fixtures. Never weaken the loopback harness or revoke the real owner's session
+for tests. Original local records/personal files, strict$0, phone-disabled policy
+and the11-item polish gate remain; no auto-upload, paid or production action.
 
 Audited all11 PRD polish items before changing source. Coherent repairs cover
 unsaved Cancel/Back/swipe handling, pending input locks/progress, stable admin

@@ -91,9 +91,10 @@ and [Google app passwords](https://support.google.com/accounts/answer/185833).
 
 Open `TeamStats/TeamStats.xcodeproj` in Xcode. Select an iPhone/iPad simulator
 to run; physical-device signing requires the developer's own Apple account.
-Owner reports successful private Free nonproduction sign-in and matching app/Auth
-Users UUID. Independent trusted verification, migrations/owner bootstrap and hosted
-access checks await administrative access; this is not hosted activation proof.
+Owner confirmed private hosted sign-in and matching app/Auth Users UUID. Trusted
+SQL account verification and dashboard Free/phone-disabled checks now passed.
+The atomic migrations/owner bootstrap is prepared but not executed; browser grant
+confirmation and actual hosted access tests remain pending. This is not activation proof.
 Most simulator verification has used 26.4; actual 26.0 and physical devices remain
 untested. The approved official Supabase Swift SDK is pinned to 2.55.3; connected
 account source is implemented and tested with isolated SDK responses; trusted hosted
