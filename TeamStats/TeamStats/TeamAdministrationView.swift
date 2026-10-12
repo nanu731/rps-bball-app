@@ -41,6 +41,7 @@ struct TeamAdministrationView: View {
                     NavigationLink("Shared games and statistics") {
                         ConnectedGamesView(account: account, teamID: team.id)
                     }
+                    NavigationLink("Playbook") { PlaybookView(account: account, teamID: team.id) }
                     NavigationLink("Roster") { AdministrationRosterView(model: model) }
                     if access.can(.membersManage) {
                         NavigationLink("Membership") { AdministrationMembershipView(model: model) }

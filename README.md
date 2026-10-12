@@ -9,7 +9,7 @@ team possessions, and individual paint-touch totals; players view saved stats.
 Local game creation, temporary roster, manual stat drafts, and read-only game
 summaries are implemented. Scoring checks flag exact mismatches and proven
 partial-score contradictions. The latest consolidated warning presentation still
-awaits owner manual verification. All data is currently local and unreviewed.
+awaits owner manual verification. The local entry screens remain local and unreviewed; shared server workflows are separate.
 
 The Account tab implements email-link and code verification, secure session
 restore, retry and sign-out. Configure an authorized nonproduction server's URL
@@ -24,8 +24,10 @@ hosted delivery and setup remain unverified. Shared entry/review and accepted su
 administration → Shared games and statistics. These use real server commands;
 local games are kept separate. Native fixtures and real local SDK workflows passed; hosted setup
 and two-device UI checks are still pending. The owner can inspect per-game server export status with independent error/Retry. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
-by default; actual Sheets delivery, photo autofill, animated plays and videos remain
-incomplete.
+by default; actual Sheets delivery, full-form photo accuracy and videos remain
+incomplete. Playbook authoring/review/playback is available from team administration;
+local database and native SDK verification passed, while device interaction and
+hosted verification remain pending.
 There is no live tracking in any phase.
 
 ## Project and planning

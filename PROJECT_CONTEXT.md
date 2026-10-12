@@ -308,3 +308,11 @@ a private Free-only setup guide is prepared, with no billing/SMS configuration.
 
 Export-status navigation race fixed after review;17 affected tests passed.
 Snapshot-scoped reads prevent stale results after switching/reopening games.
+
+Playbook source is integrated from Account/team administration: stable generic
+markers, authored movement steps, native drag/coordinate controls, playback and
+reduced-motion positions; drafts, independent review, immutable publication and
+successor revisions are server-enforced. Seven native play tests and54 actual
+rollback SQL checks passed. The real local native SDK also saved/published/reopened
+a play and retained its accepted drawing while creating a stable-marker successor.
+Actual gesture/playback/VoiceOver/larger-text device interaction remains unverified.

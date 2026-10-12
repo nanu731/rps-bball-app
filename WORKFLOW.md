@@ -1029,3 +1029,15 @@ snapshot, and obsolete responses cannot block/replace a reopened game or clear a
 new request’s loading state. All17 affected tests passed after coherent two-game
 fixture correction. Spec re-review found0 remaining issues. Original four local
 JSON files and both staged personal Xcode entries checked unchanged.
+
+
+Reviewed playbook vertical slice (migration004):54 actual isolated PostgreSQL
+checks passed for validation, permissions/RLS, live membership, stale/current-base
+conflicts, independent review/owner exception, rejected successors and immutable
+history. Native4 geometry and3 SDK-fixture tests passed; an initial test-only SDK
+initializer mismatch was corrected. Production readonly markers are static text,
+not no-op controls. The actual local Auth/native SDK test saved/published/reopened
+a labeled TEST ONLY play, verified authored intermediate coordinates, and created
+a successor retaining marker UUIDs and the accepted pointer; unrelated plays stayed
+visible. Existing JSON was not used or uploaded. Native court/playback gestures,
+VoiceOver, both-device larger text/Save and hosted integration remain pending.
