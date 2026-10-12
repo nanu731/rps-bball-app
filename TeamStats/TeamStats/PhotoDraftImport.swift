@@ -274,6 +274,7 @@ struct PhotoDraftImportSheet: View {
     @State private var preview: UIImage?
     @State private var proposals: [PhotoDraftProposal] = []
     @State private var issue: String?
+    @State private var confirmDiscard = false
     @FocusState private var numericField: UUID?
 
     private var reviewedValues: [String: String]? {
@@ -382,11 +383,22 @@ struct PhotoDraftImportSheet: View {
             .navigationTitle("Review photo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { cancelRecognition(); dismiss() } }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        if proposals.isEmpty { cancelRecognition(); dismiss() }
+                        else { confirmDiscard = true }
+                    }
+                }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("Done") { numericField = nil }
                 }
+            }
+            .alert("Discard photo review?", isPresented: $confirmDiscard) {
+                Button("Keep editing", role: .cancel) {}
+                Button("Discard reviewed proposals", role: .destructive) { cancelRecognition(); dismiss() }
+            } message: {
+                Text("Reviewed proposals have not been applied. Discarding leaves the entry draft and original photo unchanged.")
             }
             .onChange(of: selectedPhoto) { _, item in recognize(item) }
             .onDisappear {
@@ -394,6 +406,7 @@ struct PhotoDraftImportSheet: View {
                 lines = []; preview = nil; proposals = []; selectedPhoto = nil
             }
         }
+        .interactiveDismissDisabled(isRecognizing || !proposals.isEmpty)
     }
 
     private var reviewIssue: String? {

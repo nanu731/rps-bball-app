@@ -5,6 +5,20 @@ import Supabase
 
 @MainActor
 final class MediaResourcesTests: XCTestCase {
+    func testConfirmedDenialConcealsLoadedMediaUntilAuthorizedReload() async throws {
+        let fixture = MediaFixture(); let model = fixture.model(); await model.load()
+        let draft = try mediaRequired(await model.openDraft(resourceID: mediaResourceID))
+        fixture.setDeniedSave(true)
+        assertMediaNil(await model.save(draft, input: MediaLinkInput(draft)))
+        XCTAssertEqual(model.issue, .denied); XCTAssertNil(model.access)
+        XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.resources.isEmpty); XCTAssertTrue(model.contentConcealed)
+        fixture.setDeniedSave(false); fixture.setUnavailableRead(true)
+        await model.load()
+        XCTAssertEqual(model.issue, .server); XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.contentConcealed)
+        fixture.setUnavailableRead(false)
+        await model.load()
+        XCTAssertTrue(model.didLoad); XCTAssertFalse(model.contentConcealed); XCTAssertEqual(model.ownDrafts.first?.id, draft.id)
+    }
     func testMediaVersionReadsRestrictSelectedTargetBeforeTransfer() async throws {
         for kind in [MediaResourceKind.practice, .film] {
             let fixture = MediaFixture(mode: .staleDraft); let model = fixture.model(kind: kind)
@@ -214,6 +228,10 @@ private final class MediaFixture: @unchecked Sendable {
     private let mode: Mode
     private let lock = NSLock()
     private var recorded: [Command] = []
+    private var deniedSave = false
+    private var unavailableRead = false
+    func setDeniedSave(_ value: Bool) { lock.withLock { deniedSave = value } }
+    func setUnavailableRead(_ value: Bool) { lock.withLock { unavailableRead = value } }
     private var versionReads: [URL] = []
     private var revision = 1
     private var status = "draft"
@@ -243,6 +261,7 @@ private final class MediaFixture: @unchecked Sendable {
         lock.withLock {
             let name = request.url!.lastPathComponent
             if name == "team_access" {
+                if unavailableRead { return json(["code": "XX000", "message": "Synthetic unavailable"], status: 500) }
                 if mode == .loadFailureOnce && !failed { failed = true; return json(["code": "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 500) }
                 let capabilities: [String] = mode == .filmPublishOnly ? ["film.publish"] : mode == .inspectorPending ? ["practice.review"] : mode == .revokedRecovery && !resumed ? ["film.upload"] : []
                 return json(["team_id": mediaTeamID.uuidString, "user_id": mediaActorID.uuidString, "is_owner": mode == .ownerPending,
@@ -259,6 +278,7 @@ private final class MediaFixture: @unchecked Sendable {
                     return json(["previous": previous, "draft": version()])
                 }
                 if name == "media_save_draft" {
+                    if deniedSave { return json(["code": "42501", "message": "Synthetic denied"], status: 403) }
                     if mode == .conflict || mode == .failure { return json(["code": mode == .conflict ? "40001" : "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 500) }
                     revision += 1; title = params["p_title"] as? String ?? ""; url = params["p_link_url"] as? String ?? ""; notes = params["p_notes"] as? String ?? ""
                     var value = version()

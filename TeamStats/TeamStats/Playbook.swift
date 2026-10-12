@@ -54,6 +54,7 @@ final class Playbook {
     private(set) var reloadRequired = false
     private(set) var issue: PlaybookIssue?
     private(set) var confirmation: String?
+    private(set) var contentConcealed = false
     @ObservationIgnored private let authenticatedClient: () async throws -> SupabaseClient
     init(account: BackendAccount, teamID: UUID) {
         self.teamID = teamID
@@ -200,6 +201,7 @@ final class Playbook {
         guard revisions.allSatisfy({ revision in rows.contains { $0.id == revision.playID } }),
               rows.allSatisfy({ play in play.publishedVersionID == nil || revisions.contains { $0.id == play.publishedVersionID && $0.playID == play.id && $0.status == .published } }) else { throw PlaybookIssue.invalidResponse }
         access = snapshot; plays = rows; versions = revisions; didLoad = true; reloadRequired = false
+        contentConcealed = false
     }
     private func pages<T: Decodable>(_ client: SupabaseClient, _ table: String) async throws -> [T] {
         var result: [T] = []
@@ -228,5 +230,10 @@ final class Playbook {
             }
         } else if error is DecodingError { issue = .invalidResponse }
         else { issue = .unavailable }
+        // Confirmed denial differs from a connection failure; only an authorized read can reveal retained content again.
+        if issue == .denied {
+            contentConcealed = true; access = nil; plays = []; versions = []
+            didLoad = false; reloadRequired = true
+        }
     }
 }

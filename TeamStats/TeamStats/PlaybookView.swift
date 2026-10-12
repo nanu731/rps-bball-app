@@ -10,13 +10,16 @@ struct PlaybookView: View {
         List {
             Section {
                 Text("Only accepted plays are shared with team viewers. Marker numbers are diagram roles, not roster identities.")
-                if model.isBusy { ProgressView("Loading playbook…") }
+                if model.isBusy { ProgressView("Contacting playbook server…") }
                 if let issue = model.issue { Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red); Button("Retry") { Task { await model.load() } } }
                 if let confirmation = model.confirmation { Text(confirmation) }
             }
             if model.didLoad {
                 Section("Published plays") {
-                    if model.published.isEmpty { Text("No published plays.").foregroundStyle(.secondary) }
+                    if model.published.isEmpty {
+                        Text("No published plays.").foregroundStyle(.secondary)
+                        Text(model.access?.can(.playsAuthor) == true ? "Create a draft below, then save and submit it for review." : "Ask the team owner about publishing plays for viewers.").font(.footnote).foregroundStyle(.secondary)
+                    }
                     ForEach(model.published) { revision in
                         NavigationLink(revision.title) { PlayRevisionView(account: account, model: model, revision: revision) }
                     }
@@ -53,7 +56,9 @@ struct PlaybookView: View {
                 }
             }
         }
+        .disabled(model.isBusy)
         .navigationTitle("Playbook")
+        .navigationBarBackButtonHidden(model.isBusy)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Reload", systemImage: "arrow.clockwise") { Task { await model.load() } }.disabled(model.isBusy) } }
         .task { await model.load() }
         .navigationDestination(item: $openedDraft) { revision in PlayRevisionView(account: account, model: model, revision: revision) }
@@ -76,130 +81,154 @@ private struct PlayRevisionView: View {
     @State private var attachmentCandidate: PlayRevision?
     @State private var attachmentLookupMessage: String?
     @State private var confirmAttachment = false
+    @State private var confirmLeave = false
+    @Environment(\.dismiss) private var dismiss
     @FocusState private var textFocused: Bool
     init(account: BackendAccount, model: Playbook, revision: PlayRevision) {
         self.account = account; self.model = model; _revision = State(initialValue: revision)
         _title = State(initialValue: revision.title); _diagram = State(initialValue: revision.diagram)
     }
-    private var editable: Bool { revision.status == .draft && revision.authorUserID == model.access?.userID && model.access?.can(.playsAuthor) == true }
+    private var protectedContentUnavailable: Bool { model.contentConcealed || (model.didLoad && !model.versions.contains { $0.id == revision.id }) }
+    private var editable: Bool { !protectedContentUnavailable && revision.status == .draft && revision.authorUserID == model.access?.userID && model.access?.can(.playsAuthor) == true }
     private var changed: Bool { title != revision.title || diagram != revision.diagram }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Label(revision.status == .published ? "Published revision — read-only" : "\(revision.status.rawValue.capitalized) play revision", systemImage: revision.status == .published ? "checkmark.circle" : "pencil")
-                if let issue = model.issue {
-                    Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
-                    Button("Reload server state (keep unsaved drawing)") { Task { await reloadRetainingBuffers() } }
-                }
-                if let confirmation = model.confirmation { Text(confirmation) }
-                if pendingRecoverySource != nil && changed {
-                    Label("Retained unsaved name or drawing — not uploaded", systemImage: "pencil").font(.subheadline)
-                    Text("Retained name: \(title.isEmpty ? "Unnamed draft" : title)").font(.subheadline)
-                }
-                if let message = attachmentLookupMessage {
-                    Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
-                    Button("Reload and check recovered draft") { Task { await reloadRetainingBuffers() } }
-                }
-                if attachmentCandidate != nil {
-                    Text("The server has a recovered working draft for this saved drawing. Attach your retained editor content to that draft only if you want to continue editing it.").font(.subheadline)
-                    Button("Attach retained edits to recovered draft") { confirmAttachment = true }
-                        .alert("Attach retained edits?", isPresented: $confirmAttachment) {
-                            Button("Attach without saving") { attachRetainedBuffers() }
-                            Button("Go back", role: .cancel) {}
-                        } message: {
-                            Text("Your retained name and drawing stay in the editor. The recovered draft's saved content and published play remain unchanged until you explicitly Save and complete the review/publication workflow. This does not repeat recovery.")
-                        }
-                }
-                if revision.status == .superseded {
-                    Text("This saved drawing was retained after explicit recovery. It is read-only; the resumed draft has a separate identity.").font(.subheadline)
-                }
-                if editable && model.isStaleDraft(revision) && model.didLoad && !model.reloadRequired {
-                    Label("A newer play was published. This saved draft still references the previous accepted revision.", systemImage: "exclamationmark.triangle").foregroundStyle(.red)
-                    Text("Resume keeps this saved drawing in read-only history and creates a new draft against the latest published play. Your unsaved name and drawing stay in this editor until you explicitly Save.").font(.subheadline)
-                    Button("Resume drawing against latest published play") {
-                        recoveryPointer = model.currentPublishedVersionID(playID: revision.playID)
-                        confirmRecovery = recoveryPointer != nil
-                    }
-                }
-                if editable {
-                    if changed { Label("Unsaved name or drawing changes", systemImage: "pencil").font(.subheadline) }
-                    TextField("Play name", text: $title).textFieldStyle(.roundedBorder).focused($textFocused)
-                    Text("Drag a marker to position it. The controls below also move the selected marker without dragging.").font(.subheadline)
-                    Picker("Edit position", selection: $selectedStep) {
-                        Text("Initial placement").tag(0)
-                        ForEach(diagram.steps.indices, id: \.self) { Text("Step \($0 + 1)").tag($0 + 1) }
-                    }.pickerStyle(.menu)
-                    PlayCourt(diagram: diagram, positions: editorPositions, selectedMarkerID: selectedMarkerID, arrows: movementArrows,
-                              select: { selectedMarkerID = $0 }, move: { id, point in diagram.move(markerID: id, step: selectedStep, to: point) })
-                        .aspectRatio(1.15, contentMode: .fit)
-                    HStack {
-                        Button("Add marker", systemImage: "plus.circle") { diagram.addMarker(); selectedMarkerID = diagram.markers.last?.id }
-                        Spacer()
-                        Button("Add movement step", systemImage: "arrow.right") { diagram.addStep(); selectedStep = diagram.steps.count }.disabled(diagram.markers.isEmpty)
-                    }.buttonStyle(.bordered)
-                    if !diagram.markers.isEmpty {
-                        Picker("Marker", selection: $selectedMarkerID) {
-                            Text("Choose a marker").tag(Optional<UUID>.none)
-                            ForEach(diagram.markers) { Text("Marker \($0.number)").tag(Optional($0.id)) }
-                        }.pickerStyle(.menu)
-                    }
-                    if let id = selectedMarkerID, let index = diagram.markers.firstIndex(where: { $0.id == id }), let point = diagram.position(markerID: id, step: selectedStep) {
-                        TextField("Optional marker label", text: $diagram.markers[index].label).textFieldStyle(.roundedBorder).focused($textFocused)
-                        coordinateSlider("Horizontal position", id: id, point: point, horizontal: true)
-                        coordinateSlider("Vertical position", id: id, point: point, horizontal: false)
-                    }
-                    if selectedStep > 0, diagram.steps.indices.contains(selectedStep - 1) {
-                        HStack {
-                            Text("Step duration: \(diagram.steps[selectedStep - 1].duration, specifier: "%.1f") seconds")
-                            Stepper("Duration", value: $diagram.steps[selectedStep - 1].duration, in: 0.1...30, step: 0.1).labelsHidden().accessibilityLabel("Step \(selectedStep) duration")
-                        }
-                    }
-                    if let message = diagram.validationMessage { Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                if model.isBusy { ProgressView("Contacting playbook server…") }
+                if protectedContentUnavailable {
+                    Label("This play is unavailable with current access. Retained editor content is hidden.", systemImage: "lock")
+                    Button("Reload and check access") { Task { await reloadRetainingBuffers() } }
+                    if let issue = model.issue { Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
                 } else {
-                    Text(revision.title).font(.title2)
-                }
-                if revision.status == .published {
-                    NavigationLink("Practice video links and owner review") {
-                        MediaResourcesView(teamID: revision.teamID, kind: .practice, targetID: revision.playID,
-                            targetTitle: revision.title, account: account)
+                    Label(revision.status == .published ? "Published revision — read-only" : "\(revision.status.rawValue.capitalized) play revision", systemImage: revision.status == .published ? "checkmark.circle" : "pencil")
+                    if let issue = model.issue {
+                        Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                        Button("Reload server state (keep unsaved drawing)") { Task { await reloadRetainingBuffers() } }
                     }
-                }
-                Divider()
-                Text(pendingRecoverySource == nil ? "Playback" : "Retained editor preview").font(.headline)
-                PlayPlaybackView(diagram: diagram)
-                if editable {
-                    Text("Save the name and drawing before submitting. Publication requires at least one marker and movement step.").font(.subheadline)
-                    Button("Submit for independent review") { Task { _ = await model.transition(revision, action: "submit"); synchronize() } }
-                        .disabled(changed || !diagram.canPublish || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.reloadRequired)
-                    if model.access?.can(.playsPublish) == true {
-                        Button("Publish with authorized bypass") { Task { _ = await model.transition(revision, action: "publish"); synchronize() } }
+                    if let confirmation = model.confirmation { Text(confirmation) }
+                    if pendingRecoverySource != nil && changed {
+                        Label("Retained unsaved name or drawing — not uploaded", systemImage: "pencil").font(.subheadline)
+                        Text("Retained name: \(title.isEmpty ? "Unnamed draft" : title)").font(.subheadline)
+                    }
+                    if let message = attachmentLookupMessage {
+                        Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                        Button("Reload and check recovered draft") { Task { await reloadRetainingBuffers() } }
+                    }
+                    if attachmentCandidate != nil {
+                        Text("The server has a recovered working draft for this saved drawing. Attach your retained editor content to that draft only if you want to continue editing it.").font(.subheadline)
+                        Button("Attach retained edits to recovered draft") { confirmAttachment = true }
+                            .alert("Attach retained edits?", isPresented: $confirmAttachment) {
+                                Button("Attach without saving") { attachRetainedBuffers() }
+                                Button("Go back", role: .cancel) {}
+                            } message: {
+                                Text("Your retained name and drawing stay in the editor. The recovered draft's saved content and published play remain unchanged until you explicitly Save and complete the review/publication workflow. This does not repeat recovery.")
+                            }
+                    }
+                    if revision.status == .superseded {
+                        Text("This saved drawing was retained after explicit recovery. It is read-only; the resumed draft has a separate identity.").font(.subheadline)
+                    }
+                    if editable && model.isStaleDraft(revision) && model.didLoad && !model.reloadRequired {
+                        Label("A newer play was published. This saved draft still references the previous accepted revision.", systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                        Text("Resume keeps this saved drawing in read-only history and creates a new draft against the latest published play. Your unsaved name and drawing stay in this editor until you explicitly Save.").font(.subheadline)
+                        Button("Resume drawing against latest published play") {
+                            recoveryPointer = model.currentPublishedVersionID(playID: revision.playID)
+                            confirmRecovery = recoveryPointer != nil
+                        }
+                    }
+                    if editable {
+                        if changed { Label("Unsaved name or drawing changes", systemImage: "pencil").font(.subheadline) }
+                        TextField("Play name", text: $title).textFieldStyle(.roundedBorder).focused($textFocused)
+                        Text("Drag a marker to position it. The controls below also move the selected marker without dragging.").font(.subheadline)
+                        Picker("Edit position", selection: $selectedStep) {
+                            Text("Initial placement").tag(0)
+                            ForEach(diagram.steps.indices, id: \.self) { Text("Step \($0 + 1)").tag($0 + 1) }
+                        }.pickerStyle(.menu)
+                        PlayCourt(diagram: diagram, positions: editorPositions, selectedMarkerID: selectedMarkerID, arrows: movementArrows,
+                                  select: { selectedMarkerID = $0 }, move: { id, point in diagram.move(markerID: id, step: selectedStep, to: point) })
+                            .aspectRatio(1.15, contentMode: .fit)
+                        HStack {
+                            Button("Add marker", systemImage: "plus.circle") { diagram.addMarker(); selectedMarkerID = diagram.markers.last?.id }
+                            Spacer()
+                            Button("Add movement step", systemImage: "arrow.right") { diagram.addStep(); selectedStep = diagram.steps.count }.disabled(diagram.markers.isEmpty)
+                        }.buttonStyle(.bordered)
+                        if !diagram.markers.isEmpty {
+                            Picker("Marker", selection: $selectedMarkerID) {
+                                Text("Choose a marker").tag(Optional<UUID>.none)
+                                ForEach(diagram.markers) { Text("Marker \($0.number)").tag(Optional($0.id)) }
+                            }.pickerStyle(.menu)
+                        }
+                        if let id = selectedMarkerID, let index = diagram.markers.firstIndex(where: { $0.id == id }), let point = diagram.position(markerID: id, step: selectedStep) {
+                            TextField("Optional marker label", text: $diagram.markers[index].label).textFieldStyle(.roundedBorder).focused($textFocused)
+                            coordinateSlider("Horizontal position", id: id, point: point, horizontal: true)
+                            coordinateSlider("Vertical position", id: id, point: point, horizontal: false)
+                        }
+                        if selectedStep > 0, diagram.steps.indices.contains(selectedStep - 1) {
+                            HStack {
+                                Text("Step duration: \(diagram.steps[selectedStep - 1].duration, specifier: "%.1f") seconds")
+                                Stepper("Duration", value: $diagram.steps[selectedStep - 1].duration, in: 0.1...30, step: 0.1).labelsHidden().accessibilityLabel("Step \(selectedStep) duration")
+                            }
+                        }
+                        if let message = diagram.validationMessage { Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                    } else {
+                        Text(revision.title).font(.title2)
+                    }
+                    if revision.status == .published {
+                        NavigationLink("Practice video links and owner review") {
+                            MediaResourcesView(teamID: revision.teamID, kind: .practice, targetID: revision.playID,
+                                targetTitle: revision.title, account: account)
+                        }
+                    }
+                    Divider()
+                    Text(pendingRecoverySource == nil ? "Playback" : "Retained editor preview").font(.headline)
+                    PlayPlaybackView(diagram: diagram)
+                    if editable {
+                        Text("Save the name and drawing before submitting. Publication requires at least one marker and movement step.").font(.subheadline)
+                        Button("Submit for independent review") { Task { _ = await model.transition(revision, action: "submit"); synchronize() } }
                             .disabled(changed || !diagram.canPublish || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.reloadRequired)
+                        if model.access?.can(.playsPublish) == true {
+                            Button("Publish with authorized bypass") { Task { _ = await model.transition(revision, action: "publish"); synchronize() } }
+                                .disabled(changed || !diagram.canPublish || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.reloadRequired)
+                        }
                     }
-                }
-                if revision.status == .submitted, model.access?.can(.playsReview) == true,
-                   revision.authorUserID != model.access?.userID || model.access?.isOwner == true {
-                    TextField("Review reason (optional)", text: $reason, axis: .vertical).textFieldStyle(.roundedBorder).focused($textFocused)
-                    HStack {
-                        Button("Approve and publish") { Task { _ = await model.transition(revision, action: "approve", reason: reason); synchronize() } }
-                        Button("Reject proposal") { Task { _ = await model.transition(revision, action: "reject", reason: reason); synchronize() } }
-                    }.buttonStyle(.bordered)
-                }
-                if !revision.reviewReason.isEmpty { Text("Review: \(revision.reviewReason)") }
-                if model.access?.can(.playsAuthor) == true && (revision.status == .published || (revision.status == .rejected && revision.authorUserID == model.access?.userID)) {
-                    Button("Create successor draft") { Task { successor = await model.openDraft(playID: revision.playID, source: revision) } }
-                    Text("The published revision stays unchanged while a successor is authored and reviewed.").font(.caption)
-                }
-                if revision.status == .published {
-                    Text("Published history").font(.headline)
-                    ForEach(model.history(playID: revision.playID).filter { $0.id != revision.id }) { past in
-                        NavigationLink("\(past.title) — revision \(past.revision)") { PlayRevisionView(account: account, model: model, revision: past) }
+                    if revision.status == .submitted, model.access?.can(.playsReview) == true,
+                       revision.authorUserID != model.access?.userID || model.access?.isOwner == true {
+                        TextField("Review reason (optional)", text: $reason, axis: .vertical).textFieldStyle(.roundedBorder).focused($textFocused)
+                        HStack {
+                            Button("Approve and publish") { Task { if await model.transition(revision, action: "approve", reason: reason) { reason = ""; synchronize() } } }
+                            Button("Reject proposal") { Task { if await model.transition(revision, action: "reject", reason: reason) { reason = ""; synchronize() } } }
+                        }.buttonStyle(.bordered)
                     }
-                }
+                    if !revision.reviewReason.isEmpty { Text("Review: \(revision.reviewReason)") }
+                    if model.access?.can(.playsAuthor) == true && (revision.status == .published || (revision.status == .rejected && revision.authorUserID == model.access?.userID)) {
+                        Button("Create successor draft") { Task { successor = await model.openDraft(playID: revision.playID, source: revision) } }
+                        Text("The published revision stays unchanged while a successor is authored and reviewed.").font(.caption)
+                    }
+                    if revision.status == .published {
+                        Text("Published history").font(.headline)
+                        ForEach(model.history(playID: revision.playID).filter { $0.id != revision.id }) { past in
+                            NavigationLink("\(past.title) — revision \(past.revision)") { PlayRevisionView(account: account, model: model, revision: past) }
+                        }
+                    }
+            }
             }.padding(16)
         }
         .scrollDismissesKeyboard(.interactively)
+        .onChange(of: model.contentConcealed) { _, concealed in if concealed { textFocused = false } }
         .navigationTitle(editable ? "Edit play" : "View play")
+        .navigationBarBackButtonHidden(true)
+        .interactiveDismissDisabled(model.isBusy || changed || !reason.isEmpty)
+        .confirmationDialog("Leave this play?", isPresented: $confirmLeave, titleVisibility: .visible) {
+            Button("Keep editing", role: .cancel) {}
+            Button("Discard unsaved edits", role: .destructive) { dismiss() }
+        } message: {
+            Text("The unsaved name, drawing or review reason on this screen will be discarded. Saved revisions remain unchanged.")
+        }
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Back", systemImage: "chevron.left") {
+                    if changed || !reason.isEmpty { confirmLeave = true } else { dismiss() }
+                }.disabled(model.isBusy)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 if editable { Button("Save") { textFocused = false; Task { if await model.save(revision, title: title, diagram: diagram) { synchronize() } } }
                     .disabled(model.isBusy || model.reloadRequired || diagram.validationMessage != nil || title.count > 100) }

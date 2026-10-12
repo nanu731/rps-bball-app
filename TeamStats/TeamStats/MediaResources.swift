@@ -121,6 +121,7 @@ final class MediaResources {
     private(set) var reloadRequired = false
     private(set) var issue: MediaResourceIssue?
     private(set) var confirmation: String?
+    private(set) var contentConcealed = false
     @ObservationIgnored private let authenticatedClient: () async throws -> SupabaseClient
     init(teamID: UUID, kind: MediaResourceKind, targetID: UUID, account: BackendAccount) {
         self.teamID = teamID; self.kind = kind; self.targetID = targetID
@@ -153,7 +154,8 @@ final class MediaResources {
             guard Set(rows.map(\.id)).count == rows.count, rows.allSatisfy(validResponse),
                   parents.allSatisfy({ parent in parent.publishedVersionID == nil || rows.contains(where: { $0.id == parent.publishedVersionID && $0.status == .published }) }) else { throw MediaResourceIssue.invalidResponse }
             resources = parents; versions = rows; access = current; didLoad = true; reloadRequired = false
-        } catch { issue = Self.map(error); resources = []; versions = []; access = nil; reloadRequired = true }
+            contentConcealed = false
+        } catch { recordFailure(error); resources = []; versions = []; access = nil; reloadRequired = true }
     }
     /// Identifies only the exact server-created successor; attaching editor text is a separate user action.
     func recoveredDraft(after previous: MediaResourceVersion, expectedID: UUID? = nil, expectedRevision: Int64? = nil) -> MediaResourceVersion? {
@@ -212,7 +214,7 @@ final class MediaResources {
             versions.removeAll { $0.id == old.id || $0.id == fresh.id }; versions.append(contentsOf: [old, fresh])
             confirmation = "Server preserved the saved earlier proposal and created a current draft. Typed changes remain unsaved."
             return fresh
-        } catch { issue = Self.map(error); reloadRequired = true; return nil }
+        } catch { recordFailure(error); reloadRequired = true; return nil }
     }
     @discardableResult
     func openDraft(resourceID: UUID, source: MediaResourceVersion? = nil) async -> MediaResourceVersion? {
@@ -270,7 +272,14 @@ final class MediaResources {
             }
             confirmation = "Server confirmed \(result.status == .draft ? "draft save" : result.status.label.lowercased())."
             return result
-        } catch { issue = Self.map(error); reloadRequired = true; return nil }
+        } catch { recordFailure(error); reloadRequired = true; return nil }
+    }
+    private func recordFailure(_ error: Error) {
+        issue = Self.map(error)
+        if issue == .denied {
+            contentConcealed = true; resources = []; versions = []; access = nil
+            didLoad = false; reloadRequired = true
+        }
     }
     private func validResponse(_ row: MediaResourceVersion) -> Bool {
         row.teamID == teamID && row.revision > 0 && row.reviewReason.count <= 500 && MediaLinkInput(row).validDraft &&
