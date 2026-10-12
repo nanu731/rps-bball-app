@@ -3,7 +3,8 @@
 Current source/local acceptance snapshot (2026-10-12): native private clips/scouting,
 Team discovery, verified administration and optional retained playback are implemented.
 Full integration151 executed/4 opt-in skips passed, followed by8 affected recovery
-checks after the final narrow repair. Rendered UI is blocked by the locked Mac;
+checks after the final narrow repair. Representative local rendering now has partial acceptance; unreliable app input
+automation blocks the remaining interactions;
 hosted capacity/signed access, Google/sender, real assets/forms and device/release
 acceptance remain pending. Later dated checkpoints supersede earlier source gaps.
 
@@ -72,9 +73,9 @@ These are locally tested implementations, not a completed hosted release.
 | Shared statistics | SQL 136 baseline +37 approved-recovery checks and signed gateway 81 checks; actual local SDK workflow passed. Approved current-source corrections retain stale drafts read-only; explicit attachment preserves unsaved buffers. |
 | Plays | 11 integrated geometry/play tests and 54 baseline +37 recovery SQL checks. Explicit Reload/Attach preserves buffers after uncertain recovery; device interactions unverified. |
 | Photo | 14 native tests, including bounded file reads and actual synthetic Vision. Explicit mapping/confirmation only; no identity inference or persistent photo/text copy. Marked-form accuracy and picker interactions unverified. |
-| Video links | 78 actual SQL and 14 native checks; actual local SDK practice/film lifecycle passed with target filtering. File uploads, private playback, quota/transfer enforcement and Hudl access remain incomplete. |
+| Video links | 78 actual SQL and 14 native checks; actual local SDK practice/film lifecycle passed with target filtering. Private-file uploads/playback and quota/transfer enforcement have later source/local evidence; hosted media capacity and real Hudl access remain pending. |
 | Sheets | Private empty destination verified; worker source and outbox tests passed, Google delivery disabled. Trusted service identity/runtime and billing-disabled proof remain unavailable. |
-| Device/release | Simulator inspection recovered, but input failed with `-10005: noWindowsAvailable`; attempts stopped. Updated private checklist covers polish/navigation, rotation, large text, VoiceOver and keyboard/recovery. Actual26.0/physical devices and signing/production/release approval remain unverified. |
+| Device/release | Current isolated rendering partially passed; app-control automation remains unreliable. Earlier `-10005` failures are historical; failed attempts stopped. Updated private checklist covers polish/navigation, rotation, large text, VoiceOver and keyboard/recovery. Actual26.0/physical devices and signing/production/release approval remain unverified. |
 
 The owner executed the reviewed secured nine-migration/owner transaction and
 observed all four activation flags true. Independent hosted read-only readback
@@ -534,3 +535,23 @@ hosted file deployment, local draft upload, paid service or production release.
 No new rendered UI acceptance is claimed while the Mac is locked. Full app/Auth
 relaunch/offline UI, current hosted signed access/capacity and provider integrations,
 real forms/assets and physical/26.0/signing remain exact external/device gates.
+
+### Rendered acceptance continuation — 2026-10-12,source4da97b6
+
+Current isolated build/in-place installs passed on both26.4 simulators; both opened.
+Representative local empty/forms/details screenshots passed light/dark, five text
+increments and settled landscape inspection. iPad synthetic new-game Save with
+software keyboard and saved metadata passed. iPhone native large-text scroll reached
+footer with toolbar visible. Remaining entry/tab presses and iPhone typing failed
+to activate through automation, including fresh binding/keyboard forwarding; stop
+retries and do not infer a source defect or claim connected/player/VoiceOver/full
+app offline checks. Source unchanged; no unaffected model/provider suites repeated.
+
+Existing hosted dashboard history shows nine baseline versions and no three latest
+follow-up entries; Edge Functions shows no deployment. Missing private signed-test,
+worker/Google/sender and fresh$0 hosting/capacity prerequisites remain. No SQL/snippet,
+bootstrap, grant change, hosted deployment or service activation. A rejected snippet
+creation was superseded by the safe existing migration-history view. Local bounded
+capacity window expired; inspected read-only, charges/history preserved. Original
+records, identities and protected working/staged snapshots remain unchanged this
+turn, with older snapshots retained. Exact evidence/checklist stays private.

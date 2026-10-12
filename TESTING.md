@@ -379,3 +379,34 @@ hosted file deployment, local draft upload, paid service or production release.
 No new rendered UI acceptance is claimed while the Mac is locked. Full app/Auth
 relaunch/offline UI, current hosted signed access/capacity and provider integrations,
 real forms/assets and physical/26.0/signing remain exact external/device gates.
+
+## Rendered acceptance continuation — source4da97b6,2026-10-12
+
+Current signed isolated POLISH TEST build passed and installed in place on iPhone17
+and iPadA16/iOS26.4. Both apps launched; original app/container and test JSON were
+preserved. Representative screenshots remain private. No source repair was made:
+failed automation transitions do not establish an application defect.
+
+| Acceptance | Result and precise scope |
+|---|---|
+| Preservation | Passed: both personal working/staged snapshots, unrelated project change,8 original JSON files and temporary identities unchanged from this turn's initial snapshot; prior snapshots retained. |
+| Local rendering | Passed: both empty local-games screens; local/shared guidance; maroon/system surfaces; representative light/dark, five text-size increases and settled landscape inspection. These are local forms/details, not whole-app acceptance. |
+| iPad Save | Passed: clearly labeled synthetic game, software keyboard visible, Save dismisses and saved details show correct metadata. |
+| iPhone form | Passed: semantic Add opens required-opponent/disabled-Save form; large-text native scroll reaches footer with toolbar visible. Typing and enabled Save not verified in this run. |
+| Input automation | Failed/unresolved: entry/tab presses do not activate on iPad; Account-tab presses and typing do not take effect on iPhone. Fresh window binding/keyboard forwarding did not resolve it. Native menus/Add/scroll actions worked; no resets or app/container deletion. |
+| Remaining device flows | Blocked: warnings/counters, connected Team/Manage team, completion/review/correction/dirty recovery, court/playback, clip/PDF upload/viewing, actual player controls/retention/full-app offline startup, known revocation, VoiceOver and Reduce Motion. Prior model/provider evidence remains separate. |
+| Hosted prerequisites | Existing dashboard lists nine baseline migrations; three follow-up versions are unrecorded. Edge Functions shows first-deployment empty state. No distinct synthetic hosted credentials, trusted worker/Google/sender setup or fresh$0 capacity evidence exists in authorized configuration. No activation/bootstrap, grants or deployments changed. |
+
+The proposed separate SQL snippet was rejected because it would persist dashboard
+content without explicit approval. The existing migration-history page provided
+a safer read-only alternative; no snippet or SQL execution was needed/performed.
+Follow-up migration history is not proof of current signed-user permissions.
+The local bounded capacity window is expired; no quotas/charges/history were changed.
+This does not block local rendering. It must be refreshed only for the isolated
+fixture before new file-transfer checks, never treated as hosted cost evidence.
+
+Text-size increases were reversed and appearance restored after captures. Full
+app/Auth offline startup remains unverified; two-test-host clip playback is earlier
+separate evidence. Actual26.0, physical devices, real marked forms/Hudl rights,
+branding/roster, signing/distribution and release remain unverified. Stop repeated
+failed automation; the private manual checklist records exact actions/expectations.

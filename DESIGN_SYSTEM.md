@@ -46,3 +46,11 @@ Baseline: [Apple accessibility](https://developer.apple.com/design/human-interfa
 [split views](https://developer.apple.com/design/human-interface-guidelines/split-views).
 Installed apple-design, ui-ux-pro-max SwiftUI and design-system guidance are adapted
 to native platform controls; conflicting web recommendations are excluded.
+
+Representative local visual acceptance at source4da97b6: both26.4 device families
+rendered readable maroon/system light/dark screens; five preferred-text increments
+and settled landscape captures inspected. iPhone native scrolling reached large-text
+form footer; iPad keyboard-visible new-game Save passed. These limited local views
+do not accept every entry/Team/player/PDF screen or VoiceOver/Reduce Motion. Unreliable
+app-control automation requires the recorded manual checks; no visual redesign was
+inferred from an input-tool failure. Screenshots remain private.

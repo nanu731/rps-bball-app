@@ -100,8 +100,10 @@ signed access/lifecycle acceptance, team email delivery, trusted Google
 worker configuration and hosted media capacity/delivery remain blocked. Isolated
 actual upload/transfer enforcement and native playback passed.
 New UI needs iPhone/iPad rotation, larger text, VoiceOver, keyboard/Save and
-recovery/photo interaction checks. Current Simulator interaction is blocked by the locked Mac; previous automation
-also failed with stale/no-window errors. New interactions remain unverified. Earlier owner
+recovery/photo interaction checks. Current isolated app rendering passed representative local light/dark, larger-text
+and rotation checks; iPad keyboard-visible new-game Save passed. App entry/tab
+presses and iPhone typing remain unreliable through automation. Remaining new
+interactions, including connected media/full-app offline playback, remain unverified. Earlier owner
 verification does not verify new screens. Real branding/icon, signing/distribution
 and explicit production/release approval remain outstanding. No paid service,
 public submission or automatic production-data upload is enabled.
