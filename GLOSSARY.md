@@ -47,6 +47,21 @@ that require review before entering an existing draft.
 **Media resource**: A private practice-video or game-film submission. Metadata or
 a link alone does not establish upload, provider rights, or playback.
 
+**Hudl shortcut**: A game-linked destination opened in Hudl, which independently
+controls its account and film access. It is not a TeamStats-hosted film.
+
+**Practice clip**: A short team video associated with a play. It is separate from
+full-game film and transient stat-sheet photographs.
+
+**Offline clip**: A previously authorized practice clip explicitly kept on a
+device for playback without a connection. Delivered copies cannot reliably be recalled.
+
+**Private file version**: One retained, independently validated document or clip
+proposal; approval refers to that exact version rather than another replacement.
+
+**Capacity reservation**: An allowance held for a specific transfer or retained
+file. A failed or expired operation does not imply its occupied space is free.
+
 **Publication bypass**: Permission for an eligible author to publish their own
 valid submission without individual review; it does not create uploader eligibility
 or permission-administration authority.

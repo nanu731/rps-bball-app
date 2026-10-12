@@ -2,6 +2,25 @@
 
 ## Authorized implementation continuation — 2026-10-12
 
+Reviewed Hudl slice integrated inf7eb21d. A server/native query-parsing discrepancy
+was reproduced then repaired without rewriting older migrations/records.26 Hudl
+and79 existing media SQL checks passed;18 native media checks passed at7ebd25c.
+Evidence names exact repair/test revisions. Supported destinations are deliberately
+hudl.com/www.hudl.com; historical links stay readable and are labeled honestly.
+Real Hudl links, rendered presentation and hosted application remain pending.
+
+Approved native media tools now installed with independent official archive/manifest
+checksums, retained notices/SPDX assets and documented supported launcher overrides.
+Eager startup resolved a lazy health timeout. Full current process/socket audit
+passed15 loopback listeners; Storage/Functions/Imgproxy health probes passed.
+No hosted migration, bootstrap, original record or provider setting changed.
+
+Member Team workspace source now exposes shared games, plays and roster outside
+administration, with adaptive navigation, separate admission and authorized
+management. Team switching/reload requires explicit closure of existing screens;
+reselecting the same team preserves them. Native build/rendered verification is
+recorded separately; final UI acceptance remains open.
+
 Administrator-identification slice9326a14 integrated in02fe958. Actual isolated
 SQL checks20/20 and native AdministrationTests17/17 passed; Standards identified
 a security-map documentation gap now recorded in SECURITY.md, Spec0 findings.

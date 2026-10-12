@@ -26,6 +26,14 @@ local tooling; no hosted project or additional dependency is configured here.
 
 ## Trust and bootstrap
 
+Approved additional local tools now include Storage1.79.36-r0, Edge Runtime1.77.4-r0
+and Imgproxy3.26.0-r0. Their actual archive/manifest pins and installed notices were
+verified against the [CLI2.120.0 catalog](https://github.com/supabase/cli/blob/v2.120.0/packages/stack/src/Artifacts.ts).
+The isolated media stack requires eager activation and supported loopback overrides
+for Functions, PostgREST and Storage; published endpoint metadata did not prove
+internal socket safety. See TESTING.md for actual checks and remaining acceptance.
+The stock local configuration below still disables these optional services.
+
 For trusted manual activation, keep CLI-compatible migration history in
 `supabase_migrations` private, outside the Data API's exposed schemas. Explicitly
 secure the history table after creation:

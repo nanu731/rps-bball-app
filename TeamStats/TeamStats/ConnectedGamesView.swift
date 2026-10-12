@@ -161,11 +161,11 @@ private struct ConnectedGameDetailView: View {
                     LabeledContent("Game type", value: connectedGameType(game.gameType))
                 }
                 Section("Game Film") {
-                    NavigationLink("Video links and owner review") {
+                    NavigationLink("Hudl shortcuts and owner review") {
                         MediaResourcesView(teamID: game.teamID, kind: .film, targetID: game.id,
                             targetTitle: game.opponent, account: account)
                     }
-                    Text("Links require access at the video provider. Saving a link does not upload a file or verify playback.")
+                    Text("Full-game films stay on Hudl. A shortcut opens Hudl separately; its account and film permissions still apply.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Published statistics") {
