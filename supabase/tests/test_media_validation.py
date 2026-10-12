@@ -1,5 +1,5 @@
 """Actual bounded synthetic files through the trusted validator's stdin/stdout seam."""
-import hashlib,json,os,subprocess,tempfile,unittest,zlib
+import hashlib,json,os,signal,subprocess,sys,tempfile,time,unittest,zlib
 from pathlib import Path
 
 BINARY=os.environ.get("TEAMSTATS_MEDIA_VALIDATOR")
@@ -17,6 +17,30 @@ def pdf(content=b"0 0 1 rg 0 0 10 10 re f",extra=b"",compressed=False):
     for offset in offsets[1:]:data+=f"{offset:010d} 00000 n \n".encode()
     return data+b"trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n"+str(start).encode()+b"\n%%EOF\n"
 
+def external_media_reference(data, target):
+    """Rewrite only the synthetic writer's dref while retaining original samples.
+    Its mdat precedes moov, so changing moov size does not move chunk offsets.
+    """
+    changed=0
+    def boxes(payload):
+        nonlocal changed
+        output=b"";offset=0
+        while offset<len(payload):
+            size=int.from_bytes(payload[offset:offset+4],"big");kind=payload[offset+4:offset+8];header=8
+            if size==1:size=int.from_bytes(payload[offset+8:offset+16],"big");header=16
+            elif size==0:size=len(payload)-offset
+            if size<header or size>len(payload)-offset:raise ValueError("Synthetic MP4 box shape changed")
+            body=payload[offset+header:offset+size]
+            if kind in (b"moov",b"trak",b"mdia",b"minf",b"dinf"):body=boxes(body)
+            elif kind==b"dref":body=body[:8]+boxes(body[8:])
+            elif kind==b"url ":body=b"\0\0\0\0"+target.encode()+b"\0";changed+=1
+            output+=((1).to_bytes(4,"big")+kind+(len(body)+16).to_bytes(8,"big") if header==16 else (len(body)+8).to_bytes(4,"big")+kind)+body;offset+=size
+        return output
+    if data.index(b"mdat")>data.index(b"moov"):raise ValueError("Synthetic fixture requires mdat before moov")
+    result=boxes(data)
+    if changed!=1:raise ValueError("Expected exactly one synthetic data reference")
+    return result
+
 def many_pages(count):
     objects=[b"<< /Type /Catalog /Pages 2 0 R >>",
         b"<< /Type /Pages /Kids ["+b" ".join(f"{n+3} 0 R".encode() for n in range(count))+b"] /Count "+str(count).encode()+b" >>"]
@@ -28,13 +52,66 @@ def many_pages(count):
     for offset in offsets:data+=f"{offset:010d} 00000 n \n".encode()
     return data+f"trailer\n<< /Size {len(objects)+1} /Root 1 0 R >>\nstartxref\n{start}\n%%EOF\n".encode()
 
+
+def owned_group_exists(group):
+    result=subprocess.run(['/bin/ps','-eo','pgid='],capture_output=True,text=True,timeout=3)
+    rows=result.stdout.split()
+    if result.returncode!=0 or not rows or any(not value.isdecimal() for value in rows):
+        raise RuntimeError("validator_group_monitor_unavailable")
+    return str(group) in rows
+
+def supervised_run(command, *, input=None, text=True, capture_output=True, timeout=35, env=None):
+    """Bound the entire owned native-test group, not just its parent process."""
+    if not capture_output:raise ValueError("Native validator tests require bounded captured diagnostics")
+    process=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                             text=text,env=env,start_new_session=True)
+    try:
+        output,diagnostics=process.communicate(input=input,timeout=timeout)
+        if owned_group_exists(process.pid):raise RuntimeError("validator_child_process_unconfirmed")
+        return subprocess.CompletedProcess(command,process.returncode,output,diagnostics)
+    finally:
+        # Also covers successful-parent/orphan paths. Do not return an observed
+        # validator result until every owned descendant is stopped and reaped.
+        try:os.killpg(process.pid,signal.SIGKILL)
+        except ProcessLookupError:pass
+        process.wait(timeout=3)
+        process.communicate(timeout=3)
+        deadline=time.monotonic()+3
+        while True:
+            if not owned_group_exists(process.pid):break
+            if time.monotonic()>deadline:raise RuntimeError("validator_group_cleanup_unconfirmed")
+            time.sleep(.01)
+
+class ProcessSupervisionTests(unittest.TestCase):
+    def run_fault(self, orphan=False):
+        with tempfile.TemporaryDirectory(prefix="teamstats-test-process-") as directory:
+            path=Path(directory)/"owned-pids"
+            script="import os,subprocess,time;child=subprocess.Popen(['/bin/sleep','30'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);open("+repr(str(path))+",'w').write(str(os.getpid())+' '+str(child.pid));"+("print('SYNTHETIC completed parent')" if orphan else "time.sleep(30)")
+            try:
+                if orphan:
+                    with self.assertRaisesRegex(RuntimeError,'validator_child_process_unconfirmed'):
+                        supervised_run([sys.executable,'-c',script],timeout=2)
+                else:
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        supervised_run([sys.executable,'-c',script],timeout=.5)
+                parent,child=map(int,path.read_text().split())
+                for pid in (parent,child):
+                    with self.assertRaises(ProcessLookupError):os.kill(pid,0)
+            finally:
+                if path.exists():
+                    parent=int(path.read_text().split()[0])
+                    try:os.killpg(parent,signal.SIGKILL)
+                    except ProcessLookupError:pass
+    def test_timed_out_native_test_cannot_leave_renderer_running(self):self.run_fault()
+    def test_parent_exit_with_renderer_cannot_claim_finished_validation(self):self.run_fault(orphan=True)
+
 class MediaValidationTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(prefix="teamstats-validator-test-")
         self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
     def validate(self,data,kind="scouting",name="synthetic.pdf"):
         path=self.root/name;path.write_bytes(data)
-        process=subprocess.run([BINARY],input=json.dumps({"path":str(path),"kind":kind}),text=True,capture_output=True,timeout=35)
+        process=supervised_run([BINARY],input=json.dumps({"path":str(path),"kind":kind}),text=True,capture_output=True,timeout=35)
         self.assertEqual(process.returncode,0)
         result=json.loads(process.stdout);self.assertNotIn(str(path),process.stdout)
         return result
@@ -70,7 +147,7 @@ class MediaValidationTests(unittest.TestCase):
     def test_source_is_preserved_and_symlink_is_not_followed(self):
         data=pdf();source=self.root/"source.pdf";source.write_bytes(data)
         link=self.root/"link.pdf";link.symlink_to(source)
-        process=subprocess.run([BINARY],input=json.dumps({"path":str(link),"kind":"scouting"}),text=True,capture_output=True,timeout=35)
+        process=supervised_run([BINARY],input=json.dumps({"path":str(link),"kind":"scouting"}),text=True,capture_output=True,timeout=35)
         self.assertFalse(json.loads(process.stdout)["valid"])
         self.assertEqual(source.read_bytes(),data)
 
@@ -84,7 +161,7 @@ class MediaValidationTests(unittest.TestCase):
                 self.assertFalse(self.validate(data)["valid"])
         for request in ["{}","not JSON","x"*16385,json.dumps({"path":"/unused", "kind":"film"})]:
             with self.subTest(request_size=len(request)):
-                process=subprocess.run([BINARY],input=request,text=True,capture_output=True,timeout=35)
+                process=supervised_run([BINARY],input=request,text=True,capture_output=True,timeout=35)
                 result=json.loads(process.stdout);self.assertFalse(result["valid"])
                 self.assertNotIn("/unused",process.stdout)
 
@@ -92,7 +169,7 @@ class MediaValidationTests(unittest.TestCase):
         source=self.root/"synthetic.pdf";source.write_bytes(pdf())
         for env in [dict(os.environ,TEAMSTATS_PDF_RENDERER=""),dict(os.environ,TEAMSTATS_PDF_RENDERER_SHA256="0"*64)]:
             with self.subTest(configured=bool(env.get("TEAMSTATS_PDF_RENDERER"))):
-                process=subprocess.run([BINARY],input=json.dumps({"path":str(source),"kind":"scouting"}),text=True,capture_output=True,env=env,timeout=35)
+                process=supervised_run([BINARY],input=json.dumps({"path":str(source),"kind":"scouting"}),text=True,capture_output=True,env=env,timeout=35)
                 result=json.loads(process.stdout);self.assertFalse(result["valid"])
                 self.assertEqual(result["failure_reason"],"validator_unavailable")
 
@@ -112,6 +189,24 @@ class MediaValidationTests(unittest.TestCase):
         self.assertTrue(result["valid"])
         self.assertEqual(result["media_type"],"video/mp4")
         self.assertEqual(result["details"]["decoded_video_frames"],3)
+
+    @unittest.skipUnless(CLIPS, "Actual synthetic native clips must be configured")
+    def test_external_local_media_reference_cannot_establish_uploaded_byte_receipt(self):
+        data=(Path(CLIPS)/"h264.mp4").read_bytes()
+        external=self.root/"outside-container.mp4";external.write_bytes(data)
+        reference=external_media_reference(data,external.as_uri())
+        result=self.validate(reference,kind="practice",name="reference.mp4")
+        self.assertFalse(result["valid"])
+        self.assertNotIn("sha256",result)
+        self.assertEqual(external.read_bytes(),data)
+
+    @unittest.skipUnless(CLIPS, "Actual synthetic native clips must be configured")
+    def test_portrait_h264_is_fully_decoded_without_rotation(self):
+        data=(Path(CLIPS)/"portrait-h264.mp4").read_bytes()
+        result=self.validate(data,kind="practice",name="synthetic.mp4")
+        self.assertTrue(result["valid"])
+        self.assertEqual((result["details"]["width"],result["details"]["height"]),(1080,1920))
+        self.assertEqual(result["sha256"],hashlib.sha256(data).hexdigest())
 
     @unittest.skipUnless(CLIPS, "Actual synthetic native clips must be configured")
     def test_unsupported_codec_duration_and_resolution_are_rejected(self):

@@ -65,6 +65,7 @@ try writeClip(directory.appendingPathComponent("h264.mp4"), codec: .h264, width:
 try writeClip(directory.appendingPathComponent("hevc.mp4"), codec: .hevc, width: 32, height: 32, seconds: 1)
 try writeClip(directory.appendingPathComponent("too-long.mp4"), codec: .h264, width: 32, height: 32, seconds: 31)
 try writeClip(directory.appendingPathComponent("too-wide.mp4"), codec: .h264, width: 1936, height: 16, seconds: 1)
+try writeClip(directory.appendingPathComponent("portrait-h264.mp4"), codec: .h264, width: 1080, height: 1920, seconds: 1)
 try writeClip(directory.appendingPathComponent("h264-aac.mp4"), codec: .h264, width: 32, height: 32, seconds: 1, audio: true)
 if let pdf = PDFDocument(url: directory.appendingPathComponent("synthetic.pdf")) {
     guard pdf.write(to: directory.appendingPathComponent("encrypted.pdf"), withOptions: [.userPasswordOption: "synthetic-password", .ownerPasswordOption: "synthetic-owner-password"]) else { throw NSError(domain: "SyntheticFixture", code: 11) }
