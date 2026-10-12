@@ -226,6 +226,23 @@ final class AccountTests: XCTestCase {
         XCTAssertNil(restart.sessionContextID)
     }
 
+    func testSignOutStampWriteFailureLocksOfflineRestart() async {
+        let storage = FixtureAccountStorage()
+        let original = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await original.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await original.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await original.verifyCode("123456")
+        storage.rejectStampWrites()
+        await original.signOut()
+        XCTAssertEqual(original.issue, .storage)
+        XCTAssertNil(original.offlineClipActorID)
+        XCTAssertNil(original.sessionContextID)
+        let restart = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "offlineUser"))
+        await restart.restore()
+        XCTAssertNil(restart.offlineClipActorID)
+        XCTAssertNil(restart.sessionContextID)
+    }
+
     func testOfflineStampCannotRestoreDifferentStoredSessionIdentity() async throws {
         let storage = FixtureAccountStorage()
         let original = BackendAccount(storage: storage, session: fixtureHTTPSession())

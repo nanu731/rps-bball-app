@@ -354,7 +354,7 @@ final class BackendAccount {
         defer { isBusy = false }
         sessionContextID = nil
         offlineClipActorID = nil
-        do { try storage.store(key: offlineStampKey(configuration), value: JSONEncoder().encode(OfflineActorStamp(actorID: nil))) }
+        do { try invalidateOfflineActor() }
         catch { fail(.storage); return }
         let oldClient = client
         // The SDK captures the token, removes its local session, then requests
