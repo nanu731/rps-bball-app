@@ -5,6 +5,14 @@ on iPhone and iPad (minimum iOS/iPadOS 26.0). Managers enter box scores,
 team possessions, and individual paint-touch totals; players view accepted shared
 statistics. Device-local saved drafts are separate, incomplete and unreviewed.
 
+### Planned video scope
+
+Owner decision (2026-10-12): approximately 25 regular users plus initial testers.
+Full-game film stays on Hudl, with optional game-linked shortcuts in TeamStats.
+Practice clips linked to plays are the in-app upload/playback target. These are
+requirements, not completed file-upload/playback capabilities; actual clip capacity
+under the strict $0 budget and real Hudl link behavior remain unverified.
+
 ## Current implementation
 
 Local game creation, temporary roster, manual stat drafts, and read-only game

@@ -1,9 +1,9 @@
 # TeamStats — Product Requirements
 
-Status: working draft; Steps 1–6 are complete; scoring-warning presentation
-refinement awaits manual verification. Further implementation
-requires the next bounded prompt; open requirements remain unresolved.
-Last updated: 2026-10-10.
+Status: working requirements; current implementation and verification evidence
+are recorded in PROJECT_CONTEXT.md and WORKFLOW.md. End-to-end authorization
+below supersedes older bounded-step stopping rules; open provider gates remain.
+Last updated: 2026-10-12.
 
 ## Purpose and users
 
@@ -12,9 +12,10 @@ data after games and players can easily view their box scores and advanced stats
 Also provide a shared playbook where coaches draw and save plays, team members
 view plays in motion, and practice videos are linked to the relevant plays under
 owner-controlled upload permissions.
-Provide a Game Film menu where coaches and managers upload recorded game videos
-and eligible team members view film associated with the corresponding game.
-Plan for approximately 100 potential users, including coaches and players.
+Provide a Game Film menu with game-linked Hudl shortcuts; full-game video files
+remain on Hudl. Practice clips linked to plays are uploaded and viewed in TeamStats.
+Plan for approximately 25 regular users (about 10 players and 15 staff), with
+additional initial testers whose number and media usage remain unspecified.
 
 ## Value, pain, and intended audience
 
@@ -23,8 +24,8 @@ Plan for approximately 100 potential users, including coaches and players.
 - Pain addressed: the owner collects paper-form data and needs an easier input
   and player-viewing workflow, including detection of inconsistent scoring data.
   No measured time savings or unsupported claims about current usage are asserted.
-- Intended audience (ICP): this high-school basketball team, approximately 100
-  potential users. Managers/coaches contribute; players view; the owner manages
+- Intended audience (ICP): this high-school basketball team, approximately 25
+  regular users plus initial testers. Managers/coaches contribute; players view; the owner manages
   approvals and grants. This is not a general commercial customer acquisition plan.
 
 ## Confirmed decisions
@@ -63,9 +64,10 @@ Plan for approximately 100 potential users, including coaches and players.
 - Owner-managed authorization also applies to submitting/publishing plays and
   practice videos. Specific permission controls for each content type must be
   defined; an account must not be able to authorize itself.
-- Game Film is a required menu for coach/manager uploads. Apply the same owner
-  authorization and pending-review approach as practice videos; introduce it in
-  a later bounded task, not the currently assigned Step 2 or manual-stats pilot.
+- Game Film provides optional Hudl links associated with games; full-game files
+  stay on Hudl. Practice clips linked to plays are the required in-app video
+  upload/playback scope. Preserve separate eligibility, publication bypass and
+  owner review for submitted link metadata; do not upload full-game files.
 - Supplied PDF forms are layout/shorthand references, not authority to expand
   collection scope. The owner's explicit field list and exclusions take priority.
 - All printed player names and jersey numbers in those PDFs are arbitrary.
@@ -549,6 +551,10 @@ Open decisions:
   behavior, and pending-video access for the uploader. Owner approval before
   team viewing is confirmed for users without unrestricted upload permission.
 - TODO_VIDEO_LIMITS: file types, size/duration, storage budget, and upload behavior.
+  The strict $0 budget still applies with 25 regular users and additional testers.
+  Evaluate private Supabase Storage against actual clip sizes, retention and
+  download demand before activation; no capacity or provider choice is verified
+  by the smaller audience alone.
 - TODO_PLAY_VIDEO_LIFECYCLE: edits, replacements, removal, and whether approval
   must be repeated after changes.
 
@@ -566,49 +572,38 @@ Proposed acceptance criteria, pending owner confirmation:
 
 ## Required component — Game Film
 
-Confirmed scope:
+Owner decision (2026-10-12), superseding full-game file upload requirements:
 
-- A Game Film menu/section supports recorded game-film uploads by coaches and
-  managers and viewing under the team's agreed access rules.
-- Link each film upload to the corresponding game using its stable game ID,
-  so it can be found with that game's date, opponent, type, and home/away status.
-- Owner-authorized uploaders need no case-by-case approval. Other eligible
-  uploaders submit pending film for owner review before team viewing, using
-  the same authorization approach as practice videos.
-- Enforce upload, approval, and viewing access in the backend and private storage.
-- This is recorded-video upload/playback, not livestreaming, live stat tracking,
-  or automatic video-to-stat extraction.
-- It is a later component, outside the initial manual-stats pilot.
-- Hudl is the likely recording source. No direct Hudl integration is confirmed;
-  uploaded exported files versus Hudl links must be decided before implementation.
+- Keep full-game film on Hudl; TeamStats does not host or download those files.
+- Provide optional Hudl shortcuts associated with each game's stable ID, date,
+  opponent, type and home/away status. Opening a link uses the provider's supported
+  web/app destination; native embedding or offline game-film access is not promised.
+- Preserve existing coach/manager eligibility, owner approval for ordinary
+  submissions and separately granted publication bypass for link metadata.
+- TeamStats permissions protect link metadata. Hudl independently controls film
+  access; TeamStats admission does not grant a Hudl account or film permission.
+- This is outside the initial manual-stats pilot. No livestreaming, automatic
+  video-to-stat extraction, Hudl scraping or automatic exports are authorized.
+- Practice clips linked to plays remain the required in-app upload/playback
+  component, with private storage and the existing owner-controlled review flow.
 
-Proposed implementation direction:
+Remaining verification:
 
-- Reuse common video upload, review, and playback behavior with practice clips;
-  keep game-film linkage separate from practice-video linkage to plays.
-- Show upload progress and failures honestly. Do not require creating a play
-  to upload film for a game.
+- TODO_HUDL_LINK_ACCEPTANCE: test a real, authorized link on iPhone and iPad,
+  including provider sign-in, unavailable links and denied provider access.
+- Actual practice-clip formats, sizes, retention, storage/transfer capacity and
+  offline-download behavior still require validation under the $0 budget.
 
-Open decisions before implementation:
+Acceptance criteria:
 
-- TODO_GAME_FILM_ACCESS: how coach/manager eligibility is assigned and which
-  team accounts may view published film.
-- TODO_GAME_FILM_LIMITS: formats, file size/duration, storage budget, and whether
-  large games are uploaded as one video or multiple parts.
-- TODO_HUDL_WORKFLOW: exported video files, Hudl links, or both; confirm actual
-  access/export behavior rather than assuming APIs or download permissions.
-- TODO_MEDIA_PERMISSION_SCOPE: whether owner upload grants cover both practice
-  videos and game film or are separate grants.
-- TODO_GAME_FILM_REVIEW: pending access, rejection/resubmission, replacements,
-  and removal rules; preserve owner approval for ordinary eligible uploaders.
-
-Proposed acceptance criteria:
-
-- An eligible coach/manager can select a game and submit film through Game Film.
-- Owner-authorized uploads bypass individual review; other eligible uploads
-  remain pending until owner approval and are inaccessible to ordinary viewers.
-- Eligible viewers can play published film and identify its linked game.
-- Unauthorized accounts cannot upload, approve, or retrieve restricted film.
+- Eligible coaches/managers submit game-linked Hudl shortcuts without selecting
+  or uploading a full-game file. Existing review and bypass rules apply.
+- Authorized viewers identify the linked game and open a published shortcut;
+  the interface clearly indicates that film is viewed through Hudl.
+- Missing links and provider access requirements have honest guidance. Saving
+  a URL is not evidence of working playback, provider rights or native integration.
+- Existing game-film proposals, grants and history are retained; this scope
+  decision does not authorize deleting records or weakening access controls.
 
 ## Required component — Upcoming-opponent scouting reports
 

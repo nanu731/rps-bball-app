@@ -1,5 +1,20 @@
 # TeamStats — Planning and Implementation Workflow
 
+## Owner media scope revision (2026-10-12)
+
+Plan for about 25 regular users (10 players/15 staff), plus initial testers whose
+number is unknown. Full-game files stay on Hudl; Game Film may offer reviewed
+game-linked Hudl shortcuts. Required in-app upload/playback is for practice clips
+linked to plays. This supersedes older full-film hosting/upload tasks below.
+
+Before the next implementation continuation, reconcile private tickets/spec with
+this scope without deleting existing proposals/grants/history. Validate real
+Hudl link opening and provider access on both device types. Separately implement
+and verify private practice-clip delivery only after actual file sizes, retention,
+aggregate storage/transfer capacity and permitted tooling are established under $0.
+No new source code, dependency install, hosting activation, storage feasibility
+or provider acceptance is established by this planning update.
+
 ## Current end-to-end authorization (2026-10-11)
 
 The owner's current completion request supersedes older bounded-prompt stopping

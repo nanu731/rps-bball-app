@@ -1,5 +1,17 @@
 # Reviewed plays, local OCR, and budgeted media
 
+## Owner scope amendment — 2026-10-12
+
+The anticipated audience is about 25 regular users (10 players/15 staff), plus
+additional initial testers. Full-game files stay on Hudl; game-linked shortcuts
+may provide convenient provider access. TeamStats does not host/download full
+games or promise native Hudl playback. Provider account/access remains separate.
+Practice clips linked to plays remain the required in-app upload/playback scope.
+This supersedes earlier ambiguity about exported full-film hosting; it does not
+delete existing link history, change grants or establish real-link acceptance.
+The original private review and verified $0 capacity safeguards below still apply
+to practice uploads. Actual clip sizes, retention and transfer demand are unknown.
+
 ## Context
 The owner authorizes remaining PRD implementation under a strict $0 budget.
 Five independent Council analyses, five fresh anonymous reviews and chairman

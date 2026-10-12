@@ -189,8 +189,9 @@ rather than quietly inventing requirements.
 
 ## Product context
 
-- High school basketball app for approximately 100 users, including players,
-  managers, and coaches. Native Swift/SwiftUI, supporting iPhone and iPad.
+- High school basketball app for approximately 25 regular users (about 10 players
+  and 15 staff), plus additional initial testers of unspecified number. Native
+  Swift/SwiftUI, supporting iPhone and iPad. Include testers in capacity estimates.
 - Minimum iOS/iPadOS 26.0. Game fields: date, opponent, our team's home/away
   status, and regular season/playoff. No scrimmages.
 - Supabase holds official stats. Google Sheets receives automatic one-way
@@ -206,12 +207,14 @@ rather than quietly inventing requirements.
 - Coaches draw/save plays, and viewers see animated movement. Practice videos
   link to plays. Authorized users upload without individual review; other users
   upload pending clips that only the owner may approve for team viewing.
-- A Game Film menu lets coaches/managers upload recorded videos linked to games,
-  with the same owner-authorized upload bypass and pending review for other
-  eligible uploaders. It follows the manual-stats pilot; no livestreaming or
-  automatic video-to-stat extraction is requested.
-- Hudl is the likely game-film recording source. Exported-file upload versus Hudl
-  links is unresolved; do not assume direct API access or build an integration yet.
+- Owner decision (2026-10-12): full-game files stay on Hudl. Game Film provides
+  optional game-linked Hudl shortcuts, preserving existing link submission/review
+  permissions; no full-game upload, native embedding or offline download is required.
+  Hudl separately enforces provider access. Real-link iPhone/iPad acceptance remains
+  unverified; no direct API access or exports are assumed.
+- Practice clips of plays are the in-app video upload/playback scope. Private
+  storage, real clip limits/retention, transfer capacity and download acceptance
+  remain unfinished under the strict $0 budget. Fewer users do not verify capacity.
 - Owner-managed permissions apply to stats, plays, and videos. Separate versus
   shared permission grants remains unresolved.
 
@@ -313,8 +316,9 @@ Before photo import: owner confirmation of the revised advanced PDF and marked
 shot/tally examples. The actual roster will be supplied later; labeled temporary
 names/numbers are authorized and must remain easy to replace.
 Before playbook/video work: editor controls, review details, and media limits.
-Before Game Film: eligible upload/view roles, large-file limits, storage budget,
-and whether practice/game video grants are shared or separate.
+Before Game Film acceptance: real Hudl link opening, provider sign-in/access and
+unavailable-link guidance. Full-game file limits/hosting are no longer app scope.
+Practice clips still require actual file limits and storage/transfer verification.
 
 ## Development sequence
 
