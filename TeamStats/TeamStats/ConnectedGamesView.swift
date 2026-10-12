@@ -168,6 +168,14 @@ private struct ConnectedGameDetailView: View {
                     Text("Full-game films stay on Hudl. A shortcut opens Hudl separately; its account and film permissions still apply.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
+                Section("Scouting") {
+                    NavigationLink("Scouting PDFs") {
+                        PrivateFilesView(teamID: game.teamID, kind: .scouting, targetID: game.id,
+                            targetTitle: game.opponent, account: account)
+                    }
+                    Text("Report viewing and uploading use separate team permissions; the owner approves publication.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
                 Section("Published statistics") {
                     NavigationLink("View accepted statistics") { PublishedStatisticsView(model: model, game: game) }
                     Text("Only the current accepted version of each dataset contributes to this summary. A published dataset does not mean every dataset is complete.")

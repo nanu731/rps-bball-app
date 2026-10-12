@@ -11,7 +11,7 @@ import Foundation
 struct ContentView: View {
     @State private var account = BackendAccount()
     @State private var selectedTab = Tab.local
-    private enum Tab: Hashable { case local, players, team, account }
+    private enum Tab: Hashable { case local, players, team, clips, account }
     @State private var games: [Game] = []
     @State private var loadError: String?
     @State private var showingNewGame = false
@@ -100,6 +100,13 @@ struct ContentView: View {
                 .id(account.sessionContextID)
                 .tabItem { Label("Team", systemImage: "person.2") }
                 .tag(Tab.team)
+
+            NavigationStack {
+                OfflineClipsView(account: account) { selectedTab = .account }
+            }
+            .id(account.offlineClipActorID)
+            .tabItem { Label("Saved clips", systemImage: "arrow.down.circle") }
+            .tag(Tab.clips)
 
             NavigationStack {
                 AccountView(account: account) { selectedTab = .team }
