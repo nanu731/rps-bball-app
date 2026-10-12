@@ -190,6 +190,99 @@ final class AccountTests: XCTestCase {
         XCTAssertFalse(account.isBusy)
     }
 
+    func testConcurrentVerificationDoesNotBecomeConfirmedDenial() async throws {
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: fixtureHTTPSession(mode: "delayedUser"))
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await account.verifyCode("123456")
+        let first = Task { try await account.authenticatedClient() }
+        for _ in 0..<100 where !account.isBusy { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertTrue(account.isBusy)
+        do {
+            _ = try await account.authenticatedClient()
+            XCTFail("Concurrent verification must not issue a remote command client")
+        } catch { XCTAssertEqual(error as? AccountIssue, .provider) }
+        XCTAssertEqual(account.sessionContextID, fixtureUserID)
+        XCTAssertEqual(account.offlineClipActorID, fixtureUserID)
+        _ = try await first.value
+        XCTAssertEqual(account.verifiedUserID, fixtureUserID)
+    }
+
+    func testRevocationStampWriteFailureReportsSecureStorageFailure() async {
+        let storage = FixtureAccountStorage()
+        let original = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await original.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await original.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await original.verifyCode("123456")
+        storage.rejectStampWrites()
+        let denied = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "revoked"))
+        await denied.restore()
+        XCTAssertNil(denied.offlineClipActorID)
+        XCTAssertNil(denied.sessionContextID)
+        XCTAssertEqual(denied.issue, .storage)
+        let restart = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "offlineUser"))
+        await restart.restore()
+        XCTAssertNil(restart.offlineClipActorID)
+        XCTAssertNil(restart.sessionContextID)
+    }
+
+    func testSignOutStampWriteFailureLocksOfflineRestart() async {
+        let storage = FixtureAccountStorage()
+        let original = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await original.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await original.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await original.verifyCode("123456")
+        storage.rejectStampWrites()
+        await original.signOut()
+        XCTAssertEqual(original.issue, .storage)
+        XCTAssertNil(original.offlineClipActorID)
+        XCTAssertNil(original.sessionContextID)
+        let restart = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "offlineUser"))
+        await restart.restore()
+        XCTAssertNil(restart.offlineClipActorID)
+        XCTAssertNil(restart.sessionContextID)
+    }
+
+    func testOfflineStampCannotRestoreDifferentStoredSessionIdentity() async throws {
+        let storage = FixtureAccountStorage()
+        let original = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await original.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await original.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await original.verifyCode("123456")
+        var different = fixtureSession()
+        different.user.id = UUID(uuidString: "d7000000-0000-4000-8000-000000000002")!
+        try storage.replaceStoredSession(different)
+        let restart = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "offlineUser"))
+        await restart.restore()
+        XCTAssertNil(restart.offlineClipActorID)
+        XCTAssertNil(restart.sessionContextID)
+        let online = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "differentUser"))
+        await online.restore()
+        XCTAssertEqual(online.verifiedUserID, different.user.id)
+        XCTAssertEqual(online.offlineClipActorID, different.user.id)
+    }
+
+    func testOfflineClipActorSurvivesTransientRestartButKnownDenialLocksIt() async {
+        let storage = FixtureAccountStorage()
+        let original = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await original.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await original.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await original.verifyCode("123456")
+        XCTAssertEqual(original.offlineClipActorID, fixtureUserID)
+        let offline = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "offlineUser"))
+        await offline.restore()
+        XCTAssertNil(offline.verifiedUserID)
+        XCTAssertNil(offline.sessionContextID)
+        XCTAssertEqual(offline.offlineClipActorID, fixtureUserID)
+        let denied = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "revoked"))
+        await denied.restore()
+        XCTAssertNil(denied.offlineClipActorID)
+        XCTAssertNil(denied.sessionContextID)
+        let restarted = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "offlineUser"))
+        await restarted.restore()
+        XCTAssertNil(restarted.offlineClipActorID)
+    }
+
     func testServerRejectedRestoredSessionDoesNotExposeAuthenticatedClient() async throws {
         let storage = FixtureAccountStorage()
         let original = BackendAccount(storage: storage, session: fixtureHTTPSession())
@@ -273,12 +366,20 @@ private final class FixtureAccountStorage: AuthLocalStorage, @unchecked Sendable
     private var values: [String: Data] = [:]
     private let failSessionWrites: Bool
     private var failReads = false
+    private var failStampWrites = false
+    func replaceStoredSession(_ session: Session) throws {
+        lock.lock(); defer { lock.unlock() }
+        let key = values.keys.first { $0.hasPrefix("session.v1.") && !$0.hasSuffix("-code-verifier") && !$0.hasSuffix(".email-link") }!
+        values[key] = try JSONEncoder().encode(session)
+    }
+    func rejectStampWrites() { lock.lock(); defer { lock.unlock() }; failStampWrites = true }
     func rejectReads(_ reject: Bool) {
         lock.lock(); defer { lock.unlock() }; failReads = reject
     }
     init(failSessionWrites: Bool = false) { self.failSessionWrites = failSessionWrites }
     func store(key: String, value: Data) throws {
         lock.lock(); defer { lock.unlock() }
+        if failStampWrites && key.hasPrefix("offline-actor.v1.") { throw AccountIssue.storage }
         if failSessionWrites && key.hasPrefix("session.v1.") && !key.hasSuffix("-code-verifier") && !key.hasSuffix(".email-link") { throw AccountIssue.storage }
         values[key] = value
     }
@@ -319,10 +420,9 @@ private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable 
             && URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "redirect_to" })?.value != "com.narayanlekhi.teamstats://auth/callback"
         let transientFailure = mode == "transientAfterVerification" && request.url?.path.hasSuffix("/user") == true
             && (2...4).contains(Self.nextUserCheck(request.value(forHTTPHeaderField: "X-Fixture-Trace") ?? "synthetic"))
-        let failed = request.url?.host == "failure.invalid" || denied || logoutFailure || refreshFailure || missingEmailRedirect || transientFailure
+        let failed = (mode == "offlineUser" && request.url?.path.hasSuffix("/user") == true) || request.url?.host == "failure.invalid" || denied || logoutFailure || refreshFailure || missingEmailRedirect || transientFailure
         let status = denied ? 401 : (failed ? 503 : 200)
         let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!
-        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         let body: Data
         if failed {
             body = Data("{\"msg\":\"Synthetic denied response\"}".utf8)
@@ -335,10 +435,18 @@ private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable 
             if request.url?.host == "expired.invalid" { session.expiresAt = 1_700_000_000; session.expiresIn = 0 }
             body = try! AuthClient.Configuration.jsonEncoder.encode(session)
         } else if request.url?.path.hasSuffix("/user") == true {
-            body = try! AuthClient.Configuration.jsonEncoder.encode(fixtureUser())
+            var user = fixtureUser()
+            if mode == "differentUser" { user.id = UUID(uuidString: "d7000000-0000-4000-8000-000000000002")! }
+            body = try! AuthClient.Configuration.jsonEncoder.encode(user)
         } else { body = Data("{}".utf8) }
-        client?.urlProtocol(self, didLoad: body)
-        client?.urlProtocolDidFinishLoading(self)
+        let deliver = { [self] in
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: body)
+            client?.urlProtocolDidFinishLoading(self)
+        }
+        if mode == "delayedUser", request.url?.path.hasSuffix("/user") == true {
+            DispatchQueue.global().asyncAfter(deadline: .now() + 0.2, execute: deliver)
+        } else { deliver() }
     }
     override func stopLoading() {}
 }
