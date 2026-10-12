@@ -143,6 +143,15 @@ class WorkerTests(unittest.TestCase):
         with self.assertRaisesRegex(worker.ExportError, 'budget_disabled'):
             worker.GoogleSheets(worker.GoogleConfig(token='SYNTHETIC')).deliver({})
         self.assertEqual(self.fixture.batches, [])
+    def test_only_literal_true_enables_google_requests(self):
+        for value in ('false', 'true', 1, {'enabled': False}, False, None):
+            with self.subTest(enabled=value):
+                config = worker.GoogleConfig(token='SYNTHETIC', enabled=value,
+                    billing_disabled_verified_at=dt.datetime.now(dt.timezone.utc).isoformat(), endpoint=self.fixture.endpoint)
+                with self.assertRaisesRegex(worker.ExportError, 'budget_disabled'):
+                    worker.GoogleSheets(config).deliver(job())
+        self.assertEqual(len(self.fixture.batches), 0)
+
     def test_expired_or_naive_budget_evidence_cannot_enable_delivery(self):
         for timestamp in ('', '2020-01-01T00:00:00+00:00', '2026-01-01'):
             with self.subTest(timestamp=timestamp):

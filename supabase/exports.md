@@ -111,7 +111,7 @@ backoff, using current credentials and the same persisted reservations.
 Private runtime JSON requires `backend_rest_url`; `google_enabled` defaults to
 false. To explicitly enable Google, the operator must verify billing is absent or
 disabled, current API policy/quotas and the strict zero-charge condition, then
-supply `google_enabled: true` and a timezone-aware
+supply `google_enabled: true` (literal Boolean only; other types are refused) and a timezone-aware
 `billing_disabled_verified_at` timestamp no more than 24 hours old. This is an
 operator attestation, not automatic proof of account billing state. Credentials
 are injected into `TEAMSTATS_EXPORT_SERVICE_TOKEN` and
@@ -131,7 +131,7 @@ visible failure, receipt idempotency and latest accepted generation. All synthet
 SQL fixtures roll back; preexisting records remain intact. Multi-connection
 reservation timing has not been measured by this SQL test.
 
-Nineteen Python standard-library tests pass using actual loopback HTTP/urllib and
+Twenty Python standard-library tests pass using actual loopback HTTP/urllib and
 an explicitly synthetic Google protocol fixture. They exercise same-version
 races, newer-before-older disjoint writes, timeout-applied recovery, timeout retry,
 existing-ID/false-hash/cell and ledger conflicts, partial/quota errors, literal

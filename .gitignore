@@ -77,3 +77,7 @@ build/
 /ENGINEERING_SETUP.local.md
 /COMPLETION_SPEC.local.md
 /supabase/.temp/
+
+# Generated Python test/runtime caches
+__pycache__/
+*.py[cod]

@@ -293,3 +293,8 @@ remaining human action. Do not repeat the whole PRD or include secrets.
 Native integration review found and fixed transient-check navigation buffer loss
 and cross-team completion validation. The affected35-test run passed; actual
 interaction checks remain pending until the Mac is unlocked.
+
+Real local native shared-statistics round trips now passed, including accepted
+reopening/metrics/reconciliation and fresh verified signup without team authority.
+Export worker/source passed54 local SQL and20 synthetic HTTP checks; malformed
+Boolean activation is fixed. Google delivery stays disabled and unverified.

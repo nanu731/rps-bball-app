@@ -22,8 +22,9 @@ default sender cannot edit templates; do not upgrade for codes. Remote SMS stays
 disabled under the $0 budget. Actual local Auth/gateway/native SDK tests passed;
 hosted delivery and setup remain unverified. Shared entry/review and accepted summaries are accessible from Account → Team
 administration → Shared games and statistics. These use real server commands;
-local games are kept separate. Native fixtures passed; actual connected workflows
-and two-device UI checks are still pending. Sheets delivery, photo autofill, animated plays and videos remain
+local games are kept separate. Native fixtures and real local SDK workflows passed; hosted setup
+and two-device UI checks are still pending. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
+by default; actual Sheets delivery, photo autofill, animated plays and videos remain
 incomplete.
 There is no live tracking in any phase.
 

@@ -51,7 +51,7 @@ class GoogleSheets:
             recent = dt.timedelta(0) <= age <= dt.timedelta(hours=24)
         except (ValueError, TypeError):
             recent = False
-        if not c.enabled or not recent:
+        if c.enabled is not True or not recent:
             raise ExportError('budget_disabled')
         if not c.token or not 1 <= c.request_limit <= 20 or not 0 < c.timeout <= 30:
             raise ExportError('configuration_invalid')

@@ -991,3 +991,23 @@ recovers on an explicit retry. The previous Auth guard failed that regression;
 all21 Account plus14 connected tests passed after the fix. Static code resolves
 both findings; live error/retry buffer retention and independent-completion UI
 interaction remain manual checks while the Mac is locked.
+
+
+Actual native connected integration passed on the isolated local services: verified
+Auth/Keychain restart, roster create/edit/archive/history, four-dataset atomic save,
+independent completion/publication, reopening in a fresh model, historical labels,
+missing/zero preservation, safe rebounds and each team's Real Possessions, and
+seven-field reconciliation. Existing unrelated roster/game identities were kept.
+A separate fresh email-link signup/PKCE/restart test passed and received no team
+or owner authority. These used synthetic TEST ONLY records, not the original
+local JSON. Actual UI taps/hosted services are still unverified.
+
+Export source now provides immutable accepted snapshots, distinct reserved Sheet
+IDs/ledger rows, trusted bounded HTTP writes, verified readback/receipts and owner
+status. Actual local SQL passed54 checks;20 synthetic loopback transport tests
+passed. Standards and Spec each found one malformed-opt-in budget gate: a string
+"false" was truthy. The regression failed against the old gate, then passed when
+only literal Boolean true could enable Google. Google stays disabled: no trusted
+OAuth credentials, billing-disabled proof, scheduler, actual formula calculation
+or provider delivery is established. Native delivery-status integration remains
+open. Existing authorized private Sheet remains separate destination-only proof.
