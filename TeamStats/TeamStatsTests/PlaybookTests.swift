@@ -130,6 +130,78 @@ final class PlayGeometryTests: XCTestCase {
         let duplicate = await model.recoverDraft(saved, expectedPublishedVersionID: latest.id)
         XCTAssertNil(duplicate); XCTAssertEqual(fixture.recoveryRequests, 1)
     }
+    func testCommittedRecoveryLostReplyCanAttachRetainedBuffersAfterReloadWithoutReplaying() async throws {
+        _ = try await verifyUncertainRecovery(.lostReply)
+    }
+    func testCommittedRecoveryFailedFollowUpReadCanAttachRetainedBuffersAfterReloadWithoutReplaying() async throws {
+        _ = try await verifyUncertainRecovery(.followUpRead)
+    }
+    private func verifyUncertainRecovery(_ failure: PlayFixture.RecoveryFailure) async throws -> (PlayFixture, Playbook, PlayRevision) {
+        let fixture = PlayFixture(); let model = fixture.model()
+        await model.load()
+        let initialOpened = await model.openDraft(playID: fixture.playID)
+        let initial = try XCTUnwrap(initialOpened)
+        var savedDrawing = PlayDiagram(); savedDrawing.addMarker(); savedDrawing.addStep()
+        let firstSave = await model.save(initial, title: "SYNTHETIC BASE", diagram: savedDrawing)
+        XCTAssertTrue(firstSave)
+        let firstPublish = await model.transition(try XCTUnwrap(model.ownDrafts.first), action: "publish")
+        XCTAssertTrue(firstPublish)
+        let accepted = try XCTUnwrap(model.published.first)
+        let successorOpened = await model.openDraft(playID: fixture.playID, source: accepted)
+        let successor = try XCTUnwrap(successorOpened)
+        savedDrawing.move(markerID: savedDrawing.markers[0].id, step: 1, to: CourtPoint(x: 0.8, y: 0.2))
+        let successorSave = await model.save(successor, title: "SYNTHETIC SAVED DRAWING", diagram: savedDrawing)
+        XCTAssertTrue(successorSave)
+        let retainedSource = try XCTUnwrap(model.ownDrafts.first)
+        var retainedUnsavedDrawing = savedDrawing
+        retainedUnsavedDrawing.move(markerID: retainedUnsavedDrawing.markers[0].id, step: 1, to: CourtPoint(x: 0.7, y: 0.3))
+        fixture.publishOtherSuccessor(); await model.load()
+        let latest = try XCTUnwrap(model.published.first)
+        fixture.recoveryFailure = failure
+        let uncertain = await model.recoverDraft(retainedSource, expectedPublishedVersionID: latest.id)
+        XCTAssertNil(uncertain); XCTAssertNil(model.confirmation); XCTAssertTrue(model.reloadRequired)
+        XCTAssertThrowsError(try model.recoveredDraft(for: retainedSource))
+        fixture.failRead = false
+        await model.load()
+        XCTAssertTrue(model.didLoad)
+        let resumed = try model.recoveredDraft(for: retainedSource)
+        XCTAssertEqual(resumed.recoverySourceVersionID, retainedSource.id)
+        XCTAssertEqual(resumed.title, retainedSource.title); XCTAssertEqual(resumed.diagram, savedDrawing)
+        XCTAssertEqual(model.versions.first { $0.id == retainedSource.id }?.status, .superseded)
+        XCTAssertEqual(model.published.first?.id, latest.id)
+        XCTAssertEqual(fixture.recoveryRequests, 1)
+        // Attaching metadata alone has no side effect; the later explicit Save writes retained buffers.
+        let explicitSave = await model.save(resumed, title: "SYNTHETIC RETAINED UNSAVED", diagram: retainedUnsavedDrawing)
+        XCTAssertTrue(explicitSave)
+        XCTAssertEqual(model.ownDrafts.first?.diagram, retainedUnsavedDrawing)
+        XCTAssertEqual(model.versions.first { $0.id == retainedSource.id }?.diagram, savedDrawing)
+        XCTAssertEqual(model.published.first?.id, latest.id)
+        XCTAssertEqual(model.ownDrafts.count, 1); XCTAssertEqual(fixture.recoveryRequests, 1)
+        return (fixture, model, retainedSource)
+    }
+    func testRecoveredDraftLookupFollowsRepeatedRecoveryAndRejectsMissingAmbiguousOrRevokedAccess() async throws {
+        let (fixture, model, retainedSource) = try await verifyUncertainRecovery(.lostReply)
+        let firstResumed = try model.recoveredDraft(for: retainedSource)
+        fixture.publishOtherSuccessor(); await model.load()
+        let currentAccepted = try XCTUnwrap(model.published.first)
+        let secondResult = await model.recoverDraft(firstResumed, expectedPublishedVersionID: currentAccepted.id)
+        let secondResumed = try XCTUnwrap(secondResult)
+        XCTAssertEqual(try model.recoveredDraft(for: retainedSource).id, secondResumed.id)
+        XCTAssertEqual(secondResumed.recoverySourceVersionID, firstResumed.id)
+        XCTAssertEqual(fixture.recoveryRequests, 2)
+        fixture.lineageFailure = .missing
+        await model.load()
+        XCTAssertTrue(model.didLoad)
+        XCTAssertThrowsError(try model.recoveredDraft(for: retainedSource))
+        fixture.lineageFailure = .ambiguous
+        await model.load()
+        XCTAssertTrue(model.didLoad)
+        XCTAssertThrowsError(try model.recoveredDraft(for: retainedSource))
+        fixture.lineageFailure = .none; fixture.canAuthor = false
+        await model.load()
+        XCTAssertThrowsError(try model.recoveredDraft(for: retainedSource)) { error in XCTAssertEqual(error as? PlaybookIssue, .denied) }
+        XCTAssertEqual(fixture.recoveryRequests, 2)
+    }
     func testLoadFailureIsNotAnEmptySuccessfulPlaybookAndRetryRecovers() async {
         let fixture = PlayFixture(); fixture.failRead = true
         let model = fixture.model(); await model.load()
@@ -150,7 +222,12 @@ private final class PlayFixture: @unchecked Sendable {
     var failSave = false
     var failRead = false
     var saveRequests = 0
+    enum RecoveryFailure { case none, lostReply, followUpRead }
+    var recoveryFailure: RecoveryFailure = .none
     var recoveryRequests = 0
+    enum LineageFailure { case none, missing, ambiguous }
+    var lineageFailure: LineageFailure = .none
+    var canAuthor = true
     func publishOtherSuccessor() {
         lock.lock(); defer { lock.unlock() }
         var published = rows.first { $0["id"] as? String == pointer }!
@@ -177,10 +254,18 @@ private final class PlayFixture: @unchecked Sendable {
         func respond(_ body: Any, status: Int = 200) throws -> (Data, URLResponse) {
             (try JSONSerialization.data(withJSONObject: body), HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!)
         }
-        if path.hasSuffix("team_access") { return try respond(["team_id": teamID.uuidString, "user_id": userID.uuidString, "is_owner": true, "access_revision": 1, "capabilities": [], "grant_envelopes": []]) }
+        if path.hasSuffix("team_access") { return try respond(["team_id": teamID.uuidString, "user_id": userID.uuidString, "is_owner": canAuthor, "access_revision": 1, "capabilities": [], "grant_envelopes": []]) }
         if failRead && request.httpMethod == "GET" { return try respond(["code": "42501", "message": "Synthetic denied"], status: 403) }
         if path.hasSuffix("/plays") { return try respond(rows.isEmpty ? [] : [["id": playID.uuidString, "team_id": teamID.uuidString, "published_version_id": pointer as Any? ?? NSNull()]]) }
-        if path.hasSuffix("/play_versions") { return try respond(rows) }
+        if path.hasSuffix("/play_versions") {
+            var visible = rows
+            if let source = rows.first(where: { $0["status"] as? String == "superseded" }),
+               let child = rows.first(where: { $0["recovery_source_version_id"] as? String == source["id"] as? String }) {
+                if lineageFailure == .missing { visible.removeAll { $0["id"] as? String == child["id"] as? String } }
+                if lineageFailure == .ambiguous { var duplicate = child; duplicate["id"] = UUID().uuidString; visible.append(duplicate) }
+            }
+            return try respond(visible)
+        }
         if path.hasSuffix("play_open_draft") {
             if let draft = rows.first(where: { $0["status"] as? String == "draft" }) { return try respond(draft) }
             let source = rows.first(where: { $0["id"] as? String == parameters["p_source_version_id"] as? String })
@@ -202,6 +287,9 @@ private final class PlayFixture: @unchecked Sendable {
             resumed["base_published_version_id"] = pointer
             resumed["recovery_source_version_id"] = superseded["id"]
             rows.append(resumed)
+            let failure = recoveryFailure; recoveryFailure = .none
+            if failure == .lostReply { throw URLError(.networkConnectionLost) }
+            if failure == .followUpRead { failRead = true }
             return try respond(["superseded": superseded, "draft": resumed])
         }
         if path.hasSuffix("play_save_draft") || path.hasSuffix("play_transition") {

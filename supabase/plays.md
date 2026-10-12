@@ -60,6 +60,11 @@ synthetic fixtures. An additional37 actual rollback PostgreSQL checks passed for
 conflicts, explicit recovery, preserved old/accepted geometry, one working draft,
 retry/stale-input denial and frozen saved history. The original native7 fixture
 tests and real local SDK save/publish/reopen/successor passed before recovery.
-Recovery-specific native tests and live iPhone/iPad editor,
-playback, keyboard/Save, larger text and VoiceOver checks require integration.
+All eleven integrated native geometry/play tests passed, including uncertain
+successful recovery, follow-up read failure and repeated recovery chains. After
+explicit Reload, a separate confirmation attaches retained editor buffers to a
+unique current own recovered draft; only revision metadata changes until Save.
+Missing, forked, cyclic, cross-author or noneditable lineage fails closed. Recovery
+is not replayed. Live iPhone/iPad editor, playback, keyboard/Save, larger text and
+VoiceOver interactions remain unverified.
 Hosted provider configuration and physical devices remain unverified.

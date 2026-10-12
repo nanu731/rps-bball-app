@@ -72,6 +72,10 @@ private struct PlayRevisionView: View {
     @State private var successor: PlayRevision?
     @State private var recoveryPointer: UUID?
     @State private var confirmRecovery = false
+    @State private var pendingRecoverySource: PlayRevision?
+    @State private var attachmentCandidate: PlayRevision?
+    @State private var attachmentLookupMessage: String?
+    @State private var confirmAttachment = false
     @FocusState private var textFocused: Bool
     init(account: BackendAccount, model: Playbook, revision: PlayRevision) {
         self.account = account; self.model = model; _revision = State(initialValue: revision)
@@ -85,9 +89,27 @@ private struct PlayRevisionView: View {
                 Label(revision.status == .published ? "Published revision — read-only" : "\(revision.status.rawValue.capitalized) play revision", systemImage: revision.status == .published ? "checkmark.circle" : "pencil")
                 if let issue = model.issue {
                     Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
-                    Button("Reload server state (keep unsaved drawing)") { Task { await model.load(); if let current = model.versions.first(where: { $0.id == revision.id }) { revision = current } } }
+                    Button("Reload server state (keep unsaved drawing)") { Task { await reloadRetainingBuffers() } }
                 }
                 if let confirmation = model.confirmation { Text(confirmation) }
+                if pendingRecoverySource != nil && changed {
+                    Label("Retained unsaved name or drawing — not uploaded", systemImage: "pencil").font(.subheadline)
+                    Text("Retained name: \(title.isEmpty ? "Unnamed draft" : title)").font(.subheadline)
+                }
+                if let message = attachmentLookupMessage {
+                    Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                    Button("Reload and check recovered draft") { Task { await reloadRetainingBuffers() } }
+                }
+                if attachmentCandidate != nil {
+                    Text("The server has a recovered working draft for this saved drawing. Attach your retained editor content to that draft only if you want to continue editing it.").font(.subheadline)
+                    Button("Attach retained edits to recovered draft") { confirmAttachment = true }
+                        .alert("Attach retained edits?", isPresented: $confirmAttachment) {
+                            Button("Attach without saving") { attachRetainedBuffers() }
+                            Button("Go back", role: .cancel) {}
+                        } message: {
+                            Text("Your retained name and drawing stay in the editor. The recovered draft's saved content and published play remain unchanged until you explicitly Save and complete the review/publication workflow. This does not repeat recovery.")
+                        }
+                }
                 if revision.status == .superseded {
                     Text("This saved drawing was retained after explicit recovery. It is read-only; the resumed draft has a separate identity.").font(.subheadline)
                 }
@@ -143,7 +165,7 @@ private struct PlayRevisionView: View {
                     }
                 }
                 Divider()
-                Text("Playback").font(.headline)
+                Text(pendingRecoverySource == nil ? "Playback" : "Retained editor preview").font(.headline)
                 PlayPlaybackView(diagram: diagram)
                 if editable {
                     Text("Save the name and drawing before submitting. Publication requires at least one marker and movement step.").font(.subheadline)
@@ -188,10 +210,11 @@ private struct PlayRevisionView: View {
         .alert("Resume this stale draft?", isPresented: $confirmRecovery) {
             Button("Resume and retain saved history") {
                 guard let pointer = recoveryPointer else { return }
+                pendingRecoverySource = revision; attachmentCandidate = nil; attachmentLookupMessage = nil
                 Task {
                     if let resumed = await model.recoverDraft(revision, expectedPublishedVersionID: pointer) {
                         // Change only server revision metadata. Retain current unsaved editor buffers.
-                        revision = resumed
+                        revision = resumed; pendingRecoverySource = nil
                     }
                 }
             }
@@ -200,6 +223,27 @@ private struct PlayRevisionView: View {
             Text("The old saved drawing remains read-only. The new draft copies its saved content against the latest published revision. Your current unsaved edits remain in this editor and are not automatically saved or published.")
         }
         .navigationDestination(item: $successor) { next in PlayRevisionView(account: account, model: model, revision: next) }
+    }
+    private func attachRetainedBuffers() {
+        guard let source = pendingRecoverySource, let candidate = attachmentCandidate else { return }
+        do {
+            // Revalidate identity/revision against the last explicit successful server reload.
+            let current = try model.recoveredDraft(for: source)
+            guard current.id == candidate.id, current.revision == candidate.revision else { throw PlaybookIssue.reloadRequired }
+            revision = current; pendingRecoverySource = nil; attachmentCandidate = nil; attachmentLookupMessage = nil
+        } catch {
+            attachmentCandidate = nil; attachmentLookupMessage = error.localizedDescription
+        }
+    }
+    private func reloadRetainingBuffers() async {
+        attachmentCandidate = nil; attachmentLookupMessage = nil
+        await model.load()
+        guard model.didLoad else { return }
+        if let current = model.versions.first(where: { $0.id == revision.id }) { revision = current }
+        if let source = pendingRecoverySource {
+            do { attachmentCandidate = try model.recoveredDraft(for: source) }
+            catch { attachmentLookupMessage = error.localizedDescription }
+        }
     }
     private var editorPositions: [PlayPosition] { diagram.markers.compactMap { marker in diagram.position(markerID: marker.id, step: selectedStep).map { PlayPosition(markerID: marker.id, point: $0) } } }
     private var movementArrows: [(CourtPoint, CourtPoint)] {

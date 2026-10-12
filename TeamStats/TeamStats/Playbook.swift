@@ -30,7 +30,7 @@ struct PlayRevision: Decodable, Identifiable, Hashable, Sendable {
     }
 }
 enum PlaybookIssue: Error, Equatable, LocalizedError {
-    case invalidInput, conflict, denied, unavailable, invalidResponse, reloadRequired
+    case invalidInput, conflict, denied, unavailable, invalidResponse, reloadRequired, recoveryUnavailable
     var errorDescription: String? {
         switch self {
         case .invalidInput: "Check the name, marker positions and movement steps."
@@ -39,6 +39,7 @@ enum PlaybookIssue: Error, Equatable, LocalizedError {
         case .unavailable: "The playbook could not be reached. Retry; no save or publication is confirmed."
         case .invalidResponse: "The server returned an unreadable playbook. Retry before continuing."
         case .reloadRequired: "Reload the playbook before another change. Your unsaved drawing stays on this screen."
+        case .recoveryUnavailable: "An editable recovered draft could not be confirmed. Inspect your saved drafts or reload; no retained edits were attached."
         }
     }
 }
@@ -91,6 +92,35 @@ final class Playbook {
     func currentPublishedVersionID(playID: UUID) -> UUID? { plays.first { $0.id == playID }?.publishedVersionID }
     func isStaleDraft(_ version: PlayRevision) -> Bool {
         version.status == .draft && currentPublishedVersionID(playID: version.playID) != version.basePublishedVersionID
+    }
+    /// Locate a confirmed working successor without issuing or repeating a recovery command.
+    func recoveredDraft(for retainedSource: PlayRevision) throws -> PlayRevision {
+        guard didLoad, !isBusy, !reloadRequired else { throw PlaybookIssue.reloadRequired }
+        guard let access, access.can(.playsAuthor), retainedSource.teamID == teamID,
+              retainedSource.authorUserID == access.userID else { throw PlaybookIssue.denied }
+        guard let source = versions.first(where: { $0.id == retainedSource.id }),
+              source.teamID == teamID, source.playID == retainedSource.playID,
+              source.authorUserID == access.userID, source.status == .superseded else { throw PlaybookIssue.recoveryUnavailable }
+        var node = source
+        var visited: Set<UUID> = [source.id]
+        while true {
+            let successors = versions.filter { $0.recoverySourceVersionID == node.id }
+            guard successors.count == 1 else { throw PlaybookIssue.recoveryUnavailable }
+            let next = successors[0]
+            guard visited.insert(next.id).inserted, next.teamID == teamID, next.playID == source.playID,
+                  next.authorUserID == access.userID, next.revision > 0, next.diagram.validationMessage == nil,
+                  next.basePublishedVersionID != nil, next.basePublishedVersionID != node.basePublishedVersionID else {
+                throw PlaybookIssue.invalidResponse
+            }
+            switch next.status {
+            case .superseded: node = next
+            case .draft:
+                let working = ownDrafts.filter { $0.playID == source.playID }
+                guard working.count == 1, working[0].id == next.id, !isStaleDraft(next) else { throw PlaybookIssue.recoveryUnavailable }
+                return next
+            default: throw PlaybookIssue.recoveryUnavailable
+            }
+        }
     }
     private struct RecoveryResult: Decodable { let superseded: PlayRevision; let draft: PlayRevision }
     func recoverDraft(_ version: PlayRevision, expectedPublishedVersionID: UUID) async -> PlayRevision? {
