@@ -1,6 +1,6 @@
 # TeamStats security boundaries
 
-Reviewed 2026-10-12 against source at `737ca4a`. This is a control/verification
+Reviewed 2026-10-12 against integrated source through `e7b119e` and reviewed file UI. This is a control/verification
 map, not a certification. Read [ARCHITECTURE.md](ARCHITECTURE.md)'s source map,
 [PRD.md](PRD.md), and [backend contracts](supabase/README.md) for detail.
 
@@ -79,8 +79,9 @@ verified. No automatic upload or migration of existing local data is permitted.
 - On-device OCR produces proposals, not authority. Bounded photo reads and explicit
   mapping/confirmation precede changes; applying a proposal does not save/publish.
 - Keep media review private. A reviewed link does not establish ownership, upload
-  security or private playback. Future uploads require content/type/size checks,
-  private storage rules and concurrency-safe capacity/transfer enforcement.
+  security or private playback. Private uploads use immutable reservations, deny-all client bucket policies,
+  trusted actual-byte validation and concurrency-safe aggregate admission.
+  Hosted capacity/configuration remains unverified and fails closed.
 - Export worker credentials are server-only. Versioned receipts/fences prevent
   older deliveries from becoming latest accepted data. Google delivery is disabled;
   fixture tests are not Google authorization/delivery evidence.
@@ -137,3 +138,29 @@ commands, data retention or external upload/export boundaries change. Link test
 evidence rather than claiming protection from UI restrictions or provider defaults.
 Keep private identity/setup/evidence out of public documentation and commit only
 explicit reviewed paths.
+
+## Private files and retained clips — current boundary
+
+Practice clips and scouting PDFs have separate capabilities; scouting publication
+requires owner review. Only eligible authors may use their own clip-publication
+bypass. Exact immutable versions, live sessions and current published visibility
+are checked before transfer. Unknown capacity denies admission. Failed/interrupted
+uploads and retained history remain charged; expiry does not free occupied bytes.
+The development limits are10MiB/30 seconds/H264 with optional AAC/1080p and5MiB PDF,
+not proof of the team's actual workload or hosted Free-tier feasibility.
+
+The trusted local validator checks self-contained MP4 references and full decode;
+PDF graph inspection and bounded rendering reject active/encrypted/malformed inputs.
+Process containment and response sanitization are tested, not exhaustive hostile
+fuzzing or OS-decoder resource certification. All original/new local runtime
+listeners were audited loopback-only; privileged configuration remains private.
+
+Retained clips are hash-verified and scoped to a previously server-verified actor.
+Restore also requires the saved session and actor stamp to agree. Sign-out/known
+Auth denial clears memory and durably locks the stamp; failed writes independently
+attempt removal of the session and stamp. If both writing and removals fail, the
+app reports a storage error but cannot guarantee a durable lock after restart;
+device secure-storage recovery is required. Files are preserved, not remotely
+recalled. Offline rights may be unknown and are explicitly disclosed. Current
+remote access always requires server authorization. Full app/device acceptance
+of these states remains pending separately from model tests.

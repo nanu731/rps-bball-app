@@ -671,3 +671,16 @@ Custom encryption and bot protection need assessment against the final scope.
 Backend choice does not determine which advanced stats are possible: collected
 inputs and documented calculations do. Do not expand collection scope merely
 to enable a metric without the owner's agreement.
+
+## Current implementation acceptance — 2026-10-12
+
+Private play-linked clips and game-linked scouting PDFs now have source-level
+native draft/review/viewing paths and actual isolated Auth/Storage/validator/native
+playback evidence. Optional retained clips are account/team/version scoped; current
+remote authority is always checked. Full-game film remains Hudl shortcuts, and
+photos remain on-device proposals. Full shared-data offline sync is deferred.
+The Lincoln/native polish rubric still requires rendered device acceptance: a build
+or independent source review does not pass light/dark/rotation/Dynamic Type/VoiceOver,
+keyboard Save, delayed/failed writes, unsaved navigation or known-access-loss checks.
+Hosted Free capacity is unknown and denies delivery by default. No local records
+are auto-uploaded, approval is not optimistic, and release is not authorized.

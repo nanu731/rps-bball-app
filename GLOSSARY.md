@@ -71,3 +71,10 @@ linked to that game's identity rather than an opponent-name match.
 
 **Scouting report version**: A retained document proposal or accepted revision;
 a new proposal does not replace the currently approved report.
+
+**Verified offline actor stamp**: Device-private identity last confirmed by Auth,
+matched to the saved session before retained clips may be discovered. It grants no
+remote authority and does not establish current team rights while offline.
+
+**Entered-data subtotal**: A sum of known inputs, identified as incomplete when
+required values are missing; it is not a final statistical conclusion.

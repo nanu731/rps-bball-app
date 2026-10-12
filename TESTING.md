@@ -246,7 +246,7 @@ was rerun to author these documents.
 | New UI/polish | Simulator builds and model regressions recorded | Both-device dirty navigation, delayed/failed Save, denied-content recovery, accessibility |
 | Photos | Synthetic Vision and proposal checks recorded | Representative marked forms and picker/Apply/Cancel interaction |
 | Google export | SQL/worker fixtures recorded; actual delivery disabled | Trusted sender/worker access and versioned Google readback |
-| Media/scouting | Link metadata locally exercised; scouting input preparation8 native tests and iPad26.4 build passed | Report picker/upload/lifecycle/private retrieval and actual provider validation/capacity/rights; videos still need actual bytes/playback |
+| Media/scouting | Actual isolated signed storage/validation/review/delivery, native player and two-process retained playback passed (later checkpoint below) | Hosted capacity/worker/signed access, rendered picker/viewer and full app/Auth offline reopening; real Hudl rights |
 | Release | Simulator builds and an unsigned archive recorded | Actual lowest supported OS, physical devices, signing, service setup and explicit release approval |
 
 This checkpoint is a dated snapshot. Verify current runtime/schema before new
@@ -300,7 +300,7 @@ confirmation. Other ready local work continues under the strict$0 boundary.
 
 At source revision `93cac9a` (2026-10-12), scouting input preparation uses real synthetic native PDF documents in
 `ScoutingReportDocumentTests` (8 passed on iPhone17/26.4, final iPad build passed).
-No report upload/navigation was added; client parsing is not trusted server PDF
+At that dated preparation-only checkpoint no report upload/navigation was added; client parsing is not trusted server PDF
 validation or malicious-document sanitization. Actual file-provider/picker/UI and
 storage/transfer/cost acceptance remain unverified. Original8 local JSON hashes
 and both personal working/staged files survived the run unchanged; container
@@ -311,4 +311,71 @@ now repaired; optional sharing of the two bounded file readers is deferred.
 Spec found no blocking defect for source-only preparation. A synthetic macOS
 PDFKit probe accepted a corrupt compressed stream with one page: parser acceptance
 is not comprehensive content/readability validation. This probe is neither an
-iOS26.4 check nor provider acceptance. Trusted validation remains unimplemented.
+iOS26.4 check nor provider acceptance. That checkpoint did not implement trusted validation; the later checks below supersede that limitation.
+
+## Integrated private files — 2026-10-12
+
+Source through e7b119e plus native UI09bb6e2. Independent Standards/Spec slice
+reviews were repaired and rereviewed. Actual isolated SQL69 checks and signed
+Auth/Storage/worker67 checks passed; fixtures use distinct synthetic identities.
+The trusted validator passed20 actual native fixtures and the gateway25 checks,
+including portrait media, external MP4 reference rejection, malformed PDF rendering
+and timeout/process cleanup. The Functions relay passed7 contract tests plus actual
+signed PDF lifecycle/hash delivery. These are local checks, not hosted activation.
+
+Native account26, retention5 and file-model7 fixture cases passed across affected
+runs. One actual native SDK integration passed interrupted reservation recovery,
+new immutable upload, full trusted H264/AAC validation, same-ID metadata revision,
+authorized publication, complete hash-verified delivery and AVPlayer ready/time
+advancement. Cached reuse avoided another delivery request in the fixture check.
+Recreating the retention object alone does not establish app relaunch acceptance.
+A separate two-test-host offline playback check passed: distinct process IDs,
+same app-relative file/version/hash, player ready/time advancement, zero observed
+HTTP in both playback windows. Xcode relocated the data container; this verifies
+retained bytes across test processes, not a stable literal absolute path. Full app
+startup/Auth/offline UI remains pending.
+
+Native clip preparation also passed5 synthetic macOS fixtures and rejected a
+remote input; iOS compilation passed. This does not substitute for actual iOS
+picker/codec preparation or real marked-sheet OCR accuracy. All26 audited local
+runtime listeners were loopback-only after state-preserving binding repairs.
+All8 original local JSON files, temporary identities and personal Xcode bytes/index
+entries passed the preservation guard. New synthetic files are test fixtures.
+
+Current UI control is blocked by the locked Mac; stop repeated identical attempts.
+New Team/file/player/PDF screens still require rendered iPhone/iPad light/dark,
+rotation, large text, VoiceOver, keyboard Save, pending/failure/dirty navigation,
+known revocation and full app termination/offline reopening checks. See the private
+manual checklist. The previously verified owner activation/bootstrap is not rerun.
+Hosted001/002/003 follow-up migrations, signed hosted access, media capacity/worker,
+Google delivery, sender, real Hudl rights, branding,26.0/physical/signing/release
+acceptance remain separate gates under the strict$0 budget.
+
+Preservation note: the personal Xcode UI-state working file changed between guard
+snapshots during this session; its origin was not established. The merge's immediate
+before/after snapshots were identical and its staged entry stayed unchanged. The
+latest bytes were retained without restoration; both baselines remain private.
+The scheme-state and unrelated project bytes/index,8 original JSON contents and
+temporary roster identities remained unchanged. Do not claim the UI-state working
+bytes stayed equal to the session's original snapshot.
+
+### Final executable integration checks — 2026-10-12
+
+The iPhone17/iOS26.4 integrated build/test run passed155 selected cases:151
+executed,4 explicit opt-in integration skips,0 failures. Review then identified
+terminal validator codes that could falsely enter reconciliation/access-lock recovery.
+The final narrow repair rebuilt the app and passed all8 affected native cases,
+including22 public error-code outcomes; all8 relay cases passed. Known content
+rejection and neutral validator failure offer explicit new drafts while preserving
+history; capacity/unavailable/uncertain outcomes retain conservative recovery.
+Both final Standards and Spec source rereviews report0 remaining concrete findings.
+
+Actual read-only isolated delivery receipts corroborate one delivery operation per
+published synthetic clip despite cached reuse.26 current owned local listeners
+remain loopback-only. Original8 local JSON contents and temporary identities are
+unchanged. Personal staged entries remain unchanged; the separately disclosed
+UI-state working-byte change is preserved, not overwritten. No activation/bootstrap,
+hosted file deployment, local draft upload, paid service or production release.
+No new rendered UI acceptance is claimed while the Mac is locked. Full app/Auth
+relaunch/offline UI, current hosted signed access/capacity and provider integrations,
+real forms/assets and physical/26.0/signing remain exact external/device gates.

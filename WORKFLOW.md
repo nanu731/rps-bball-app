@@ -1,5 +1,12 @@
 # TeamStats — Planning and Implementation Workflow
 
+Current source/local acceptance snapshot (2026-10-12): native private clips/scouting,
+Team discovery, verified administration and optional retained playback are implemented.
+Full integration151 executed/4 opt-in skips passed, followed by8 affected recovery
+checks after the final narrow repair. Rendered UI is blocked by the locked Mac;
+hosted capacity/signed access, Google/sender, real assets/forms and device/release
+acceptance remain pending. Later dated checkpoints supersede earlier source gaps.
+
 ## Authorized implementation continuation — 2026-10-12
 
 Reviewed Hudl slice integrated inf7eb21d. A server/native query-parsing discrepancy
@@ -1377,3 +1384,50 @@ configuration, synthetic records and charges remain preserved. Hosted activation
 was not rerun and hosted files remain disabled pending verified$0 capacity/hosting.
 Simulator UI inspection is currently blocked by the locked Mac. Native client,
 retention, playback and rendered interaction acceptance remain in progress.
+
+### Private-file native integration — 2026-10-12
+
+Integrated native models e7b119e and UI09bb6e2: published plays → Practice clips;
+shared games → Scouting reports; Saved clips opens explicitly retained copies.
+Immutable draft/review/history, same-ID metadata edits, uncertain-operation recovery,
+current visibility checks and hash-verified native playback/PDF viewing are implemented.
+No auto-upload of local drafts, full shared offline sync, hosted delivery or production
+release. Actual local SDK upload/validation/publication/delivery/AVPlayer time advancement
+passed; account26/cache5/file-model7 fixture cases passed across affected runs.
+The native UI compiled on iPad26.4; rendered interaction acceptance is blocked by
+the locked Mac. A separate two-test-host offline playback proof passed: distinct process IDs, same
+app-relative file/version/hash, AVPlayer ready/time advancement, and zero observed
+HTTP requests in both playback windows. Xcode relocated the container; literal
+absolute-path stability and full app startup/Auth/offline UI were not tested. Final
+integration suite/review are pending this checkpoint. Original records and personal index/bytes
+passed preservation. Hosted capacity and signed access, Google worker, sender, real
+forms/Hudl/assets and physical/26.0/release checks remain explicit external gates.
+
+Preservation note: the personal Xcode UI-state working file changed between guard
+snapshots during this session; its origin was not established. The merge's immediate
+before/after snapshots were identical and its staged entry stayed unchanged. The
+latest bytes were retained without restoration; both baselines remain private.
+The scheme-state and unrelated project bytes/index,8 original JSON contents and
+temporary roster identities remained unchanged. Do not claim the UI-state working
+bytes stayed equal to the session's original snapshot.
+
+### Final executable integration checks — 2026-10-12
+
+The iPhone17/iOS26.4 integrated build/test run passed155 selected cases:151
+executed,4 explicit opt-in integration skips,0 failures. Review then identified
+terminal validator codes that could falsely enter reconciliation/access-lock recovery.
+The final narrow repair rebuilt the app and passed all8 affected native cases,
+including22 public error-code outcomes; all8 relay cases passed. Known content
+rejection and neutral validator failure offer explicit new drafts while preserving
+history; capacity/unavailable/uncertain outcomes retain conservative recovery.
+Both final Standards and Spec source rereviews report0 remaining concrete findings.
+
+Actual read-only isolated delivery receipts corroborate one delivery operation per
+published synthetic clip despite cached reuse.26 current owned local listeners
+remain loopback-only. Original8 local JSON contents and temporary identities are
+unchanged. Personal staged entries remain unchanged; the separately disclosed
+UI-state working-byte change is preserved, not overwritten. No activation/bootstrap,
+hosted file deployment, local draft upload, paid service or production release.
+No new rendered UI acceptance is claimed while the Mac is locked. Full app/Auth
+relaunch/offline UI, current hosted signed access/capacity and provider integrations,
+real forms/assets and physical/26.0/signing remain exact external/device gates.

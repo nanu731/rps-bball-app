@@ -5,13 +5,13 @@ on iPhone and iPad (minimum iOS/iPadOS 26.0). Managers enter box scores,
 team possessions, and individual paint-touch totals; players view accepted shared
 statistics. Device-local saved drafts are separate, incomplete and unreviewed.
 
-### Planned video scope
+### Media scope
 
 Owner decision (2026-10-12): approximately 25 regular users plus initial testers.
 Full-game film stays on Hudl, with optional game-linked shortcuts in TeamStats.
 Practice clips linked to plays are the in-app upload/playback target. These are
-requirements, not completed file-upload/playback capabilities; actual clip capacity
-under the strict $0 budget and real Hudl link behavior remain unverified.
+implemented source paths with actual isolated Auth/Storage/native playback checks;
+hosted clip capacity under the strict $0 budget and real Hudl links remain unverified.
 
 ## Native appearance
 
@@ -39,15 +39,15 @@ disabled under the $0 budget. Actual local Auth/gateway/native SDK tests passed;
 limited owner hosted email sign-in and identity/session preflight are recorded.
 The owner executed reviewed nonproduction activation; independent hosted SQL
 readback passed. Team-wide email delivery and signed authorization acceptance
-remain pending. Shared entry/review and accepted summaries are accessible from Account → Team
-administration → Shared games and statistics. These use real server commands;
+remain pending. Shared entry/review and accepted summaries are accessible from Team → Shared games and statistics. These use real server commands;
 local games are kept separate. Native fixtures and real local SDK workflows passed; hosted setup
 and two-device UI checks are still pending. The owner can inspect per-game server export status with independent error/Retry. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
-by default; actual Sheets delivery, full-form photo accuracy and videos remain
-incomplete. Private reviewed practice/game-film links are available from published
-plays/shared games; file uploads and in-app playback are unavailable. Provider
+by default; actual Sheets delivery, full-form photo accuracy and hosted media delivery remain
+pending. Published plays offer private practice clips and earlier reviewed links;
+shared games offer scouting PDFs and Hudl shortcuts. Actual isolated file transfer,
+validation, owner review and native playback passed; hosted delivery remains disabled. Provider
 links require independent access, and saving them proves no rights or playback.
-Playbook authoring/review/court-movement playback is available from team administration;
+Playbook authoring/review/court-movement playback is available from Team → Playbook;
 local database and native SDK verification passed, while device interaction and
 hosted verification remain pending.
 Photo review is available inside local/shared player and possession drafts. Choose
@@ -76,13 +76,14 @@ rendered/interaction acceptance remain pending; source wiring is not that eviden
 | Feature | Path and current limit |
 | --- | --- |
 | Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Hosted SQL readback passed; signed permission acceptance pending; real SMS disabled. |
-| Owner administration | Account → Team administration; membership admission, roster add/edit/archive, separate grants and bounded delegation. Historical identities retained. |
-| Shared statistics | Team administration → Shared games and statistics; games, individual/table box scores, independent paired possessions and player paint totals. No automatic upload of local records. |
+| Owner administration | Team → Manage team; membership admission, roster add/edit/archive, separate grants and bounded delegation. Historical identities retained. |
+| Shared statistics | Team → Shared games and statistics; games, individual/table box scores, independent paired possessions and player paint totals. No automatic upload of local records. |
 | Completion and review | Shared game details; server-confirmed independent completion, approved edit requests, review/publication and accepted summaries. Possession zero conversion uses the confirmed warning flow. |
 | Metrics | Accepted shared summaries; missing inputs stay unavailable. Only accepted versions affect agreed metrics and reconciliation. |
 | Sheets status | Shared game details, owner only; server outbox status and Retry. Live Google delivery disabled and unverified. |
 | Photo review | Existing local/shared drafts; map/confirm recognized values, apply to unsaved input, then explicitly Save. Real form accuracy unverified. |
-| Plays and video links | Team administration → Playbook; authored movement and reviewed revisions. Published plays link practice resources; shared games link Game Film. Video files/playback incomplete. |
+| Plays and clips | Team → Playbook; authored movement and reviewed revisions. Published play → Practice clips, optional Keep on device; Saved clips tab opens retained copies. Hosted file delivery pending. |
+| Scouting and Hudl | Shared game → Scouting reports or Game Film; separate current capabilities and owner review. Hudl controls film access. |
 
 Saved play/media recovery preserves earlier proposals as read-only history.
 After an uncertain response, explicitly Reload and confirm attachment to a
@@ -96,10 +97,11 @@ request before its recovered working draft can receive retained entries.
 
 This branch is not a completed hosted integration or release. Nonproduction
 signed access/lifecycle acceptance, team email delivery, trusted Google
-worker configuration and actual video upload/transfer enforcement remain blocked.
+worker configuration and hosted media capacity/delivery remain blocked. Isolated
+actual upload/transfer enforcement and native playback passed.
 New UI needs iPhone/iPad rotation, larger text, VoiceOver, keyboard/Save and
-recovery/photo interaction checks. Simulator inspection recovered, but native
-input failed with `-10005: noWindowsAvailable`; those interactions remain unverified. Earlier owner
+recovery/photo interaction checks. Current Simulator interaction is blocked by the locked Mac; previous automation
+also failed with stale/no-window errors. New interactions remain unverified. Earlier owner
 verification does not verify new screens. Real branding/icon, signing/distribution
 and explicit production/release approval remain outstanding. No paid service,
 public submission or automatic production-data upload is enabled.
@@ -107,7 +109,8 @@ public submission or automatic production-data upload is enabled.
 The owner-requested polish audit added unsaved-navigation confirmations, pending
 field locks/progress, clearer admission next actions and protected-content hiding
 after confirmed server denial. Recovery buffers remain private until an authorized
-reload; no persistent connected cache or full offline sync was added. Native
+reload; only explicitly retained private clips have persistent connected caching; full
+shared-data offline sync remains deferred. Native
 regressions and simulator compilation passed, while slow-network, background/
 termination, accessibility and physical-device acceptance remain separate checks.
 
@@ -128,20 +131,20 @@ or every current gesture has passed. See [TESTING.md](TESTING.md) for limitation
 
 | User task | Path and result |
 |---|---|
-| Local practice entry | Games → Add game → game details → box-score/possession/player paint-touch drafts → Save draft → read-only summary. Saved only on this device; not official data. |
-| Join the team | Account → private server configuration → email sign-in on the same device → Team administration. Request admission if needed; pending admission grants no active-member access. SMS remains disabled. |
-| Enter shared statistics | Team administration → Shared games and statistics → game → editable dataset → Save → explicit completion → submit for review, or authorized publication. Server reply determines status. |
+| Local practice entry | Local drafts → Add game → game details → box-score/possession/player paint-touch drafts → Save draft → read-only summary. Saved only on this device; not official data. |
+| Join the team | Account → private server configuration → email sign-in on the same device → Team tab. Request admission if needed; pending admission grants no active-member access. SMS remains disabled. |
+| Enter shared statistics | Team → Shared games and statistics → game → editable dataset → Save → explicit completion → submit for review, or authorized publication. Server reply determines status. |
 | View accepted statistics | Shared game → accepted summary. Accepted versions drive supported metrics/reconciliation; missing inputs remain unavailable. |
 | Correct completed data | Request edit → authorized reopen approval → new draft → edit/save/complete → review/publication. Accepted history stays intact; retained stale buffers require explicit authorized attachment and Save. |
-| Owner/delegate administration | Team administration → roster/members/grants/delegation. Archive preserves history; capability use and permission to grant it are separate, server-enforced authorities. |
-| Plays and practice film | Team administration → Playbook → author saved movement/review/publish → published play → practice-video links. Metadata does not prove file upload or playback. |
-| Game film and photo input | Shared game → Game Film links; eligible authors submit, owner reviews. Existing draft → photo review → map/confirm → Apply → explicit Save. Photo Apply does not complete/publish. |
+| Owner/delegate administration | Team → Manage team → roster/members/grants/delegation. Archive preserves history; capability use and permission to grant it are separate, server-enforced authorities. |
+| Plays and practice film | Team → Playbook → author saved movement/review/publish → published play → Practice clips. Upload/validation/review precede playback; optional retained copies appear in Saved clips. |
+| Game film and photo input | Shared game → Game Film Hudl shortcuts; eligible authors submit, owner reviews. Existing draft → photo review → map/confirm → Apply → explicit Save. Photo Apply does not complete/publish. |
 
 Loading, empty, pending admission, failed requests and denied access must have
 different messages and next actions. Unfinished provider/media work remains
-identified above. Scouting reports for upcoming opponents follow ADR0003. Bounded native PDF
-input preparation is tested; there is no report upload screen or verified private
-report storage/retrieval yet.
+identified above. Scouting reports for upcoming opponents follow ADR0003. The scouting picker, draft/review, private transfer and PDF viewer are implemented.
+Actual isolated trusted validation/storage/retrieval passed; hosted and rendered UI
+acceptance remain pending.
 
 ### Technical documentation
 

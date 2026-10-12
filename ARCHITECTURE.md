@@ -1,6 +1,6 @@
 # TeamStats architecture
 
-Documentation snapshot: 2026-10-12, source reviewed at `737ca4a`.
+Documentation snapshot: 2026-10-12, integration through `e7b119e` plus reviewed native file UI.
 This describes implementation and boundaries, not release acceptance.
 
 ## Reading order and source map
@@ -46,12 +46,12 @@ transactions and version checks. UI restrictions alone do not secure records.
 
 ## Local drafts versus official shared data
 
-Games/Players tabs use provisional identities and four separate atomic JSON
+Local drafts/Players tabs use provisional identities and four separate atomic JSON
 stores: games, box scores, possessions and player paint-touch totals. Local
 summaries are incomplete/unreviewed; blank differs from zero. Signing in does
 not upload those records or turn temporary players into actual roster entries.
 
-Account → Team administration opens shared workflows. Shared roster entries have
+Team opens shared workflows; Manage team protects administrative destinations. Shared roster entries have
 stable real identities and retained revisions; archiving preserves history.
 Shared statistics use four independent dataset types: box scores, our possessions,
 opponent possessions and player paint-touch totals. Saved is not completed;
@@ -86,14 +86,17 @@ shot categories without inventing player attribution to possessions.
 - Plays use editable court markers/movement steps and immutable accepted revisions.
   Photo recognition runs on device; reviewed mappings change only existing unsaved
   input. Representative filled-form accuracy remains pending.
-- Practice/game-film link metadata and review are implemented. File upload,
-  transfer-budget enforcement, provider rights and private playback are unfinished.
-- Upcoming-opponent scouting reports follow ADR0003 (private game-linked PDFs,
-  separate read/upload grants, owner approval and retained versions). Bounded
-  native PDF input preparation is tested; picker/upload/server lifecycle/private
-  retrieval and provider validation/capacity remain unimplemented or unverified.
-- Full offline synchronization and persistent connected-data caching are deferred.
-  Recovery buffers do not constitute an offline queue or durable server replica.
+- Full-game film stays on Hudl; reviewed HTTPS shortcuts open provider destinations.
+- PrivateFiles/PrivateFilesView handle immutable play-linked clips and game-linked
+  scouting PDFs. Authenticated SQL owns reservations/revisions/review/current access;
+  a bounded trusted worker validates actual bytes before private Storage publication.
+  Native AVPlayer/PDFKit consume complete hash-verified local files. The local Functions
+  relay has actual signed checks; hosted deployment is not enabled.
+- ClipRetention stores explicit optional copies by project/verified actor/team/version.
+  Online opening rechecks current published access; known denial locks retained copies.
+  Unknown offline rights are disclosed. Previously delivered bytes cannot reliably be
+  recalled. Offline clip retention is not full shared-data synchronization.
+- Four local draft stores remain unchanged and are never automatically uploaded.
 
 ## Backup and recovery boundary
 
