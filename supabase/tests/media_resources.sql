@@ -57,6 +57,7 @@ select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('pra
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','https://user:secret@video.example.invalid/watch','')$$,'22023',null,'URL user credentials rejected');
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','https://video.example.invalid/#token=synthetic','')$$,'22023',null,'token-bearing fragments rejected');
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','https://video.example.invalid/?access_token=synthetic','')$$,'22023',null,'credential query keys rejected');
+select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','https://video.example.invalid/watch?view=team?&access_token=synthetic','')$$,'22023',null,'practice credential query after second question mark rejected');
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','https://video.example.invalid/?%74oken=synthetic','')$$,'22023',null,'encoded credential key rejected');
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','https://video.example.invalid/%zz','')$$,'22023',null,'invalid percent escape rejected');
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),repeat('x',121),'https://video.example.invalid/watch','')$$,'22023',null,'oversized title rejected');
@@ -100,7 +101,7 @@ select lives_ok($$select pg_temp.keep('revised',public.media_open_draft(pg_temp.
 select is(pg_temp.body('revised')->>'base_published_version_id',pg_temp.id('bypass')::text,'successor captures current accepted base');
 select pg_temp.login(5);
 select lives_ok($$select pg_temp.keep('film',public.media_open_draft(pg_temp.team(),pg_temp.resource(4),'film',pg_temp.game()))$$,'eligible film contributor opens game-linked draft');
-select pg_temp.keep('film',public.media_save_draft(pg_temp.team(),pg_temp.id('film'),pg_temp.rev('film'),'SYNTHETIC FILM LINK','https://film.example.invalid/watch',''));
+select pg_temp.keep('film',public.media_save_draft(pg_temp.team(),pg_temp.id('film'),pg_temp.rev('film'),'SYNTHETIC FILM LINK','https://www.hudl.com/video/synthetic-never-opened',''));
 select lives_ok($$select pg_temp.keep('film',public.media_transition(pg_temp.team(),pg_temp.id('film'),pg_temp.rev('film'),'submit'))$$,'eligible film submits pending owner review');
 select pg_temp.login(3);
 select is((select count(*)::int from public.media_resource_versions where id=pg_temp.id('film')),1,'film inspector reads pending metadata');
@@ -109,7 +110,7 @@ select pg_temp.login(1);
 select lives_ok($$select pg_temp.keep('film',public.media_transition(pg_temp.team(),pg_temp.id('film'),pg_temp.rev('film'),'approve'))$$,'owner approves game-film link');
 select pg_temp.login(6);
 select pg_temp.keep('film-bypass',public.media_open_draft(pg_temp.team(),pg_temp.resource(5),'film',pg_temp.game()));
-select pg_temp.keep('film-bypass',public.media_save_draft(pg_temp.team(),pg_temp.id('film-bypass'),pg_temp.rev('film-bypass'),'SYNTHETIC BYPASS FILM','https://film.example.invalid/other',''));
+select pg_temp.keep('film-bypass',public.media_save_draft(pg_temp.team(),pg_temp.id('film-bypass'),pg_temp.rev('film-bypass'),'SYNTHETIC BYPASS FILM','https://hudl.com/video/synthetic-never-opened-other',''));
 select lives_ok($$select pg_temp.keep('film-bypass',public.media_transition(pg_temp.team(),pg_temp.id('film-bypass'),pg_temp.rev('film-bypass'),'publish'))$$,'eligible film author with bypass publishes own link');
 select pg_temp.login(7);
 select is((select count(*)::int from public.media_resource_versions),0,'nonmember cannot read accepted links');
