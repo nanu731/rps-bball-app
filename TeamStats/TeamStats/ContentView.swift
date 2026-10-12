@@ -95,7 +95,7 @@ struct ContentView: View {
             NavigationStack {
                 AccountView(account: account)
             }
-            .id(account.verifiedUserID)
+            .id(account.sessionContextID)
             .tabItem {
                 Label("Account", systemImage: "person.crop.circle")
             }

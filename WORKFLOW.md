@@ -978,3 +978,16 @@ two-device larger-text/rotation/keyboard/VoiceOver interactions remain unverifie
 Native app screen control returned but reports the Mac locked; the owner was
 asked to unlock, and repeated blocked attempts stopped. Original iPhone games,
 box scores, possessions and paint-touch JSON remained byte-identical on recheck.
+
+
+Native two-axis review: Standards0, Spec2 actionable findings. A transient Auth
+check changed the navigation identity and could destroy unsaved buffers; each
+possession completion control also considered invalid input from the other sheet.
+Navigation now uses retained session editing context, cleared on sign-out/account
+change; this identity confers no authority. Explicit retry rechecks Auth before
+commands. Completion validates only its selected sheet and preserves the other
+buffer. A corrected fault fixture exhausts the SDK's internal GET retries, then
+recovers on an explicit retry. The previous Auth guard failed that regression;
+all21 Account plus14 connected tests passed after the fix. Static code resolves
+both findings; live error/retry buffer retention and independent-completion UI
+interaction remain manual checks while the Mac is locked.

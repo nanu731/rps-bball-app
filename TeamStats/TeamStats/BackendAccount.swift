@@ -92,6 +92,9 @@ final class BackendAccount {
 
     private(set) var configuration: AccountConfiguration?
     private(set) var state: AccountState = .unconfigured
+    // Editing context survives a failed network check. It grants no authority;
+    // commands still reverify Auth and server permissions before proceeding.
+    private(set) var sessionContextID: UUID?
     private(set) var isBusy = false
     private(set) var issue: AccountIssue?
     private(set) var pendingMethod: AccountMethod?
@@ -126,6 +129,7 @@ final class BackendAccount {
             pendingMethod = nil
             pendingIdentifier = nil
             issue = nil
+            sessionContextID = nil
             state = .signedOut
         } catch { fail(error as? AccountIssue ?? .storage) }
     }
@@ -195,6 +199,7 @@ final class BackendAccount {
         do {
             guard let data = try read(key: configurationKey) else {
                 state = .unconfigured
+                sessionContextID = nil
                 issue = nil
                 return
             }
@@ -208,6 +213,7 @@ final class BackendAccount {
             guard let sessionData = try read(key: sessionKey(validated)) else {
                 client = makeClient(validated)
                 state = .signedOut
+                sessionContextID = nil
                 issue = nil
                 return
             }
@@ -300,7 +306,8 @@ final class BackendAccount {
     /// Caller uses this verified session to invoke server-authorized commands.
     /// The server alone decides team admission, grants and owner authority.
     func authenticatedClient() async throws -> SupabaseClient {
-        guard !isBusy, verifiedUserID != nil, let client else { throw AccountIssue.noVerifiedSession }
+        guard !isBusy, let client,
+              verifiedUserID != nil || (state == .error && sessionContextID != nil) else { throw AccountIssue.noVerifiedSession }
         isBusy = true
         defer { isBusy = false }
         do {
@@ -317,6 +324,7 @@ final class BackendAccount {
         guard !isBusy, let configuration else { return }
         isBusy = true
         defer { isBusy = false }
+        sessionContextID = nil
         let oldClient = client
         // The SDK captures the token, removes its local session, then requests
         // server revocation. Explicit deletion below also checks suppressed failures.
@@ -350,6 +358,7 @@ final class BackendAccount {
         do { try storage.store(key: sessionKey(configuration), value: JSONEncoder().encode(session)) }
         catch { throw AccountIssue.storage }
         issue = nil
+        sessionContextID = verifiedUser.id
         state = .authenticated(verifiedUser.id)
     }
 

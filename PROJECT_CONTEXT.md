@@ -23,7 +23,7 @@ Read WORKFLOW.md's Project readiness audit for the 20-item checklist and remaini
 sequence. PRD.md now states value/pain/audience and lean brand/UI standards;
 README.md describes actual setup/status. Native Auth now supports PKCE email links and email/phone OTP,
 private Keychain configuration/session restore, Retry and sign-out; remote SMS is
-disabled. Twenty isolated native account tests passed, including real simulator
+disabled. Twenty-one isolated native account tests passed, including real simulator
 Keychain operations in a signed test host. These SDK fixtures do not prove hosted
 delivery or deployed authorization. Server membership/grant/delegation/roster
 source passed81 actual Postgres17.11 pgTAP checks after local tooling approval.
@@ -289,3 +289,7 @@ Return 150–250 words, maximum 300, with:
 `STEP`, `RESULT`, `CHECKS`, `GIT`, `DECISIONS`, `BLOCKERS / HUMAN INPUT`, `NEXT`.
 Include branch/commit identifiers, dirty state, actual check results, and any
 remaining human action. Do not repeat the whole PRD or include secrets.
+
+Native integration review found and fixed transient-check navigation buffer loss
+and cross-team completion validation. The affected35-test run passed; actual
+interaction checks remain pending until the Mac is unlocked.

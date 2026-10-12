@@ -80,6 +80,25 @@ final class AccountTests: XCTestCase {
         XCTAssertNil(account.verifiedUserID)
     }
 
+    func testTransientAuthenticatedCheckCanRetryTheExistingSession() async throws {
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: fixtureHTTPSession(mode: "transientAfterVerification"))
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await account.verifyCode("123456")
+        XCTAssertEqual(account.verifiedUserID, fixtureUserID)
+        do { _ = try await account.authenticatedClient(); XCTFail("The transient failed check must not authorize a command") }
+        catch { XCTAssertEqual(account.issue, .provider) }
+        XCTAssertNil(account.verifiedUserID)
+        XCTAssertEqual(account.sessionContextID, fixtureUserID)
+        do {
+            _ = try await account.authenticatedClient()
+            XCTAssertEqual(account.verifiedUserID, fixtureUserID)
+        } catch { XCTFail("An explicit retry must recheck the existing session without a new sign-in") }
+        XCTAssertEqual(account.sessionContextID, fixtureUserID)
+        await account.signOut()
+        XCTAssertNil(account.sessionContextID)
+    }
+
     func testVerifiedEmailSessionSurvivesRestartAndSignOutClearsIt() async throws {
         let storage = FixtureAccountStorage()
         let first = BackendAccount(storage: storage, session: fixtureHTTPSession())
@@ -276,11 +295,19 @@ private final class FixtureAccountStorage: AuthLocalStorage, @unchecked Sendable
 private func fixtureHTTPSession(mode: String? = nil) -> URLSession {
     let configuration = URLSessionConfiguration.ephemeral
     configuration.protocolClasses = [FixtureAccountURLProtocol.self]
-    if let mode { configuration.httpAdditionalHeaders = ["X-Fixture-Mode": mode] }
+    if let mode { configuration.httpAdditionalHeaders = ["X-Fixture-Mode": mode, "X-Fixture-Trace": UUID().uuidString] }
     return URLSession(configuration: configuration)
 }
 
 private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable {
+    private static let counterLock = NSLock()
+    nonisolated(unsafe) private static var userChecks: [String: Int] = [:]
+    private static func nextUserCheck(_ trace: String) -> Int {
+        counterLock.lock(); defer { counterLock.unlock() }
+        let count = (userChecks[trace] ?? 0) + 1
+        if count >= 5 { userChecks.removeValue(forKey: trace) } else { userChecks[trace] = count }
+        return count
+    }
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
@@ -290,7 +317,9 @@ private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable 
         let refreshFailure = mode == "refreshFailure" && request.url?.path.hasSuffix("/token") == true
         let missingEmailRedirect = mode == "requireEmailRedirect" && request.url?.path.hasSuffix("/otp") == true
             && URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "redirect_to" })?.value != "com.narayanlekhi.teamstats://auth/callback"
-        let failed = request.url?.host == "failure.invalid" || denied || logoutFailure || refreshFailure || missingEmailRedirect
+        let transientFailure = mode == "transientAfterVerification" && request.url?.path.hasSuffix("/user") == true
+            && (2...4).contains(Self.nextUserCheck(request.value(forHTTPHeaderField: "X-Fixture-Trace") ?? "synthetic"))
+        let failed = request.url?.host == "failure.invalid" || denied || logoutFailure || refreshFailure || missingEmailRedirect || transientFailure
         let status = denied ? 401 : (failed ? 503 : 200)
         let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)

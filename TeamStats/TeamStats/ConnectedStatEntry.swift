@@ -153,6 +153,13 @@ struct ConnectedStatEntryView: View {
         }
     }
 
+    private func hasInvalidInputs(_ kind: ConnectedDatasetType) -> Bool {
+        if isPaired {
+            return possessions.contains { datasetKind($0.team) == kind && $0.invalidField != nil }
+        }
+        return !invalidMessages.isEmpty
+    }
+
     @ViewBuilder private func datasetControls(_ kind: ConnectedDatasetType) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(kind.label).font(.headline)
@@ -167,7 +174,7 @@ struct ConnectedStatEntryView: View {
                     }.disabled(model.isBusy)
                 } else if version.status == .draft {
                     Button("Complete \(kind.label.lowercased())") { focused = nil; completionKind = kind }
-                        .disabled(changed.contains(kind) || model.isBusy || model.reloadRequired || !invalidMessages.isEmpty || !hasRecords(kind))
+                        .disabled(changed.contains(kind) || model.isBusy || model.reloadRequired || hasInvalidInputs(kind) || !hasRecords(kind))
                     if changed.contains(kind) { Text("Save this dataset before completing it.").font(.footnote).foregroundStyle(.secondary) }
                 } else {
                     Text("Completed data is read-only until an edit request is approved.").font(.footnote).foregroundStyle(.secondary)
