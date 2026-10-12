@@ -25,12 +25,12 @@ final class MediaResourcesTests: XCTestCase {
         var input = MediaLinkInput()
         XCTAssertTrue(input.validDraft(for: .film)); XCTAssertFalse(input.readyToSubmit(for: .film))
         input.title = "SYNTHETIC SHORTCUT"
-        for supported in ["https://hudl.com/v/synthetic", "https://www.hudl.com/video/synthetic", "https://HUDL.COM:443/video/synthetic?view=team"] {
+        for supported in ["https://hudl.com/v/synthetic", "https://www.hudl.com/video/synthetic", "https://HUDL.COM:443/video/synthetic?view=team", "https://hudl.com/video?view=team?"] {
             input.linkURL = supported
             XCTAssertTrue(input.readyToSubmit(for: .film), supported)
             XCTAssertNotNil(MediaLinkInput.hudlURL(supported))
         }
-        for unsupported in ["https://hudl.com.evil.invalid/video", "https://evilhudl.com/video", "https://hudl.com./video", "https://unverified.hudl.com/video", "https://%68udl.com/video", "https://user@hudl.com/video", "https://hudl.com:8443/video", "https://hudl.com/video#private", "https://hudl.com/video?access_token=synthetic", "http://hudl.com/video"] {
+        for unsupported in ["https://hudl.com.evil.invalid/video", "https://evilhudl.com/video", "https://hudl.com./video", "https://unverified.hudl.com/video", "https://%68udl.com/video", "https://user@hudl.com/video", "https://hudl.com:8443/video", "https://hudl.com/video#private", "https://hudl.com/video?access_token=synthetic", "https://hudl.com/video?view=team?&access_token=synthetic", "http://hudl.com/video"] {
             input.linkURL = unsupported
             XCTAssertFalse(input.validDraft(for: .film), unsupported)
             XCTAssertNil(MediaLinkInput.hudlURL(unsupported))

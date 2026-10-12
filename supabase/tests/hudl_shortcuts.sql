@@ -45,7 +45,9 @@ from (values
  ('https://%68udl.com/watch','encoded authority'),
  ('https://hudl.com/watch#private','fragment'),
  ('https://hudl.com/watch?access_token=synthetic','credential query'),
+ ('https://hudl.com/video?view=team?&access_token=synthetic','credential after second question mark'),
  ('http://hudl.com/watch','insecure scheme')) as unsupported(url,label);
+select lives_ok($$select pg_temp.hudl_keep('draft',public.media_save_draft(pg_temp.hudl_team(),pg_temp.hudl_id('draft'),pg_temp.hudl_rev('draft'),'SYNTHETIC SAFE QUERY','https://hudl.com/video?view=team?',''))$$,'a harmless second question mark is allowed without credential parameters');
 select lives_ok($$select pg_temp.hudl_keep('draft',public.media_save_draft(pg_temp.hudl_team(),pg_temp.hudl_id('draft'),pg_temp.hudl_rev('draft'),'SYNTHETIC HUDL SHORTCUT','https://www.hudl.com/video/synthetic-never-opened',''))$$,'eligible author saves a supported shortcut');
 select lives_ok($$select pg_temp.hudl_keep('draft',public.media_transition(pg_temp.hudl_team(),pg_temp.hudl_id('draft'),pg_temp.hudl_rev('draft'),'submit'))$$,'supported shortcut enters owner review');
 select pg_temp.hudl_login(1);

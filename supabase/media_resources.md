@@ -158,6 +158,8 @@ existing runtime/simulator records are overwritten by these tests.
 
 ### Hudl-only shortcut slice — 2026-10-12
 
+Slice source is commit `adde255` (based on `dcf13bc`); the initial test results
+below apply to its Hudl validation changes, not later integrated features.
 The native Save tracer first failed because a film accepted an unrelated HTTPS
 host. After kind-specific validation, all18 native media tests passed on iPhone
 Simulator26.4, including host/blank validation and historical-film recovery without
@@ -168,3 +170,16 @@ confirmed the new validator was absent from that existing runtime. No hosted
 migration, provider-link opening or actual Hudl/device UI acceptance is claimed.
 The existing opt-in SDK lifecycle fixture now supplies a never-opened Hudl URL
 for film; that named real SDK workflow has not been rerun for this slice.
+
+### Reviewed query-parser repair — 2026-10-12
+
+An authenticated command tracer reproduced server acceptance of a credential
+parameter after a second question mark, while native validation rejected it.
+The additive migration replaces the existing private validator's query extraction
+with the entire substring after the first question mark. Existing stored URLs are
+not rewritten; unsafe new practice/film saves and transitions are blocked.
+Harmless extra question marks remain valid. At base `adde255` plus this repair,
+26 Hudl and79 media regression checks passed in rollback-only loopback SQL.
+Exact tested migration SHA256: `59627e8761ecb92e1398f7366ed1304501ef578b1d3e715e8d38ee29fdf70c23`.
+Native parity regression and post-integration checks are recorded separately;
+this SQL result is not hosted/provider acceptance.
