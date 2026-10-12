@@ -89,6 +89,37 @@ and [Google app passwords](https://support.google.com/accounts/answer/185833).
 
 ## Project and planning
 
+### Short app flows
+
+Local and shared records are separate; signing in does not upload local games.
+These are implemented navigation/state paths, not proof that hosted acceptance
+or every current gesture has passed. See [TESTING.md](TESTING.md) for limitations.
+
+| User task | Path and result |
+|---|---|
+| Local practice entry | Games → Add game → game details → box-score/possession/player paint-touch drafts → Save draft → read-only summary. Saved only on this device; not official data. |
+| Join the team | Account → private server configuration → email sign-in on the same device → Team administration. Request admission if needed; pending admission grants no active-member access. SMS remains disabled. |
+| Enter shared statistics | Team administration → Shared games and statistics → game → editable dataset → Save → explicit completion → submit for review, or authorized publication. Server reply determines status. |
+| View accepted statistics | Shared game → accepted summary. Accepted versions drive supported metrics/reconciliation; missing inputs remain unavailable. |
+| Correct completed data | Request edit → authorized reopen approval → new draft → edit/save/complete → review/publication. Accepted history stays intact; retained stale buffers require explicit authorized attachment and Save. |
+| Owner/delegate administration | Team administration → roster/members/grants/delegation. Archive preserves history; capability use and permission to grant it are separate, server-enforced authorities. |
+| Plays and practice film | Team administration → Playbook → author saved movement/review/publish → published play → practice-video links. Metadata does not prove file upload or playback. |
+| Game film and photo input | Shared game → Game Film links; eligible authors submit, owner reviews. Existing draft → photo review → map/confirm → Apply → explicit Save. Photo Apply does not complete/publish. |
+
+Loading, empty, pending admission, failed requests and denied access must have
+different messages and next actions. Unfinished provider/media work remains
+identified above. Scouting reports for upcoming opponents are planned, not a
+currently available upload screen.
+
+### Technical documentation
+
+- [Architecture and source map](ARCHITECTURE.md): modules, storage and integration boundaries.
+- [Security boundaries](SECURITY.md): authority, controls and verification gaps.
+- [Testing and acceptance](TESTING.md): suites, safe prerequisites and remaining gates.
+
+Update this flow section when visible navigation or lifecycle changes; keep
+technical contracts in their own documents rather than duplicating them here.
+
 Open `TeamStats/TeamStats.xcodeproj` in Xcode. Select an iPhone/iPad simulator
 to run; physical-device signing requires the developer's own Apple account.
 Owner confirmed private hosted sign-in and matching app/Auth Users UUID. Trusted
