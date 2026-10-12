@@ -256,6 +256,7 @@ struct BoxScoreEditor: View {
                         Spacer()
                         Button("Save draft", action: save)
                             .buttonStyle(.borderedProminent)
+                            .tint(TeamStatsStyle.filledAccent)
                             .disabled(!loaded || !invalidEntries.isEmpty)
                     }
                 }

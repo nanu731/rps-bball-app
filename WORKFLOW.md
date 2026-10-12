@@ -1,5 +1,20 @@
 # TeamStats — Planning and Implementation Workflow
 
+## Authorized implementation continuation — 2026-10-12
+
+Baseline5ea4ac8 preserved2 personal working/staged files, unrelated project.pbxproj
+working/index bytes,8 original JSON hashes and temporary identities. Existing
+verification stays recorded. Necessary free tooling now approved; source/license,
+pins/checksums/disk and actual tool confirmation still required. Root owns setup,
+design integration and Xcode; independent implementers use clean existing worktrees
+based on the current integration tip. Private spec/tickets reconcile the latest
+Hudl/practice/offline/25-user and maroon decisions before coding.
+
+Provisional native palette is implemented in AccentColor/DesignSystem.swift and
+prominent controls, documented in DESIGN_SYSTEM.md. Sample contrast arithmetic
+passes; build/rendered appearance and interaction acceptance still pending. Maroon
+is confirmed, official school hex is unknown. Actual logo/icon/roster remain TODOs.
+
 ## Owner media scope revision (2026-10-12)
 
 Plan for about 25 regular users (10 players/15 staff), plus initial testers whose

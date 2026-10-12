@@ -100,6 +100,8 @@ struct ContentView: View {
                 Label("Account", systemImage: "person.crop.circle")
             }
         }
+        .tint(.accentColor)
+        .toggleStyle(SwitchToggleStyle(tint: TeamStatsStyle.filledAccent))
         .task { loadGames() }
         .onOpenURL { url in
             guard url.scheme == BackendAccount.emailRedirectURL.scheme else { return }

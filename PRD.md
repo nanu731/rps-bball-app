@@ -134,10 +134,12 @@ Do not add decorative loading effects or blanket parallel screen rewrites.
 
 ### Lightweight brand and UI standards
 
-Working product name: TeamStats. School colors, logo, and final app icon:
-`TODO_TEAM_BRAND_ASSETS`. Actual roster: `TODO_TEAM_ROSTER`. Use factual, short
+Working product name: TeamStats. Primary maroon is confirmed for this Rutgers Prep
+team app; official school hex remains unknown. DESIGN_SYSTEM.md records a
+provisional accessible light/dark palette. Logo: `TODO_TEAM_LOGO`; final icon:
+`TODO_APP_ICON`. Actual roster: `TODO_TEAM_ROSTER`. Use factual, short
 labels tied to basketball tasks; never invent school identity or outcomes.
-No separate brand document is needed until these owner assets are available.
+Use DESIGN_SYSTEM.md for actual native rules; never present provisional colors as official specifications.
 
 Use system text styles with Dynamic Type, semantic foreground/background colors,
 and clear light/dark contrast. Prefer native navigation, forms, lists, buttons,
@@ -145,7 +147,7 @@ pickers, alerts, and counters. Target at least 44-point interactive areas.
 Use a consistent spacing rhythm (8/16/24 points where appropriate), adapting
 for accessibility rather than forcing fixed dimensions. Numeric displays may
 use monospaced digits. Error text must have a textual/icon cue, not color alone.
-Reserve red for errors/discrepancies; do not invent a school accent color.
+Reserve system red for errors/discrepancies with text/icons; use the confirmed maroon primary accent through documented semantic tokens.
 Use native scrolling, keyboard-safe Save, and accessibility labels identifying
 player/team/field. These are forward standards, not authorization for a broad
 refactor. The owner-approved consolidated scoring warning is a reusable pattern.
@@ -165,7 +167,7 @@ shadcn UI, scroll fade-ins, cursor-following beams, buttons fading on hover,
 inconsistent spacing, excessive em dashes, generic buzzword copy, serif italic
 accents, Space Grotesk paired with Instrument Serif, and grain over gradients.
 Apply this direction to future work; do not start a separate redesign without
-an assigned task. School colors and branding remain owner-provided content.
+an assigned task. Maroon is confirmed; official hex, logo and final icon remain owner-provided.
 
 ## Reviewed input references
 
@@ -585,7 +587,10 @@ Owner decision (2026-10-12), superseding full-game file upload requirements:
 - This is outside the initial manual-stats pilot. No livestreaming, automatic
   video-to-stat extraction, Hudl scraping or automatic exports are authorized.
 - Practice clips linked to plays remain the required in-app upload/playback
-  component, with private storage and the existing owner-controlled review flow.
+  component, with optional offline downloads, private storage and the existing
+  owner-controlled review flow. Capability approval is per user, not per download.
+  Already delivered copies cannot reliably be recalled after revocation; future
+  remote access still checks current permissions.
 
 Remaining verification:
 
@@ -657,7 +662,7 @@ Custom encryption and bot protection need assessment against the final scope.
 
 ## Release decisions
 
-- TODO_BUDGET: backend, extraction, and distribution budget.
+- Budget is strictly$0; provider feasibility/capacity and distribution still need verification.
 - TODO_DISTRIBUTION: pilot group and long-term app distribution method.
 - TODO_RELEASE_CRITERIA: agreed device coverage and end-to-end checks.
 - TODO_PILOT_DETAIL: metrics included, pilot participants, and whether Google

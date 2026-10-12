@@ -239,6 +239,7 @@ struct ConnectedStatEntryView: View {
                     Task { await save() }
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(TeamStatsStyle.filledAccent)
                 .frame(minHeight: 44)
                 .disabled(model.isBusy || model.reloadRequired || unavailable || !loaded || bufferIssue != nil || changed.isEmpty || !invalidMessages.isEmpty || kinds.contains { stale($0) })
             }

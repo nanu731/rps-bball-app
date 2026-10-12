@@ -22,6 +22,20 @@ inputs, not facts Council can invent. See PRD.md's latest owner-administration s
 
 Last updated: 2026-10-11.
 
+## Current owner continuation — 2026-10-12
+
+Owner authorizes necessary free tooling/dependencies, including the proposed
+local Storage/Functions/Imgproxy bundles, subject to provenance/pins/checksums,
+licenses/disk checks and actual tool permissions. Strict$0/SMS-disabled/no production,
+no history rewrite and record/Xcode preservation stay binding. Full films remain
+on Hudl via optional game shortcuts; practice clips upload/play in-app with optional
+offline downloads. On-device photo autofill is not a photo library. Approximately25
+regular users plus unspecified testers; workload/capacity is not assumed.
+Maroon is confirmed; DESIGN_SYSTEM.md/AccentColor use an accessible provisional
+palette, not official school hex. Logo/icon/actual roster remain TODOs. Private
+verified administrator identification and routine team navigation are now required.
+Older approval-blocked tooling entries below are historical, not current gates.
+
 ## Current completion checkpoint
 
 The older Step 1–6 notes below are historical. The end-to-end branch now includes

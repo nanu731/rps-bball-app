@@ -321,6 +321,7 @@ struct PossessionEditor: View {
                 Spacer()
                 Button("Save draft", action: save)
                     .buttonStyle(.borderedProminent)
+                    .tint(TeamStatsStyle.filledAccent)
                     .disabled(!loaded || invalidMessage != nil)
             }
         }

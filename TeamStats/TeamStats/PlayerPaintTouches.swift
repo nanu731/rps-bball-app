@@ -136,6 +136,7 @@ struct PlayerPaintTouchEditor: View {
                         Spacer()
                         Button("Save draft") { save() }
                             .buttonStyle(.borderedProminent)
+                            .tint(TeamStatsStyle.filledAccent)
                             .frame(minHeight: 44)
                             .disabled(!loaded || invalid)
                     }

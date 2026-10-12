@@ -13,6 +13,13 @@ Practice clips linked to plays are the in-app upload/playback target. These are
 requirements, not completed file-upload/playback capabilities; actual clip capacity
 under the strict $0 budget and real Hudl link behavior remain unverified.
 
+## Native appearance
+
+Maroon is confirmed for this Rutgers Prep app. AccentColor and prominent controls
+use provisional accessible light/dark variants from DESIGN_SYSTEM.md, not official
+school hex. Logo, final icon and actual roster remain owner-provided TODOs. Rendered
+appearance, accessibility and interaction checks remain separate from contrast math.
+
 ## Current implementation
 
 Local game creation, temporary roster, manual stat drafts, and read-only game
