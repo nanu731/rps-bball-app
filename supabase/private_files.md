@@ -178,3 +178,36 @@ supervisor (PDF, H264 and H264/AAC). Native app upload/download, AVPlayer playba
 restart/offline retention/space/UI and hosted capacity/cost acceptance remain
 separate checks. The gateway and provider are real **local** services; no hosted
 file feature, production release or physical-device acceptance is claimed.
+
+### Validator/gateway repair verification — 2026-10-12
+
+Repair source `de575eb` passed20 actual native parser/process tests and25 gateway
+tests, including actual supervised1080×1920 H264. The clip bound is orientation
+independent: long edge≤1920, short edge≤1080; dimensions and bytes stay unchanged.
+The portrait gateway mismatch failed first and now accepts the native receipt.
+The original16 parser cases remain covered, with two added file cases and two
+owned-process supervision cases. No iPhone/iPad UI or physical-device acceptance
+is implied by these Mac-native checks.
+
+A synthetic MP4 containing an external local `dref` declaration was accepted by
+the original pinned validator. That fixture retains internal samples, so the
+result does **not** prove external-file decoding or an exploited filesystem read.
+The new validator requires bounded self-contained `url ` reference entries before
+AVFoundation, and sets `AVURLAssetReferenceRestrictionsKey` to `forbidAll`.
+The declaration now fails before decoding, emits no receipt and leaves the
+separate synthetic file untouched. No external network reference was followed.
+
+Native test execution now owns a process group, enforces its deadline, kills all
+owned descendants, waits for the parent and verifies group disappearance before
+returning results. Both parent-timeout/orphan-renderer tests failed first and now
+pass. Production supervision remains the gateway's separate CPU/RSS/concurrency
+contract. A checked word-sized pointer identity also handles the observed
+CoreGraphics opaque-pointer/wrapper importer difference; the repaired worker
+rebuilt with Xcode Swift6.3/MacOSX26 SDK and passed the PDF graph cases.
+
+The repaired executable and new portrait fixtures have distinct private paths/
+pins; original binaries, fixtures and all local/provider records remain intact.
+The unchanged67-check shared-budget harness was deliberately not rerun during
+concurrent native-client fixture work. Root integration must switch only its own
+ignored trusted configuration/pin and verify the new native byte client. Hosted
+capacity, deployment, provider rights and$0 acceptance remain gated.
