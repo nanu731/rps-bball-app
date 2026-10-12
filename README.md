@@ -22,8 +22,9 @@ supported when the configured sender supplies them. New Free projects using the
 default sender cannot edit templates; do not upgrade for codes. Remote SMS stays
 disabled under the $0 budget. Actual local Auth/gateway/native SDK tests passed;
 limited owner hosted email sign-in and identity/session preflight are recorded.
-Team-wide email delivery, hosted activation and authorization acceptance remain
-pending. Shared entry/review and accepted summaries are accessible from Account → Team
+The owner executed reviewed nonproduction activation; independent hosted SQL
+readback passed. Team-wide email delivery and signed authorization acceptance
+remain pending. Shared entry/review and accepted summaries are accessible from Account → Team
 administration → Shared games and statistics. These use real server commands;
 local games are kept separate. Native fixtures and real local SDK workflows passed; hosted setup
 and two-device UI checks are still pending. The owner can inspect per-game server export status with independent error/Retry. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
@@ -47,7 +48,7 @@ There is no live tracking in any phase.
 
 | Feature | Path and current limit |
 | --- | --- |
-| Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Trusted hosted activation pending; real SMS disabled. |
+| Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Hosted SQL readback passed; signed permission acceptance pending; real SMS disabled. |
 | Owner administration | Account → Team administration; membership admission, roster add/edit/archive, separate grants and bounded delegation. Historical identities retained. |
 | Shared statistics | Team administration → Shared games and statistics; games, individual/table box scores, independent paired possessions and player paint totals. No automatic upload of local records. |
 | Completion and review | Shared game details; server-confirmed independent completion, approved edit requests, review/publication and accepted summaries. Possession zero conversion uses the confirmed warning flow. |
@@ -67,7 +68,7 @@ request before its recovered working draft can receive retained entries.
 ### Release readiness
 
 This branch is not a completed hosted integration or release. Nonproduction
-activation, verified owner bootstrap, team email delivery, trusted Google
+signed access/lifecycle acceptance, team email delivery, trusted Google
 worker configuration and actual video upload/transfer enforcement remain blocked.
 New UI needs iPhone/iPad rotation, larger text, VoiceOver, keyboard/Save and
 recovery/photo interaction checks. Simulator inspection recovered, but native
@@ -128,12 +129,13 @@ Open `TeamStats/TeamStats.xcodeproj` in Xcode. Select an iPhone/iPad simulator
 to run; physical-device signing requires the developer's own Apple account.
 Owner confirmed private hosted sign-in and matching app/Auth Users UUID. Trusted
 SQL account verification and dashboard Free/phone-disabled checks now passed.
-The atomic migrations/owner bootstrap is prepared but not executed; browser grant
-confirmation and actual hosted access tests remain pending. This is not activation proof.
+The owner reports successful reviewed activation. Independent hosted readback
+verified nine history entries, protections on20 app tables, active owner membership
+and one bootstrap audit. Signed distinct-user workflow checks remain pending.
 Most simulator verification has used 26.4; actual 26.0 and physical devices remain
 untested. The approved official Supabase Swift SDK is pinned to 2.55.3; connected
 account source is implemented and tested with isolated SDK responses; trusted hosted
-activation remains pending, and shared workflows have passed isolated local integration, not hosted verification.
+SQL activation readback passed; shared workflows have passed isolated local integration, with signed hosted acceptance still pending.
 
 - [PRD](PRD.md): product scope, data definitions, design direction, open decisions.
 - [Project context](PROJECT_CONTEXT.md): current state and implementation sequence.

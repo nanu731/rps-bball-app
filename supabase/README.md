@@ -41,7 +41,7 @@ client schema/table privileges are absent while trusted migration tracking works
 The prepared activation asserts metadata protection and RLS on all20 app tables
 before owner bootstrap. An isolated rollback-only local fixture passed both
 roles' access-denial and seeded-row RLS checks, privileged tracking and state
-preservation. Hosted metadata readback remains pending until activation executes.
+preservation. Hosted readback on2026-10-12 passed metadata ACL/RLS, all20 app-table RLS and expected grants, owner membership/audit checks; Data API excludes history. Separate read-only role probes passed. Signed distinct-user API acceptance remains pending.
 Run the full reviewed transaction as written, not a selection or automatic RLS
 rewrite; do not change app grants or app RLS to resolve a metadata warning.
 

@@ -222,8 +222,8 @@ was rerun to author these documents.
 | Area | Recorded evidence | Still required |
 |---|---|---|
 | Native/local backend | Fixture suites and actual local Auth/SDK/SQL workflows recorded | Relevant regressions after source changes |
-| Account hosted setup | Owner-confirmed sign-in/UUID comparison; trusted identity/session preflight recorded in implementation handoff | Hosted migration/grant/bootstrap execution and signed permission tests |
-| Hosted activation | Guarded transaction prepared; not recorded as executed | Inspect migration-history grants/exposure; confirm execution and read back owner membership/audit |
+| Account hosted setup | Owner-confirmed sign-in/UUID comparison; trusted identity/session preflight | Distinct-user signed hosted permission tests |
+| Hosted activation | Owner-observed execution; independent16 hosted SQL checks,3 permission denials/2 unverified-role zero-row reads; Data API excludes history | Signed owner/nonmember, admission, delegation/revocation and workflow tests; SQL role probes are not signed API evidence |
 | New UI/polish | Simulator builds and model regressions recorded | Both-device dirty navigation, delayed/failed Save, denied-content recovery, accessibility |
 | Photos | Synthetic Vision and proposal checks recorded | Representative marked forms and picker/Apply/Cancel interaction |
 | Google export | SQL/worker fixtures recorded; actual delivery disabled | Trusted sender/worker access and versioned Google readback |
@@ -256,3 +256,25 @@ contain sanitized revision/environment/scope/outcome only. Commit explicit paths
 preserve personal Xcode staged/working files, and avoid repeating passed checks
 unless changes or unresolved concerns warrant it. Documentation completion never
 authorizes spending, hosted activation, production migration or release.
+
+## Hosted activation readback — 2026-10-12
+
+The owner reports executing the exact reviewed secured transaction and observing
+all four activation results true. That execution evidence is owner-observed.
+Independent trusted read-only hosted SQL at source `55b9249` then passed16 checks:
+exact nine migration versions/names; metadata RLS with no policies; no PUBLIC or
+anon/authenticated history access; RLS on all20 app tables; denied direct client
+writes/anonymous reads; expected authenticated read grants; private export
+payload fields; client roles without RLS bypass; fixed-search-path definers;
+verified owner identity, active membership and exactly one bootstrap audit.
+Data API settings independently show only public/graphql_public exposed; history
+is excluded. Save remained disabled and no settings changed.
+
+A separate read-only rollback probe produced3 actual permission denials (history
+reads by anon/authenticated and anonymous team read). An authenticated role with
+empty verified claims saw0 team and membership rows. These are trusted SQL role
+probes, not distinct-user signed API tests. No activation/bootstrap was rerun,
+accounts/grants changed, local records uploaded or external delivery enabled.
+Signed hosted owner/nonmember/admission/delegation/revocation acceptance remains
+pending; creating credentials/security-sensitive grants requires human action-time
+confirmation. Other ready local work continues under the strict$0 boundary.

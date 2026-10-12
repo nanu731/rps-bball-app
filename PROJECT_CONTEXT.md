@@ -32,7 +32,7 @@ These are locally tested implementations, not a completed hosted release.
 
 | Area | Evidence and remaining limit |
 | --- | --- |
-| Identity/access | 21 native Account fixtures and actual local Auth/RLS checks. Owner confirmed hosted app/Auth Users UUID match; trusted hosted SQL now verifies confirmed/nonanonymous account, no ban/deletion and a live session. Dashboard shows Free/email enabled/phone disabled. Atomic migrations/owner bootstrap prepared, awaiting browser grant confirmation; hosted access tests remain pending. |
+| Identity/access | 21 native Account fixtures and actual local Auth/RLS checks. Owner confirmed hosted app/Auth Users UUID match; trusted hosted SQL now verifies confirmed/nonanonymous account, no ban/deletion and a live session. Dashboard shows Free/email enabled/phone disabled. Owner-observed activation followed by16 independent hosted readback checks and read-only role denials; signed hosted access tests remain pending. |
 | Shared statistics | SQL 136 baseline +37 approved-recovery checks and signed gateway 81 checks; actual local SDK workflow passed. Approved current-source corrections retain stale drafts read-only; explicit attachment preserves unsaved buffers. |
 | Plays | 11 integrated geometry/play tests and 54 baseline +37 recovery SQL checks. Explicit Reload/Attach preserves buffers after uncertain recovery; device interactions unverified. |
 | Photo | 14 native tests, including bounded file reads and actual synthetic Vision. Explicit mapping/confirmation only; no identity inference or persistent photo/text copy. Marked-form accuracy and picker interactions unverified. |
@@ -40,28 +40,17 @@ These are locally tested implementations, not a completed hosted release.
 | Sheets | Private empty destination verified; worker source and outbox tests passed, Google delivery disabled. Trusted service identity/runtime and billing-disabled proof remain unavailable. |
 | Device/release | Simulator inspection recovered, but input failed with `-10005: noWindowsAvailable`; attempts stopped. Updated private checklist covers polish/navigation, rotation, large text, VoiceOver and keyboard/recovery. Actual26.0/physical devices and signing/production/release approval remain unverified. |
 
-The connected dashboard now exposes the selected nonproduction project. The
-owner cancelled Run after its metadata RLS warning. The prepared transaction now
-explicitly revokes PUBLIC/anon/authenticated history-schema/table privileges,
-enables metadata RLS without client policies, and asserts all20 app tables retain
-RLS. Data API exposure lists public/graphql_public only. Local rollback checks
-passed2 ACL denials,2 seeded-row RLS denials, privileged tracking and preservation.
-The saved secured editor source matches after reload, with one BEGIN/COMMIT and
-unchanged app migrations. No hosted activation has run; metadata hosted readback
-remains pending. Use full-query Run as written, without selection/automatic edits.
-
-The
-owner's app/Auth Users UUID comparison was followed by a trusted SQL recheck:
-confirmed, nonanonymous, not banned/deleted, with a live Auth session. Dashboard
-Free and phone-disabled indicators were observed; no provider setting changed.
-TeamStats tables and migration history are absent. The complete nine-migration
-transaction is prepared and verified against the editor contents; it records
-canonical migration versions and repeats verification before the atomic owner
-membership/audit bootstrap. Hosted execution awaits the browser-control policy's
-security-sensitive grant confirmation. No owner authority granted yet; hosted
-signed access checks remain pending. A local fail-closed rehearsal rejected an
-existing schema before writes and preserved existing rows. Real identifiers and
-the prepared SQL stay private/ignored. No local upload, paid or production action.
+The owner executed the reviewed secured nine-migration/owner transaction and
+observed all four activation flags true. Independent hosted read-only readback
+passed16 checks: exact history, metadata ACL/RLS/no policies, all20 app-table RLS,
+client write/read restrictions, export-field privacy, fixed-search-path definers,
+verified owner/active membership and one bootstrap audit. Data API exposes only
+public/graphql_public. Separate rollback role probes passed3 permission denials
+and2 zero-row unverified-role reads. These are configuration/SQL-role evidence,
+not distinct-user signed API acceptance. No activation/bootstrap rerun, grants,
+provider settings, existing records or SMS changed. Signed hosted workflows remain
+pending; security-sensitive test grants/credential setup need human confirmation.
+See WORKFLOW.md for dated scope and historical preparation evidence.
 
 The f682cfe polish rubric was audited before changes. Demonstrated fixes protect
 unsaved navigation in local/shared game creation, play/media/photo review and

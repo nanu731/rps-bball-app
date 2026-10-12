@@ -931,6 +931,30 @@ before real shared team use regardless of the approximately 100-user audience.
 
 ### Owner polish rubric: f682cfe audit and source repairs
 
+## Hosted activation readback — 2026-10-12
+
+The owner reports executing the exact reviewed secured transaction and observing
+all four activation results true. That execution evidence is owner-observed.
+Independent trusted read-only hosted SQL at source `55b9249` then passed16 checks:
+exact nine migration versions/names; metadata RLS with no policies; no PUBLIC or
+anon/authenticated history access; RLS on all20 app tables; denied direct client
+writes/anonymous reads; expected authenticated read grants; private export
+payload fields; client roles without RLS bypass; fixed-search-path definers;
+verified owner identity, active membership and exactly one bootstrap audit.
+Data API settings independently show only public/graphql_public exposed; history
+is excluded. Save remained disabled and no settings changed.
+
+A separate read-only rollback probe produced3 actual permission denials (history
+reads by anon/authenticated and anonymous team read). An authenticated role with
+empty verified claims saw0 team and membership rows. These are trusted SQL role
+probes, not distinct-user signed API tests. No activation/bootstrap was rerun,
+accounts/grants changed, local records uploaded or external delivery enabled.
+Signed hosted owner/nonmember/admission/delegation/revocation acceptance remains
+pending; creating credentials/security-sensitive grants requires human action-time
+confirmation. Other ready local work continues under the strict$0 boundary.
+
+### Historical activation preparation (before owner execution)
+
 Hosted activation frontier: connected nonproduction dashboard is accessible.
 Owner cancelled the metadata-RLS warning before execution. Prepared source now
 revokes PUBLIC/anon/authenticated privileges on the history schema/table and
