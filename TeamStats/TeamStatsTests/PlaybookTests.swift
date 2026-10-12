@@ -92,6 +92,44 @@ final class PlayGeometryTests: XCTestCase {
         fixture.failSave = false; await model.load()
         XCTAssertTrue(model.didLoad); XCTAssertFalse(model.reloadRequired)
     }
+    func testExplicitStaleDraftRecoveryRetainsSavedHistoryAndAcceptedDrawing() async throws {
+        let fixture = PlayFixture(); let model = fixture.model()
+        await model.load()
+        let initialOpened = await model.openDraft(playID: fixture.playID)
+        let initial = try XCTUnwrap(initialOpened)
+        var diagram = PlayDiagram(); diagram.addMarker(); diagram.addStep()
+        let initialSave = await model.save(initial, title: "SYNTHETIC BASE", diagram: diagram)
+        XCTAssertTrue(initialSave)
+        let initialPublication = await model.transition(try XCTUnwrap(model.ownDrafts.first), action: "publish")
+        XCTAssertTrue(initialPublication)
+        let accepted = try XCTUnwrap(model.published.first)
+        let successorOpened = await model.openDraft(playID: fixture.playID, source: accepted)
+        let successor = try XCTUnwrap(successorOpened)
+        diagram.move(markerID: diagram.markers[0].id, step: 1, to: CourtPoint(x: 0.8, y: 0.2))
+        let successorSave = await model.save(successor, title: "SYNTHETIC AUTHOR SAVED", diagram: diagram)
+        XCTAssertTrue(successorSave)
+        let saved = try XCTUnwrap(model.ownDrafts.first)
+        fixture.publishOtherSuccessor()
+        await model.load()
+        XCTAssertTrue(model.isStaleDraft(saved))
+        let latest = try XCTUnwrap(model.published.first)
+        let recovered = await model.recoverDraft(saved, expectedPublishedVersionID: latest.id)
+        let resumed = try XCTUnwrap(recovered)
+        XCTAssertNotEqual(resumed.id, saved.id)
+        XCTAssertEqual(resumed.title, saved.title); XCTAssertEqual(resumed.diagram, saved.diagram)
+        XCTAssertEqual(resumed.basePublishedVersionID, latest.id)
+        XCTAssertEqual(resumed.recoverySourceVersionID, saved.id)
+        let retained = try XCTUnwrap(model.versions.first { $0.id == saved.id })
+        XCTAssertEqual(retained.status, .superseded)
+        XCTAssertEqual(retained.title, saved.title); XCTAssertEqual(retained.diagram, saved.diagram)
+        XCTAssertEqual(retained.basePublishedVersionID, accepted.id)
+        XCTAssertEqual(model.published.first?.id, latest.id)
+        XCTAssertEqual(model.published.first?.diagram, latest.diagram)
+        XCTAssertEqual(model.ownDrafts.count, 1)
+        XCTAssertFalse(model.isStaleDraft(resumed))
+        let duplicate = await model.recoverDraft(saved, expectedPublishedVersionID: latest.id)
+        XCTAssertNil(duplicate); XCTAssertEqual(fixture.recoveryRequests, 1)
+    }
     func testLoadFailureIsNotAnEmptySuccessfulPlaybookAndRetryRecovers() async {
         let fixture = PlayFixture(); fixture.failRead = true
         let model = fixture.model(); await model.load()
@@ -112,6 +150,16 @@ private final class PlayFixture: @unchecked Sendable {
     var failSave = false
     var failRead = false
     var saveRequests = 0
+    var recoveryRequests = 0
+    func publishOtherSuccessor() {
+        lock.lock(); defer { lock.unlock() }
+        var published = rows.first { $0["id"] as? String == pointer }!
+        published["id"] = UUID().uuidString
+        published["author_user_id"] = "a1000000-0000-4000-8000-000000000002"
+        published["base_published_version_id"] = pointer
+        published["title"] = "SYNTHETIC OTHER ACCEPTED"
+        rows.append(published); pointer = published["id"] as? String
+    }
     @MainActor func model() -> Playbook {
         PlayProtocol.registry.insert(self)
         let configuration = URLSessionConfiguration.ephemeral
@@ -139,6 +187,22 @@ private final class PlayFixture: @unchecked Sendable {
             let row: [String: Any] = ["id": UUID().uuidString, "team_id": teamID.uuidString, "play_id": playID.uuidString, "author_user_id": userID.uuidString,
                 "revision": 1, "status": "draft", "title": source?["title"] ?? "", "diagram": source?["diagram"] ?? ["markers": [], "steps": []], "base_published_version_id": pointer as Any? ?? NSNull(), "review_reason": ""]
             rows.append(row); return try respond(row)
+        }
+        if path.hasSuffix("play_recover_draft") {
+            recoveryRequests += 1
+            let index = rows.firstIndex { $0["id"] as? String == parameters["p_version_id"] as? String }!
+            guard rows[index]["status"] as? String == "draft", rows[index]["revision"] as? Int == parameters["p_expected_revision"] as? Int,
+                  pointer == parameters["p_expected_published_version_id"] as? String else {
+                return try respond(["code": "40001", "message": "Synthetic recovery conflict"], status: 500)
+            }
+            rows[index]["status"] = "superseded"; rows[index]["revision"] = (rows[index]["revision"] as! Int) + 1
+            let superseded = rows[index]
+            var resumed = superseded
+            resumed["id"] = UUID().uuidString; resumed["status"] = "draft"; resumed["revision"] = 1
+            resumed["base_published_version_id"] = pointer
+            resumed["recovery_source_version_id"] = superseded["id"]
+            rows.append(resumed)
+            return try respond(["superseded": superseded, "draft": resumed])
         }
         if path.hasSuffix("play_save_draft") || path.hasSuffix("play_transition") {
             let saving = path.hasSuffix("play_save_draft")

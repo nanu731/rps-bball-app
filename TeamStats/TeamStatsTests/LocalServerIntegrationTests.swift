@@ -205,6 +205,35 @@ final class LocalServerIntegrationTests: XCTestCase {
         XCTAssertEqual(successor.diagram.markers[0].id, markerID)
         XCTAssertEqual(reopenedPlays.published.first { $0.playID == acceptedPlay.playID }?.id, acceptedPlay.id)
         XCTAssertTrue(existingPlayIDs.isSubset(of: Set(reopenedPlays.plays.map(\.id))))
+        for kind in [MediaResourceKind.practice, .film] {
+            let targetID = kind == .practice ? acceptedPlay.playID : game.id
+            let links = MediaResources(teamID: fixture.syntheticTeamID, kind: kind, targetID: targetID, authenticatedClient: { client })
+            await links.load()
+            XCTAssertNil(links.issue)
+            let existingResourceIDs = Set(links.resources.map(\.id))
+            let openedLink = await links.openDraft(resourceID: UUID())
+            let linkDraft = try XCTUnwrap(openedLink)
+            var input = MediaLinkInput()
+            input.title = "TEST ONLY native \(kind.rawValue) link"
+            input.linkURL = "https://video.example.invalid/watch"
+            input.notes = "Synthetic metadata only; no provider playback or rights verified."
+            let savedLink = await links.save(linkDraft, input: input)
+            let savedVersion = try XCTUnwrap(savedLink)
+            let submittedLink = await links.transition(savedVersion, action: "submit")
+            let submittedVersion = try XCTUnwrap(submittedLink)
+            XCTAssertNil(links.issue)
+            XCTAssertFalse(links.published.contains { $0.resourceID == linkDraft.resourceID })
+            let reviewedLink = await links.transition(submittedVersion, action: "approve")
+            let acceptedLink = try XCTUnwrap(reviewedLink)
+            await links.load()
+            XCTAssertEqual(links.published.first { $0.resourceID == linkDraft.resourceID }?.id, acceptedLink.id)
+            let revisedLink = await links.openDraft(resourceID: acceptedLink.resourceID, source: acceptedLink)
+            let successorLink = try XCTUnwrap(revisedLink)
+            XCTAssertNotEqual(successorLink.id, acceptedLink.id)
+            XCTAssertEqual(successorLink.basePublishedVersionID, acceptedLink.id)
+            XCTAssertEqual(successorLink.linkURL, input.linkURL)
+            XCTAssertTrue(existingResourceIDs.isSubset(of: Set(links.resources.map(\.id))))
+        }
         try await client.auth.signOut(scope: .local)
     }
 }

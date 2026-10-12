@@ -25,7 +25,10 @@ administration → Shared games and statistics. These use real server commands;
 local games are kept separate. Native fixtures and real local SDK workflows passed; hosted setup
 and two-device UI checks are still pending. The owner can inspect per-game server export status with independent error/Retry. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
 by default; actual Sheets delivery, full-form photo accuracy and videos remain
-incomplete. Playbook authoring/review/playback is available from team administration;
+incomplete. Private reviewed practice/game-film links are available from published
+plays/shared games; file uploads and in-app playback are unavailable. Provider
+links require independent access, and saving them proves no rights or playback.
+Playbook authoring/review/playback is available from team administration;
 local database and native SDK verification passed, while device interaction and
 hosted verification remain pending.
 Photo review is available inside local/shared player and possession drafts. Choose

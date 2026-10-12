@@ -20,12 +20,12 @@ enum TeamCapability: String, Codable, CaseIterable, Identifiable, Sendable {
         case .playsAuthor: "Author plays"
         case .playsReview: "Review plays"
         case .playsPublish: "Publish plays"
-        case .practiceUpload: "Upload practice videos"
-        case .practiceReview: "Review practice videos"
-        case .practicePublish: "Publish practice videos"
-        case .filmUpload: "Upload game film"
-        case .filmReview: "Review game film"
-        case .filmPublish: "Publish game film"
+        case .practiceUpload: "Practice submission grant (active members already eligible)"
+        case .practiceReview: "Inspect pending practice videos (owner approves)"
+        case .practicePublish: "Publish own practice videos without review"
+        case .filmUpload: "Submit game film (coaches/managers)"
+        case .filmReview: "Inspect pending game film (owner approves)"
+        case .filmPublish: "Publish own game film without review"
         }
     }
 }

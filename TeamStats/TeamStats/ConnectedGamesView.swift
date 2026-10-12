@@ -2,10 +2,12 @@ import Foundation
 import SwiftUI
 
 struct ConnectedGamesView: View {
+    let account: BackendAccount
     @State private var model: ConnectedStatistics
     @State private var showingNewGame = false
 
     init(account: BackendAccount, teamID: UUID) {
+        self.account = account
         _model = State(initialValue: ConnectedStatistics(account: account, teamID: teamID))
     }
 
@@ -20,7 +22,7 @@ struct ConnectedGamesView: View {
                 Section("Shared games") {
                     ForEach(model.games) { game in
                         NavigationLink {
-                            ConnectedGameDetailView(model: model, game: game)
+                            ConnectedGameDetailView(account: account, model: model, game: game)
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(game.opponent).font(.headline)
@@ -112,6 +114,7 @@ private struct ConnectedNewGameView: View {
 }
 
 private struct ConnectedGameDetailView: View {
+    let account: BackendAccount
     let model: ConnectedStatistics
     let game: ConnectedGame
 
@@ -123,6 +126,14 @@ private struct ConnectedGameDetailView: View {
                 LabeledContent("Opponent", value: game.opponent)
                 LabeledContent("Our team", value: connectedVenue(game.homeAway))
                 LabeledContent("Game type", value: connectedGameType(game.gameType))
+            }
+            Section("Game Film") {
+                NavigationLink("Video links and owner review") {
+                    MediaResourcesView(teamID: game.teamID, kind: .film, targetID: game.id,
+                        targetTitle: game.opponent, account: account)
+                }
+                Text("Links require access at the video provider. Saving a link does not upload a file or verify playback.")
+                    .font(.footnote).foregroundStyle(.secondary)
             }
             if !model.didLoadGame || model.selectedGame?.id != game.id {
                 Section { Text("Statistics are unavailable until this game loads successfully.").foregroundStyle(.secondary) }
@@ -183,7 +194,7 @@ private struct ConnectedGameDetailView: View {
                     }
                 }
                 if model.access?.isOwner == true {
-                    Section { NavigationLink("Sheets export queue") { ConnectedExportQueueView(model: model) } }
+                    Section { NavigationLink("Sheets export status") { ConnectedExportQueueView(model: model) } }
                 }
             }
         }

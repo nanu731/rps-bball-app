@@ -1,10 +1,11 @@
 import SwiftUI
 
 struct PlaybookView: View {
+    let account: BackendAccount
     @State private var model: Playbook
     @State private var newPlayID = UUID()
     @State private var openedDraft: PlayRevision?
-    init(account: BackendAccount, teamID: UUID) { _model = State(initialValue: Playbook(account: account, teamID: teamID)) }
+    init(account: BackendAccount, teamID: UUID) { self.account = account; _model = State(initialValue: Playbook(account: account, teamID: teamID)) }
     var body: some View {
         List {
             Section {
@@ -17,7 +18,7 @@ struct PlaybookView: View {
                 Section("Published plays") {
                     if model.published.isEmpty { Text("No published plays.").foregroundStyle(.secondary) }
                     ForEach(model.published) { revision in
-                        NavigationLink(revision.title) { PlayRevisionView(model: model, revision: revision) }
+                        NavigationLink(revision.title) { PlayRevisionView(account: account, model: model, revision: revision) }
                     }
                 }
                 if model.access?.can(.playsAuthor) == true {
@@ -26,13 +27,25 @@ struct PlaybookView: View {
                             Task { if let draft = await model.openDraft(playID: newPlayID) { openedDraft = draft; newPlayID = UUID() } }
                         }
                         ForEach(model.ownDrafts) { revision in
-                            NavigationLink(revision.title.isEmpty ? "Unnamed draft" : revision.title) { PlayRevisionView(model: model, revision: revision) }
+                            Button(revision.title.isEmpty ? "Unnamed draft" : revision.title) { openedDraft = revision }
+                        }
+                    }
+                }
+                if model.versions.contains(where: { $0.status == .superseded }) {
+                    Section("Your superseded saved drafts") {
+                        ForEach(model.versions.filter { $0.status == .superseded }) { revision in
+                            NavigationLink { PlayRevisionView(account: account, model: model, revision: revision) } label: {
+                                VStack(alignment: .leading) {
+                                    Text(revision.title.isEmpty ? "Unnamed saved draft" : revision.title)
+                                    Text("Superseded saved drawing — read-only").font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
                         }
                     }
                 }
                 Section("Submitted / rejected revisions") {
                     ForEach(model.versions.filter { $0.status == .submitted || $0.status == .rejected }) { revision in
-                        NavigationLink { PlayRevisionView(model: model, revision: revision) } label: {
+                        NavigationLink { PlayRevisionView(account: account, model: model, revision: revision) } label: {
                             VStack(alignment: .leading) { Text(revision.title); Text(revision.status.rawValue.capitalized).font(.caption).foregroundStyle(.secondary) }
                         }
                     }
@@ -43,11 +56,12 @@ struct PlaybookView: View {
         .navigationTitle("Playbook")
         .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Reload", systemImage: "arrow.clockwise") { Task { await model.load() } }.disabled(model.isBusy) } }
         .task { await model.load() }
-        .navigationDestination(item: $openedDraft) { revision in PlayRevisionView(model: model, revision: revision) }
+        .navigationDestination(item: $openedDraft) { revision in PlayRevisionView(account: account, model: model, revision: revision) }
     }
 }
 
 private struct PlayRevisionView: View {
+    let account: BackendAccount
     let model: Playbook
     @State var revision: PlayRevision
     @State private var title: String
@@ -56,9 +70,11 @@ private struct PlayRevisionView: View {
     @State private var selectedMarkerID: UUID?
     @State private var reason = ""
     @State private var successor: PlayRevision?
+    @State private var recoveryPointer: UUID?
+    @State private var confirmRecovery = false
     @FocusState private var textFocused: Bool
-    init(model: Playbook, revision: PlayRevision) {
-        self.model = model; _revision = State(initialValue: revision)
+    init(account: BackendAccount, model: Playbook, revision: PlayRevision) {
+        self.account = account; self.model = model; _revision = State(initialValue: revision)
         _title = State(initialValue: revision.title); _diagram = State(initialValue: revision.diagram)
     }
     private var editable: Bool { revision.status == .draft && revision.authorUserID == model.access?.userID && model.access?.can(.playsAuthor) == true }
@@ -72,7 +88,19 @@ private struct PlayRevisionView: View {
                     Button("Reload server state (keep unsaved drawing)") { Task { await model.load(); if let current = model.versions.first(where: { $0.id == revision.id }) { revision = current } } }
                 }
                 if let confirmation = model.confirmation { Text(confirmation) }
+                if revision.status == .superseded {
+                    Text("This saved drawing was retained after explicit recovery. It is read-only; the resumed draft has a separate identity.").font(.subheadline)
+                }
+                if editable && model.isStaleDraft(revision) && model.didLoad && !model.reloadRequired {
+                    Label("A newer play was published. This saved draft still references the previous accepted revision.", systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                    Text("Resume keeps this saved drawing in read-only history and creates a new draft against the latest published play. Your unsaved name and drawing stay in this editor until you explicitly Save.").font(.subheadline)
+                    Button("Resume drawing against latest published play") {
+                        recoveryPointer = model.currentPublishedVersionID(playID: revision.playID)
+                        confirmRecovery = recoveryPointer != nil
+                    }
+                }
                 if editable {
+                    if changed { Label("Unsaved name or drawing changes", systemImage: "pencil").font(.subheadline) }
                     TextField("Play name", text: $title).textFieldStyle(.roundedBorder).focused($textFocused)
                     Text("Drag a marker to position it. The controls below also move the selected marker without dragging.").font(.subheadline)
                     Picker("Edit position", selection: $selectedStep) {
@@ -108,6 +136,12 @@ private struct PlayRevisionView: View {
                 } else {
                     Text(revision.title).font(.title2)
                 }
+                if revision.status == .published {
+                    NavigationLink("Practice video links and owner review") {
+                        MediaResourcesView(teamID: revision.teamID, kind: .practice, targetID: revision.playID,
+                            targetTitle: revision.title, account: account)
+                    }
+                }
                 Divider()
                 Text("Playback").font(.headline)
                 PlayPlaybackView(diagram: diagram)
@@ -136,7 +170,7 @@ private struct PlayRevisionView: View {
                 if revision.status == .published {
                     Text("Published history").font(.headline)
                     ForEach(model.history(playID: revision.playID).filter { $0.id != revision.id }) { past in
-                        NavigationLink("\(past.title) — revision \(past.revision)") { PlayRevisionView(model: model, revision: past) }
+                        NavigationLink("\(past.title) — revision \(past.revision)") { PlayRevisionView(account: account, model: model, revision: past) }
                     }
                 }
             }.padding(16)
@@ -151,7 +185,21 @@ private struct PlayRevisionView: View {
             ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { textFocused = false } }
         }
         .disabled(model.isBusy)
-        .navigationDestination(item: $successor) { next in PlayRevisionView(model: model, revision: next) }
+        .alert("Resume this stale draft?", isPresented: $confirmRecovery) {
+            Button("Resume and retain saved history") {
+                guard let pointer = recoveryPointer else { return }
+                Task {
+                    if let resumed = await model.recoverDraft(revision, expectedPublishedVersionID: pointer) {
+                        // Change only server revision metadata. Retain current unsaved editor buffers.
+                        revision = resumed
+                    }
+                }
+            }
+            Button("Go back", role: .cancel) {}
+        } message: {
+            Text("The old saved drawing remains read-only. The new draft copies its saved content against the latest published revision. Your current unsaved edits remain in this editor and are not automatically saved or published.")
+        }
+        .navigationDestination(item: $successor) { next in PlayRevisionView(account: account, model: model, revision: next) }
     }
     private var editorPositions: [PlayPosition] { diagram.markers.compactMap { marker in diagram.position(markerID: marker.id, step: selectedStep).map { PlayPosition(markerID: marker.id, point: $0) } } }
     private var movementArrows: [(CourtPoint, CourtPoint)] {

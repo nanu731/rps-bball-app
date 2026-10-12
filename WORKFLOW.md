@@ -1054,3 +1054,28 @@ explicit and no source image/text is stored or uploaded. Blanks/zeros/invalid
 values/overflow/unknown field IDs/duplicate mappings are checked. Picker, Cancel/
 apply interaction, keyboard/larger-text reachability and real marked-form accuracy
 remain pending; built native code is not evidence that these interactions passed.
+
+
+Play/video revision recovery and link integration: native play suite8 and media
+suite9 passed together (17 total). Play Spec review found safe conflicts could
+permanently strand a stale draft; incremental migration006 adds explicit expected
+revision/current-pointer recovery, preserving saved old drawings as superseded
+read-only history.37 actual SQL checks passed. Existing editable play rows now
+use the existing item-bound destination so list identity replacement does not
+own the editor lifetime; actual recovery interaction remains unverified.
+
+Video-link migrations005/007 and73 actual SQL checks cover ordinary practice
+submission, film eligibility versus bypass, owner-only review, RLS, stale revisions,
+retained history and explicit recovery. A test-only String/null JSON fixture cast
+was corrected; all9 native media fixtures passed. Real local Auth/SDK workflows
+passed for practice and film metadata: save, submit, owner approve, reopen and
+successor while preserving accepted/unrelated IDs. Test URLs were synthetic and
+never opened. Source links are not file upload, provider rights or playback proof.
+Root wires practice links to published plays and Game Film to saved shared games.
+Legacy inspection labels now explicitly state owner approval, and film submission
+is labeled coaches/managers; no existing grants/audits were deleted.
+
+Photo Spec review found eager image Data allocation before the size limit. Native
+file-transfer/bounded-read repair passed11 photo checks, including original-file
+preservation, oversized rejection and actual synthetic Vision. This is source
+verification, not picker/Cancel/apply or real-form accuracy evidence.

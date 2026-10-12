@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import Supabase
 
-enum PlayRevisionStatus: String, Codable, Sendable { case draft, submitted, rejected, published }
+enum PlayRevisionStatus: String, Codable, Sendable { case draft, submitted, rejected, published, superseded }
 struct ServerPlay: Decodable, Identifiable, Sendable {
     let id: UUID
     let teamID: UUID
@@ -20,12 +20,13 @@ struct PlayRevision: Decodable, Identifiable, Hashable, Sendable {
     let diagram: PlayDiagram
     let basePublishedVersionID: UUID?
     let reviewReason: String
+    let recoverySourceVersionID: UUID?
     static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id && lhs.revision == rhs.revision }
     func hash(into hasher: inout Hasher) { hasher.combine(id); hasher.combine(revision) }
     enum CodingKeys: String, CodingKey {
         case id, revision, status, title, diagram
         case teamID = "team_id", playID = "play_id", authorUserID = "author_user_id"
-        case basePublishedVersionID = "base_published_version_id", reviewReason = "review_reason"
+        case basePublishedVersionID = "base_published_version_id", reviewReason = "review_reason", recoverySourceVersionID = "recovery_source_version_id"
     }
 }
 enum PlaybookIssue: Error, Equatable, LocalizedError {
@@ -85,6 +86,40 @@ final class Playbook {
             try await read(client)
             confirmation = "Server confirmed the working play draft."
             return versions.first { $0.id == result.id }
+        } catch { mutationFailed(error); return nil }
+    }
+    func currentPublishedVersionID(playID: UUID) -> UUID? { plays.first { $0.id == playID }?.publishedVersionID }
+    func isStaleDraft(_ version: PlayRevision) -> Bool {
+        version.status == .draft && currentPublishedVersionID(playID: version.playID) != version.basePublishedVersionID
+    }
+    private struct RecoveryResult: Decodable { let superseded: PlayRevision; let draft: PlayRevision }
+    func recoverDraft(_ version: PlayRevision, expectedPublishedVersionID: UUID) async -> PlayRevision? {
+        guard begin() else { return nil }
+        defer { isBusy = false }
+        guard versions.contains(where: { $0.id == version.id && $0.revision == version.revision }),
+              version.status == .draft, version.authorUserID == access?.userID, version.revision < Int64.max,
+              isStaleDraft(version), currentPublishedVersionID(playID: version.playID) == expectedPublishedVersionID else {
+            issue = .reloadRequired; reloadRequired = true; return nil
+        }
+        do {
+            let client = try await authenticatedClient()
+            let result: RecoveryResult = try await command(client, "play_recover_draft", [
+                "p_version_id": .string(version.id.uuidString), "p_expected_revision": .integer(Int(version.revision)),
+                "p_expected_published_version_id": .string(expectedPublishedVersionID.uuidString)])
+            let old = result.superseded, new = result.draft
+            guard old.id == version.id, old.teamID == teamID, old.playID == version.playID, old.authorUserID == version.authorUserID,
+                  old.status == .superseded, old.revision == version.revision + 1, old.title == version.title,
+                  old.diagram == version.diagram, old.basePublishedVersionID == version.basePublishedVersionID,
+                  old.recoverySourceVersionID == version.recoverySourceVersionID,
+                  new.id != old.id, new.teamID == teamID, new.playID == version.playID, new.authorUserID == version.authorUserID,
+                  new.status == .draft, new.revision == 1, new.title == version.title, new.diagram == version.diagram,
+                  new.basePublishedVersionID == expectedPublishedVersionID, new.recoverySourceVersionID == old.id else {
+                throw PlaybookIssue.invalidResponse
+            }
+            try await read(client)
+            guard let loaded = versions.first(where: { $0.id == new.id }), loaded.revision == new.revision else { throw PlaybookIssue.invalidResponse }
+            confirmation = "Server created a resumed draft and retained the previous saved drawing as read-only. Unsaved editor changes have not been uploaded."
+            return loaded
         } catch { mutationFailed(error); return nil }
     }
     @discardableResult func save(_ version: PlayRevision, title: String, diagram: PlayDiagram) async -> Bool {

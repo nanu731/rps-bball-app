@@ -1,12 +1,14 @@
 # Reviewed team plays
 
-Apply migration `202610110004_play_versions.sql` after migrations 001–003. It does
+Apply migration `202610110004_play_versions.sql` after migrations 001–003, then
+`202610110006_play_draft_recovery.sql` as an incremental repair. Do not reapply an
+already-installed migration004. This slice does
 not read, convert or upload existing local JSON/temporary players. Play markers
 are user-authored numbered diagram roles with stable UUIDs, optional labels,
 normalized half-court coordinates and ordered movement steps.
 
 `plays` holds the stable play identity and accepted pointer. `play_versions` holds
-private editable drafts and frozen submitted/rejected/published revisions. Members
+private editable drafts and frozen submitted/rejected/published/superseded revisions. Members
 see accepted history; authors see their own drafts/proposals; `plays.review`
 reviewers see submitted/rejected proposals. Protected direct writes are denied.
 
@@ -27,6 +29,17 @@ current capability grants while serialized on the team:
   one marker and one movement step. Rejected proposals stay immutable and may be
   cloned into a new draft.
 
+- `play_recover_draft(team, version, expected_revision, expected_published_version)`:
+  explicitly resumes an author's stale-base draft under current `plays.author` and
+  live membership. It atomically retains the old saved row as immutable
+  `superseded` history and creates one fresh working draft copying that saved title
+  and geometry against the explicitly expected latest accepted pointer. It records
+  `recovery_source_version_id` and audits both retained and new rows. Wrong author,
+  stale revision/pointer, non-stale base, revoked capability or session are denied.
+  Recovery never changes accepted content. The editor changes only its server
+  revision metadata, retaining unsaved name/drawing buffers for a later explicit
+  Save. Opening a draft alone never silently rebases it.
+
 Every save/transition checks both expected revision and current accepted base.
 Conflicts return SQLSTATE `40001`; denied access `42501`; invalid inputs `22023`
 (or UUID parse `22P02`). The native model never automatically repeats a POST and
@@ -43,6 +56,10 @@ with Reduce Motion. It never invents trajectories beyond linear authored segment
 Verification: a Foundation geometry tracer failed before validation, then passed
 finite/range rejection, authored midpoint and reduced-motion placement. All 54
 actual local PostgreSQL pgTAP command/RLS/lifecycle checks passed using rollback
-synthetic fixtures. Native SDK transport fixture tests and live iPhone/iPad editor,
+synthetic fixtures. An additional37 actual rollback PostgreSQL checks passed for two-author stale-base
+conflicts, explicit recovery, preserved old/accepted geometry, one working draft,
+retry/stale-input denial and frozen saved history. The original native7 fixture
+tests and real local SDK save/publish/reopen/successor passed before recovery.
+Recovery-specific native tests and live iPhone/iPad editor,
 playback, keyboard/Save, larger text and VoiceOver checks require integration.
 Hosted provider configuration and physical devices remain unverified.

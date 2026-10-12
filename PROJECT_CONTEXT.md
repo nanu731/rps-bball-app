@@ -324,3 +324,18 @@ field mapping/value confirmation before changing unsaved buffers. Eight review
 tests passed plus actual Vision on a corrected synthetic printed image. The first
 image’s REBOUNDS0 was read as letterO; no substitution was added. Real marked-form
 accuracy, picker interactions and both-device layout remain unverified.
+
+Private video-link metadata/review is integrated from published plays and shared
+game details. Ordinary active members submit practice links; protected film
+eligibility remains separate from publication bypass. Only the owner approves
+pending video resources; legacy review grants are inspection only. Nine native
+fixtures and73 actual rollback SQL checks passed. Real local SDK practice/film
+save/submit/owner-approve/reopen/successor checks passed without opening providers.
+File upload, private playback, Hudl rights and hosted/media budget enforcement
+remain unimplemented/unverified; saving a link does not establish them.
+
+Play review: Standards0 breaches (optional action-enum suggestion); Spec1 stranded
+stale-draft defect. Explicit retained-history recovery fixes it;37 additional
+actual SQL checks and8 native play tests passed. Both play/media editors retain
+unsaved buffers after intentional recovery; actual recovery navigation still
+requires device inspection.
