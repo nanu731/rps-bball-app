@@ -233,7 +233,7 @@ struct ConnectedVersionDetailView: View {
                         Button("Approve and publish") { action = .approve }
                         Button("Reject submission") { action = .reject }
                     }
-                    if current.status != .draft && (current.status == .published || current.authorUserID == model.access?.userID) {
+                    if current.status.isComplete && (current.status == .published || current.authorUserID == model.access?.userID) {
                         Button("Request permission to edit") { action = .requestEdit }
                     }
                 }.disabled(model.isBusy || model.reloadRequired)

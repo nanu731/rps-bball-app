@@ -263,6 +263,68 @@ final class ConnectedStatisticsTests: XCTestCase {
         XCTAssertTrue(model.didLoadGames)
         XCTAssertEqual(fixture.gameOffsets, [0, 100])
     }
+    func testSupersededStatisticsRetainMissingValuesWithoutClaimingCompletion() async throws {
+        let fixture = StatisticsFixture(mode: .supersededRecovery)
+        let model = fixture.model()
+        await model.loadGames(); await model.loadGame(try XCTUnwrap(model.games.first))
+        guard model.didLoadGame else { XCTFail("Server-confirmed superseded saved draft must remain readable"); return }
+        let retained = try XCTUnwrap(model.ownVersions.first { $0.id == statsVersionID })
+        XCTAssertEqual(retained.status.rawValue, "superseded")
+        XCTAssertFalse(retained.status.isComplete)
+        XCTAssertEqual(retained.records.first?.objectValue?["values"]?.objectValue?["points"], .null)
+        XCTAssertEqual(try retained.boxScores().first?.values["twosMade"], 0)
+        XCTAssertEqual(model.publishedVersions[.boxScores]?.id, statsRecoveryPublishedID)
+    }
+    func testUncertainApprovedRecoveryReloadFindsDraftWithoutRepeatingApproval() async throws {
+        for mode in [StatisticsFixture.Mode.recoveryLostReply, .recoveryReadFailure] {
+            let fixture = StatisticsFixture(mode: mode)
+            let model = fixture.model()
+            await model.loadGames(); await model.loadGame(try XCTUnwrap(model.games.first))
+            let retained = try XCTUnwrap(model.ownVersions.first { $0.id == statsVersionID })
+            let request = try XCTUnwrap(model.editReviewQueue.first)
+            let uncertain = await model.reviewEdit(request, approve: true)
+            XCTAssertFalse(uncertain); XCTAssertNil(model.confirmation); XCTAssertTrue(model.reloadRequired)
+            XCTAssertThrowsError(try model.approvedRecoveryDraft(for: retained))
+            fixture.allowRecoveryRead()
+            await model.reload()
+            XCTAssertTrue(model.didLoadGame)
+            let approved = try model.approvedRecoveryDraft(for: retained)
+            XCTAssertEqual(approved.id, statsWorkingID)
+            XCTAssertEqual(approved.recoverySourceVersionID, retained.id)
+            XCTAssertEqual(approved.basePublishedVersionID, statsRecoveryPublishedID)
+            XCTAssertEqual(model.versions.first { $0.id == retained.id }?.status, .superseded)
+            XCTAssertEqual(fixture.commands.filter { $0.name == "stats_review_edit" }.count, 1)
+            var typed = try retained.boxScores()
+            typed[0].values["assists"] = 7
+            let item = try ConnectedDraftSave(version: approved, boxScores: typed, coveredRoster: retained.coveredRoster)
+            let saved = await model.saveDraftBatch([item])
+            XCTAssertTrue(saved)
+            let current = try model.approvedRecoveryDraft(for: retained)
+            XCTAssertEqual(try current.boxScores().first?.values["assists"], 7)
+            XCTAssertNil(try current.boxScores().first?.values["points"])
+            XCTAssertEqual(model.versions.first { $0.id == retained.id }?.records, retained.records)
+            XCTAssertEqual(model.publishedVersions[.boxScores]?.id, statsRecoveryPublishedID)
+            XCTAssertEqual(fixture.commands.filter { $0.name == "stats_review_edit" }.count, 1)
+        }
+    }
+    func testApprovedRecoveryLookupRejectsMissingForkedCyclicOrUnapprovedLineageAndRevokedAccess() async throws {
+        let fixture = StatisticsFixture(mode: .supersededRecovery)
+        let model = fixture.model()
+        await model.loadGames(); await model.loadGame(try XCTUnwrap(model.games.first))
+        let retained = try XCTUnwrap(model.ownVersions.first { $0.id == statsVersionID })
+        XCTAssertEqual(try model.approvedRecoveryDraft(for: retained).id, statsWorkingID)
+        for fault in [StatisticsFixture.LineageFault.missing, .fork, .cycle, .unapproved] {
+            fixture.setLineageFault(fault)
+            await model.reload()
+            XCTAssertTrue(model.didLoadGame)
+            XCTAssertThrowsError(try model.approvedRecoveryDraft(for: retained))
+        }
+        fixture.setLineageFault(.none); fixture.revokeAccess()
+        await model.reload()
+        XCTAssertFalse(model.didLoadGame)
+        XCTAssertThrowsError(try model.approvedRecoveryDraft(for: retained))
+        XCTAssertTrue(fixture.commands.filter { $0.name == "stats_review_edit" }.isEmpty)
+    }
     func testFailedDiscoveryIsNotConfirmedEmpty() async {
         let model = ConnectedStatistics(teamID: statsTeamID, authenticatedClient: { throw AccountIssue.provider })
         await model.loadGames()
@@ -281,14 +343,28 @@ private let statsVersionID = UUID(uuidString: "55555555-5555-4555-8555-555555555
 private let statsDatasetID = UUID(uuidString: "66666666-6666-4666-8666-666666666666")!
 private let statsRequestID = UUID(uuidString: "77777777-7777-4777-8777-777777777777")!
 private let statsWorkingID = UUID(uuidString: "88888888-8888-4888-8888-888888888888")!
+private let statsRecoveryPublishedID = UUID(uuidString: "DDDD0001-DDDD-4DDD-8DDD-000000000001")!
+private let statsRecoveryBaseID = UUID(uuidString: "DDDD0001-DDDD-4DDD-8DDD-000000000002")!
 private let statsSecondDatasetID = UUID(uuidString: "99999999-9999-4999-8999-999999999999")!
 private let statsSecondVersionID = UUID(uuidString: "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA")!
 private let statsPossessionID = UUID(uuidString: "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB")!
 // Synthetic HTTP responses verify the real SDK/model seam, not deployed authorization or delivery.
 private final class StatisticsFixture: @unchecked Sendable {
-    enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination, exportStates, exportFailureOnce, delayedExport }
+    enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination, exportStates, exportFailureOnce, delayedExport, supersededRecovery, recoveryLostReply, recoveryReadFailure }
     private let mode: Mode
-    init(mode: Mode = .standard) { self.mode = mode }
+    init(mode: Mode = .standard) {
+        self.mode = mode
+        if mode == .supersededRecovery { versionStatus = "superseded"; revision = 2; editStatus = "approved"; workingVersion = recoveryWorking() }
+        if mode == .recoveryLostReply || mode == .recoveryReadFailure { editStatus = "pending" }
+    }
+    enum LineageFault { case none, missing, fork, cycle, unapproved }
+    private var lineageFault: LineageFault = .none
+    private var recoveryReadDenied = false
+    private var accessRevoked = false
+    private var isRecoveryMode: Bool { [.supersededRecovery, .recoveryLostReply, .recoveryReadFailure].contains(mode) }
+    func allowRecoveryRead() { lock.withLock { recoveryReadDenied = false } }
+    func setLineageFault(_ fault: LineageFault) { lock.withLock { lineageFault = fault } }
+    func revokeAccess() { lock.withLock { accessRevoked = true } }
     private var didFail = false
     private var requests = 0
     private var exportReads = 0
@@ -323,6 +399,7 @@ private final class StatisticsFixture: @unchecked Sendable {
         requests += 1
         let name = request.url!.lastPathComponent
         if request.url!.path.contains("/rpc/") {
+            if name == "team_access", accessRevoked { return json(["code": "42501", "message": "Synthetic revoked access"], status: 403) }
             if name == "team_access" { return json(["team_id": statsTeamID.uuidString, "user_id": statsUserID.uuidString, "is_owner": true, "access_revision": 7, "capabilities": [], "grant_envelopes": []]) }
             if name == "stats_preferences" { return json(["suppress_numeric_warning": suppressWarning]) }
             let parameters = (try? JSONSerialization.jsonObject(with: request.httpBody ?? body(request.httpBodyStream))) as? [String: Any] ?? [:]
@@ -355,6 +432,12 @@ private final class StatisticsFixture: @unchecked Sendable {
                 return json(["code": mode == .conflictOnce ? "40001" : mode == .denied ? "42501" : "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD", "details": "SENSITIVE_FIXTURE_PAYLOAD", "hint": NSNull()], status: 500)
             }
             if name == "stats_create_game" { return json(game()) }
+            if name == "stats_save_drafts", isRecoveryMode, var working = workingVersion,
+               let items = parameters["p_items"] as? [[String: Any]], let item = items.first {
+                working["revision"] = (working["revision"] as! Int) + 1
+                working["records"] = item["records"]; working["covered_roster"] = item["covered_roster"]
+                workingVersion = working; return json([working])
+            }
             if name == "stats_save_drafts" {
                 revision += 1
                 return json([version(status: versionStatus, revision: revision)] + (mode == .paired ? [secondVersion()] : []))
@@ -365,6 +448,12 @@ private final class StatisticsFixture: @unchecked Sendable {
             }
             if name == "stats_submit" { revision += 1; versionStatus = "submitted" }
             if name == "stats_request_edit" { editStatus = "pending"; return json(editRequest()) }
+            if name == "stats_review_edit", isRecoveryMode {
+                revision += 1; versionStatus = "superseded"; editStatus = "approved"; workingVersion = recoveryWorking()
+                if mode == .recoveryLostReply { return (0, Data()) }
+                if mode == .recoveryReadFailure { recoveryReadDenied = true }
+                return json(["request": editRequest(), "version": workingVersion!])
+            }
             if name == "stats_review_edit" {
                 editStatus = parameters["p_approve"] as? Bool == true ? "approved" : "rejected"
                 if editStatus == "rejected" { return json(["request": editRequest(), "version": NSNull()]) }
@@ -396,8 +485,25 @@ private final class StatisticsFixture: @unchecked Sendable {
         }
         if name == "roster_entries" { return json([["id": statsPlayerID.uuidString, "team_id": statsTeamID.uuidString, "display_name": "New synthetic name", "jersey_number": "13", "version": 2, "archived_at": NSNull()]]) }
         if name == "roster_entry_revisions" { return json([["roster_id": statsPlayerID.uuidString, "team_id": statsTeamID.uuidString, "display_name": "Original synthetic name", "jersey_number": "12", "version": 1]]) }
+        if name == "stat_versions", isRecoveryMode {
+            if recoveryReadDenied { return json(["code": "42501", "message": "Synthetic read failure"], status: 403) }
+            var retained = version(status: versionStatus, revision: revision)
+            var working = workingVersion
+            if lineageFault == .missing { working?["recovery_source_version_id"] = NSNull() }
+            if lineageFault == .cycle { retained["recovery_source_version_id"] = statsWorkingID.uuidString }
+            var rows = [retained, recoveryPublished(id: statsRecoveryBaseID), recoveryPublished(id: statsRecoveryPublishedID)] + (working.map { [$0] } ?? [])
+            if lineageFault == .fork, var fork = working { fork["id"] = "DDDD0001-DDDD-4DDD-8DDD-000000000003"; rows.append(fork) }
+            return json(rows)
+        }
+        if name == "stat_datasets", isRecoveryMode {
+            return json([["id": statsDatasetID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_type": "box_scores", "published_version_id": statsRecoveryPublishedID.uuidString]])
+        }
         if name == "stat_versions" { return json([version(status: versionStatus, revision: revision)] + (workingVersion.map { [$0] } ?? []) + (mode == .paired ? [secondVersion()] : [])) }
-        if name == "stat_edit_requests" { return json(editStatus == nil ? [] : [editRequest()]) }
+        if name == "stat_edit_requests" {
+            var request = editRequest()
+            if lineageFault == .unapproved { request["status"] = "pending" }
+            return json(editStatus == nil ? [] : [request])
+        }
         if name == "stat_datasets" { return json([["id": statsDatasetID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_type": mode == .possession ? "our_possessions" : "box_scores", "published_version_id": versionStatus == "published" ? statsVersionID.uuidString as Any : NSNull()]] + (mode == .paired ? [["id": statsSecondDatasetID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_type": "opponent_possessions", "published_version_id": NSNull()]] : [])) }
         return json([])
     }
@@ -411,7 +517,21 @@ private final class StatisticsFixture: @unchecked Sendable {
             result["records"] = [record]
             return result
         }
-        return ["id": statsVersionID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_id": statsDatasetID.uuidString, "dataset_type": "box_scores", "author_user_id": statsUserID.uuidString, "revision": revision, "status": status, "records": [["gameID": fixtureGameID.uuidString, "playerID": mode == .lowercaseIdentity ? statsPlayerID.uuidString.lowercased() : statsPlayerID.uuidString, "values": ["points": NSNull(), "twosMade": mode == .negativeCount ? -1 : 0]]], "covered_roster": [["id": statsPlayerID.uuidString, "version": 1]], "base_published_version_id": NSNull()]
+        return ["id": statsVersionID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_id": statsDatasetID.uuidString, "dataset_type": "box_scores", "author_user_id": statsUserID.uuidString, "revision": revision, "status": status, "records": [["gameID": fixtureGameID.uuidString, "playerID": mode == .lowercaseIdentity ? statsPlayerID.uuidString.lowercased() : statsPlayerID.uuidString, "values": ["points": NSNull(), "twosMade": mode == .negativeCount ? -1 : 0]]], "covered_roster": [["id": statsPlayerID.uuidString, "version": 1]], "base_published_version_id": isRecoveryMode ? statsRecoveryBaseID.uuidString as Any : NSNull()]
+    }
+    private func recoveryPublished(id: UUID) -> [String: Any] {
+        var row = version(status: "published", revision: 4)
+        row["id"] = id.uuidString; row["author_user_id"] = "11111111-1111-4111-8111-111111111112"
+        row["base_published_version_id"] = id == statsRecoveryBaseID ? NSNull() : statsRecoveryBaseID.uuidString as Any
+        if id == statsRecoveryPublishedID { row["records"] = [["gameID": statsGameID.uuidString, "playerID": statsPlayerID.uuidString, "values": ["points": 2, "twosMade": 1]]] }
+        return row
+    }
+    private func recoveryWorking() -> [String: Any] {
+        var row = recoveryPublished(id: statsRecoveryPublishedID)
+        row["status"] = "draft"; row["revision"] = 1; row["author_user_id"] = statsUserID.uuidString
+        row["id"] = statsWorkingID.uuidString; row["base_published_version_id"] = statsRecoveryPublishedID.uuidString
+        row["recovery_source_version_id"] = statsVersionID.uuidString
+        return row
     }
     private func possessionRecord(team: String) -> [String: Any] {
         ["id": statsPossessionID.uuidString, "gameID": fixtureGameID.uuidString, "team": team, "number": 1, "values": [:] as [String: Any], "turnover": false]
@@ -422,7 +542,7 @@ private final class StatisticsFixture: @unchecked Sendable {
          "revision": revision, "status": "draft", "records": [possessionRecord(team: "opponent")], "covered_roster": [], "base_published_version_id": NSNull()]
     }
     private func editRequest() -> [String: Any] {
-        ["id": statsRequestID.uuidString, "team_id": statsTeamID.uuidString, "source_version_id": statsVersionID.uuidString,
+        ["id": statsRequestID.uuidString, "team_id": statsTeamID.uuidString, "source_version_id": isRecoveryMode ? statsRecoveryPublishedID.uuidString : statsVersionID.uuidString,
          "requester_user_id": statsUserID.uuidString, "revision": editStatus == "approved" || editStatus == "rejected" ? 2 : 1,
          "status": editStatus ?? "pending", "reason": "Synthetic correction", "review_reason": "", "working_version_id": workingVersion == nil ? NSNull() : statsWorkingID.uuidString as Any]
     }
@@ -454,6 +574,7 @@ private final class StatisticsProtocol: URLProtocol, @unchecked Sendable {
         } else { deliver(status: status, body: body) }
     }
     private func deliver(status: Int, body: Data) {
+        if status == 0 { client?.urlProtocol(self, didFailWithError: URLError(.networkConnectionLost)); return }
         client?.urlProtocol(self, didReceive: HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: body); client?.urlProtocolDidFinishLoading(self)
     }

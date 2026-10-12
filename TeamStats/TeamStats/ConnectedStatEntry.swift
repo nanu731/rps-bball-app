@@ -22,6 +22,9 @@ struct ConnectedStatEntryView: View {
     @State private var headerHeight: CGFloat = 0
     @State private var completionKind: ConnectedDatasetType?
     @State private var reloadCandidate: ConnectedDatasetType?
+    @State private var attachmentKind: ConnectedDatasetType?
+    @State private var attachmentVersionID: UUID?
+    @State private var attachmentRevision: Int64?
     @State private var photoTarget: ConnectedPhotoTarget?
     @FocusState private var focused: String?
     @ScaledMetric(relativeTo: .body) private var possessionColumnWidth = 340.0
@@ -116,10 +119,10 @@ struct ConnectedStatEntryView: View {
             if model.isBusy { ProgressView("Contacting statistics server…") }
             if let issue = model.issue {
                 Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
-                Button("Reload server state") { Task { await model.reload() } }.disabled(model.isBusy)
-                Text("Reload preserves the values on this screen. If the saved revision changed, explicitly load its values before editing again.")
-                    .font(.footnote).foregroundStyle(.secondary)
             }
+            Button("Reload server state (keep entry values)") { Task { await model.reload() } }.disabled(model.isBusy)
+            Text("Reload keeps this screen's entries. If an approved recovery exists, explicitly attach these entries or load its saved values. Neither action repeats approval.")
+                .font(.footnote).foregroundStyle(.secondary)
             if let confirmation = model.confirmation { Label(confirmation, systemImage: "checkmark.circle") }
             Text(game.opponent).font(.headline)
             Text("Blank = not entered. Enter 0 explicitly. Use nonnegative whole numbers within the supported range.")
@@ -178,10 +181,26 @@ struct ConnectedStatEntryView: View {
                     Button("Load current saved values") {
                         if changed.contains(kind) { reloadCandidate = kind } else { synchronize(kind) }
                     }.disabled(model.isBusy)
+                    if let approved = try? model.approvedRecoveryDraft(for: version) {
+                        Text("A current approved working draft is available. Attaching keeps these typed entries; saving them remains separate.").font(.footnote)
+                        Button("Attach retained entries to approved draft") {
+                            attachmentKind = kind; attachmentVersionID = approved.id; attachmentRevision = approved.revision
+                        }
+                        .disabled(model.isBusy || model.reloadRequired)
+                        .confirmationDialog("Attach retained entries?", isPresented: Binding(get: { attachmentKind == kind }, set: { if !$0 { attachmentKind = nil } }), titleVisibility: .visible) {
+                            Button("Attach without saving") { attachRetainedEntries(kind) }
+                            Button("Go back", role: .cancel) { attachmentKind = nil }
+                        } message: {
+                            Text("Only this dataset's server version identity changes. Your typed counts, unanswered values and roster labels stay in the editor. The saved approved copy, superseded history and published data remain unchanged until explicit Save and later completion/review.")
+                        }
+                    }
                 } else if version.status == .draft {
                     Button("Complete \(kind.label.lowercased())") { focused = nil; completionKind = kind }
                         .disabled(changed.contains(kind) || model.isBusy || model.reloadRequired || hasInvalidInputs(kind) || !hasRecords(kind))
                     if changed.contains(kind) { Text("Save this dataset before completing it.").font(.footnote).foregroundStyle(.secondary) }
+                } else if version.status == .superseded {
+                    Text("Superseded saved draft — read-only, incomplete and unreviewed. Its records are retained; this is not a completed dataset.").font(.footnote).foregroundStyle(.secondary)
+                    NavigationLink("View retained saved records") { ConnectedVersionDetailView(model: model, version: version) }
                 } else {
                     Text("Completed data is read-only until an edit request is approved.").font(.footnote).foregroundStyle(.secondary)
                     NavigationLink("View status / Request edit") { ConnectedVersionDetailView(model: model, version: version) }
@@ -478,6 +497,19 @@ struct ConnectedStatEntryView: View {
         }
         if selectedPlayerID.isEmpty { selectedPlayerID = playerLabels.first?.id.uuidString ?? "" }
         loaded = true
+    }
+    private func attachRetainedEntries(_ kind: ConnectedDatasetType) {
+        defer { attachmentKind = nil }
+        guard let source = baseVersions[kind] else { return }
+        do {
+            let approved = try model.approvedRecoveryDraft(for: source)
+            guard approved.id == attachmentVersionID, approved.revision == attachmentRevision,
+                  approved.datasetType == kind else { throw ConnectedStatisticsIssue.reloadRequired }
+            // No hydrate: retain all typed values, paired rows, covered labels and missing answers.
+            baseVersions[kind] = approved
+            changed.insert(kind)
+            preparationIssue = nil
+        } catch { preparationIssue = error.localizedDescription }
     }
     private func synchronize(_ kind: ConnectedDatasetType) {
         if let version = currentWorkingVersion(kind) { hydrate(version, newDraft: false) }

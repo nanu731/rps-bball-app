@@ -127,3 +127,36 @@ review/reopening, accepted history/outbox, stale bases and live access revocatio
 The game/batch public-command tests were observed failing before those commands
 were applied. These SQL checks do not prove hosted deployment, real delivery,
 physical-device behavior, or Google Sheets export.
+
+## Explicit stale-draft recovery (migration009)
+
+Apply `202610110009_stat_draft_recovery.sql` once after the existing lifecycle
+migration; earlier migrations stay unchanged. A captured authenticated regression
+showed that approval of a current V2 edit was blocked by an author's unfinished V1
+draft. The missing-turnover draft could not honestly be marked complete to free
+the slot.
+
+An authorized current-source edit approval now retains only a **stale-base**
+requester's saved draft as read-only `superseded`, preserving records, covered
+roster and historical missing answers exactly. It creates the normal approved
+working copy from the authorized current source and records immutable nullable
+`recovery_source_version_id`. Same-base unfinished drafts still reject approval.
+Superseded is not completion and cannot request completed-source edits. Accepted
+pointers, export generations and existing rows are unchanged by recovery; no
+historical backfill, zero conversion, approval bypass or deletion occurs.
+
+The native model accepts this read-only status and verifies each recovery link
+against an approved edit request, current author/game/dataset and accepted base.
+Missing, forked, cyclic, unapproved or revoked-access snapshots fail closed. After
+explicit Reload, the entry screen separately confirms attaching retained buffers:
+only its server-version metadata changes. Typed values, missing answers, paired
+rows and historical roster labels remain until explicit Save. An uncertain
+approval is never automatically replayed. Existing photo review wiring is intact.
+
+Verification: the SQL red case failed with40001, and the native pre-fix read test
+failed on the unknown saved status. Migration009 then passed37 actual rollback
+PostgreSQL checks, including unchanged records/outbox, same-base denial, readonly
+history, revoked reviewers and expired-session denial. The original136 lifecycle
+checks also passed after the shared trigger/command repair. Swift syntax parsing
+passed; affected native fixture/build checks are assigned to the integrator.
+Actual attachment/keyboard/navigation interaction remains unverified.

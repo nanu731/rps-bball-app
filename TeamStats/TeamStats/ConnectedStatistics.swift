@@ -16,8 +16,8 @@ enum ConnectedDatasetType: String, Codable, CaseIterable, Identifiable, Sendable
     }
 }
 enum ConnectedVersionStatus: String, Codable, Sendable {
-    case draft, completed, submitted, rejected, published
-    var isComplete: Bool { self != .draft }
+    case draft, completed, submitted, rejected, published, superseded
+    var isComplete: Bool { [.completed, .submitted, .rejected, .published].contains(self) }
 }
 struct ConnectedGame: Decodable, Identifiable, Sendable {
     let id: UUID
@@ -69,10 +69,11 @@ struct ConnectedVersion: Decodable, Identifiable, Sendable {
     let records: [AnyJSON]
     let coveredRoster: [ConnectedCoveredPlayer]
     let basePublishedVersionID: UUID?
+    let recoverySourceVersionID: UUID?
     enum CodingKeys: String, CodingKey {
         case id, revision, status, records
         case teamID = "team_id", gameID = "game_id", datasetID = "dataset_id", datasetType = "dataset_type"
-        case authorUserID = "author_user_id", coveredRoster = "covered_roster", basePublishedVersionID = "base_published_version_id"
+        case authorUserID = "author_user_id", coveredRoster = "covered_roster", basePublishedVersionID = "base_published_version_id", recoverySourceVersionID = "recovery_source_version_id"
     }
     func boxScores() throws -> [PlayerBoxScore] {
         guard datasetType == .boxScores else { throw ConnectedStatisticsIssue.invalidResponse }
@@ -245,7 +246,7 @@ struct ConnectedDraftSave: Encodable, Sendable {
     }
 }
 enum ConnectedStatisticsIssue: Error, LocalizedError, Equatable {
-    case invalidInput, invalidResponse, conflict, denied, server, tooManyRecords, reloadRequired
+    case invalidInput, invalidResponse, conflict, denied, server, tooManyRecords, reloadRequired, recoveryUnavailable
     var errorDescription: String? {
         switch self {
         case .invalidInput: "Check the entered game details, counts, roster coverage and completion confirmations."
@@ -255,6 +256,7 @@ enum ConnectedStatisticsIssue: Error, LocalizedError, Equatable {
         case .server: "The server could not confirm this request. Reload to check the current version before trying again."
         case .tooManyRecords: "This list exceeds the supported size. No statistics snapshot was loaded. Contact the team owner."
         case .reloadRequired: "Reload current server statistics before making another change."
+        case .recoveryUnavailable: "An approved current working draft could not be confirmed. Reload or inspect saved versions; retained entries were not attached."
         }
     }
 }
@@ -447,7 +449,7 @@ final class ConnectedStatistics {
         guard !isBusy else { return false }
         confirmation = nil
         guard reason.count <= 500 else { issue = .invalidInput; return false }
-        guard version.status != .draft, versions.contains(where: { $0.id == version.id && $0.revision == version.revision }) else { issue = .reloadRequired; return false }
+        guard version.status.isComplete, versions.contains(where: { $0.id == version.id && $0.revision == version.revision }) else { issue = .reloadRequired; return false }
         guard beginMutation(), let game = selectedGame else { return false }
         defer { isBusy = false }
         do {
@@ -460,6 +462,42 @@ final class ConnectedStatistics {
             confirmation = "Server confirmed the edit request. Published statistics remain available."
             return true
         } catch { mutationFailed(error); return false }
+    }
+    /// Read-only lookup after explicit Reload; never replays approval or changes entry buffers.
+    func approvedRecoveryDraft(for retainedSource: ConnectedVersion) throws -> ConnectedVersion {
+        guard didLoadGame, !isBusy, !reloadRequired, let game = selectedGame, let access else { throw ConnectedStatisticsIssue.reloadRequired }
+        guard retainedSource.teamID == teamID, retainedSource.gameID == game.id,
+              retainedSource.authorUserID == access.userID else { throw ConnectedStatisticsIssue.denied }
+        guard let source = versions.first(where: { $0.id == retainedSource.id }), source.status == .superseded,
+              source.teamID == teamID, source.gameID == game.id, source.datasetID == retainedSource.datasetID,
+              source.datasetType == retainedSource.datasetType, source.authorUserID == access.userID else { throw ConnectedStatisticsIssue.recoveryUnavailable }
+        var node = source
+        var visited: Set<UUID> = [source.id]
+        while true {
+            let successors = versions.filter { $0.recoverySourceVersionID == node.id }
+            guard successors.count == 1 else { throw ConnectedStatisticsIssue.recoveryUnavailable }
+            let next = successors[0]
+            guard visited.insert(next.id).inserted, next.teamID == teamID, next.gameID == game.id,
+                  next.datasetID == source.datasetID, next.datasetType == source.datasetType,
+                  next.authorUserID == access.userID, next.revision > 0, next.basePublishedVersionID != nil,
+                  next.basePublishedVersionID != node.basePublishedVersionID else { throw ConnectedStatisticsIssue.invalidResponse }
+            let approvals = editRequests.filter { $0.workingVersionID == next.id && $0.status == .approved && $0.requesterUserID == access.userID }
+            guard approvals.count == 1, approvals[0].teamID == teamID,
+                  let approvedSource = versions.first(where: { $0.id == approvals[0].sourceVersionID }),
+                  approvedSource.datasetID == source.datasetID, approvedSource.datasetType == source.datasetType,
+                  approvedSource.teamID == teamID, approvedSource.gameID == game.id, approvedSource.status.isComplete,
+                  (approvedSource.status == .published ? approvedSource.id : approvedSource.basePublishedVersionID) == next.basePublishedVersionID else { throw ConnectedStatisticsIssue.recoveryUnavailable }
+            switch next.status {
+            case .superseded: node = next
+            case .draft:
+                let working = ownVersions.filter { $0.datasetID == source.datasetID && $0.status == .draft }
+                guard working.count == 1, working[0].id == next.id,
+                      !versions.contains(where: { $0.recoverySourceVersionID == next.id }),
+                      datasets.first(where: { $0.id == source.datasetID })?.publishedVersionID == next.basePublishedVersionID else { throw ConnectedStatisticsIssue.recoveryUnavailable }
+                return next
+            default: throw ConnectedStatisticsIssue.recoveryUnavailable
+            }
+        }
     }
     private struct EditReviewResponse: Decodable { let request: ConnectedEditRequest; let version: ConnectedVersion? }
     @discardableResult
