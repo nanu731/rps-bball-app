@@ -210,7 +210,14 @@ final class TeamAdministration {
             let status: String = try await client.rpc("team_request_membership", params: ["p_team_id": id.uuidString]).execute().value
             guard let result = TeamMembershipStatus(rawValue: status) else { throw AdministrationIssue.invalidResponse }
             admissionStatus = result
-            confirmation = "Server confirmed your admission status: \(result.rawValue). Reload teams after an administrator activates your membership."
+            switch result {
+            case .pending:
+                confirmation = "Your request is waiting for an administrator. Reload teams after they confirm admission."
+            case .active:
+                confirmation = "The server confirmed active membership. Reload teams to open the team."
+            case .removed:
+                confirmation = "The server reports removed membership. Ask your administrator about admission."
+            }
             retryAdmissionID = nil
         } catch { fail(error) }
     }

@@ -164,13 +164,26 @@ private enum GameStorage {
 
 private struct NewGameView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var date = Date()
+    @State private var date: Date
+    @State private var initialDate: Date
     @State private var opponent = ""
     @State private var venue: Game.Venue = .home
     @State private var kind: Game.Kind = .regularSeason
     @State private var saveError: String?
+    @State private var confirmingLeave = false
 
     let save: (Game) -> String?
+
+    init(save: @escaping (Game) -> String?) {
+        self.save = save
+        let initial = Date()
+        _date = State(initialValue: initial)
+        _initialDate = State(initialValue: initial)
+    }
+
+    private var hasChanges: Bool {
+        !opponent.isEmpty || date != initialDate || venue != .home || kind != .regularSeason
+    }
 
     private var trimmedOpponent: String {
         opponent.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -211,7 +224,9 @@ private struct NewGameView: View {
             .navigationTitle("New game")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        if hasChanges { confirmingLeave = true } else { dismiss() }
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -223,6 +238,13 @@ private struct NewGameView: View {
                     }
                     .disabled(trimmedOpponent.isEmpty)
                 }
+            }
+            .interactiveDismissDisabled(hasChanges)
+            .confirmationDialog("Discard unsaved game details?", isPresented: $confirmingLeave, titleVisibility: .visible) {
+                Button("Discard unsaved details", role: .destructive) { dismiss() }
+                Button("Keep editing", role: .cancel) { }
+            } message: {
+                Text("These new game details have not been saved. Existing games stay unchanged.")
             }
         }
     }
