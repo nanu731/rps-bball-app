@@ -6,6 +6,96 @@ import AVFoundation
 
 @MainActor
 final class PrivateFilesLocalIntegrationTests: XCTestCase {
+    // This verifies the retained-file/player pipeline across test-host processes.
+    // It does not establish current Auth, team rights, or rendered offline app UI.
+    func testPreviouslyVerifiedClipPlaysAcrossSeparateOfflineProcesses() async throws {
+        let environment = ProcessInfo.processInfo.environment
+        guard let fixturePath = environment["TEAMSTATS_PRIVATE_FILES_FIXTURE"],
+              let markerPath = environment["TEAMSTATS_OFFLINE_PROCESS_MARKER"],
+              let phase = environment["TEAMSTATS_OFFLINE_PROCESS_PHASE"] else {
+            throw XCTSkip("Explicit prior-verified clip/process fixture is not configured")
+        }
+        guard phase == "first" || phase == "second" else { XCTFail("Unknown test process phase"); return }
+        let object = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: fixturePath))) as? [String: Any])
+        let project = try XCTUnwrap(URL(string: XCTUnwrap(object["apiRoot"] as? String)))
+        XCTAssertTrue(["127.0.0.1", "localhost", "::1"].contains(project.host ?? ""))
+        let saved = try AuthClient.Configuration.jsonDecoder.decode(Session.self,
+            from: JSONSerialization.data(withJSONObject: XCTUnwrap(object["session"])))
+        let team = try XCTUnwrap(UUID(uuidString: XCTUnwrap(object["syntheticTeamID"] as? String)))
+        let play = try XCTUnwrap(UUID(uuidString: XCTUnwrap(object["syntheticPlayID"] as? String)))
+        let scope = ClipScope(projectURL: project, actorID: saved.user.id, teamID: team)
+        let marker = URL(fileURLWithPath: markerPath), pid = ProcessInfo.processInfo.processIdentifier
+        let home = URL(fileURLWithPath: NSHomeDirectory()).standardizedFileURL
+        func relativePath(_ url: URL) throws -> String {
+            let path = url.standardizedFileURL.path, prefix = home.path + "/"
+            guard path.hasPrefix(prefix) else { throw ClipRetentionIssue.storage }
+            return String(path.dropFirst(prefix.count))
+        }
+        var receipt: OfflineClipProcessReceipt
+        OfflineClipNetworkFence.reset()
+        XCTAssertTrue(URLProtocol.registerClass(OfflineClipNetworkFence.self))
+        defer { URLProtocol.unregisterClass(OfflineClipNetworkFence.self) }
+        if phase == "first" {
+            guard !FileManager.default.fileExists(atPath: marker.path) else { XCTFail("Use a fresh owned process-proof marker"); return }
+            let candidates = try FileManager.default.contentsOfDirectory(at: FileManager.default.temporaryDirectory,
+                includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey]).filter {
+                    $0.lastPathComponent.hasPrefix("TEST-ONLY-CLIPS-")
+                }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+            var found: OfflineClipProcessReceipt?
+            for candidate in candidates {
+                let values = try candidate.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+                guard values.isDirectory == true, values.isSymbolicLink != true else { continue }
+                let cache = ClipRetention(root: candidate)
+                guard let clip = try cache.items(scope: scope, actorID: saved.user.id).first(where: {
+                    $0.targetID == play && $0.title == "TEST ONLY NATIVE PRIVATE CLIP"
+                }), let url = try cache.cachedURL(scope: scope, versionID: clip.versionID, actorID: saved.user.id,
+                    requireRetained: true, expectedCount: clip.byteCount, expectedSHA256: clip.sha256) else { continue }
+                found = OfflineClipProcessReceipt(firstPID: pid, secondPID: nil, cacheRoot: candidate.path,
+                    clipURL: url.path, secondClipURL: nil, cacheRelativePath: try relativePath(candidate),
+                    clipRelativePath: try relativePath(url), scope: scope, versionID: clip.versionID,
+                    byteCount: clip.byteCount, sha256: clip.sha256)
+                break
+            }
+            receipt = try XCTUnwrap(found, "No previously downloaded verified test clip; do not automatically transfer")
+        } else {
+            receipt = try JSONDecoder().decode(OfflineClipProcessReceipt.self, from: Data(contentsOf: marker))
+            XCTAssertNotEqual(pid, receipt.firstPID)
+            XCTAssertNil(receipt.secondPID)
+            XCTAssertEqual(receipt.scope, scope)
+            XCTAssertTrue(URL(fileURLWithPath: receipt.cacheRoot).lastPathComponent.hasPrefix("TEST-ONLY-CLIPS-"))
+            receipt.secondPID = pid
+        }
+        // Xcode may relocate the simulator app container while reinstalling its host.
+        // Bind to the same retained path inside the current container, not a stale absolute base.
+        guard receipt.cacheRelativePath.hasPrefix("tmp/TEST-ONLY-CLIPS-"),
+              !receipt.cacheRelativePath.split(separator: "/").contains(".."),
+              receipt.clipRelativePath.hasPrefix(receipt.cacheRelativePath + "/") else {
+            XCTFail("The proof must reference only this owned test-cache subtree"); return
+        }
+        let cache = ClipRetention(root: home.appendingPathComponent(receipt.cacheRelativePath))
+        let url = try XCTUnwrap(cache.cachedURL(scope: scope, versionID: receipt.versionID, actorID: saved.user.id,
+            requireRetained: true, expectedCount: receipt.byteCount, expectedSHA256: receipt.sha256))
+        XCTAssertEqual(try relativePath(url), receipt.clipRelativePath)
+        if phase == "second" { receipt.secondClipURL = url.path }
+        else { XCTAssertEqual(url.path, receipt.clipURL) }
+        let bytes = try boundedBytes(url, maximum: 10 * 1024 * 1024)
+        XCTAssertEqual(bytes.count, receipt.byteCount); XCTAssertEqual(clipDigest(bytes), receipt.sha256)
+        let asset = AVURLAsset(url: url, options: [AVURLAssetReferenceRestrictionsKey: AVAssetReferenceRestrictions.forbidAll.rawValue])
+        let item = AVPlayerItem(asset: asset), player = AVPlayer(playerItem: item)
+        let readyDeadline = Date().addingTimeInterval(10)
+        while item.status == .unknown && Date() < readyDeadline { try await Task.sleep(for: .milliseconds(100)) }
+        XCTAssertEqual(item.status.rawValue, AVPlayerItem.Status.readyToPlay.rawValue)
+        let duration = try await asset.load(.duration).seconds
+        XCTAssertGreaterThan(duration, 0); XCTAssertLessThanOrEqual(duration, 30)
+        player.play()
+        let playbackDeadline = Date().addingTimeInterval(5)
+        while player.currentTime().seconds < 0.05 && Date() < playbackDeadline { try await Task.sleep(for: .milliseconds(100)) }
+        XCTAssertGreaterThan(player.currentTime().seconds, 0.05); player.pause()
+        XCTAssertEqual(OfflineClipNetworkFence.requestCount, 0)
+        try JSONEncoder().encode(receipt).write(to: marker, options: .atomic)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: marker.path)
+    }
+
     func testActualLocalPrivateClipLifecycleDeliveryAndRestartRetention() async throws {
         guard let fixturePath = ProcessInfo.processInfo.environment["TEAMSTATS_PRIVATE_FILES_FIXTURE"],
               let clipPath = ProcessInfo.processInfo.environment["TEAMSTATS_PRIVATE_CLIP_FIXTURE"] else {
@@ -107,4 +197,31 @@ private final class NativeFileFixtureStorage: AuthLocalStorage, @unchecked Senda
     func store(key: String, value: Data) throws { lock.withLock { values[key] = value } }
     func retrieve(key: String) throws -> Data? { lock.withLock { values[key] } }
     func remove(key: String) throws { lock.withLock { values[key] = nil } }
+}
+
+nonisolated private struct OfflineClipProcessReceipt: Codable {
+    let firstPID: Int32
+    var secondPID: Int32?
+    let cacheRoot: String
+    let clipURL: String
+    var secondClipURL: String?
+    let cacheRelativePath: String
+    let clipRelativePath: String
+    let scope: ClipScope
+    let versionID: UUID
+    let byteCount: Int
+    let sha256: String
+}
+nonisolated private final class OfflineClipNetworkFence: URLProtocol, @unchecked Sendable {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var count = 0
+    static var requestCount: Int { lock.withLock { count } }
+    static func reset() { lock.withLock { count = 0 } }
+    override class func canInit(with request: URLRequest) -> Bool { ["http", "https"].contains(request.url?.scheme ?? "") }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        Self.lock.withLock { Self.count += 1 }
+        client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
+    }
+    override func stopLoading() {}
 }
