@@ -44,11 +44,12 @@ struct MediaResourceVersion: Decodable, Identifiable, Sendable {
     let linkURL: String
     let notes: String
     let basePublishedVersionID: UUID?
+    let recoverySourceVersionID: UUID?
     let reviewReason: String
     enum CodingKeys: String, CodingKey {
         case id, revision, status, title, notes
         case teamID = "team_id", resourceID = "resource_id", authorUserID = "author_user_id"
-        case linkURL = "link_url", basePublishedVersionID = "base_published_version_id", reviewReason = "review_reason"
+        case linkURL = "link_url", basePublishedVersionID = "base_published_version_id", recoverySourceVersionID = "recovery_source_version_id", reviewReason = "review_reason"
     }
     var externalURL: URL? { MediaLinkInput.validURL(linkURL) }
 }
@@ -154,6 +155,31 @@ final class MediaResources {
             resources = parents; versions = rows; access = current; didLoad = true; reloadRequired = false
         } catch { issue = Self.map(error); resources = []; versions = []; access = nil; reloadRequired = true }
     }
+    /// Identifies only the exact server-created successor; attaching editor text is a separate user action.
+    func recoveredDraft(after previous: MediaResourceVersion, expectedID: UUID? = nil, expectedRevision: Int64? = nil) -> MediaResourceVersion? {
+        guard didLoad, !reloadRequired, !isBusy, canContribute,
+              previous.status == .superseded, previous.authorUserID == access?.userID,
+              versions.contains(where: { $0.id == previous.id && $0.revision == previous.revision && $0.status == .superseded }),
+              let current = resources.first(where: { $0.id == previous.resourceID })?.publishedVersionID else { return nil }
+        var sourceID = previous.id
+        var visited: Set<UUID> = [sourceID]
+        for _ in 0..<versions.count {
+            let matches = versions.filter { $0.recoverySourceVersionID == sourceID }
+            guard matches.count == 1, let next = matches.first,
+                  visited.insert(next.id).inserted,
+                  next.teamID == teamID, next.resourceID == previous.resourceID,
+                  next.authorUserID == previous.authorUserID else { return nil }
+            if next.status == .draft {
+                guard next.basePublishedVersionID == current,
+                      expectedID == nil || expectedID == next.id,
+                      expectedRevision == nil || expectedRevision == next.revision else { return nil }
+                return next
+            }
+            guard next.status == .superseded else { return nil }
+            sourceID = next.id
+        }
+        return nil
+    }
     func hasNewerPublishedLink(_ version: MediaResourceVersion) -> Bool {
         guard version.status == .draft,
               let parent = resources.first(where: { $0.id == version.resourceID }),
@@ -182,7 +208,7 @@ final class MediaResources {
                   old.authorUserID == version.authorUserID, old.basePublishedVersionID == version.basePublishedVersionID, MediaLinkInput(old) == MediaLinkInput(version),
                   fresh.id != old.id, fresh.status == .draft, fresh.revision == 1,
                   fresh.resourceID == old.resourceID, fresh.authorUserID == old.authorUserID,
-                  fresh.basePublishedVersionID == current, MediaLinkInput(fresh) == MediaLinkInput(old) else { throw MediaResourceIssue.invalidResponse }
+                  fresh.basePublishedVersionID == current, fresh.recoverySourceVersionID == old.id, MediaLinkInput(fresh) == MediaLinkInput(old) else { throw MediaResourceIssue.invalidResponse }
             versions.removeAll { $0.id == old.id || $0.id == fresh.id }; versions.append(contentsOf: [old, fresh])
             confirmation = "Server preserved the saved earlier proposal and created a current draft. Typed changes remain unsaved."
             return fresh
@@ -253,8 +279,15 @@ final class MediaResources {
     private func pages<T: Decodable>(_ client: SupabaseClient, _ table: String, filterTarget: Bool) async throws -> [T] {
         var rows: [T] = []
         for page in 0..<50 {
-            let query = client.from(table).select().eq("team_id", value: teamID.uuidString)
-            if filterTarget { _ = query.eq("kind", value: kind.rawValue).eq(kind == .practice ? "play_id" : "game_id", value: targetID.uuidString) }
+            // Explicit FK avoids ambiguity with the parent's reverse published-version pointer.
+            let selection = filterTarget ? "*" : "*,media_resources!media_resource_versions_team_id_resource_id_fkey!inner(kind,play_id,game_id)"
+            let query = client.from(table).select(selection).eq("team_id", value: teamID.uuidString)
+            if filterTarget {
+                _ = query.eq("kind", value: kind.rawValue).eq(kind == .practice ? "play_id" : "game_id", value: targetID.uuidString)
+            } else {
+                _ = query.eq("media_resources.kind", value: kind.rawValue)
+                    .eq(kind == .practice ? "media_resources.play_id" : "media_resources.game_id", value: targetID.uuidString)
+            }
             let values: [T] = try await query.order("created_at").order("id").range(from: page * 100, to: page * 100 + 99).execute().value
             rows.append(contentsOf: values)
             if values.count < 100 { return rows }

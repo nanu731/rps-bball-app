@@ -120,6 +120,9 @@ private struct MediaResourceEditor: View {
     let model: MediaResources
     @State private var draft: MediaResourceVersion
     @State private var input: MediaLinkInput
+    @State private var attachmentCandidate: MediaResourceVersion?
+    @State private var confirmAttachment = false
+    @State private var attachmentIssue: String?
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isTyping: Bool
     init(model: MediaResources, draft: MediaResourceVersion) {
@@ -133,6 +136,21 @@ private struct MediaResourceEditor: View {
                 Text("This link is for the selected \(model.kind == .practice ? "published play" : "shared game"). Only the owner approves pending videos.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
+            if draft.status == .superseded {
+                Section("Saved proposal was preserved") {
+                    Label("This saved revision is read-only.", systemImage: "doc.text")
+                    if let recovered = model.recoveredDraft(after: draft) {
+                        Text("The server already created its replacement draft. Your typed text is still retained here and has not been saved to that draft.").font(.footnote)
+                        Button("Attach typed changes to recovered draft", systemImage: "arrow.triangle.branch") {
+                            attachmentCandidate = recovered; confirmAttachment = true
+                        }
+                    } else {
+                        Text("No unique, current, eligible replacement draft can be attached. Reload and compare saved revisions; do not repeat the recovery request.").font(.footnote)
+                        Button("Reload saved links") { Task { await reloadDraft() } }.disabled(model.isBusy)
+                    }
+                }
+            }
+            if let attachmentIssue { Section { Label(attachmentIssue, systemImage: "exclamationmark.triangle").foregroundStyle(.red) } }
             if model.hasNewerPublishedLink(draft) {
                 Section("A newer link was accepted") {
                     Label("This proposal uses an earlier accepted link.", systemImage: "exclamationmark.triangle")
@@ -154,21 +172,32 @@ private struct MediaResourceEditor: View {
             }
             Section {
                 Button("Save draft", systemImage: "square.and.arrow.down") { Task { await save() } }
-                    .disabled(model.isBusy || model.reloadRequired || !input.validDraft)
+                    .disabled(model.isBusy || model.reloadRequired || draft.status != .draft || !input.validDraft)
                 Button("Submit for owner review", systemImage: "paperplane") { Task { await send("submit") } }
-                    .disabled(model.isBusy || model.reloadRequired || changed || !input.readyToSubmit)
+                    .disabled(model.isBusy || model.reloadRequired || draft.status != .draft || changed || !input.readyToSubmit)
                 if model.canPublishOwn {
                     Button("Publish my link", systemImage: "checkmark.circle") { Task { await send("publish") } }
-                        .disabled(model.isBusy || model.reloadRequired || changed || !input.readyToSubmit)
+                        .disabled(model.isBusy || model.reloadRequired || draft.status != .draft || changed || !input.readyToSubmit)
                 }
                 Text("Save changes before submitting. A published link still requires access through its provider.").font(.footnote).foregroundStyle(.secondary)
             }
         }
         .navigationTitle("Edit video link")
+        .alert("Attach retained text?", isPresented: $confirmAttachment, presenting: attachmentCandidate) { candidate in
+            Button("Attach — keep changes unsaved") {
+                if let current = model.recoveredDraft(after: draft, expectedID: candidate.id, expectedRevision: candidate.revision) {
+                    draft = current; attachmentIssue = nil
+                    // Only revision identity changes. The input buffer remains untouched; Save is separate.
+                } else { attachmentIssue = "The replacement draft or current access changed. Reload and compare before attaching." }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { candidate in
+            Text("Attach your retained typed text to the exact recovered draft, saved revision \(candidate.revision). This does not save or publish changes. The saved earlier proposal remains read-only.")
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() }.disabled(model.isBusy) }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { Task { await save() } }.disabled(model.isBusy || model.reloadRequired || !input.validDraft)
+                Button("Save") { Task { await save() } }.disabled(model.isBusy || model.reloadRequired || draft.status != .draft || !input.validDraft)
             }
             ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { isTyping = false } }
         }
@@ -181,7 +210,7 @@ private struct MediaResourceEditor: View {
     }
     private func reloadDraft() async {
         await model.load()
-        if let saved = model.versions.first(where: { $0.id == draft.id && $0.status == .draft }) { draft = saved }
+        if let saved = model.versions.first(where: { $0.id == draft.id }) { draft = saved }
         // Preserve the user's text; reloaded revision enables an explicit subsequent save.
     }
 }

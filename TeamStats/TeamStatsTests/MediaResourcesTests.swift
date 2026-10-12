@@ -5,6 +5,77 @@ import Supabase
 
 @MainActor
 final class MediaResourcesTests: XCTestCase {
+    func testMediaVersionReadsRestrictSelectedTargetBeforeTransfer() async throws {
+        for kind in [MediaResourceKind.practice, .film] {
+            let fixture = MediaFixture(mode: .staleDraft); let model = fixture.model(kind: kind)
+            await model.load()
+            let request = try XCTUnwrap(fixture.versionReadURLs.first)
+            let items = URLComponents(url: request, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            let query = Dictionary(items.map { ($0.name, $0.value ?? "") }, uniquingKeysWith: { _, new in new })
+            let select = try XCTUnwrap(query["select"])
+            XCTAssertTrue(select.contains("media_resources!media_resource_versions_team_id_resource_id_fkey!inner"))
+            XCTAssertEqual(query["media_resources.kind"], "eq.\(kind.rawValue)")
+            XCTAssertEqual(query[kind == .practice ? "media_resources.play_id" : "media_resources.game_id"], "eq.\(mediaTargetID.uuidString)")
+            XCTAssertEqual(query["team_id"], "eq.\(mediaTeamID.uuidString)")
+        }
+    }
+    func testLostResumeAcknowledgmentFindsExactSavedSuccessorAfterReloadWithoutReplay() async throws {
+        let fixture = MediaFixture(mode: .lostResumeAck); let model = fixture.model(); await model.load()
+        let previous = try XCTUnwrap(model.ownDrafts.first)
+        assertMediaNil(await model.resumeDraft(previous))
+        XCTAssertEqual(model.issue, .server); XCTAssertTrue(model.reloadRequired)
+        await model.load()
+        let reloadedPrevious = try XCTUnwrap(model.versions.first { $0.id == previous.id })
+        XCTAssertEqual(reloadedPrevious.status, .superseded)
+        let successor = try XCTUnwrap(model.recoveredDraft(after: reloadedPrevious))
+        XCTAssertEqual(successor.id, mediaResumedID)
+        XCTAssertEqual(successor.title, "Saved author proposal")
+        XCTAssertEqual(successor.recoverySourceVersionID, previous.id)
+        XCTAssertEqual(model.published.first?.id, mediaCurrentID)
+        XCTAssertEqual(model.ownDrafts.count, 1)
+        XCTAssertEqual(fixture.commands.filter { $0.name == "media_resume_draft" }.count, 1)
+        XCTAssertNil(model.recoveredDraft(after: reloadedPrevious, expectedID: UUID(), expectedRevision: successor.revision))
+        XCTAssertNil(model.recoveredDraft(after: reloadedPrevious, expectedID: successor.id, expectedRevision: successor.revision + 1))
+        assertMediaNil(await model.resumeDraft(reloadedPrevious))
+        XCTAssertEqual(fixture.commands.filter { $0.name == "media_resume_draft" }.count, 1)
+    }
+    func testStaleOrAmbiguousRecoveryLineageCannotAttachRetainedInput() async throws {
+        for mode in [MediaFixture.Mode.ambiguousRecovery, .staleRecovery, .missingRecoveryLineage, .chainedRecovery, .cyclicRecovery] {
+            let fixture = MediaFixture(mode: mode); let model = fixture.model(); await model.load()
+            let previous = try XCTUnwrap(model.ownDrafts.first)
+            _ = await model.resumeDraft(previous)
+            await model.load()
+            let savedPrevious = try XCTUnwrap(model.versions.first { $0.id == previous.id })
+            XCTAssertEqual(savedPrevious.status, .superseded)
+            XCTAssertNil(model.recoveredDraft(after: savedPrevious))
+            XCTAssertEqual(fixture.commands.filter { $0.name == "media_resume_draft" }.count, 1)
+        }
+    }
+    func testLostAcknowledgmentFollowsExactSameAuthorRecoveryChain() async throws {
+        let fixture = MediaFixture(mode: .validRecoveryChain); let model = fixture.model(); await model.load()
+        let previous = try XCTUnwrap(model.ownDrafts.first)
+        assertMediaNil(await model.resumeDraft(previous))
+        await model.load()
+        let savedPrevious = try XCTUnwrap(model.versions.first { $0.id == previous.id })
+        let current = try XCTUnwrap(model.recoveredDraft(after: savedPrevious))
+        XCTAssertEqual(current.id.uuidString.lowercased(), "da000000-0000-4000-8000-000000000001")
+        XCTAssertEqual(current.recoverySourceVersionID, mediaResumedID)
+        XCTAssertEqual(current.authorUserID, previous.authorUserID)
+        XCTAssertEqual(model.published.first?.id, mediaCurrentID)
+        XCTAssertNil(model.recoveredDraft(after: savedPrevious, expectedID: mediaResumedID, expectedRevision: 1))
+        XCTAssertEqual(fixture.commands.filter { $0.name == "media_resume_draft" }.count, 1)
+    }
+    func testRecoveryAttachmentRequiresCurrentFilmEligibility() async throws {
+        let fixture = MediaFixture(mode: .revokedRecovery); let model = fixture.model(kind: .film); await model.load()
+        XCTAssertTrue(model.canContribute)
+        let previous = try XCTUnwrap(model.ownDrafts.first)
+        assertMediaNil(await model.resumeDraft(previous))
+        await model.load()
+        XCTAssertFalse(model.canContribute)
+        let savedPrevious = try XCTUnwrap(model.versions.first { $0.id == previous.id })
+        XCTAssertNil(model.recoveredDraft(after: savedPrevious))
+        XCTAssertEqual(fixture.commands.filter { $0.name == "media_resume_draft" }.count, 1)
+    }
     func testExplicitResumeKeepsSavedProposalHistoryAndCurrentAcceptedLink() async throws {
         let fixture = MediaFixture(mode: .staleDraft); let model = fixture.model(); await model.load()
         let stale = try XCTUnwrap(model.ownDrafts.first)
@@ -137,12 +208,13 @@ private let mediaPriorID = UUID(uuidString: "d7000000-0000-4000-8000-00000000000
 private let mediaResumedID = UUID(uuidString: "d8000000-0000-4000-8000-000000000001")!
 private let mediaVersionID = UUID(uuidString: "d5000000-0000-4000-8000-000000000001")!
 private final class MediaFixture: @unchecked Sendable {
-    enum Mode { case standard, conflict, failure, malformed, loadFailureOnce, filmPublishOnly, ownerPending, inspectorPending, staleDraft }
+    enum Mode { case standard, conflict, failure, malformed, loadFailureOnce, filmPublishOnly, ownerPending, inspectorPending, staleDraft, lostResumeAck, ambiguousRecovery, staleRecovery, missingRecoveryLineage, chainedRecovery, validRecoveryChain, cyclicRecovery, revokedRecovery }
     struct Command { let name: String; let parameters: [String: Any] }
     let key = UUID().uuidString
     private let mode: Mode
     private let lock = NSLock()
     private var recorded: [Command] = []
+    private var versionReads: [URL] = []
     private var revision = 1
     private var status = "draft"
     private var title = ""
@@ -154,11 +226,12 @@ private final class MediaFixture: @unchecked Sendable {
     private var failed = false
     private var kind: MediaResourceKind = .practice
     var commands: [Command] { lock.withLock { recorded } }
+    var versionReadURLs: [URL] { lock.withLock { versionReads } }
     init(mode: Mode = .standard) { self.mode = mode }
     @MainActor func model(kind: MediaResourceKind = .practice) -> MediaResources {
         self.kind = kind
         if mode == .ownerPending || mode == .inspectorPending { opened = true; status = "submitted"; title = "Synthetic pending link"; url = "https://video.example.invalid/watch" }
-        if mode == .staleDraft { opened = true; title = "Saved author proposal"; url = "https://video.example.invalid/my-proposal"; notes = "Saved author notes" }
+        if mode == .staleDraft || mode == .lostResumeAck || mode == .ambiguousRecovery || mode == .staleRecovery || mode == .missingRecoveryLineage || mode == .chainedRecovery || mode == .validRecoveryChain || mode == .cyclicRecovery || mode == .revokedRecovery { opened = true; title = "Saved author proposal"; url = "https://video.example.invalid/my-proposal"; notes = "Saved author notes" }
         MediaProtocol.registry.insert(self)
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MediaProtocol.self]
@@ -171,7 +244,7 @@ private final class MediaFixture: @unchecked Sendable {
             let name = request.url!.lastPathComponent
             if name == "team_access" {
                 if mode == .loadFailureOnce && !failed { failed = true; return json(["code": "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 500) }
-                let capabilities: [String] = mode == .filmPublishOnly ? ["film.publish"] : mode == .inspectorPending ? ["practice.review"] : []
+                let capabilities: [String] = mode == .filmPublishOnly ? ["film.publish"] : mode == .inspectorPending ? ["practice.review"] : mode == .revokedRecovery && !resumed ? ["film.upload"] : []
                 return json(["team_id": mediaTeamID.uuidString, "user_id": mediaActorID.uuidString, "is_owner": mode == .ownerPending,
                              "access_revision": 1, "capabilities": capabilities, "grant_envelopes": []])
             }
@@ -182,6 +255,7 @@ private final class MediaFixture: @unchecked Sendable {
                 if name == "media_resume_draft" {
                     var previous = version(); previous["status"] = "superseded"; previous["revision"] = revision + 1
                     preservedVersion = previous; resumed = true; revision = 1
+                    if mode == .lostResumeAck || mode == .ambiguousRecovery || mode == .staleRecovery || mode == .missingRecoveryLineage || mode == .chainedRecovery || mode == .validRecoveryChain || mode == .cyclicRecovery || mode == .revokedRecovery { return json(["code": "XX000", "message": "Synthetic lost acknowledgment"], status: 500) }
                     return json(["previous": previous, "draft": version()])
                 }
                 if name == "media_save_draft" {
@@ -198,11 +272,25 @@ private final class MediaFixture: @unchecked Sendable {
             }
             if name == "media_resources" { return json(opened ? [resource()] : []) }
             if name == "media_resource_versions" {
+                versionReads.append(request.url!)
                 var rows = opened ? [version()] : []
-                if mode == .staleDraft {
-                    var current = version(); current["id"] = mediaCurrentID.uuidString; current["status"] = "published"; current["title"] = "Newer accepted content"; current["base_published_version_id"] = mediaPriorID.uuidString; current["author_user_id"] = "d2000000-0000-4000-8000-000000000002"
+                if mode == .staleDraft || mode == .lostResumeAck || mode == .ambiguousRecovery || mode == .staleRecovery || mode == .missingRecoveryLineage || mode == .chainedRecovery || mode == .validRecoveryChain || mode == .cyclicRecovery || mode == .revokedRecovery {
+                    var current = version(); current["id"] = mediaCurrentID.uuidString; current["status"] = "published"; current["title"] = "Newer accepted content"; current["base_published_version_id"] = mediaPriorID.uuidString; current["recovery_source_version_id"] = NSNull(); current["author_user_id"] = "d2000000-0000-4000-8000-000000000002"
                     rows.append(current)
-                    if let preservedVersion { rows.append(preservedVersion) }
+                    if resumed && mode == .ambiguousRecovery {
+                        var ambiguous = version(); ambiguous["id"] = "d9000000-0000-4000-8000-000000000001"; rows.append(ambiguous)
+                    }
+                    if resumed && (mode == .chainedRecovery || mode == .validRecoveryChain || mode == .cyclicRecovery) {
+                        rows[0]["status"] = "superseded"
+                        var chain = version(); chain["id"] = "da000000-0000-4000-8000-000000000001"; chain["recovery_source_version_id"] = mediaResumedID.uuidString
+                        if mode == .chainedRecovery { chain["author_user_id"] = "d2000000-0000-4000-8000-000000000002" }
+                        if mode == .cyclicRecovery { chain["status"] = "superseded" }
+                        rows.append(chain)
+                    }
+                    if var preservedVersion {
+                        if mode == .cyclicRecovery { preservedVersion["recovery_source_version_id"] = "da000000-0000-4000-8000-000000000001" }
+                        rows.append(preservedVersion)
+                    }
                 }
                 return json(rows)
             }
@@ -212,13 +300,14 @@ private final class MediaFixture: @unchecked Sendable {
     private func resource() -> [String: Any] {
         ["id": mediaResourceID.uuidString, "team_id": mediaTeamID.uuidString, "kind": kind.rawValue,
          "play_id": kind == .practice ? mediaTargetID.uuidString : NSNull(), "game_id": kind == .film ? mediaTargetID.uuidString : NSNull(),
-         "published_version_id": mode == .staleDraft ? mediaCurrentID.uuidString as Any : status == "published" ? mediaVersionID.uuidString as Any : NSNull()]
+         "published_version_id": (mode == .staleDraft || mode == .lostResumeAck || mode == .ambiguousRecovery || mode == .staleRecovery || mode == .missingRecoveryLineage || mode == .chainedRecovery || mode == .validRecoveryChain || mode == .cyclicRecovery || mode == .revokedRecovery) ? mediaCurrentID.uuidString as Any : status == "published" ? mediaVersionID.uuidString as Any : NSNull()]
     }
     private func version() -> [String: Any] {
         ["id": resumed ? mediaResumedID.uuidString : mediaVersionID.uuidString, "team_id": mediaTeamID.uuidString, "resource_id": mediaResourceID.uuidString,
          "author_user_id": mode == .ownerPending || mode == .inspectorPending ? "d2000000-0000-4000-8000-000000000002" : mediaActorID.uuidString,
          "revision": revision, "status": status, "title": title, "link_url": url, "notes": notes,
-         "base_published_version_id": mode == .staleDraft ? (resumed ? mediaCurrentID.uuidString : mediaPriorID.uuidString) as Any : NSNull(), "review_reason": ""]
+         "recovery_source_version_id": resumed && mode != .missingRecoveryLineage ? mediaVersionID.uuidString : NSNull(),
+         "base_published_version_id": (mode == .staleDraft || mode == .lostResumeAck || mode == .ambiguousRecovery || mode == .staleRecovery || mode == .missingRecoveryLineage || mode == .chainedRecovery || mode == .validRecoveryChain || mode == .cyclicRecovery || mode == .revokedRecovery) ? (resumed && mode != .staleRecovery ? mediaCurrentID.uuidString : mediaPriorID.uuidString) as Any : NSNull(), "review_reason": ""]
     }
     private func json(_ object: Any, status: Int = 200) -> (Int, Data) { (status, try! JSONSerialization.data(withJSONObject: object)) }
     private func streamData(_ stream: InputStream?) -> Data {

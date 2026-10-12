@@ -157,5 +157,10 @@ select throws_ok($$select public.media_resume_draft(pg_temp.team(),pg_temp.id('r
 select is(public.media_open_draft(pg_temp.team(),pg_temp.resource(1),'practice',pg_temp.play(),pg_temp.id('newer')),pg_temp.body('resume')->'draft','opening now returns the resumed draft');
 reset role;
 select throws_ok($$update public.media_resource_versions set notes='CHANGED',revision=revision+1 where id=pg_temp.id('revised')$$,'42501',null,'saved superseded proposal immutable even through trusted SQL');
+select is(pg_temp.body('resume')->'draft'->>'recovery_source_version_id',pg_temp.id('revised')::text,'resumed successor records exact saved source identity');
+select is((select recovery_source_version_id from public.media_resource_versions where id=pg_temp.id('accepted')),null::uuid,'historical accepted revision has no guessed recovery source');
+select is((select recovery_source_version_id from public.media_resource_versions where id=pg_temp.id('revised')),null::uuid,'ordinary saved proposal has no manufactured lineage');
+select throws_ok($$update public.media_resource_versions set recovery_source_version_id=pg_temp.id('accepted'),revision=revision+1 where id=(pg_temp.body('resume')->'draft'->>'id')::uuid$$,'42501',null,'recovery source relation immutable after insertion');
+select throws_ok($$insert into public.media_resource_versions(team_id,resource_id,author_user_id,recovery_source_version_id) values(pg_temp.team(),pg_temp.resource(1),'b1000000-0000-4000-8000-000000000009',pg_temp.id('revised'))$$,'23505',null,'only one exact successor may cite a recovery source');
 select * from finish();
 rollback;

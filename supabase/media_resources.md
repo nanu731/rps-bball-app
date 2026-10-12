@@ -1,6 +1,6 @@
 # Reviewed video-link resources
 
-Migrations005/007 follow team access, statistical games and play revisions. It stores
+Migrations005/007/008 follow team access, statistical games and play revisions. It stores
 user-authored HTTPS **link metadata only**. It does not upload, download, embed,
 probe a provider URL or establish video ownership, private playback or Hudl rights.
 Open provider links only through explicit user action. Provider login/access may
@@ -52,6 +52,11 @@ local JSON or converts temporary player identities. Lists distinguish load error
 from empty data and offer Reload; editor preserves typed text while loading current
 revision after conflict. Save is available in the navigation bar and form; native
 keyboard Done dismisses typing. Large text uses wrapping system styles/sections.
+Version reads use a target-scoped PostgREST inner embedding with the verified
+`media_resource_versions_team_id_resource_id_fkey` relationship. Both team and
+selected parent kind/play/game UUID filters apply before transfer, retaining RLS
+and ordered pagination; unrelated team video history is not fetched then hidden
+locally. The reverse published-pointer relationship is not implicitly selected.
 
 ### Explicit recovery after a newer acceptance
 
@@ -65,6 +70,25 @@ This is an explicit user action, not record deletion. The native editor retains
 current typed text separately, so unsaved edits stay visibly unsaved against the
 fresh draft; saving before resuming is optional. Pending submitted records remain
 frozen until the owner rejects them or accepts a nonstale proposal.
+
+### Lost recovery acknowledgment
+
+Migration008 records a nullable, unique same-resource `recovery_source_version_id`
+only when resume creates its fresh draft. Prior history stays null; no guessed
+relationship or automatic backfill. A lost successful response must not cause
+blind retry. Reload updates the editor's old revision metadata even if now
+superseded, and a validated helper identifies exactly one current own editable
+successor through a unique same-author/same-resource immutable lineage chain.
+Intermediate proposals must be read-only superseded revisions; missing, forked,
+cyclic, cross-author or noncurrent paths cannot attach text. Stale bases, ambiguous matches, changed
+revision and lost contribution eligibility cannot attach retained typed text.
+
+Attachment requires explicit confirmation and rechecks the captured successor ID
+and revision. It swaps editor revision metadata only; current typed text stays
+unsaved until a separate Save. Source history and accepted pointers remain intact.
+No provider operation occurs. The native lost-response tracer actually committed
+its synthetic recovery then failed the acknowledgment; before this fix it failed
+at successor identification after Reload. Actual view tapping remains unverified.
 
 ## Strict $0 file-upload/playback contract — not implemented by links
 
@@ -97,7 +121,11 @@ provider rights, billing-disabled evidence, hosted RLS or device playback checks
 ## Evidence
 
 A missing-command tracer failed before implementation; the actual isolated
-Postgres rollback suite passed73 checks (synthetic identities only). Native SDK
+Postgres rollback suite passed78 checks (synthetic identities only). All fourteen
+native media fixtures passed, including lost recovery replies, chained attachment,
+denied attachment and target-scoped reads. The read-filter regression was observed
+failing first; the actual local Auth/PostgREST/SDK practice and film workflow then
+passed with the explicit FK embedding. Native SDK
 fixtures exercise validation/save/retry/current authority; device interaction,
 hosted services and actual external-provider access are separate checks. No
 existing runtime/simulator records are overwritten by these tests.
