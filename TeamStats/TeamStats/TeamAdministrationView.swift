@@ -38,6 +38,13 @@ struct TeamAdministrationView: View {
             if let team = model.selectedTeam, let access = model.access {
                 Section(team.name) {
                     Text(access.isOwner ? "Owner access confirmed by server" : "Active membership confirmed by server")
+                    if access.can(.membersManage) {
+                        LabeledContent("Team invitation code") {
+                            Text(team.id.uuidString).font(.caption).textSelection(.enabled)
+                        }
+                        Text("Share this code privately. A join request still needs administrator admission.")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
                     NavigationLink("Shared games and statistics") {
                         ConnectedGamesView(account: account, teamID: team.id)
                     }
