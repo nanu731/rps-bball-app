@@ -95,6 +95,9 @@ final class BackendAccount {
     // Editing context survives a failed network check. It grants no authority;
     // commands still reverify Auth and server permissions before proceeding.
     private(set) var sessionContextID: UUID?
+    // Keychain-backed prior Auth confirmation permits only scoped device clip viewing.
+    // It never restores authenticated state or supplies a remote command client.
+    private(set) var offlineClipActorID: UUID?
     private(set) var isBusy = false
     private(set) var issue: AccountIssue?
     private(set) var pendingMethod: AccountMethod?
@@ -130,6 +133,7 @@ final class BackendAccount {
             pendingIdentifier = nil
             issue = nil
             sessionContextID = nil
+            offlineClipActorID = nil
             state = .signedOut
         } catch { fail(error as? AccountIssue ?? .storage) }
     }
@@ -200,6 +204,7 @@ final class BackendAccount {
             guard let data = try read(key: configurationKey) else {
                 state = .unconfigured
                 sessionContextID = nil
+                offlineClipActorID = nil
                 issue = nil
                 return
             }
@@ -214,15 +219,27 @@ final class BackendAccount {
                 client = makeClient(validated)
                 state = .signedOut
                 sessionContextID = nil
+                offlineClipActorID = nil
                 issue = nil
                 return
             }
             do { _ = try JSONDecoder().decode(Session.self, from: sessionData) }
             catch { throw AccountIssue.storage }
+            if let stamp = try read(key: offlineStampKey(validated)) {
+                do { offlineClipActorID = try JSONDecoder().decode(OfflineActorStamp.self, from: stamp).actorID }
+                catch { throw AccountIssue.storage }
+            }
             let restoredClient = makeClient(validated)
             client = restoredClient
             try await acceptSession(from: restoredClient)
-        } catch { fail(error as? AccountIssue ?? .provider) }
+        } catch {
+            var failure = error as? AccountIssue ?? .provider
+            if knownSessionDenial(error) {
+                sessionContextID = nil
+                do { try invalidateOfflineActor() } catch { failure = .storage }
+            }
+            fail(failure)
+        }
     }
 
     func verifyCode(_ code: String) async {
@@ -306,7 +323,8 @@ final class BackendAccount {
     /// Caller uses this verified session to invoke server-authorized commands.
     /// The server alone decides team admission, grants and owner authority.
     func authenticatedClient() async throws -> SupabaseClient {
-        guard !isBusy, let client,
+        guard !isBusy else { throw AccountIssue.provider }
+        guard let client,
               verifiedUserID != nil || (state == .error && sessionContextID != nil) else { throw AccountIssue.noVerifiedSession }
         isBusy = true
         defer { isBusy = false }
@@ -314,9 +332,13 @@ final class BackendAccount {
             try await acceptSession(from: client)
             return client
         } catch {
-            let issue = error as? AccountIssue ?? .provider
-            fail(issue)
-            throw issue
+            var failure = error as? AccountIssue ?? .provider
+            if knownSessionDenial(error) {
+                sessionContextID = nil
+                do { try invalidateOfflineActor() } catch { failure = .storage }
+            }
+            fail(failure)
+            throw failure
         }
     }
 
@@ -325,6 +347,9 @@ final class BackendAccount {
         isBusy = true
         defer { isBusy = false }
         sessionContextID = nil
+        offlineClipActorID = nil
+        do { try storage.store(key: offlineStampKey(configuration), value: JSONEncoder().encode(OfflineActorStamp(actorID: nil))) }
+        catch { fail(.storage); return }
         let oldClient = client
         // The SDK captures the token, removes its local session, then requests
         // server revocation. Explicit deletion below also checks suppressed failures.
@@ -357,9 +382,34 @@ final class BackendAccount {
         }
         do { try storage.store(key: sessionKey(configuration), value: JSONEncoder().encode(session)) }
         catch { throw AccountIssue.storage }
+        let offlineID = verifiedUser.emailConfirmedAt != nil || verifiedUser.phoneConfirmedAt != nil ? verifiedUser.id : nil
+        offlineClipActorID = nil
+        do { try storage.store(key: offlineStampKey(configuration), value: JSONEncoder().encode(OfflineActorStamp(actorID: offlineID))) }
+        catch { throw AccountIssue.storage }
+        offlineClipActorID = offlineID
         issue = nil
         sessionContextID = verifiedUser.id
         state = .authenticated(verifiedUser.id)
+    }
+
+    private struct OfflineActorStamp: Codable { let actorID: UUID? }
+    private func offlineStampKey(_ value: AccountConfiguration) -> String { "offline-actor.v1." + sessionKey(value) }
+    private func invalidateOfflineActor() throws {
+        offlineClipActorID = nil
+        if let configuration {
+            try storage.store(key: offlineStampKey(configuration), value: JSONEncoder().encode(OfflineActorStamp(actorID: nil)))
+        }
+    }
+    private func knownSessionDenial(_ error: Error) -> Bool {
+        if let error = error as? AuthError {
+            switch error {
+            case .api(_, let code, _, let response):
+                return [401, 403, 404].contains(response.statusCode) || [.sessionNotFound, .sessionExpired, .refreshTokenNotFound, .refreshTokenAlreadyUsed, .userNotFound, .userBanned].contains(code)
+            case .sessionMissing, .jwtVerificationFailed: return true
+            default: return false
+            }
+        }
+        return error as? AccountIssue == .noVerifiedSession
     }
 
     private func read(key: String) throws -> Data? {
