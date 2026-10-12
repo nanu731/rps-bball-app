@@ -112,8 +112,9 @@ or every current gesture has passed. See [TESTING.md](TESTING.md) for limitation
 
 Loading, empty, pending admission, failed requests and denied access must have
 different messages and next actions. Unfinished provider/media work remains
-identified above. Scouting reports for upcoming opponents are planned, not a
-currently available upload screen.
+identified above. Scouting reports for upcoming opponents follow ADR0003. Bounded native PDF
+input preparation is tested; there is no report upload screen or verified private
+report storage/retrieval yet.
 
 ### Technical documentation
 

@@ -227,7 +227,7 @@ was rerun to author these documents.
 | New UI/polish | Simulator builds and model regressions recorded | Both-device dirty navigation, delayed/failed Save, denied-content recovery, accessibility |
 | Photos | Synthetic Vision and proposal checks recorded | Representative marked forms and picker/Apply/Cancel interaction |
 | Google export | SQL/worker fixtures recorded; actual delivery disabled | Trusted sender/worker access and versioned Google readback |
-| Media/scouting | Link metadata locally exercised; scouting planned | Private file upload/playback, provider rights, limits and report implementation |
+| Media/scouting | Link metadata locally exercised; scouting input preparation8 native tests and iPad26.4 build passed | Report picker/upload/lifecycle/private retrieval and actual provider validation/capacity/rights; videos still need actual bytes/playback |
 | Release | Simulator builds and an unsigned archive recorded | Actual lowest supported OS, physical devices, signing, service setup and explicit release approval |
 
 This checkpoint is a dated snapshot. Verify current runtime/schema before new
@@ -278,3 +278,11 @@ accounts/grants changed, local records uploaded or external delivery enabled.
 Signed hosted owner/nonmember/admission/delegation/revocation acceptance remains
 pending; creating credentials/security-sensitive grants requires human action-time
 confirmation. Other ready local work continues under the strict$0 boundary.
+
+Scouting input preparation uses real synthetic native PDF documents in
+`ScoutingReportDocumentTests` (8 passed on iPhone17/26.4, final iPad build passed).
+No report upload/navigation was added; client parsing is not trusted server PDF
+validation or malicious-document sanitization. Actual file-provider/picker/UI and
+storage/transfer/cost acceptance remain unverified. Original8 local JSON hashes
+and both personal working/staged files survived the run unchanged; container
+paths may relocate during native tests, so compare device/file identities too.

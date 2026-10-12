@@ -619,15 +619,20 @@ Associate each report with its intended opponent/upcoming matchup. Exact game
 linkage versus opponent-only reports needs a decision before implementation.
 Do not invent report content or automatically generate scouting conclusions.
 
-Before implementation decide supported formats (for example PDF documents),
-viewing audience, coach upload eligibility, whether publication needs review,
-replacement/archive behavior and upload size limits. Existing practice-video
-approval rules are not automatically scouting-report rules. Resolve delegated
-product choices through Council under the existing owner authorization; actual
-reports and third-party rights remain owner-provided facts.
-Keep reports private with server-enforced access and bounded file validation;
-preserve the $0 budget and applicable upload security requirements. Display and
-upload behavior must be verified, not claimed complete from metadata alone.
+Council defaults adopted2026-10-12: PDF only, at most5 MiB, linked to an existing
+same-team shared Game UUID including future games. Owner-granted `scouting.upload`
+and `scouting.read` remain separate from membership or coach labels. Pending access
+is uploader/owner only; the owner approves publication. Published access needs
+current active membership/read authority (or owner authority). Replacement approval
+atomically advances an immutable version; archive hides ordinary access while
+retaining bytes/history, initially inspectable only by the owner.
+
+See [ADR0003](docs/adr/0003-private-game-linked-scouting-reports.md) for tradeoffs,
+revocation/retry/capacity safeguards. Native file validation/source tests may
+proceed; actual upload remains unimplemented and blocked by trusted private
+storage/validation/transfer-capacity/$0 acceptance. A5 MiB product ceiling does
+not establish provider affordability. No current grants, hosted migrations or
+services change from adopting these defaults; existing video rules remain separate.
 
 ## Security direction
 

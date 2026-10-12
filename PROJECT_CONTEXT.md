@@ -2,7 +2,7 @@
 
 Owner addition (2026-10-12): coaches upload scouting reports for the upcoming
 opponent. Required future continuation scope; see PRD.md's scouting-report section.
-Formats, access/review and opponent/game linkage need decisions. Do not interrupt
+Council defaults now select PDF≤5MiB, existing same-team Game linkage, separate read/upload authority, owner approval and retained versions; see ADR0003. Eight native input-validation tests and iPad build passed; actual byte storage/access/cost acceptance remains blocked. Do not interrupt
 hosted activation or treat existing video approval rules as confirmed report rules.
 
 Owner added Lincoln Devine's polish guide as a UI acceptance reference; PRD.md's

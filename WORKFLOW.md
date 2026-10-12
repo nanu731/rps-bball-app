@@ -1235,3 +1235,47 @@ validation; confirmed unanswered, Yes and No remain distinct in local/shared
 existing-possession buffers. No save, completion, publication or OCR inference
 occurs during apply. Picker/keyboard/Cancel/apply navigation and both-device
 large-text interaction remain unverified while native UI control is locked.
+
+## Scouting report contract — 2026-10-12
+
+Five independent Council analyses and five fresh reviews of anonymized proposals
+converged on existing-game linkage, restricted read/upload and owner approval.
+The chairman synthesis favored5MiB over10MiB. Adopted ADR0003 uses explicit
+read grants instead of role labels/per-report audience duplication; owner-only
+history inspection keeps the initial access contract small. Aggregate provider
+limits remain evidence-dependent rather than adopting arbitrary suggested quotas.
+No report content, rights, successful upload or provider costs were invented.
+
+Ready source-only slice: bounded native PDF validation against synthetic files.
+The public file-input seam checks actual bytes/readability/encryption/limits;
+this matches authorized bounded-input/synthetic public-seam acceptance. It does
+not validate server storage, rights or publication. Actual upload/provider tests
+remain parked for approved Storage tooling and trusted capacity/access validation.
+Native toolbar input recovered, but launch of the already installed isolated
+POLISH TEST app was refused by SBMainWorkspace; its executable exists and code
+signature verifies. Stop repeated launch attempts. Current app gestures, large
+text, keyboard Save, rotation, dark/light and VoiceOver remain unverified; manually
+open the isolated app in a responsive Simulator before those acceptance checks.
+
+### Bounded scouting input preparation — verified2026-10-12
+
+`ScoutingReportDocument.swift` reads only bounded regular local files (5MiB),
+rejects symlinks/special files, preserves cancellation and checks native PDFKit
+parsing/pages/encryption. No network, file rewrite, upload receipt, server authority
+or publication is created. Eight real native iPhone17/26.4 tests passed: readable
+bytes/one page/source preservation, exact5MiB, oversized, locked/unlocked encrypted,
+malformed/empty/non-PDF, unavailable/remote/directory/symlink/FIFO and cancellation.
+Readable/size/encryption regressions failed first; one initial test-option compiler
+error was repaired and is not runtime evidence. Final iPad26.4 build passed.
+PDFKit APIs used are available before the26.0 deployment target; actual26.0 and
+physical devices remain untested. This is native input preparation, not a report
+upload screen, trusted content sanitizer or provider integration.
+
+Current containers retain all8 original JSON hashes; the iPhone data-container
+path changed during tests, so preservation was checked by device/file identity,
+not an obsolete path. Personal working bytes/staged entries and temporary-player
+source identities match the overnight baseline. An additional unrequested
+project.pbxproj diff appeared; parsed configuration equals HEAD (formatting only).
+It is preserved untouched/uncommitted. No current hosted schema/grants/SMS change.
+Standards/Spec review follows this slice; feature17 remains blocked on actual
+private storage/validation/quotas/rights and approvals, independent of these tests.

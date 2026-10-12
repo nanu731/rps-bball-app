@@ -50,3 +50,9 @@ a link alone does not establish upload, provider rights, or playback.
 **Publication bypass**: Permission for an eligible author to publish their own
 valid submission without individual review; it does not create uploader eligibility
 or permission-administration authority.
+
+**Scouting report**: A coach-contributed document for a specific upcoming matchup,
+linked to that game's identity rather than an opponent-name match.
+
+**Scouting report version**: A retained document proposal or accepted revision;
+a new proposal does not replace the currently approved report.

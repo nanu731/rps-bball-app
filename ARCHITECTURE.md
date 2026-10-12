@@ -88,8 +88,10 @@ shot categories without inventing player attribution to possessions.
   input. Representative filled-form accuracy remains pending.
 - Practice/game-film link metadata and review are implemented. File upload,
   transfer-budget enforcement, provider rights and private playback are unfinished.
-- Upcoming-opponent scouting reports are planned; format/access/linkage decisions
-  and implementation remain outstanding.
+- Upcoming-opponent scouting reports follow ADR0003 (private game-linked PDFs,
+  separate read/upload grants, owner approval and retained versions). Bounded
+  native PDF input preparation is tested; picker/upload/server lifecycle/private
+  retrieval and provider validation/capacity remain unimplemented or unverified.
 - Full offline synchronization and persistent connected-data caching are deferred.
   Recovery buffers do not constitute an offline queue or durable server replica.
 
