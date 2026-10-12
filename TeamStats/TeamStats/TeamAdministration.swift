@@ -98,6 +98,17 @@ struct ServerMembership: Decodable, Identifiable, Sendable {
     enum CodingKeys: String, CodingKey { case userID = "user_id", status }
 }
 
+/// Contacts are derived by a protected server command from independently confirmed Auth fields.
+/// They identify an existing membership; they never establish capabilities or owner status.
+struct ServerAdministratorIdentity: Decodable, Identifiable, Sendable {
+    let userID: UUID
+    let email: String?
+    let phone: String?
+    var id: UUID { userID }
+    var label: String { email ?? phone ?? userID.uuidString }
+    enum CodingKeys: String, CodingKey { case userID = "user_id", email, phone }
+}
+
 struct ServerCapabilityGrant: Decodable, Identifiable, Sendable {
     let id: UUID
     let userID: UUID
@@ -154,6 +165,8 @@ final class TeamAdministration {
     private(set) var access: TeamAccess?
     private(set) var roster: [ServerRosterEntry] = []
     private(set) var memberships: [ServerMembership] = []
+    private(set) var administratorIdentities: [ServerAdministratorIdentity] = []
+    private(set) var identityIssue: AdministrationIssue?
     private(set) var grants: [ServerCapabilityGrant] = []
     private(set) var delegations: [ServerDelegation] = []
     private(set) var isBusy = false
@@ -176,6 +189,7 @@ final class TeamAdministration {
         guard !isBusy else { return }
         isBusy = true
         didLoadTeams = false
+        clearSelection()
         issue = nil
         retryTeamID = nil
         retryAdmissionID = nil
@@ -301,6 +315,31 @@ final class TeamAdministration {
         memberships = loadedMemberships
         grants = loadedGrants
         delegations = loadedDelegations
+        if snapshot.canReadAdministration {
+            do {
+                administratorIdentities = try await readIdentities(client: client, teamID: teamID)
+            } catch {
+                let safeIssue = administrationIssue(error)
+                administratorIdentities = []
+                if safeIssue == .denied { throw safeIssue }
+                identityIssue = safeIssue
+            }
+        }
+    }
+
+    func identity(for userID: UUID) -> ServerAdministratorIdentity? {
+        administratorIdentities.first { $0.userID == userID }
+    }
+
+    private func readIdentities(client: SupabaseClient, teamID: UUID) async throws -> [ServerAdministratorIdentity] {
+        var rows: [ServerAdministratorIdentity] = []
+        for page in 0..<50 {
+            let values: [ServerAdministratorIdentity] = try await client.rpc("team_administrator_identities", params: ["p_team_id": teamID.uuidString])
+                .order("user_id").range(from: page * 100, to: (page + 1) * 100 - 1).execute().value
+            rows.append(contentsOf: values)
+            if values.count < 100 { return rows }
+        }
+        throw AdministrationIssue.tooManyRecords
     }
 
     private func readPages<T: Decodable>(client: SupabaseClient, table: String, columns: String, order: String, teamID: UUID? = nil) async throws -> [T] {
@@ -350,18 +389,21 @@ final class TeamAdministration {
         return id
     }
     private func validation(_ value: AdministrationIssue) { confirmation = nil; issue = value }
-    private func clearSelection() { selectedTeam = nil; access = nil; roster = []; memberships = []; grants = []; delegations = [] }
-    private func fail(_ error: Error) {
-        if let error = error as? AdministrationIssue { issue = error }
-        else if let error = error as? PostgrestError {
-            switch error.code {
-            case "40001": issue = .conflict
-            case "42501": issue = .denied
-            case "22023", "23514", "23503": issue = .invalidResponse
-            default: issue = .server
-            }
-        } else { issue = .server }
+    private func clearSelection() { selectedTeam = nil; access = nil; roster = []; memberships = []; grants = []; delegations = []; administratorIdentities = []; identityIssue = nil }
+    private func fail(_ error: Error) { issue = administrationIssue(error) }
+}
+
+private func administrationIssue(_ error: Error) -> AdministrationIssue {
+    if let error = error as? AdministrationIssue { return error }
+    if let error = error as? PostgrestError {
+        switch error.code {
+        case "40001": return .conflict
+        case "42501": return .denied
+        case "22023", "23514", "23503": return .invalidResponse
+        default: return .server
+        }
     }
+    return .server
 }
 
 private enum CommandValue: Encodable {

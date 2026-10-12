@@ -24,6 +24,13 @@ Last updated: 2026-10-11.
 
 ## Current owner continuation — 2026-10-12
 
+Protected administrator identification is integrated: verified Auth email/phone
+for existing same-team memberships, admin-only lookup and UUID fallback.20 local
+SQL and17 native tests passed; hosted/UI acceptance remains pending. ADR0004
+adopts actual private-byte lifecycle and optional offline clip delivery after five
+independent Council analyses/reviews and synthesis. Local development is authorized;
+unknown hosted capacity/cost controls still fail closed under strict$0.
+
 Owner authorizes necessary free tooling/dependencies, including the proposed
 local Storage/Functions/Imgproxy bundles, subject to provenance/pins/checksums,
 licenses/disk checks and actual tool permissions. Strict$0/SMS-disabled/no production,

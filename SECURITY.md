@@ -44,6 +44,15 @@ Audit events accompany the enforced commands. See [statistics](supabase/statisti
 
 ## Credentials, device data and revocation
 
+Protected administrator identification uses the team-scoped
+`team_administrator_identities` command. Current owner, membership administrator or
+bounded delegate authority is checked on the server; only existing same-team
+memberships are returned. Email and phone appear only when independently confirmed
+in trusted Auth fields. Missing contacts retain the Auth UUID fallback; writable
+metadata never confers identity or authority. Ordinary members cannot request this
+private contact list. Confirmed denial clears the native protected snapshot;
+other contact-load failures offer Retry without impersonating an empty team.
+
 Only project URL/publishable configuration may enter the native client. Privileged
 database, Supabase, Google and sender credentials stay in trusted configuration,
 never source, URLs shared publicly, logs or handoffs. Build environment variables

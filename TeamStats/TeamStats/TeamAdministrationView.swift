@@ -115,6 +115,14 @@ private struct AdministrationFeedback: View {
         if model.isBusy {
             Section { ProgressView("Contacting team server…") }
         }
+        if let issue = model.identityIssue {
+            Section {
+                Label("Verified account contacts are unavailable.", systemImage: "exclamationmark.triangle")
+                Text(issue.localizedDescription).font(.footnote).foregroundStyle(.secondary)
+                Text("Account UUIDs remain available; contacts do not determine permissions.").font(.footnote).foregroundStyle(.secondary)
+                Button("Retry account contacts") { Task { await model.reload() } }.disabled(model.isBusy)
+            }
+        }
         if let issue = model.issue {
             Section {
                 Label(issue.localizedDescription, systemImage: "exclamationmark.triangle")
@@ -277,6 +285,23 @@ private struct AdministrationRosterEditor: View {
     }
 }
 
+private struct AdministrationIdentityView: View {
+    let model: TeamAdministration
+    let userID: UUID
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if let identity = model.identity(for: userID) {
+                if let email = identity.email { Text("Verified email: \(email)").textSelection(.enabled) }
+                if let phone = identity.phone { Text("Verified phone: \(phone)").textSelection(.enabled) }
+                if identity.email == nil && identity.phone == nil {
+                    Text("No verified contact available").foregroundStyle(.secondary)
+                }
+            }
+            Text("Auth account: \(userID.uuidString)").font(.caption).textSelection(.enabled)
+        }
+    }
+}
+
 private struct AdministrationMembershipView: View {
     let model: TeamAdministration
     @State private var targetID = ""
@@ -291,7 +316,7 @@ private struct AdministrationMembershipView: View {
                     if model.memberships.isEmpty { Text("No membership records returned.").foregroundStyle(.secondary) }
                     ForEach(model.memberships) { member in
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(member.userID.uuidString).font(.caption).textSelection(.enabled)
+                            AdministrationIdentityView(model: model, userID: member.userID)
                             Text(member.status.rawValue.capitalized)
                             if member.userID != model.access?.userID && member.userID != model.selectedTeam?.ownerAuthUUID {
                                 Button("Choose account") { targetID = member.userID.uuidString; status = member.status }
@@ -405,8 +430,11 @@ private struct AdministrationTargetPicker: View {
         Picker("Active Auth account", selection: $selection) {
             Text("Choose an account").tag("")
             ForEach(model.memberships.filter { $0.status == .active && $0.userID != model.access?.userID && $0.userID != model.selectedTeam?.ownerAuthUUID }) { member in
-                Text(member.userID.uuidString).tag(member.userID.uuidString)
+                Text(model.identity(for: member.userID)?.label ?? member.userID.uuidString).tag(member.userID.uuidString)
             }
+        }
+        if let userID = UUID(uuidString: selection) {
+            AdministrationIdentityView(model: model, userID: userID)
         }
     }
 }
@@ -445,7 +473,7 @@ private struct AdministrationDelegationView: View {
                     if model.delegations.isEmpty { Text("No delegation records.").foregroundStyle(.secondary) }
                     ForEach(model.delegations) { delegation in
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(delegation.delegateUserID.uuidString).font(.caption).textSelection(.enabled)
+                            AdministrationIdentityView(model: model, userID: delegation.delegateUserID)
                             ForEach(delegation.allowedCapabilities) { Text($0.label) }
                             if let date = administrationDate(delegation.expiresAt) {
                                 Text("Expires \(date.formatted(date: .abbreviated, time: .shortened))").foregroundStyle(.secondary)
