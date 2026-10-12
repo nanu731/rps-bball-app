@@ -178,6 +178,66 @@ final class AdministrationTests: XCTestCase {
         XCTAssertNil(model.issue)
     }
 
+    func testAdministratorIdentitiesUseConfirmedContactsAndUUIDFallback() async {
+        let fixture = AdministrationFixture()
+        let model = fixture.model()
+        await load(model)
+        XCTAssertEqual(model.identity(for: fixtureMemberID)?.email, "synthetic-member@example.invalid")
+        XCTAssertNil(model.identity(for: fixtureMemberID)?.phone)
+        XCTAssertEqual(model.identity(for: fixtureOwnerID)?.label, fixtureOwnerID.uuidString)
+        XCTAssertNil(model.identityIssue)
+        XCTAssertEqual(fixture.identityRequests, 1)
+    }
+
+    func testOrdinaryMemberNeverRequestsPrivateContacts() async {
+        let fixture = AdministrationFixture(mode: .ordinary)
+        let model = fixture.model()
+        await load(model)
+        XCTAssertNotNil(model.access)
+        XCTAssertFalse(model.access!.canReadAdministration)
+        XCTAssertEqual(fixture.identityRequests, 0)
+        XCTAssertTrue(model.administratorIdentities.isEmpty)
+    }
+
+    func testIdentityFailureKeepsSharedDataUsableAndRetryReloadsContacts() async {
+        let fixture = AdministrationFixture(mode: .identityFailureOnce)
+        let model = fixture.model()
+        await load(model)
+        XCTAssertNil(model.issue)
+        XCTAssertEqual(model.identityIssue, .server)
+        XCTAssertNotNil(model.access)
+        XCTAssertFalse(model.roster.isEmpty)
+        XCTAssertTrue(model.administratorIdentities.isEmpty)
+        XCTAssertFalse(model.identityIssue!.localizedDescription.contains("SENSITIVE_FIXTURE_PAYLOAD"))
+        await model.reload()
+        XCTAssertNil(model.identityIssue)
+        XCTAssertEqual(model.identity(for: fixtureMemberID)?.email, "synthetic-member@example.invalid")
+        XCTAssertEqual(fixture.commands.count, 0)
+    }
+
+    func testConfirmedIdentityDenialConcealsPreviousProtectedSnapshot() async {
+        let fixture = AdministrationFixture()
+        let model = fixture.model()
+        await load(model)
+        XCTAssertFalse(model.administratorIdentities.isEmpty)
+        fixture.denyIdentities()
+        await model.reload()
+        XCTAssertEqual(model.issue, .denied)
+        XCTAssertNil(model.access)
+        XCTAssertTrue(model.memberships.isEmpty)
+        XCTAssertTrue(model.administratorIdentities.isEmpty)
+    }
+
+    func testReloadingTeamContextClearsPreviousPrivateContacts() async {
+        let fixture = AdministrationFixture()
+        let model = fixture.model()
+        await load(model)
+        XCTAssertFalse(model.administratorIdentities.isEmpty)
+        await model.loadTeams()
+        XCTAssertNil(model.selectedTeam)
+        XCTAssertTrue(model.administratorIdentities.isEmpty)
+    }
+
     private func load(_ model: TeamAdministration) async {
         await model.loadTeams()
         guard let team = model.teams.first else { XCTFail("Synthetic team must be discovered"); return }
@@ -194,17 +254,21 @@ private let fixtureEnvelopeID = UUID(uuidString: "55555555-5555-4555-8555-555555
 // Synthetic HTTP responses exercise the real SDK/model seam. They do not prove
 // deployed Supabase authorization, verified owner identity or provider delivery.
 private final class AdministrationFixture: @unchecked Sendable {
-    enum Mode { case standard, empty, staleOnce, denied, reloadFailureOnce, pagination, delegate, ambiguousSave }
+    enum Mode { case standard, empty, staleOnce, denied, reloadFailureOnce, pagination, delegate, ambiguousSave, ordinary, identityFailureOnce }
     struct Command { let name: String; let parameters: [String: Any] }
     private let lock = NSLock()
     private let mode: Mode
     private var commandValues: [Command] = []
     private var offsets: [Int] = []
     private var didFail = false
+    private var identityReadCount = 0
+    private var deniedIdentities = false
     let key = UUID().uuidString
     init(mode: Mode = .standard) { self.mode = mode }
     var commands: [Command] { lock.withLock { commandValues } }
     var rosterOffsets: [Int] { lock.withLock { offsets } }
+    var identityRequests: Int { lock.withLock { identityReadCount } }
+    func denyIdentities() { lock.withLock { deniedIdentities = true } }
 
     @MainActor func model() -> TeamAdministration {
         AdministrationURLProtocol.registry.insert(self)
@@ -224,8 +288,17 @@ private final class AdministrationFixture: @unchecked Sendable {
         let name = request.url!.lastPathComponent
         if request.url!.path.contains("/rpc/") {
             if name == "team_access" {
-                return json(["team_id": fixtureTeamID.uuidString, "user_id": mode == .delegate ? "77777777-7777-4777-8777-777777777777" : fixtureOwnerID.uuidString, "is_owner": mode != .delegate,
+                return json(["team_id": fixtureTeamID.uuidString, "user_id": mode == .delegate ? "77777777-7777-4777-8777-777777777777" : fixtureOwnerID.uuidString, "is_owner": mode != .delegate && mode != .ordinary,
                     "access_revision": mode == .staleOnce && didFail ? 8 : 7, "capabilities": mode == .delegate ? ["stats.review"] : [], "grant_envelopes": mode == .delegate ? [["id": fixtureEnvelopeID.uuidString, "allowed_capabilities": ["roster.manage"], "expires_at": "2040-01-01T00:00:00Z"]] : []])
+            }
+            if name == "team_administrator_identities" {
+                identityReadCount += 1
+                if deniedIdentities { return json(["code": "42501", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 403) }
+                if mode == .identityFailureOnce && identityReadCount == 1 {
+                    return json(["code": "503", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 503)
+                }
+                return json([["user_id": fixtureMemberID.uuidString, "email": "synthetic-member@example.invalid", "phone": NSNull()],
+                    ["user_id": fixtureOwnerID.uuidString, "email": NSNull(), "phone": NSNull()]])
             }
             let body = request.httpBody ?? readBodyStream(request.httpBodyStream)
             let parameters = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any] ?? [:]
