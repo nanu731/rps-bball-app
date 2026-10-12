@@ -173,7 +173,11 @@ private struct PlayRevisionView: View {
                         Text(revision.title).font(.title2)
                     }
                     if revision.status == .published {
-                        NavigationLink("Practice video links and owner review") {
+                        NavigationLink("Practice clips") {
+                            PrivateFilesView(teamID: revision.teamID, kind: .practice, targetID: revision.playID,
+                                targetTitle: revision.title, account: account)
+                        }
+                        NavigationLink("Earlier practice video links") {
                             MediaResourcesView(teamID: revision.teamID, kind: .practice, targetID: revision.playID,
                                 targetTitle: revision.title, account: account)
                         }
