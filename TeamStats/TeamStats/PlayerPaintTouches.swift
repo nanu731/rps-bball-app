@@ -57,6 +57,7 @@ struct PlayerPaintTouchEditor: View {
     @State private var saveError: String?
     @State private var hasChanges = false
     @State private var saved = false
+    @State private var photoPlayer: TemporaryPlayer?
     @FocusState private var focusedPlayer: String?
 
     private var invalid: Bool {
@@ -83,6 +84,9 @@ struct PlayerPaintTouchEditor: View {
                 } else if loaded {
                     ForEach(temporaryRoster) { player in
                         Section("\(player.name) · #\(player.number)") {
+                            Button("Review photo for this player", systemImage: "photo") {
+                                focusedPlayer = nil; photoPlayer = player
+                            }
                             Text("Game-total paint touches")
                             HStack(spacing: 12) {
                                 counter(player, delta: -1)
@@ -141,6 +145,12 @@ struct PlayerPaintTouchEditor: View {
             }
             .interactiveDismissDisabled(hasChanges)
             .task { load() }
+            .sheet(item: $photoPlayer) { player in
+                PhotoDraftImportSheet(targetLabel: "\(game.opponent) · \(player.name) #\(player.number)",
+                    fields: [PhotoDraftField(id: "total", label: "Game-total paint touches")]) { reviewed in
+                    if let total = reviewed["total"] { values[player.id] = total; changed() }
+                }
+            }
         }
     }
 

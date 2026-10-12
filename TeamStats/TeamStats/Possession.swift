@@ -112,6 +112,7 @@ struct PossessionEditor: View {
     @State private var saveError: String?
     @State private var hasChanges = false
     @State private var saved = false
+    @State private var photoRecord: PossessionDraft?
     @FocusState private var focusedField: String?
     @ScaledMetric(relativeTo: .body) private var columnWidth = 264.0
 
@@ -187,6 +188,14 @@ struct PossessionEditor: View {
         }
         .interactiveDismissDisabled(hasChanges)
         .task { load() }
+        .sheet(item: $photoRecord) { record in
+            PhotoDraftImportSheet(targetLabel: "\(game.opponent) · \(record.team.label) possession \(record.number)",
+                fields: PossessionField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) }) { reviewed in
+                guard let index = drafts.firstIndex(where: { $0.id == record.id }) else { return }
+                drafts[index].values.merge(reviewed) { _, new in new }
+                changed()
+            }
+        }
     }
 
     private var guidance: some View {
@@ -217,6 +226,9 @@ struct PossessionEditor: View {
         if let index = drafts.firstIndex(where: { $0.team == team && $0.number == number }) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("\(team.label) possession \(number)").font(.headline)
+                Button("Review photo for this possession", systemImage: "photo") {
+                    focusedField = nil; photoRecord = drafts[index]
+                }
                 ForEach(PossessionField.allCases, id: \.self) { field in
                     VStack(alignment: .leading, spacing: 6) {
                         Text(field.label)

@@ -22,6 +22,7 @@ struct ConnectedStatEntryView: View {
     @State private var headerHeight: CGFloat = 0
     @State private var completionKind: ConnectedDatasetType?
     @State private var reloadCandidate: ConnectedDatasetType?
+    @State private var photoTarget: ConnectedPhotoTarget?
     @FocusState private var focused: String?
     @ScaledMetric(relativeTo: .body) private var possessionColumnWidth = 340.0
     @ScaledMetric(relativeTo: .body) private var boxColumnWidth = 110.0
@@ -86,6 +87,11 @@ struct ConnectedStatEntryView: View {
                     hasNumericBlanks: numericBlanks(kind)) {
                         synchronize(kind)
                     }
+            }
+        }
+        .sheet(item: $photoTarget) { target in
+            PhotoDraftImportSheet(targetLabel: "\(game.opponent) · \(target.label)", fields: target.fields) {
+                applyPhoto($0, to: target)
             }
         }
         .confirmationDialog("Load the current saved version?", isPresented: Binding(get: { reloadCandidate != nil }, set: { if !$0 { reloadCandidate = nil } }), titleVisibility: .visible) {
@@ -227,6 +233,9 @@ struct ConnectedStatEntryView: View {
                 }
                 if let player = playerLabels.first(where: { $0.id.uuidString == selectedPlayerID }) {
                     Section("Player box score") {
+                        Button("Review photo for this player", systemImage: "photo") {
+                            focused = nil; photoTarget = .box(player)
+                        }.disabled(!editable(.boxScores))
                         ForEach(BoxScoreField.allCases, id: \.self) { field in
                             LabeledContent(field.label) { boxEntry(player, field).frame(minWidth: 95) }
                         }
@@ -255,7 +264,12 @@ struct ConnectedStatEntryView: View {
                     }.font(.caption.bold())
                     ForEach(playerLabels) { player in
                         GridRow {
-                            Text("\(player.name) · #\(player.jerseyNumber)").frame(minWidth: 170, alignment: .leading)
+                            VStack(alignment: .leading) {
+                                Text("\(player.name) · #\(player.jerseyNumber)")
+                                Button("Review photo", systemImage: "photo") { focused = nil; photoTarget = .box(player) }
+                                    .frame(minHeight: 44)
+                                    .disabled(!editable(.boxScores)).accessibilityLabel("Review photo for \(player.name)")
+                            }.frame(minWidth: 170, alignment: .leading)
                             ForEach(BoxScoreField.allCases, id: \.self) { field in boxEntry(player, field).frame(width: boxColumnWidth) }
                             Text(bufferRebounds(boxes[player.id.uuidString] ?? [:])).frame(width: 150)
                             Group {
@@ -290,6 +304,8 @@ struct ConnectedStatEntryView: View {
             else {
                 ForEach(playerLabels) { player in
                     Section("\(player.name) · #\(player.jerseyNumber)") {
+                        Button("Review photo for this player", systemImage: "photo") { focused = nil; photoTarget = .paint(player) }
+                            .disabled(!editable(.playerPaintTouches))
                         countControls("Game-total paint touches", text: Binding(get: { paint[player.id.uuidString] ?? "" }, set: {
                             paint[player.id.uuidString] = $0
                             changed.insert(.playerPaintTouches)
@@ -354,6 +370,9 @@ struct ConnectedStatEntryView: View {
         if let index = possessions.firstIndex(where: { $0.team == team && $0.number == number }) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("\(team.label) · Record \(number)").font(.headline)
+                Button("Review photo for this possession", systemImage: "photo") {
+                    focused = nil; photoTarget = .possession(possessions[index].id, team, number)
+                }.disabled(!editable(datasetKind(team)))
                 ForEach(PossessionField.allCases, id: \.self) { field in
                     countControls(field.label, text: Binding(get: { possessions[index].values[field.rawValue] ?? "" }, set: {
                         possessions[index].values[field.rawValue] = $0
@@ -378,6 +397,20 @@ struct ConnectedStatEntryView: View {
                 Text("No opposite-side placeholder is saved. Use Add next record for this team.").font(.footnote).foregroundStyle(.secondary)
             }.frame(width: possessionColumnWidth, alignment: .leading)
         }
+    }
+
+    private func applyPhoto(_ reviewed: [String: String], to target: ConnectedPhotoTarget) {
+        guard editable(target.kind) else { return }
+        switch target {
+        case .box(let player): boxes[player.id.uuidString, default: [:]].merge(reviewed) { _, new in new }
+        case .paint(let player):
+            guard let total = reviewed["total"] else { return }
+            paint[player.id.uuidString] = total
+        case .possession(let id, _, _):
+            guard let index = possessions.firstIndex(where: { $0.id == id }) else { return }
+            possessions[index].values.merge(reviewed) { _, new in new }
+        }
+        changed.insert(target.kind)
     }
 
     private func countControls(_ label: String, text: Binding<String>, focusKey: String, editable: Bool, accessibility: String) -> some View {
@@ -512,6 +545,37 @@ struct ConnectedStatEntryView: View {
     }
 }
 
+private enum ConnectedPhotoTarget: Identifiable {
+    case box(ConnectedRosterLabel), paint(ConnectedRosterLabel), possession(UUID, PossessionTeam, Int)
+    var id: String {
+        switch self {
+        case .box(let player): "box:\(player.id)"
+        case .paint(let player): "paint:\(player.id)"
+        case .possession(let id, _, _): "possession:\(id)"
+        }
+    }
+    var label: String {
+        switch self {
+        case .box(let player), .paint(let player): "\(player.name) · #\(player.jerseyNumber)"
+        case .possession(_, let team, let number): "\(team.label) possession \(number)"
+        }
+    }
+    var kind: ConnectedDatasetType {
+        switch self {
+        case .box: .boxScores
+        case .paint: .playerPaintTouches
+        case .possession(_, let team, _): team == .ours ? .ourPossessions : .opponentPossessions
+        }
+    }
+    var fields: [PhotoDraftField] {
+        switch self {
+        case .box: BoxScoreField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) }
+        case .paint: [PhotoDraftField(id: "total", label: "Game-total paint touches")]
+        case .possession: PossessionField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) }
+        }
+    }
+}
+
 private struct ConnectedCompletionSheet: View {
     let model: ConnectedStatistics
     let version: ConnectedVersion
@@ -568,4 +632,3 @@ private func bufferRebounds(_ values: [String: String]) -> String {
     guard let first = offensive.number, let second = defensive.number else { return "Not entered" }
     return boxScoreSum([first, second]).map(String.init) ?? "Unavailable — exceeds calculation range"
 }
-

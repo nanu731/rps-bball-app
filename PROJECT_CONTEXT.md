@@ -316,3 +316,11 @@ successor revisions are server-enforced. Seven native play tests and54 actual
 rollback SQL checks passed. The real local native SDK also saved/published/reopened
 a play and retained its accepted drawing while creating a stable-marker successor.
 Actual gesture/playback/VoiceOver/larger-text device interaction remains unverified.
+
+Photo review is wired to selected existing player/possession draft targets in local
+and shared entry. Native PhotosPicker/Vision keeps preview/text transient, validates
+image/request bounds, proposes only standalone valid counts, and requires explicit
+field mapping/value confirmation before changing unsaved buffers. Eight review
+tests passed plus actual Vision on a corrected synthetic printed image. The first
+image’s REBOUNDS0 was read as letterO; no substitution was added. Real marked-form
+accuracy, picker interactions and both-device layout remain unverified.

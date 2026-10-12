@@ -1041,3 +1041,16 @@ a labeled TEST ONLY play, verified authored intermediate coordinates, and create
 a successor retaining marker UUIDs and the accepted pointer; unrelated plays stayed
 visible. Existing JSON was not used or uploaded. Native court/playback gestures,
 VoiceOver, both-device larger text/Save and hosted integration remain pending.
+
+
+Native photo-review slice: two red/green proposal tracers verified confirmation
+and standalone-count-only proposals. Eight native review/validation tests passed;
+actual Vision initially read TEST ONLY REBOUNDS0 as REBOUNDSO. Diagnostic output
+was limited to that generated image. The corrected distinct REBOUNDS123 fixture
+passed strict POINTS7/REBOUNDS123 and transient JPEG preview checks. Production
+code never converts O to0. Confirmed mappings change only the chosen existing
+unsaved local/shared box-score, paint-total or possession buffer; Save remains
+explicit and no source image/text is stored or uploaded. Blanks/zeros/invalid
+values/overflow/unknown field IDs/duplicate mappings are checked. Picker, Cancel/
+apply interaction, keyboard/larger-text reachability and real marked-form accuracy
+remain pending; built native code is not evidence that these interactions passed.

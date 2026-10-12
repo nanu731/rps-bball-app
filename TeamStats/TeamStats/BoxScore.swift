@@ -184,6 +184,7 @@ struct BoxScoreEditor: View {
     @State private var hasChanges = false
     @State private var saved = false
     @State private var headerHeight: CGFloat = 0
+    @State private var photoPlayer: TemporaryPlayer?
 
     init(gameID: UUID, initialMode: BoxScoreEntryMode) {
         self.gameID = gameID
@@ -264,6 +265,13 @@ struct BoxScoreEditor: View {
         }
         .interactiveDismissDisabled(hasChanges)
         .task { load() }
+        .sheet(item: $photoPlayer) { player in
+            PhotoDraftImportSheet(targetLabel: "Selected game · \(player.name) #\(player.number)",
+                fields: BoxScoreField.allCases.map { PhotoDraftField(id: $0.rawValue, label: $0.label) }) { reviewed in
+                drafts[player.id, default: [:]].merge(reviewed) { _, new in new }
+                hasChanges = true; saved = false; saveError = nil
+            }
+        }
     }
 
     private var entryHeader: some View {
@@ -310,6 +318,7 @@ struct BoxScoreEditor: View {
             }
             if let player = temporaryRoster.first(where: { $0.id == selectedPlayerID }) {
                 Section("Player box score") {
+                    Button("Review photo for this player", systemImage: "photo") { photoPlayer = player }
                     ForEach(BoxScoreField.allCases, id: \.self) { field in
                         LabeledContent(field.label) { entry(player, field).frame(width: 95) }
                     }
@@ -337,8 +346,12 @@ struct BoxScoreEditor: View {
                 }.font(.caption.bold())
                 ForEach(temporaryRoster) { player in
                     GridRow {
-                        Text("\(player.name) #\(player.number)")
-                            .frame(width: 170, alignment: .leading)
+                        VStack(alignment: .leading) {
+                            Text("\(player.name) #\(player.number)")
+                            Button("Review photo", systemImage: "photo") { photoPlayer = player }
+                                .frame(minHeight: 44)
+                                .accessibilityLabel("Review photo for \(player.name)")
+                        }.frame(width: 170, alignment: .leading)
                         ForEach(BoxScoreField.allCases, id: \.self) { field in
                             entry(player, field).frame(width: 95)
                         }
