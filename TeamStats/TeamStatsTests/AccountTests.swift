@@ -220,6 +220,29 @@ final class AccountTests: XCTestCase {
         XCTAssertNil(denied.offlineClipActorID)
         XCTAssertNil(denied.sessionContextID)
         XCTAssertEqual(denied.issue, .storage)
+        let restart = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "offlineUser"))
+        await restart.restore()
+        XCTAssertNil(restart.offlineClipActorID)
+        XCTAssertNil(restart.sessionContextID)
+    }
+
+    func testOfflineStampCannotRestoreDifferentStoredSessionIdentity() async throws {
+        let storage = FixtureAccountStorage()
+        let original = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await original.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await original.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await original.verifyCode("123456")
+        var different = fixtureSession()
+        different.user.id = UUID(uuidString: "d7000000-0000-4000-8000-000000000002")!
+        try storage.replaceStoredSession(different)
+        let restart = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "offlineUser"))
+        await restart.restore()
+        XCTAssertNil(restart.offlineClipActorID)
+        XCTAssertNil(restart.sessionContextID)
+        let online = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "differentUser"))
+        await online.restore()
+        XCTAssertEqual(online.verifiedUserID, different.user.id)
+        XCTAssertEqual(online.offlineClipActorID, different.user.id)
     }
 
     func testOfflineClipActorSurvivesTransientRestartButKnownDenialLocksIt() async {
@@ -327,6 +350,11 @@ private final class FixtureAccountStorage: AuthLocalStorage, @unchecked Sendable
     private let failSessionWrites: Bool
     private var failReads = false
     private var failStampWrites = false
+    func replaceStoredSession(_ session: Session) throws {
+        lock.lock(); defer { lock.unlock() }
+        let key = values.keys.first { $0.hasPrefix("session.v1.") && !$0.hasSuffix("-code-verifier") && !$0.hasSuffix(".email-link") }!
+        values[key] = try JSONEncoder().encode(session)
+    }
     func rejectStampWrites() { lock.lock(); defer { lock.unlock() }; failStampWrites = true }
     func rejectReads(_ reject: Bool) {
         lock.lock(); defer { lock.unlock() }; failReads = reject
@@ -390,7 +418,9 @@ private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable 
             if request.url?.host == "expired.invalid" { session.expiresAt = 1_700_000_000; session.expiresIn = 0 }
             body = try! AuthClient.Configuration.jsonEncoder.encode(session)
         } else if request.url?.path.hasSuffix("/user") == true {
-            body = try! AuthClient.Configuration.jsonEncoder.encode(fixtureUser())
+            var user = fixtureUser()
+            if mode == "differentUser" { user.id = UUID(uuidString: "d7000000-0000-4000-8000-000000000002")! }
+            body = try! AuthClient.Configuration.jsonEncoder.encode(user)
         } else { body = Data("{}".utf8) }
         let deliver = { [self] in
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)

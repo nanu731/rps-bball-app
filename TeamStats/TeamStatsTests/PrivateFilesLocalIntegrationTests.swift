@@ -36,10 +36,32 @@ final class PrivateFilesLocalIntegrationTests: XCTestCase {
             }, offlineActor: { actor }, retention: retention)
         await model.load()
         XCTAssertTrue(model.didLoad); XCTAssertNil(model.issue)
+        // Only this synthetic fixture's prior uncertain uploads are reconciled;
+        // no body is repeated and prior versions/allocations remain preserved.
+        let priorUploads = model.ownDrafts.filter {
+            $0.status == .uploading && $0.authorUserID == actor && $0.title == "TEST ONLY NATIVE PRIVATE CLIP"
+        }
+        for prior in priorUploads {
+            let receipt = await model.reconcile(prior)
+            if receipt == nil { XCTAssertEqual(model.issue, .missingUpload) }
+            else { XCTAssertEqual(receipt?.id, prior.id); XCTAssertEqual(receipt?.status, .ready) }
+            guard receipt != nil || model.issue == .missingUpload else { return }
+        }
+        if !priorUploads.isEmpty {
+            await model.load()
+            XCTAssertTrue(model.didLoad); XCTAssertNil(model.issue)
+            for prior in priorUploads {
+                let preserved = try XCTUnwrap(model.versions.first { $0.id == prior.id })
+                XCTAssertEqual(model.versions.filter { $0.id == prior.id }.count, 1)
+                XCTAssertEqual(preserved.operationID, prior.operationID)
+                XCTAssertEqual(preserved.resourceID, prior.resourceID)
+            }
+        }
         let bytes = try boundedBytes(URL(fileURLWithPath: clipPath), maximum: 10 * 1024 * 1024)
         var input = PrivateFileInput(); input.title = "TEST ONLY NATIVE PRIVATE CLIP"
         let reservation = await model.reserve(data: bytes, input: input)
         XCTAssertNotNil(reservation, model.issue?.message ?? "No server reservation")
+        for prior in priorUploads { XCTAssertNotEqual(reservation?.operationID, prior.operationID) }
         let stored = await model.upload()
         XCTAssertNotNil(stored, model.issue?.message ?? "No validated stored receipt")
         guard let stored else { return }

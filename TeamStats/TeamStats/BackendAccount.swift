@@ -212,6 +212,7 @@ final class BackendAccount {
             do { stored = try JSONDecoder().decode(AccountConfiguration.self, from: data) }
             catch { throw AccountIssue.invalidConfiguration }
             let validated = try AccountConfiguration(url: stored.url.absoluteString, publicKey: stored.publicKey, environment: stored.environment)
+            offlineClipActorID = nil
             configuration = validated
             // Read and decode explicitly: the SDK otherwise turns read errors
             // into an absent session and suppresses write/delete errors.
@@ -223,11 +224,16 @@ final class BackendAccount {
                 issue = nil
                 return
             }
-            do { _ = try JSONDecoder().decode(Session.self, from: sessionData) }
+            let storedSession: Session
+            do { storedSession = try JSONDecoder().decode(Session.self, from: sessionData) }
             catch { throw AccountIssue.storage }
             if let stamp = try read(key: offlineStampKey(validated)) {
-                do { offlineClipActorID = try JSONDecoder().decode(OfflineActorStamp.self, from: stamp).actorID }
-                catch { throw AccountIssue.storage }
+                do {
+                    let actor = try JSONDecoder().decode(OfflineActorStamp.self, from: stamp).actorID
+                    // Binding prevents a failed account change from exposing a prior actor's clips.
+                    // It supplies no remote authority; fresh Auth verification still follows.
+                    if actor == storedSession.user.id { offlineClipActorID = actor }
+                } catch { throw AccountIssue.storage }
             }
             let restoredClient = makeClient(validated)
             client = restoredClient
@@ -397,7 +403,14 @@ final class BackendAccount {
     private func invalidateOfflineActor() throws {
         offlineClipActorID = nil
         if let configuration {
-            try storage.store(key: offlineStampKey(configuration), value: JSONEncoder().encode(OfflineActorStamp(actorID: nil)))
+            do { try storage.store(key: offlineStampKey(configuration), value: JSONEncoder().encode(OfflineActorStamp(actorID: nil))) }
+            catch {
+                // Either removal durably prevents restoring this revoked offline namespace.
+                // Preserved clip bytes and all local game records remain untouched.
+                try? storage.remove(key: sessionKey(configuration))
+                try? storage.remove(key: offlineStampKey(configuration))
+                throw AccountIssue.storage
+            }
         }
     }
     private func knownSessionDenial(_ error: Error) -> Bool {
