@@ -91,6 +91,29 @@ web headers/CSRF/payment controls are conditional, not passed native-app checks.
 See [TESTING.md](TESTING.md) for evidence and release gates. Production/release
 requires separate owner approval.
 
+## Private security reporting and recovery responsibility
+
+`TODO_SECURITY_REPORTING_CHANNEL`: the owner must choose a private reporting
+route before external pilot use. No contact is invented here, and GitHub private
+vulnerability reporting is not claimed enabled. Until a route is published, do
+not post credentials, student records, private provider identifiers or exploit
+details in public issues. Provide a minimal sanitized description through an
+owner-approved private channel once available; share sensitive evidence only by
+an explicitly agreed secure method. No response-time promise is established.
+
+The owner coordinates incident response and approved restoration with trusted
+provider administrators. Ordinary membership, review or delegated grant authority
+does not authorize database access/restore. Identify and contain the affected
+scope, preserve evidence privately, and rotate/revoke an exposed credential before
+coordinated cleanup. No unapproved record deletion, provider reset or public
+disclosure follows automatically from a report.
+
+See [architecture recovery boundaries](ARCHITECTURE.md#backup-and-recovery-boundary).
+Local-data protection/backup behavior, account-switch retention and restore testing
+remain open. `TODO_BACKUP_RECOVERY_POLICY` must identify an approved operator,
+retention/recovery objectives and a $0-compatible verified method; documentation
+must not imply paid provider backups or tested disaster recovery.
+
 ## Maintenance
 
 Update this document when grants, authentication/session storage, privileged

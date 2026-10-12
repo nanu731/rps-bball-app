@@ -2,7 +2,8 @@
 
 TeamStats is a native SwiftUI app for after-game high-school basketball statistics
 on iPhone and iPad (minimum iOS/iPadOS 26.0). Managers enter box scores,
-team possessions, and individual paint-touch totals; players view saved stats.
+team possessions, and individual paint-touch totals; players view accepted shared
+statistics. Device-local saved drafts are separate, incomplete and unreviewed.
 
 ## Current implementation
 
@@ -20,7 +21,9 @@ binds the exchange to that device's Keychain challenge. Typed email codes remain
 supported when the configured sender supplies them. New Free projects using the
 default sender cannot edit templates; do not upgrade for codes. Remote SMS stays
 disabled under the $0 budget. Actual local Auth/gateway/native SDK tests passed;
-hosted delivery and setup remain unverified. Shared entry/review and accepted summaries are accessible from Account → Team
+limited owner hosted email sign-in and identity/session preflight are recorded.
+Team-wide email delivery, hosted activation and authorization acceptance remain
+pending. Shared entry/review and accepted summaries are accessible from Account → Team
 administration → Shared games and statistics. These use real server commands;
 local games are kept separate. Native fixtures and real local SDK workflows passed; hosted setup
 and two-device UI checks are still pending. The owner can inspect per-game server export status with independent error/Retry. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
@@ -28,7 +31,7 @@ by default; actual Sheets delivery, full-form photo accuracy and videos remain
 incomplete. Private reviewed practice/game-film links are available from published
 plays/shared games; file uploads and in-app playback are unavailable. Provider
 links require independent access, and saving them proves no rights or playback.
-Playbook authoring/review/playback is available from team administration;
+Playbook authoring/review/court-movement playback is available from team administration;
 local database and native SDK verification passed, while device interaction and
 hosted verification remain pending.
 Photo review is available inside local/shared player and possession drafts. Choose
@@ -64,7 +67,7 @@ request before its recovered working draft can receive retained entries.
 ### Release readiness
 
 This branch is not a completed hosted integration or release. Nonproduction
-project setup, verified owner bootstrap, team email delivery, trusted Google
+activation, verified owner bootstrap, team email delivery, trusted Google
 worker configuration and actual video upload/transfer enforcement remain blocked.
 New UI needs iPhone/iPad rotation, larger text, VoiceOver, keyboard/Save and
 recovery/photo interaction checks. Simulator inspection recovered, but native
@@ -116,6 +119,7 @@ currently available upload screen.
 - [Architecture and source map](ARCHITECTURE.md): modules, storage and integration boundaries.
 - [Security boundaries](SECURITY.md): authority, controls and verification gaps.
 - [Testing and acceptance](TESTING.md): suites, safe prerequisites and remaining gates.
+- [Glossary](GLOSSARY.md): local/shared data, completion, publication and recovery terminology.
 
 Update this flow section when visible navigation or lifecycle changes; keep
 technical contracts in their own documents rather than duplicating them here.

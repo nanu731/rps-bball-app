@@ -93,6 +93,23 @@ shot categories without inventing player attribution to possessions.
 - Full offline synchronization and persistent connected-data caching are deferred.
   Recovery buffers do not constitute an offline queue or durable server replica.
 
+## Backup and recovery boundary
+
+Application recovery handles retained drafts, stale versions and uncertain replies.
+It is not disaster recovery after device loss, app removal or database loss.
+Local JSON is not a hosted backup; Keychain's device-only items are not a portable
+account/session backup. Published revision history is not an independent database
+backup either. No tested local-record export/import or hosted restore procedure
+is established by this snapshot. Provider backup availability/retention and any
+restore mechanism must be verified under the $0 budget before promising recovery.
+
+The app owner coordinates incident/data-recovery decisions and authorizes trusted
+administrative work; delegates' normal app capabilities confer no database-restore
+authority. Operators preserve available state, identify the affected environment
+and seek approval before destructive restoration. Recovery objectives, retention,
+backup location and restore-test evidence remain `TODO_BACKUP_RECOVERY_POLICY`.
+Use synthetic data to verify restoration without overwriting existing records.
+
 ## Maintenance
 
 Update this overview when storage boundaries, source modules, version lifecycle
