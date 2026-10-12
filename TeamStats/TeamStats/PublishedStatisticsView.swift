@@ -178,24 +178,40 @@ struct ConnectedExportQueueView: View {
             ConnectedStatisticsFeedback(model: model)
             Section {
                 Text("The server creates one immutable export outbox item for each accepted dataset version.")
-                Text("Automatic delivery to Google Sheets is not implemented. These queue records do not confirm spreadsheet delivery.")
+                Text("Only Delivered confirms a server receipt. Delivery requires a separately configured trusted worker and an approved zero-cost Google setup. Queued items do not confirm spreadsheet delivery.")
                     .foregroundStyle(.secondary)
             }
             if model.access?.isOwner != true || !model.didLoadGame {
                 Section { Text("Export queue unavailable. Owner access and a successful server load are required.") }
             } else {
-                Section("Server outbox") {
-                    if model.exportOutbox.isEmpty { Text("No export items returned for this game.").foregroundStyle(.secondary) }
-                    ForEach(model.exportOutbox) { item in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Publication generation \(item.publicationGeneration)").font(.headline)
-                            Text("Accepted version \(item.acceptedVersionID.uuidString)").font(.caption).textSelection(.enabled)
-                            Text("Queued \(item.createdAt)").font(.caption).foregroundStyle(.secondary)
+                if model.isLoadingExportStatus { Section { ProgressView("Loading delivery status…") } }
+                if let issue = model.exportIssue {
+                    Section("Delivery status unavailable") {
+                        Label(issue.localizedDescription, systemImage: "exclamationmark.triangle")
+                        Button("Retry delivery status") { Task { await model.loadExportStatus() } }
+                            .disabled(model.isLoadingExportStatus)
+                    }
+                }
+                if model.didLoadExportStatus {
+                    Section("Server delivery status") {
+                        if model.exportStatus.isEmpty { Text("No export items returned for this game.").foregroundStyle(.secondary) }
+                        ForEach(model.exportStatus) { item in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.datasetType.label).font(.headline)
+                                Label(item.state.label, systemImage: item.state == .delivered ? "checkmark.circle" : item.state == .failed ? "exclamationmark.triangle" : "clock")
+                                Text("Publication generation \(item.publicationGeneration)")
+                                Text("Accepted version \(item.acceptedVersionID.uuidString)").font(.caption).textSelection(.enabled)
+                                Text("Delivery attempts: \(item.attempts)").foregroundStyle(.secondary)
+                                if let code = item.errorCode { Text("Reason: \(code)").textSelection(.enabled) }
+                                if let date = item.deliveredAt { Text("Confirmed \(date)").font(.caption).foregroundStyle(.secondary) }
+                            }
                         }
                     }
                 }
             }
-        }.navigationTitle("Sheets export queue")
+        }.navigationTitle("Sheets export status")
+            .task { await model.loadExportStatus() }
+            .refreshable { await model.loadExportStatus() }
     }
 }
 

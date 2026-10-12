@@ -1011,3 +1011,14 @@ only literal Boolean true could enable Google. Google stays disabled: no trusted
 OAuth credentials, billing-disabled proof, scheduler, actual formula calculation
 or provider delivery is established. Native delivery-status integration remains
 open. Existing authorized private Sheet remains separate destination-only proof.
+
+
+Owner export-status integration: the screen now reads the owner-only server RPC,
+distinguishes queued/reserved/failed/delivered receipts, and gives independent
+loading/error/Retry without erasing saved statistics. Regression tests first
+failed to compile against the absent interface; all16 connected SDK tests then
+passed. The real local native shared-stat workflow passed again with four queued
+export states and no claimed delivery. Build-for-testing passed on iPhone26.4.
+Actual screen interaction remains unavailable while the Mac is locked; actual
+Google delivery, billing-disabled proof and trusted runtime configuration remain
+blocked. Earlier media/UI/runtime limitations remain in force.

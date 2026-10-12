@@ -5,6 +5,37 @@ import Supabase
 
 @MainActor
 final class ConnectedStatisticsTests: XCTestCase {
+    func testExportStatusShowsServerDeliveryRatherThanAssumingOutboxWasDelivered() async throws {
+        let fixture = StatisticsFixture(mode: .exportStates)
+        let model = fixture.model()
+        await model.loadGames()
+        await model.loadGame(try XCTUnwrap(model.games.first))
+        await model.loadExportStatus()
+        XCTAssertTrue(model.didLoadExportStatus)
+        XCTAssertNil(model.exportIssue)
+        XCTAssertEqual(model.exportStatus.map(\.state), [.queued, .failed, .delivered])
+        XCTAssertEqual(model.exportStatus[1].errorCode, "budget_disabled")
+        XCTAssertEqual(model.exportStatus[2].deliveredAt, "2026-10-11T12:00:00Z")
+        XCTAssertEqual(fixture.commands.last?.name, "stats_export_status")
+    }
+
+    func testExportFailureKeepsStatisticsUsableAndRetryLoadsStatus() async throws {
+        let fixture = StatisticsFixture(mode: .exportFailureOnce)
+        let model = fixture.model()
+        await model.loadGames()
+        await model.loadGame(try XCTUnwrap(model.games.first))
+        let savedVersions = model.versions.map(\.id)
+        await model.loadExportStatus()
+        XCTAssertFalse(model.didLoadExportStatus)
+        XCTAssertEqual(model.exportIssue, .server)
+        XCTAssertTrue(model.didLoadGame)
+        XCTAssertNil(model.issue)
+        XCTAssertEqual(model.versions.map(\.id), savedVersions)
+        await model.loadExportStatus()
+        XCTAssertTrue(model.didLoadExportStatus)
+        XCTAssertNil(model.exportIssue)
+        XCTAssertEqual(model.exportStatus.count, 3)
+    }
     func testGameDiscoveryAndStableIdentityRetryUseServerRows() async throws {
         let fixture = StatisticsFixture()
         let model = fixture.model()
@@ -231,7 +262,7 @@ private let statsSecondVersionID = UUID(uuidString: "AAAAAAAA-AAAA-4AAA-8AAA-AAA
 private let statsPossessionID = UUID(uuidString: "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB")!
 // Synthetic HTTP responses verify the real SDK/model seam, not deployed authorization or delivery.
 private final class StatisticsFixture: @unchecked Sendable {
-    enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination }
+    enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination, exportStates, exportFailureOnce }
     private let mode: Mode
     init(mode: Mode = .standard) { self.mode = mode }
     private var didFail = false
@@ -266,6 +297,20 @@ private final class StatisticsFixture: @unchecked Sendable {
             if name == "stats_preferences" { return json(["suppress_numeric_warning": suppressWarning]) }
             let parameters = (try? JSONSerialization.jsonObject(with: request.httpBody ?? body(request.httpBodyStream))) as? [String: Any] ?? [:]
             commandValues.append(Command(name: name, parameters: parameters))
+            if name == "stats_export_status" {
+                if mode == .exportFailureOnce && !didFail {
+                    didFail = true
+                    return json(["code": "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 500)
+                }
+                return json(["queued", "failed", "delivered"].enumerated().map { index, state in
+                    ["job_id": String(format: "CCCCCCCC-CCCC-4CCC-8CCC-%012d", index),
+                     "game_id": statsGameID.uuidString, "accepted_version_id": statsVersionID.uuidString,
+                     "dataset_type": "box_scores", "publication_generation": index + 1,
+                     "state": state, "attempts": index,
+                     "error_code": state == "failed" ? "budget_disabled" : NSNull(),
+                     "delivered_at": state == "delivered" ? "2026-10-11T12:00:00Z" : NSNull()] as [String: Any]
+                })
+            }
             if name == "stats_save_drafts", mode == .denied || mode == .serverFailure || (mode == .conflictOnce && !didFail) {
                 didFail = true; revision = 2
                 return json(["code": mode == .conflictOnce ? "40001" : mode == .denied ? "42501" : "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD", "details": "SENSITIVE_FIXTURE_PAYLOAD", "hint": NSNull()], status: 500)

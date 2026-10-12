@@ -23,7 +23,7 @@ disabled under the $0 budget. Actual local Auth/gateway/native SDK tests passed;
 hosted delivery and setup remain unverified. Shared entry/review and accepted summaries are accessible from Account → Team
 administration → Shared games and statistics. These use real server commands;
 local games are kept separate. Native fixtures and real local SDK workflows passed; hosted setup
-and two-device UI checks are still pending. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
+and two-device UI checks are still pending. The owner can inspect per-game server export status with independent error/Retry. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
 by default; actual Sheets delivery, photo autofill, animated plays and videos remain
 incomplete.
 There is no live tracking in any phase.
@@ -35,7 +35,7 @@ to run; physical-device signing requires the developer's own Apple account.
 Most simulator verification has used 26.4; actual 26.0 and physical devices remain
 untested. The approved official Supabase Swift SDK is pinned to 2.55.3; connected
 account source is implemented and tested with isolated SDK responses; a hosted
-project is not configured and shared data workflows are not implemented.
+project is not configured and shared workflows have passed isolated local integration, not hosted verification.
 
 - [PRD](PRD.md): product scope, data definitions, design direction, open decisions.
 - [Project context](PROJECT_CONTEXT.md): current state and implementation sequence.

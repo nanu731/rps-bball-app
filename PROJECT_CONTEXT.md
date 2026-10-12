@@ -38,10 +38,10 @@ Hosted configuration and centralized monitoring remain unavailable. Continue
 independent work while banner interaction checks remain open. Shared games and
 statistical lifecycle screens are now wired from Account/team administration;
 the integrated build and65 native fixture tests passed. The actual local signed
-statistical gateway passed81 checks; native connected workflow integration and
+statistical gateway passed81 checks; native connected workflow integration passed on the local stack;
 locked-Mac UI checks are still outstanding. Metrics use accepted pointers only.
-The server retains immutable corrections and atomic export enqueue, while Sheets
-delivery remains unimplemented.
+The server retains immutable corrections and atomic export enqueue, while actual Sheets
+delivery remains disabled and unverified.
 Status: requirements draft; Steps 1–6 complete. Games, shared box scores, and paired possession drafts are
 stored locally. Possessions have independent team numbering, stable UUIDs,
 missing-versus-zero counts, and unanswered/Yes/No turnovers. All possession data
@@ -298,3 +298,10 @@ Real local native shared-statistics round trips now passed, including accepted
 reopening/metrics/reconciliation and fresh verified signup without team authority.
 Export worker/source passed54 local SQL and20 synthetic HTTP checks; malformed
 Boolean activation is fixed. Google delivery stays disabled and unverified.
+
+Owner export status now independently loads server queued/reserved/failed/delivered
+receipts with Retry; errors do not hide the saved game snapshot. Sixteen connected
+SDK fixture tests passed, and the actual local native workflow confirmed four
+queued, undelivered jobs after four dataset publications. UI interaction and
+actual Google delivery remain unverified. The owner has no hosted project yet;
+a private Free-only setup guide is prepared, with no billing/SMS configuration.

@@ -176,6 +176,33 @@ struct ConnectedExportOutbox: Decodable, Identifiable, Sendable {
         case publicationGeneration = "publication_generation", createdAt = "created_at"
     }
 }
+enum ConnectedExportState: String, Decodable, Sendable {
+    case queued, reserved, failed, delivered
+    var label: String {
+        switch self {
+        case .queued: "Queued — not delivered"
+        case .reserved: "Reserved — delivery not confirmed"
+        case .failed: "Delivery failed"
+        case .delivered: "Delivered — server receipt confirmed"
+        }
+    }
+}
+struct ConnectedExportStatus: Decodable, Identifiable, Sendable {
+    let id: UUID
+    let gameID: UUID
+    let acceptedVersionID: UUID
+    let datasetType: ConnectedDatasetType
+    let publicationGeneration: Int64
+    let state: ConnectedExportState
+    let attempts: Int64
+    let errorCode: String?
+    let deliveredAt: String?
+    enum CodingKeys: String, CodingKey {
+        case id = "job_id", gameID = "game_id", acceptedVersionID = "accepted_version_id"
+        case datasetType = "dataset_type", publicationGeneration = "publication_generation"
+        case state, attempts, errorCode = "error_code", deliveredAt = "delivered_at"
+    }
+}
 struct ConnectedDraftSave: Encodable, Sendable {
     let versionID: UUID
     let expectedRevision: Int64
@@ -244,6 +271,10 @@ final class ConnectedStatistics {
     private(set) var datasets: [ConnectedDatasetPointer] = []
     private(set) var editRequests: [ConnectedEditRequest] = []
     private(set) var exportOutbox: [ConnectedExportOutbox] = []
+    private(set) var exportStatus: [ConnectedExportStatus] = []
+    private(set) var didLoadExportStatus = false
+    private(set) var isLoadingExportStatus = false
+    private(set) var exportIssue: ConnectedStatisticsIssue?
     private(set) var didLoadGame = false
     private(set) var suppressNumericWarning = false
     private(set) var reloadRequired = false
@@ -307,6 +338,29 @@ final class ConnectedStatistics {
             guard games.allSatisfy({ $0.teamID == teamID && $0.date != nil }) else { throw ConnectedStatisticsIssue.invalidResponse }
             didLoadGames = true; reloadRequired = false
         } catch { games = []; fail(error) }
+    }
+    /// Delivery is independent of the statistics snapshot; its failure must not hide saved data.
+    func loadExportStatus() async {
+        guard !isLoadingExportStatus else { return }
+        exportStatus = []; didLoadExportStatus = false; exportIssue = nil
+        guard didLoadGame, access?.isOwner == true, let game = selectedGame else { exportIssue = .denied; return }
+        isLoadingExportStatus = true
+        defer { isLoadingExportStatus = false }
+        do {
+            let rows: [ConnectedExportStatus] = try await command(authenticatedClient(), "stats_export_status", [:])
+            guard rows.count <= 5_000 else { throw ConnectedStatisticsIssue.tooManyRecords }
+            guard Set(rows.map(\.id)).count == rows.count,
+                  rows.allSatisfy({ $0.publicationGeneration > 0 && $0.attempts >= 0 &&
+                      (($0.state == .delivered) == ($0.deliveredAt != nil)) }) else {
+                throw ConnectedStatisticsIssue.invalidResponse
+            }
+            guard selectedGame?.id == game.id, didLoadGame else { return }
+            exportStatus = rows.filter { $0.gameID == game.id }
+            didLoadExportStatus = true
+        } catch {
+            guard selectedGame?.id == game.id, didLoadGame else { return }
+            exportIssue = Self.mappedIssue(error)
+        }
     }
     @discardableResult
     func createGame(id: UUID, dateString: String, opponent: String, homeAway: String, gameType: String) async -> Bool {
@@ -518,11 +572,13 @@ final class ConnectedStatistics {
         versions = loadedVersions; datasets = loadedDatasets
         editRequests = requests.filter { request in loadedVersions.contains { $0.id == request.sourceVersionID } }
         exportOutbox = outbox; suppressNumericWarning = preferences.suppressNumericWarning
+        exportStatus = []; didLoadExportStatus = false; exportIssue = nil
         didLoadGame = true; reloadRequired = false
     }
     private func clearGame() {
         selectedGame = nil; access = nil; roster = []; historicalRoster = []; versions = []; datasets = []
         editRequests = []; exportOutbox = []; suppressNumericWarning = false; didLoadGame = false
+        exportStatus = []; didLoadExportStatus = false; exportIssue = nil
     }
     private func pages<T: Decodable>(_ client: SupabaseClient, table: String, order: String, gameID: UUID? = nil) async throws -> [T] {
         var rows: [T] = []
@@ -545,15 +601,18 @@ final class ConnectedStatistics {
     }
     private func fail(_ error: Error) {
         confirmation = nil
-        if let error = error as? ConnectedStatisticsIssue { issue = error }
+        issue = Self.mappedIssue(error)
+    }
+    private static func mappedIssue(_ error: Error) -> ConnectedStatisticsIssue {
+        if let error = error as? ConnectedStatisticsIssue { return error }
         else if let error = error as? PostgrestError {
             switch error.code {
-            case "40001": issue = .conflict
-            case "42501": issue = .denied
-            case "22023", "23514", "23503": issue = .invalidInput
-            default: issue = .server
+            case "40001": return .conflict
+            case "42501": return .denied
+            case "22023", "23514", "23503": return .invalidInput
+            default: return .server
             }
-        } else if error is DecodingError { issue = .invalidResponse }
-        else { issue = .server }
+        } else if error is DecodingError { return .invalidResponse }
+        else { return .server }
     }
 }
