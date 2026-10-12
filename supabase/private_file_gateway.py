@@ -75,12 +75,15 @@ class Providers:
         except urllib.error.HTTPError as error:
             # Only stable SQLSTATE is retained; raw SQL/provider details stay private.
             try:
-                code = json.loads(error.read(8192)).get('code')
+                error_body = json.loads(error.read(8192))
+                code = error_body.get('code')
+                missing_storage_key = code == 'NoSuchKey' and error_body.get('statusCode') in ('404', 404)
             except (ValueError, AttributeError):
                 code = None
+                missing_storage_key = False
             mapping = {'42501': ('access_denied', 403), '40001': ('reload_or_reconcile', 409),
                        '22023': ('invalid_file_input', 422), 'P0001': ('capacity_unavailable', 503)}
-            if error.code == 404:
+            if error.code == 404 or missing_storage_key:
                 raise FileFailure('object_not_found', 404) from None
             if code in mapping:
                 raise FileFailure(*mapping[code]) from None

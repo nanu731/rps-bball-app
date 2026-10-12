@@ -36,7 +36,7 @@ class GatewayTests(unittest.TestCase):
     def setUp(self):
         self.objects = {}; self.receipt = None; self.transfer_started = False
         self.revoked = False; self.uncertain_put = False; self.missing_get = False
-        self.corrupt_get = False; self.claimed = False; self.finish_count = 0; self.missing = False
+        self.missing_http400 = False; self.corrupt_get = False; self.claimed = False; self.finish_count = 0; self.missing = False
         case = self
         class Handler(http.server.BaseHTTPRequestHandler):
             def log_message(self, *args): pass
@@ -47,7 +47,8 @@ class GatewayTests(unittest.TestCase):
                 if self.path.startswith('/rest/file_resource_versions?'):
                     self.send([] if case.revoked else [{'team_id':TEAM}]);return
                 if self.path.startswith('/storage/object/'):
-                    if case.missing_get or PATH not in case.objects:self.send({'error':'not found'},404);return
+                    if case.missing_get or PATH not in case.objects:
+                        self.send({'code':'NoSuchKey','statusCode':'404','error':'not_found'} if case.missing_http400 else {'error':'not found'},400 if case.missing_http400 else 404);return
                     self.send(b'WRONG' if case.corrupt_get else case.objects[PATH]);return
                 self.send({},404)
             def do_POST(self):
@@ -116,6 +117,10 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
     def test_blind_upload_retry_cannot_retransfer_uncertain_object(self):
         self.upload();self.failure(self.upload,'reload_or_reconcile');self.assertEqual(self.finish_count,1)
     def test_reconcile_missing_object_retains_identity_and_allows_fresh_attempt(self):
+        self.failure(lambda:self.gateway.upload('SYNTHETIC USER',OPERATION,io.BytesIO(b''),0,True),'upload_not_stored_start_new_operation')
+        self.assertTrue(self.missing);self.assertIsNone(self.receipt)
+    def test_actual_storage_http400_no_such_key_shape_reconciles_missing_upload(self):
+        self.missing_http400=True
         self.failure(lambda:self.gateway.upload('SYNTHETIC USER',OPERATION,io.BytesIO(b''),0,True),'upload_not_stored_start_new_operation')
         self.assertTrue(self.missing);self.assertIsNone(self.receipt)
     def test_corrupt_storage_readback_cannot_create_receipt(self):

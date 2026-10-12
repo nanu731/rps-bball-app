@@ -6,6 +6,7 @@ keys and raw provider errors remain in memory; public output is sanitized checks
 """
 from pathlib import Path
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import importlib.util
 import io
@@ -70,7 +71,11 @@ namespace='synthetic-private-file-'+uuid.uuid4().hex
 def session(label):
  code,link=request(api+'/auth/v1/admin/generate_link',{'type':'magiclink','email':namespace+'-'+label+'@example.invalid'},service)
  check('local trusted synthetic verification link created',code==200 and isinstance(link,dict))
- code,reply=request(api+'/auth/v1/verify',{'type':'magiclink','token_hash':link['properties']['hashed_token']})
+ hashed_token=link.get('hashed_token') or link.get('properties',{}).get('hashed_token')
+ check('trusted synthetic link supplies an actual verification token',isinstance(hashed_token,str) and bool(hashed_token))
+ verification_type=link.get('verification_type') or link.get('properties',{}).get('verification_type')
+ check('trusted verification response supplies its actual type',verification_type in ('signup','magiclink','email'))
+ code,reply=request(api+'/auth/v1/verify',{'type':verification_type,'token_hash':hashed_token})
  check('actual distinct signed local Auth session verified',code==200 and bool(reply.get('access_token')))
  return reply
 
@@ -104,7 +109,7 @@ try:
   code,body=rpc(owner,'team_access',{'p_team_id':team});check('signed owner access snapshot',code==200);return body
  for user,capability in ((author_id,'scouting.upload'),(reader_id,'scouting.read')):
   code,_=rpc(owner,'team_set_capability',{'p_team_id':team,'p_user_id':user,'p_capability':capability,'p_enabled':True,'p_expected_access_revision':access()['access_revision']})
-  check('signed owner assigned synthetic scoped capability',code==200)
+  check('signed owner assigned synthetic scoped capability',code in (200,204))
  data=pdf();arguments={'p_team_id':team,'p_resource_id':resource_id,'p_kind':'scouting','p_target_id':game,'p_operation_id':operation,'p_declared_bytes':len(data),'p_title':'TEST ONLY ACTUAL PDF BYTES'}
  code,version=rpc(author,'file_reserve',arguments);check('signed eligible author reserves immutable upload',code==200)
  code,repeated=rpc(author,'file_reserve',arguments);check('reservation lost-reply retry keeps exact identity',code==200 and repeated['id']==version['id'])
@@ -120,7 +125,9 @@ try:
  check('independent signed nonmember cannot retrieve approved body',deny(lambda:gateway.download(outsider['access_token'],receipt['id'],str(uuid.uuid4()))))
  # Direct private-bucket read and write cannot bypass the ledger, even for the author.
  path=team+'/'+resource_id+'/'+receipt['id'];object_url=gateway.providers.object_url(path)
- for account,label in ((reader,'reader'),(author,'uploader')):
+ for account,label in ((reader,'reader'),(author,'uploader'),({'access_token':key},'anonymous-role')):
+  identity_response=gateway.providers.request(gateway.providers.storage+'/bucket','GET',None,{'apikey':key,'Authorization':'Bearer '+account['access_token']},16384)
+  check('Storage accepts the actual signed '+label+' token before policy denial',isinstance(json.loads(identity_response),list))
   try:
    gateway.providers.request(object_url,'GET',None,{'apikey':key,'Authorization':'Bearer '+account['access_token']},len(data));allowed=True
   except module.FileFailure:allowed=False
@@ -130,7 +137,7 @@ try:
   except module.FileFailure:allowed=False
   check('direct Storage '+label+' write denied',not allowed)
  code,_=rpc(owner,'team_set_capability',{'p_team_id':team,'p_user_id':reader_id,'p_capability':'scouting.read','p_enabled':False,'p_expected_access_revision':access()['access_revision']})
- check('signed synthetic read grant revoked',code==200)
+ check('signed synthetic read grant revoked',code in (200,204))
  check('same signed account immediately denied future remote bytes',deny(lambda:gateway.download(reader['access_token'],receipt['id'],str(uuid.uuid4()))))
  code,owner_view=rpc(owner,'file_delivery',{'p_team_id':team,'p_version_id':receipt['id'],'p_operation_id':str(uuid.uuid4())})
  check('revocation preserves owner accepted metadata and bytes',code==200 and owner_view['sha256']==receipt['sha256'])
@@ -174,7 +181,7 @@ try:
  downloaded,details=gateway.download(reader['access_token'],clip_receipt['id'],str(uuid.uuid4()))
  check('active team member receives complete integrity-checked actual clip',downloaded==clip and details['content_type']=='video/mp4')
  code,_=rpc(owner,'team_set_capability',{'p_team_id':team,'p_user_id':author_id,'p_capability':'practice.upload','p_enabled':True,'p_expected_access_revision':access()['access_revision']})
- check('owner grants isolated user unrestricted byte upload capability',code==200)
+ check('owner grants isolated user unrestricted byte upload capability',code in (200,204))
  bypass_operation=str(uuid.uuid4())
  code,bypass=rpc(author,'file_reserve',dict(clip_args,p_operation_id=bypass_operation,p_base_published_version_id=clip_published['id']))
  check('unrestricted author reserves immutable successor against accepted pointer',code==200)
@@ -183,6 +190,18 @@ try:
  check('actual unrestricted byte author publishes own clip without individual approval',code==200 and bypass_published['status']=='published')
  code,old=request(rest+'/file_resource_versions?id=eq.'+clip_published['id']+'&select=id,status,sha256',token=owner['access_token'])
  check('replacement preserves exact previous accepted clip history',code==200 and len(old)==1 and old[0]['sha256']==clip_receipt['sha256'])
+ # Public signed concurrent requests, not a SQL-state fixture: one actor cannot
+ # race two active uploads, and different teams share the same budget lock.
+ same_actor=[dict(clip_args,p_resource_id=str(uuid.uuid4()),p_operation_id=str(uuid.uuid4()),p_declared_bytes=2) for _ in range(2)]
+ with ThreadPoolExecutor(max_workers=2) as pool:answers=list(pool.map(lambda command:rpc(author,'file_reserve',command),same_actor))
+ check('concurrent same-account reservations admit exactly one active upload',sum(code==200 for code,_ in answers)==1 and any(code>=400 and isinstance(body,dict) and body.get('code')=='40001' for code,body in answers))
+ other_team,other_play,other_play_version=str(uuid.uuid4()),str(uuid.uuid4()),str(uuid.uuid4())
+ sql(f"insert into public.teams(id,name,owner_auth_uuid) values('{other_team}','TEST ONLY CROSS TEAM BYTE QUOTA','{owner_id}');insert into public.plays(id,team_id,created_by) values('{other_play}','{other_team}','{owner_id}');insert into public.play_versions(id,team_id,play_id,author_user_id,status,title) values('{other_play_version}','{other_team}','{other_play}','{owner_id}','published','TEST ONLY QUOTA TARGET');update public.plays set published_version_id='{other_play_version}' where id='{other_play}';update team_private.file_budget set storage_limit=(select coalesce(sum(reserved_bytes),0)+2 from team_private.file_uploads) where id;")
+ contenders=[(reader,dict(clip_args,p_resource_id=str(uuid.uuid4()),p_operation_id=str(uuid.uuid4()),p_declared_bytes=2)),(owner,dict(clip_args,p_team_id=other_team,p_target_id=other_play,p_resource_id=str(uuid.uuid4()),p_operation_id=str(uuid.uuid4()),p_declared_bytes=2))]
+ with ThreadPoolExecutor(max_workers=2) as pool:answers=list(pool.map(lambda item:rpc(item[0],'file_reserve',item[1]),contenders))
+ check('concurrent different-team reservations cannot exceed shared aggregate allowance',sum(code==200 for code,_ in answers)==1 and any(code>=400 and isinstance(body,dict) and body.get('code')=='P0001' for code,body in answers))
+ # Restore ONLY the explicit synthetic allowance, preserving every charge/reservation.
+ sql("update team_private.file_budget set storage_limit=(select coalesce(sum(reserved_bytes),0)+20971520 from team_private.file_uploads) where id;")
  code,response=request(api+'/auth/v1/logout',{},author['access_token'])
  check('actual synthetic Auth logout succeeds',code in (200,204))
  code,_=rpc(author,'file_reserve',arguments)
