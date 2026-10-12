@@ -20,6 +20,11 @@ _Avoid_: Chronological pair, simultaneous possessions
 **Draft**: Unfinished editable collected data; blank numeric inputs remain unentered.
 _Avoid_: Published record, completed dataset
 
+**Superseded draft**: Retained saved proposal made read-only by an explicit
+recovery or approved current-version correction. It remains incomplete and
+unreviewed; it is never a completed or accepted dataset. Unsaved editor content
+requires separate confirmed attachment to a validated working draft and explicit Save.
+
 **Completed dataset**: Data explicitly marked entry-complete; this does not establish review or publication.
 _Avoid_: Approved data, official statistics
 

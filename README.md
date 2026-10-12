@@ -57,6 +57,9 @@ Saved play/media recovery preserves earlier proposals as read-only history.
 After an uncertain response, explicitly Reload and confirm attachment to a
 validated recovered draft; input buffers are retained and Save remains separate.
 Media history is filtered by selected play/game before transfer.
+Approved statistical corrections likewise retain stale unfinished drafts as
+read-only history; an authorized reviewer must approve a current-version edit
+request before its recovered working draft can receive retained entries.
 
 ### Release readiness
 
@@ -68,6 +71,13 @@ recovery/photo interaction checks; Mac UI control is locked. Earlier owner
 verification does not verify new screens. Real branding/icon, signing/distribution
 and explicit production/release approval remain outstanding. No paid service,
 public submission or automatic production-data upload is enabled.
+
+A consumer Gmail sender with eligible app-password access is a documented no-cost
+SMTP candidate for team email on Free; it is not configured or verified delivery.
+Account/security prerequisites, private trusted sender configuration and real inbox
+checks remain required. Do not invite players into provider administration to
+work around default-email restrictions. See [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp)
+and [Google app passwords](https://support.google.com/accounts/answer/185833).
 
 ## Project and planning
 

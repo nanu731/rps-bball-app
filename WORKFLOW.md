@@ -23,6 +23,31 @@ Last updated: 2026-10-08.
 ### Completion execution evidence
 
 Latest checkpoint (2026-10-11; older entries below retain their original scope):
+the concurrent statistical regression failed before repair: an author's unfinished
+old-base draft blocked approval to reopen current accepted data. Migration009
+retains it as immutable superseded history only during authorized current-source
+approval, opening the normal approved copy; same-base unfinished drafts still
+reject. Saved missing values/coverage, accepted pointers and export state stay
+intact.37 new SQL +136 existing lifecycle checks passed. The native superseded
+read tracer failed first;20 connected tests then passed, including uncertain
+approval replies, follow-up read failure and denied lineage attachment. Explicit
+Reload/confirmation changes editor metadata only, retaining buffers until Save.
+Standards:0 documented breaches, optional captured-state clump; Spec:0 findings
+for50f3c5a...c0504a6. Full integrated suite:111 passed,2 opt-in cases skipped;
+skips are not provider evidence. Final iPad simulator build passed.
+Unsigned generic-device archive c0504a6 passed; Info.plist minimum26.0/families1,2
+verified and no code-signature resource present. Only harmless AppIntents metadata
+extraction warning appeared; no AppIntents feature was requested. Archive/build
+success is not physical-device testing, hosted deployment or release approval.
+Post009 actual local Auth/PostgREST/SDK roster/statistics/play/media workflow
+passed: one named test,2.245 seconds. An initial attempt could not start because
+the app-only iPad build had replaced the embedded test host; rebuilding the test
+host fixed the harness without a source change. That failed-to-start attempt is
+not counted as provider evidence. Four original snapshotted simulator JSON files
+were rechecked byte-identical; both personal working bytes and staged blobs match
+the original snapshot. Generated Xcode window state was retained separately in
+temporary storage before restoring original personal work.
+
 play recovery after uncertain replies and failed follow-up reads preserves
 buffers through explicit Reload/Attach. Eleven geometry/play tests passed across
 integration runs. Media recovery now has immutable exact lineage, including
@@ -43,6 +68,16 @@ is blocked by locked Mac/failed automatic unlock, so repeated attempts stopped.
 New device/rotation/large-text/VoiceOver/keyboard/recovery/photo checks remain
 explicitly pending. Existing local simulator JSON and both staged personal entries
 must be rechecked before each handoff.
+
+Official documentation supports a candidate zero-cost team-email route: eligible
+consumer Gmail authenticated SMTP on Supabase Free, without adding players to
+provider administration. It is not configured/tested; owner account security,
+separately revocable sender secret and actual inbox delivery remain human gates.
+Do not weaken Advanced Protection, use the normal Google password, assume
+Workspace's larger quota, or infer private access from public documentation.
+[Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp),
+[Google app passwords](https://support.google.com/accounts/answer/185833),
+[consumer limits](https://support.google.com/mail/answer/22839).
 
 - Setup/coverage/task graph and compact Council defaults committed as `8f6050c`.
   Independent Standards and Spec reviews reported zero findings for that slice.

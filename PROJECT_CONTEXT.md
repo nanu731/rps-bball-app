@@ -22,7 +22,7 @@ These are locally tested implementations, not a completed hosted release.
 | Area | Evidence and remaining limit |
 | --- | --- |
 | Identity/access | 21 native Account fixtures; actual local email-link PKCE/restore and distinct-user Auth/RLS checks. Hosted Free project and verified owner UUID not yet available; real SMS disabled. |
-| Shared statistics | Existing SQL 136 and signed gateway 81 checks; actual local SDK draft/completion/publication/metrics workflow passed. Current-version edit-request recovery is under regression investigation. |
+| Shared statistics | SQL 136 baseline +37 approved-recovery checks and signed gateway 81 checks; actual local SDK workflow passed. Approved current-source corrections retain stale drafts read-only; explicit attachment preserves unsaved buffers. |
 | Plays | 11 integrated geometry/play tests and 54 baseline +37 recovery SQL checks. Explicit Reload/Attach preserves buffers after uncertain recovery; device interactions unverified. |
 | Photo | 14 native tests, including bounded file reads and actual synthetic Vision. Explicit mapping/confirmation only; no identity inference or persistent photo/text copy. Marked-form accuracy and picker interactions unverified. |
 | Video links | 78 actual SQL and 14 native checks; actual local SDK practice/film lifecycle passed with target filtering. File uploads, private playback, quota/transfer enforcement and Hudl access remain incomplete. |
@@ -33,6 +33,17 @@ The owner requested guidance for a new Free project; private guide/wizard are
 prepared and syntax-checked, not run against an account. Real identifiers stay
 out of public files/logs; bootstrap requires trusted verification of Auth UUID.
 Additional local Storage/Functions/Imgproxy test tooling is awaiting approval.
+The integrated native suite passed111 tests, with two opt-in local-server tests
+skipped in that run. Actual local-server workflows are verified separately.
+Final iPad simulator build passed. The new recovery slice passed Standards0
+documented breaches and Spec0 findings; device behavior remains pending.
+An unsigned local device archive of c0504a6 passed; its manifest declares26.0 and
+iPhone/iPad device families. It is not a signed installable release or actual
+26.0-runtime verification. Real signing/distribution and release approval remain pending.
+An eligible consumer Gmail SMTP sender is a documented no-cost candidate for
+team email, requiring separately authorized private sender/account setup and
+real inbox verification. It has not been configured; default organization-only
+mail is not a team delivery solution.
 
 Completion work is on `codex/teamstats-completion`. Private task graph/acceptance
 and coverage live in ignored `.scratch/teamstats-completion/spec.md`; generic
