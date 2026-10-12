@@ -34,7 +34,7 @@ nonisolated struct PrivateFileInput: Equatable, Sendable {
     }
 }
 nonisolated enum PrivateFileIssue: Error, Equatable {
-    case invalidInput, invalidResponse, denied, conflict, server, capacity, hostedUnavailable, reloadRequired, reconcileRequired, integrity, storage, insufficientSpace, invalidFile, missingUpload
+    case invalidInput, invalidResponse, denied, conflict, server, capacity, hostedUnavailable, reloadRequired, reconcileRequired, integrity, storage, insufficientSpace, invalidFile, missingUpload, validationFailed
     var message: String {
         switch self {
         case .invalidInput: "Check the file size, title and notes. Original files are unchanged."
@@ -50,6 +50,7 @@ nonisolated enum PrivateFileIssue: Error, Equatable {
         case .storage: "Device file storage is unavailable. Existing copies are preserved."
         case .insufficientSpace: "There is not enough free device space. Existing copies are preserved."
         case .missingUpload: "The server confirmed no stored object. Start a new upload operation; the old draft and allocation remain retained."
+        case .validationFailed: "Server validation failed for this upload. The failed operation and allocation remain retained. Start a new draft after validation is available."
         case .invalidFile: "The trusted validator rejected this file. Choose a supported readable PDF or H264/AAC MP4."
         }
     }
@@ -169,7 +170,7 @@ final class PrivateFiles {
             return reply
         } catch {
             fail(error)
-            if issue == .missingUpload || issue == .invalidFile { proposal = nil; pendingVersion = nil; uploadNeedsReconciliation = false }
+            if issue == .missingUpload || issue == .invalidFile || issue == .validationFailed { proposal = nil; pendingVersion = nil; uploadNeedsReconciliation = false }
             return nil
         }
     }
@@ -348,7 +349,8 @@ nonisolated private enum PrivateFileTransfer {
             if [401, 403].contains(response.statusCode) { throw PrivateFileIssue.denied }
             if code == "upload_not_stored_start_new_operation" { throw PrivateFileIssue.missingUpload }
             if ["capacity_unavailable", "private_file_capacity_unknown"].contains(code ?? "") { throw PrivateFileIssue.capacity }
-            if ["encrypted_pdf", "active_pdf", "invalid_pdf", "unsupported_codec", "duration_limit", "dimensions_limit", "invalid_video", "size_limit"].contains(code ?? "") { throw PrivateFileIssue.invalidFile }
+            if ["validation_resource_limit", "validator_receipt_mismatch"].contains(code ?? "") { throw PrivateFileIssue.validationFailed }
+            if ["unsupported_type", "encrypted_pdf", "malformed_file", "resource_limit", "unsupported_codec", "duration_limit", "dimension_limit", "size_limit", "active_content", "unreadable_content", "invalid_request", "unreadable", "invalid_pdf", "active_pdf", "invalid_video", "dimensions_limit", "file_validation_failed"].contains(code ?? "") { throw PrivateFileIssue.invalidFile }
             throw PrivateFileIssue.server
         }
         guard maximum > 0, maximum <= 10 * 1024 * 1024, response.expectedContentLength <= maximum,

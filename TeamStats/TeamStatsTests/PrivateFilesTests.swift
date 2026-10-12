@@ -42,6 +42,31 @@ final class PrivateFilesTests: XCTestCase {
         XCTAssertEqual(reconciled?.id, reservation.id); XCTAssertEqual(reconciled?.status, .ready)
         XCTAssertFalse(model.uploadNeedsReconciliation)
     }
+    func testPublicFileFailuresKeepCapacityAndRejectedUploadRecoveryDistinct() async throws {
+        let rejected = ["unsupported_type", "encrypted_pdf", "malformed_file", "resource_limit", "unsupported_codec",
+            "duration_limit", "dimension_limit", "size_limit", "active_content", "unreadable_content",
+            "invalid_request", "unreadable", "invalid_pdf", "active_pdf", "invalid_video", "dimensions_limit", "file_validation_failed"]
+        let failedValidation = ["validation_resource_limit", "validator_receipt_mismatch"]
+        for code in rejected + failedValidation + ["capacity_unavailable", "private_file_capacity_unknown", "validator_unavailable"] {
+            let fixture = NativeFileFixture(), model = try fixture.model()
+            await model.load()
+            var input = PrivateFileInput(); input.title = "TEST ONLY REJECTED CLIP"
+            let reserved = await model.reserve(data: nativeFileBytes, input: input)
+            XCTAssertNotNil(reserved)
+            fixture.rejectUpload(code)
+            let result = await model.upload(); XCTAssertNil(result)
+            if rejected.contains(code) || failedValidation.contains(code) {
+                XCTAssertEqual(model.issue, rejected.contains(code) ? .invalidFile : .validationFailed, code)
+                XCTAssertNil(model.pendingVersion, code)
+                XCTAssertFalse(model.hasPendingReservation, code)
+                XCTAssertFalse(model.uploadNeedsReconciliation, code)
+            } else {
+                XCTAssertEqual(model.issue, code == "validator_unavailable" ? .server : .capacity, code)
+                XCTAssertTrue(model.uploadNeedsReconciliation, code)
+            }
+            XCTAssertEqual(fixture.requests.filter { $0.url?.path.contains("/uploads/") == true }.count, 1)
+        }
+    }
     func testCompletePublishedClipIsIntegrityCheckedAndReusedWithoutAnotherDelivery() async throws {
         let fixture = NativeFileFixture(), model = try fixture.model()
         await model.load()
@@ -100,9 +125,11 @@ private final class NativeFileFixture: @unchecked Sendable {
     private let lock = NSLock(); private var mode: Mode
     private var allRequests: [URLRequest] = [], allCommands: [(String, [String: Any])] = []
     private var operation = UUID(); private var resource = privateResource
+    private var uploadError: String?
     init(mode: Mode = .standard) { self.mode = mode }
     var requests: [URLRequest] { lock.withLock { allRequests } }
     var commands: [(String, [String: Any])] { lock.withLock { allCommands } }
+    func rejectUpload(_ code: String) { lock.withLock { uploadError = code } }
     func changeMode(_ value: Mode) { lock.withLock { mode = value } }
     @MainActor func model() throws -> PrivateFiles {
         NativeFileURLProtocol.registry.insert(self)
@@ -138,6 +165,7 @@ private final class NativeFileFixture: @unchecked Sendable {
                 if name == "file_delivery" { return ok(["operation_id": arguments["p_operation_id"]!, "version_id": privateVersion.uuidString, "byte_count": nativeFileBytes.count, "sha256": clipDigest(nativeFileBytes), "content_type": "video/mp4"]) }
             }
             if request.url!.path.contains("/uploads/") {
+                if let uploadError { return (422, json(["error": uploadError]), "application/json", false) }
                 if mode == .uploadFailure && !request.url!.path.hasSuffix("reconcile") { return (503, json(["error": "operation_unconfirmed_reconcile"]), "application/json", false) }
                 return ok(version(status: "ready", receipt: true))
             }

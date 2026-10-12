@@ -208,7 +208,7 @@ private struct FileDraftEditor: View {
                         }
                     }
                 }
-                if version?.status == .failed || model.issue == .missingUpload {
+                if version?.status == .failed || model.issue == .missingUpload || model.issue == .invalidFile || model.issue == .validationFailed {
                     Section {
                         Text("The earlier draft is preserved. Create a new draft for a missing or rejected file; a new upload uses additional storage allowance.")
                         Button("Prepare a new draft") {

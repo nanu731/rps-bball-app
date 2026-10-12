@@ -10,7 +10,11 @@ const publicErrors = new Set([
   "durable_bytes_unconfirmed_reconcile", "upload_size_limit", "bounded_content_length_required",
   "delivery_operation_required", "delivery_integrity_failed", "provider_operation_unconfirmed",
   "validation_unavailable", "validation_resource_limit", "validator_busy", "validator_receipt_mismatch",
-  "operation_unconfirmed_reconcile",
+  "operation_unconfirmed_reconcile", "capacity_unavailable", "private_file_capacity_unknown",
+  "unsupported_type", "encrypted_pdf", "malformed_file", "resource_limit", "unsupported_codec",
+  "duration_limit", "dimension_limit", "size_limit", "active_content", "unreadable_content",
+  "invalid_request", "unreadable", "invalid_pdf", "active_pdf", "validator_unavailable",
+  "invalid_video", "dimensions_limit", "file_validation_failed",
 ]);
 
 function error(status: number, code: string): Response {

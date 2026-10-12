@@ -60,3 +60,14 @@ test('unexpected worker error bodies never disclose private diagnostics', async 
   const denied = await handle(request,worker,async()=>Response.json({error:'access_denied'},{status:403}));
   assert.deepEqual(await denied.json(),{error:'access_denied'});
 });
+
+test('documented capacity and validator failures retain their public recovery codes', async () => {
+  const request = new Request(base + '/uploads/' + id, {method:'POST',headers,body:'abc'});
+  const codes = ['capacity_unavailable','private_file_capacity_unknown','unsupported_type','encrypted_pdf','malformed_file','resource_limit','unsupported_codec','duration_limit','dimension_limit','size_limit','active_content','unreadable_content','invalid_request','unreadable','invalid_pdf','active_pdf','validator_unavailable','invalid_video','dimensions_limit','file_validation_failed','validation_resource_limit','validator_receipt_mismatch'];
+  for (const code of codes) {
+    const status = code.includes('capacity') || code === 'validator_unavailable' ? 503 : 422;
+    const result = await handle(request.clone(),worker,async()=>Response.json({error:code},{status}));
+    assert.equal(result.status,status);
+    assert.deepEqual(await result.json(),{error:code});
+  }
+});
