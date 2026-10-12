@@ -10,12 +10,14 @@ import Foundation
 
 struct ContentView: View {
     @State private var account = BackendAccount()
+    @State private var selectedTab = Tab.local
+    private enum Tab: Hashable { case local, players, team, account }
     @State private var games: [Game] = []
     @State private var loadError: String?
     @State private var showingNewGame = false
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
                 Group {
                     if let loadError {
@@ -30,7 +32,7 @@ struct ContentView: View {
                         ContentUnavailableView {
                             Label("No games yet", systemImage: "basketball")
                         } description: {
-                            Text("Add a game to save its details on this device.")
+                            Text("Add a local draft on this device. Use Team for official shared records.")
                         }
                     } else {
                         List(games) { game in
@@ -50,7 +52,7 @@ struct ContentView: View {
                         }
                     }
                 }
-                .navigationTitle("Games")
+                .navigationTitle("Local games")
                 .toolbar {
                     Button("Add game", systemImage: "plus") {
                         showingNewGame = true
@@ -71,8 +73,9 @@ struct ContentView: View {
                 }
             }
             .tabItem {
-                Label("Games", systemImage: "basketball")
+                Label("Local drafts", systemImage: "basketball")
             }
+            .tag(Tab.local)
 
             NavigationStack {
                 List {
@@ -91,14 +94,21 @@ struct ContentView: View {
             .tabItem {
                 Label("Players", systemImage: "person.3")
             }
+            .tag(Tab.players)
+
+            TeamWorkspaceView(account: account) { selectedTab = .account }
+                .id(account.sessionContextID)
+                .tabItem { Label("Team", systemImage: "person.2") }
+                .tag(Tab.team)
 
             NavigationStack {
-                AccountView(account: account)
+                AccountView(account: account) { selectedTab = .team }
             }
             .id(account.sessionContextID)
             .tabItem {
                 Label("Account", systemImage: "person.crop.circle")
             }
+            .tag(Tab.account)
         }
         .tint(.accentColor)
         .toggleStyle(SwitchToggleStyle(tint: TeamStatsStyle.filledAccent))

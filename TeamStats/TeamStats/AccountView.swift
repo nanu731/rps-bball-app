@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AccountView: View {
     @Bindable var account: BackendAccount
+    let openTeam: () -> Void
     @Environment(\.scenePhase) private var scenePhase
     @State private var method: AccountMethod = .email
     @State private var identifier = ""
@@ -36,9 +37,9 @@ struct AccountView: View {
                     Text(userID.uuidString)
                         .textSelection(.enabled)
                         .accessibilityLabel("Verified Auth account identifier, \(userID.uuidString)")
-                    NavigationLink("Team access and administration") {
-                        TeamAdministrationView(account: account)
-                    }
+                    Button("Open Team", action: openTeam)
+                    Text("Shared games, playbook and roster are in Team. Management controls require current server permission.")
+                        .font(.footnote).foregroundStyle(.secondary)
                     Button("Check session again") { Task { await account.restore() } }
                         .frame(minHeight: 44)
                     Button("Sign out", role: .destructive) {

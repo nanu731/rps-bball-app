@@ -61,6 +61,18 @@ There is no live tracking in any phase.
 
 ### Where to find connected features
 
+The Team tab now opens member activities directly: shared games/statistics,
+playbook and team roster. It uses an adaptive sidebar/detail workspace on iPad
+and native collapsed navigation on iPhone. Request admission there using a private
+invitation code; Account remains for sign-in/session configuration. Authorized
+management is a separate Team home → Manage team destination. Local drafts remain
+in their separate tab and are never automatically uploaded.
+
+Shared game → Game Film opens reviewed Hudl shortcuts. New film links require
+safe HTTPS destinations on hudl.com/www.hudl.com; historical metadata stays intact.
+Hudl independently controls access. Real provider opening and the new workspace's
+rendered/interaction acceptance remain pending; source wiring is not that evidence.
+
 | Feature | Path and current limit |
 | --- | --- |
 | Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Hosted SQL readback passed; signed permission acceptance pending; real SMS disabled. |

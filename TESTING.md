@@ -215,6 +215,25 @@ separately authorized/configured within the $0 budget.
 
 ## Current evidence and open gates
 
+2026-10-12 local media tooling: owner-approved CLI2.120.0 prepared Storage1.79.36-r0,
+Edge Runtime1.77.4-r0 and Imgproxy3.26.0-r0 in a separate synthetic native stack.
+All three archive and manifest SHA256 values were independently matched to the
+official pinned catalog. Installed license notices and the official SPDX2.3 assets
+are retained privately; this is not an exhaustive dependency/legal certification.
+Additional official upstream/distributor Poppler26.05.0 checksums and GPL notices
+were verified for the already bundled renderer; it is not shipped in the iOS app.
+
+CLI endpoint metadata alone did not establish safe binding. Eager activation
+revealed internal Functions/PostgREST/Storage listeners on all interfaces. Separate
+physical launcher copies apply documented `--ip=127.0.0.1`,
+`PGRST_SERVER_HOST`/`PGRST_ADMIN_SERVER_HOST` and `SERVER_HOST`/`HOST` settings.
+Upstream archives, original launchers and actual binaries remain unchanged.
+Lazy activation also timed out while Imgproxy's direct health was healthy;
+state-preserving stop/start with `--eager` resolved it. All seven services then
+reported healthy; three media health probes and all15 actual current listeners
+passed loopback checks. These are isolated-tooling results, not private-object,
+hosted or native-player acceptance. Recheck sockets after every service activation.
+
 Source snapshot `737ca4a` includes the local checkpoint and polish work recorded
 in [WORKFLOW.md](WORKFLOW.md) and subsystem documentation. No acceptance suite
 was rerun to author these documents.

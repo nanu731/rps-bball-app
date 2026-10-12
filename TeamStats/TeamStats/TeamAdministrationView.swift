@@ -7,9 +7,11 @@ struct TeamAdministrationView: View {
     @State private var administrationScreen: AdministrationScreen?
     @State private var invitationID = ""
     @FocusState private var invitationFocused: Bool
+    private let initialTeamID: UUID?
 
-    init(account: BackendAccount) {
+    init(account: BackendAccount, initialTeamID: UUID? = nil) {
         self.account = account
+        self.initialTeamID = initialTeamID
         _model = State(initialValue: TeamAdministration(account: account))
     }
 
@@ -105,7 +107,12 @@ struct TeamAdministrationView: View {
             case .delegation: AdministrationDelegationView(model: model)
             }
         }
-        .task(id: account.verifiedUserID) { await model.loadTeams() }
+        .task(id: account.sessionContextID) {
+            await model.loadTeams()
+            if let initialTeamID, let team = model.teams.first(where: { $0.id == initialTeamID }) {
+                await model.selectTeam(team)
+            }
+        }
     }
 }
 

@@ -24,6 +24,13 @@ Last updated: 2026-10-11.
 
 ## Current owner continuation — 2026-10-12
 
+Hudl shortcuts integrated inf7eb21d: supported new HTTPS destinations, retained
+historical metadata, server/native credential-query repair.26+79 SQL and18 native
+checks passed at recorded slice revisions. Extra approved local media tools are
+installed and health/socket verified with documented loopback launcher settings;
+this is not hosted/private-playback evidence. Member Team workspace source places
+routine shared tasks outside protected administration; rendered acceptance pending.
+
 Protected administrator identification is integrated: verified Auth email/phone
 for existing same-team memberships, admin-only lookup and UUID fallback.20 local
 SQL and17 native tests passed; hosted/UI acceptance remains pending. ADR0004
