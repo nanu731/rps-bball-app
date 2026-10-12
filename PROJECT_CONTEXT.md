@@ -463,3 +463,19 @@ UI, hosted media/capacity and physical/26.0 acceptance remain pending. Reviewed
 private-file server/validator source merged as fe13446/f0d7214; actual isolated
 server evidence is in supabase/private_files.md, with validator review repairs
 underway. No hosted activation/bootstrap or local-record upload occurred.
+
+
+### Trusted file/relay integration — 2026-10-12
+
+Reviewed server and native-validator source is integrated through3d77305. Repairs
+passed20 actual native file checks and25 gateway checks: portrait dimensions,
+self-contained MP4 references, process-group containment and pointer-import safety.
+The local Functions relay passed7 injected contract tests and actual signed PDF
+upload/validation/submission/owner approval/exact-hash delivery plus anonymous and
+invalid-operation denial. Real routing exposed a prefix mismatch; a regression
+failed before repair. Unexpected diagnostic bodies are sanitized after a second
+red regression. The current worker uses a copied reviewed pin/config; old binaries,
+configuration, synthetic records and charges remain preserved. Hosted activation
+was not rerun and hosted files remain disabled pending verified$0 capacity/hosting.
+Simulator UI inspection is currently blocked by the locked Mac. Native client,
+retention, playback and rendered interaction acceptance remain in progress.

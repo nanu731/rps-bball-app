@@ -127,8 +127,9 @@ limit and make it explicit; full game film is excluded from TeamStats storage.
 Reserve storage bytes and conservative transfer allowances atomically, keyed by
 stable resource/version/user/team with finite expiry. Concurrent upload requests
 must not collectively exceed known remaining capacity. Reconcile reservations
-against actual verified object bytes before publishing metadata; expired/failed
-reservations release accounting without deleting source work. Trusted type/content,
+against actual verified object bytes before publishing metadata. As adopted in
+ADR0004, expired, failed and uncertain reservations remain accounted for; expiry
+never frees occupied bytes. Trusted type/content,
 size and ownership checks must reject unsupported or oversized uploads before
 publication. Never trust client MIME/byte count, arbitrary bucket path or user
 submitted owner identity. Server-enforced private policies must deny pending-object
@@ -141,7 +142,9 @@ blocked operation, not a successful upload/playback. No silent compression,
 deletions, eviction, public bucket or external transfer workaround. Raw private
 provider tokens stay trusted; no service-role/Google/media secrets ship in iOS.
 Necessary free Storage/Functions/Imgproxy tooling is now owner-authorized; actual
-installation and trusted capacity enforcement remain separately verified. Link tests cannot substitute for actual object upload/download,
+installation and isolated local capacity/byte checks are now verified in
+`private_files.md`; hosted capacity, native delivery and playback remain separate.
+Link tests cannot substitute for actual object upload/download,
 provider rights, billing-disabled evidence, hosted RLS or device playback checks.
 
 ## Evidence
