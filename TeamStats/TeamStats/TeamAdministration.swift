@@ -9,6 +9,7 @@ enum TeamCapability: String, Codable, CaseIterable, Identifiable, Sendable {
     case playsAuthor = "plays.author", playsReview = "plays.review", playsPublish = "plays.publish"
     case practiceUpload = "practice.upload", practiceReview = "practice.review", practicePublish = "practice.publish"
     case filmUpload = "film.upload", filmReview = "film.review", filmPublish = "film.publish"
+    case scoutingUpload = "scouting.upload", scoutingRead = "scouting.read"
     var id: String { rawValue }
     var label: String {
         switch self {
@@ -20,12 +21,14 @@ enum TeamCapability: String, Codable, CaseIterable, Identifiable, Sendable {
         case .playsAuthor: "Author plays"
         case .playsReview: "Review plays"
         case .playsPublish: "Publish plays"
-        case .practiceUpload: "Practice submission grant (active members already eligible)"
+        case .practiceUpload: "Upload and publish own practice clips without review"
         case .practiceReview: "Inspect pending practice videos (owner approves)"
         case .practicePublish: "Publish own practice videos without review"
-        case .filmUpload: "Submit game film (coaches/managers)"
-        case .filmReview: "Inspect pending game film (owner approves)"
-        case .filmPublish: "Publish own game film without review"
+        case .filmUpload: "Submit Hudl shortcuts"
+        case .filmReview: "Inspect pending Hudl shortcuts (owner approves)"
+        case .filmPublish: "Publish own Hudl shortcuts without review"
+        case .scoutingUpload: "Upload scouting reports for owner review"
+        case .scoutingRead: "Read approved scouting reports"
         }
     }
 }
