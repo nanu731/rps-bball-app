@@ -116,6 +116,13 @@ must not imply paid provider backups or tested disaster recovery.
 
 ## Maintenance
 
+Commit metadata is public separately from file contents. Use the owner's verified
+GitHub noreply identity for future commits; check both effective author and
+committer email, including environment/agent overrides, before committing/pushing.
+Changing future configuration does not remove previous metadata or hide the author
+name. Historical identity remediation requires a private inventory, coordinated
+preservation plan and explicit approval before rewriting refs or force-pushing.
+
 Update this document when grants, authentication/session storage, privileged
 commands, data retention or external upload/export boundaries change. Link test
 evidence rather than claiming protection from UI restrictions or provider defaults.
