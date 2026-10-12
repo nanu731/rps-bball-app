@@ -114,7 +114,8 @@ class Providers:
                       'Content-Type': content_type, 'x-upsert': 'false'}, 8192)
 
     def get(self, path: str, maximum: int) -> bytes:
-        return self.request(self.object_url(path), 'GET', None,
+        url = self.object_url(path).replace('/object/', '/object/authenticated/', 1)
+        return self.request(url, 'GET', None,
                             {'Authorization': 'Bearer ' + self.service_key, 'apikey': self.service_key}, maximum)
 
 class TrustedValidator:
@@ -166,11 +167,11 @@ class TrustedValidator:
                         time.sleep(0.05)
                     output.seek(0); result = output.read(8193)
                     if process.returncode != 0 or len(result) > 8192:
-                        raise FileFailure('validation_unavailable', 422)
+                        raise FileFailure('validation_unavailable', 503)
                     try:
                         reply = json.loads(result)
                     except ValueError:
-                        raise FileFailure('validation_unavailable', 422) from None
+                        raise FileFailure('validation_unavailable', 503) from None
                     return verified_validation(kind, data, reply)
         finally:
             self.lock.release()
@@ -180,8 +181,10 @@ def verified_validation(kind: str, data: bytes, reply: dict) -> dict:
         # Only allowlisted failure codes, never native/provider diagnostics.
         code = reply.get('failure_reason') if isinstance(reply, dict) else None
         allowed = {'unsupported_type', 'encrypted_pdf', 'malformed_file', 'resource_limit', 'unsupported_codec',
-                   'duration_limit', 'dimension_limit', 'size_limit', 'active_content', 'unreadable_content'}
-        raise FileFailure(code if code in allowed else 'file_validation_failed', 422)
+                   'duration_limit', 'dimension_limit', 'size_limit', 'active_content', 'unreadable_content',
+                   'invalid_request', 'unreadable', 'invalid_pdf', 'active_pdf', 'validator_unavailable',
+                   'invalid_video', 'dimensions_limit'}
+        raise FileFailure(code if code in allowed else 'file_validation_failed', 503 if code=='validator_unavailable' else 422)
     digest = hashlib.sha256(data).hexdigest()
     media_type = 'application/pdf' if kind == 'scouting' else 'video/mp4'
     if type(reply.get('byte_count')) is not int or reply['byte_count'] != len(data) or reply.get('sha256') != digest or reply.get('media_type') != media_type:
@@ -189,6 +192,16 @@ def verified_validation(kind: str, data: bytes, reply: dict) -> dict:
     details = reply.get('details')
     if not isinstance(details, dict):
         raise FileFailure('validator_receipt_mismatch', 422)
+    # Normalize the pinned native validator's bounded integer decode report.
+    if kind == 'scouting' and 'page_count' in details:
+        details = {'pageCount': details['page_count']}
+    elif kind == 'practice' and 'duration_milliseconds' in details:
+        milliseconds = details.get('duration_milliseconds')
+        video_frames, audio_buffers = details.get('decoded_video_frames'), details.get('decoded_audio_buffers')
+        if type(milliseconds) is not int or type(video_frames) is not int or video_frames<1 or type(audio_buffers) is not int or audio_buffers<0:
+            raise FileFailure('validator_receipt_mismatch', 422)
+        details = {'duration': milliseconds / 1000, 'width': details.get('width'), 'height': details.get('height'),
+                   'videoCodec': 'h264', 'audioCodec': 'aac' if audio_buffers>0 else None}
     if kind == 'scouting':
         pages = details.get('pageCount')
         if type(pages) is not int or not 1 <= pages <= 500:

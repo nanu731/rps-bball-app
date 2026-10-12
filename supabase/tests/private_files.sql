@@ -62,6 +62,14 @@ select lives_ok($$select pg_temp.keep('pdf',public.file_worker_finish(pg_temp.id
 select is(public.file_worker_finish(pg_temp.id(11),100,repeat('a',64),'application/pdf','{"pageCount":1}'),pg_temp.body('pdf'),'lost finalization reply retry cannot duplicate receipt');
 select throws_ok($$select public.file_worker_finish(pg_temp.id(11),100,repeat('b',64),'application/pdf','{"pageCount":1}')$$,'40001',null,'accepted byte digest cannot change');
 reset role;set local role authenticated;select pg_temp.login(2);
+reset role;
+update public.capability_grants set revoked_at=now() where user_id='e1000000-0000-4000-8000-000000000002' and capability='scouting.upload';
+set local role authenticated;select pg_temp.login(2);
+select throws_ok($$select public.file_delivery(pg_temp.t(),pg_temp.vid('pdf'),pg_temp.id(30))$$,'42501',null,'revoked scouting contributor cannot fetch own pending bytes');
+select is((select count(*)::int from public.file_resource_versions),0,'revoked scouting contributor loses protected pending metadata');
+reset role;
+update public.capability_grants set revoked_at=null where user_id='e1000000-0000-4000-8000-000000000002' and capability='scouting.upload';
+set local role authenticated;select pg_temp.login(2);
 select lives_ok($$select pg_temp.keep('pdf',public.file_save(pg_temp.t(),pg_temp.vid('pdf'),pg_temp.rev('pdf'),'SYNTHETIC UPDATED PDF','TEST ONLY'))$$,'validated author edits metadata without byte replacement');
 select throws_ok($$select public.file_save(pg_temp.t(),pg_temp.vid('pdf'),1,'STALE','')$$,'40001',null,'stale file save rejected');
 select throws_ok($$select public.file_transition(pg_temp.t(),pg_temp.vid('pdf'),pg_temp.rev('pdf'),'publish')$$,'42501',null,'scouting contributor requires owner approval');

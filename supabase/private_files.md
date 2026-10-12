@@ -15,8 +15,9 @@ creates a fresh version/object path. No overwrite, deletion or automatic evictio
 is exposed. Scouting requires separate `scouting.upload` / `scouting.read` grants;
 these names extend the whitelist without issuing any live grants. Only the owner
 approves scouting publication. Current published scouting viewing needs read
-permission; archived/previous accepted document retrieval is owner-only. Authors
-can inspect their own pending/failed/rejected metadata for recovery.
+permission; archived/previous accepted document retrieval is owner-only. Currently eligible authors
+can inspect their own pending/failed/rejected metadata for recovery; losing a
+scouting-upload grant conceals these records and blocks pending-byte retrieval.
 
 All active members can propose pending practice clips. For the **new byte feature**,
 `practice.upload` or `practice.publish` permits an eligible author to publish their
@@ -92,8 +93,8 @@ reconciliation reads actual private bytes, validates/digests them and finalizes 
 same version. Confirmed missing bytes mark the attempt interrupted; a new operation
 can be started while its conservative old allocation remains retained.
 
-Storage insertion uses `x-upsert:false`; successful PUT alone is insufficient.
-The gateway reads back actual stored bytes and checks their exact digest/length
+The pinned [Storage insertion route](https://github.com/supabase/storage/blob/v1.79.36/src/http/routes/object/createObject.ts) uses `x-upsert:false`; successful PUT alone is insufficient.
+The gateway uses the strict authenticated [object route](https://github.com/supabase/storage/blob/v1.79.36/src/http/routes/object/getObject.ts) and reads back actual stored bytes and checks their exact digest/length
 before its service-only receipt command. Only service-role can invoke claim,
 finalize and delivery operations. The private bucket has a restrictive policy
 blocking anon/authenticated read/write even in the presence of another permissive
@@ -126,7 +127,7 @@ authority. This is not full offline shared-stat synchronization.
 ## Evidence and remaining gates
 
 The missing-command tracer failed before implementation. The rollback SQL suite
-passed65 checks against the actual approved local Postgres instance: authenticated
+passed67 checks against the actual approved local Postgres instance: authenticated
 commands, missing/zero/oversized/overflow/target validation, state/revision/approval,
 RLS and service-only receipt denial, retained budget accounting, session/revocation,
 archive/history and transfer exhaustion. Its injected **protocol receipts are not

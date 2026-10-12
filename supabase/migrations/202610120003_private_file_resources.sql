@@ -22,7 +22,7 @@ alter table public.file_resource_versions add constraint file_base_version forei
 create index file_versions_target on public.file_resource_versions(team_id,resource_id,created_at,id);
 -- These tables are not exposed through the Data API and have no client grants.
 create table team_private.file_budget(
- id boolean primary key default true check(id),known_until timestamptz,storage_limit bigint check(storage_limit>=0),transfer_limit bigint check(transfer_limit>=0),transfer_charged bigint not null default 0 check(transfer_charged>=0)
+ id boolean primary key default true check(id),known_until timestamptz check(known_until is null or isfinite(known_until)),storage_limit bigint check(storage_limit>=0),transfer_limit bigint check(transfer_limit>=0),transfer_charged bigint not null default 0 check(transfer_charged>=0)
 );
 insert into team_private.file_budget(id) values(true);
 create table team_private.file_uploads(
@@ -45,13 +45,13 @@ $$;
 create function team_private.file_can_fetch(t uuid,v uuid,a uuid) returns boolean language sql stable security definer set search_path=pg_catalog as $$
  select team_private.is_active(t,a) and exists(select 1 from public.file_resource_versions x join public.file_resources r on r.id=x.resource_id
  where x.id=v and x.team_id=t and x.byte_count is not null and (team_private.is_owner(t,a) or
- (r.archived_at is null and ((x.author_user_id=a and (x.status in ('ready','submitted') or (r.kind='practice' and x.status='rejected'))) or
+ (r.archived_at is null and ((x.author_user_id=a and team_private.file_eligible(t,a,r.kind) and (x.status in ('ready','submitted') or (r.kind='practice' and x.status='rejected'))) or
  (r.published_version_id=x.id and x.status='published' and (r.kind='practice' or team_private.has_capability(t,a,'scouting.read')))))))
 $$;
 create function team_private.file_visible(t uuid,v uuid) returns boolean language sql stable security definer set search_path=pg_catalog as $$
  select team_private.can_read(t) and exists(select 1 from public.file_resource_versions x join public.file_resources r on r.id=x.resource_id where x.id=v and x.team_id=t
  and (team_private.is_owner(t,team_private.actor()) or (r.archived_at is null and
- ((x.author_user_id=team_private.actor() and x.status<>'published') or (r.published_version_id=x.id and x.status='published' and (r.kind='practice' or team_private.has_capability(t,team_private.actor(),'scouting.read')))))))
+ ((x.author_user_id=team_private.actor() and team_private.file_eligible(t,team_private.actor(),r.kind) and x.status<>'published') or (r.published_version_id=x.id and x.status='published' and (r.kind='practice' or team_private.has_capability(t,team_private.actor(),'scouting.read')))))))
 $$;
 create function team_private.file_parent_visible(t uuid,r uuid) returns boolean language sql stable security definer set search_path=pg_catalog as $$select exists(select 1 from public.file_resource_versions x where x.team_id=t and x.resource_id=r and team_private.file_visible(t,x.id))$$;
 alter table public.file_resources enable row level security;
@@ -214,11 +214,13 @@ returns jsonb language plpgsql security definer set search_path=pg_catalog as $$
  end if;
  perform team_private.audit(v.team_id,u.actor_id,case when p_failure_reason is null then 'file.bytes_validated' else 'file.validation_failed' end,v.id);return to_jsonb(v);
 end$$;
-create function public.file_worker_missing(p_operation_id uuid) returns jsonb language plpgsql security definer set search_path=pg_catalog as $$declare v public.file_resource_versions;u team_private.file_uploads;begin
+create function public.file_worker_missing(p_operation_id uuid) returns jsonb language plpgsql security definer set search_path=pg_catalog as $$declare v public.file_resource_versions;u team_private.file_uploads;r public.file_resources;begin
  select * into v from public.file_resource_versions where operation_id=p_operation_id;select * into u from team_private.file_uploads where operation_id=p_operation_id;
  if u.version_id is null then raise exception 'Upload unavailable' using errcode='42501';end if;
  perform team_private.file_worker_actor(v.team_id,u.actor_id,u.session_id,u.jwt_expires_at);
  select * into u from team_private.file_uploads where operation_id=p_operation_id for update;
+ select * into r from public.file_resources where id=v.resource_id;
+ if not team_private.file_eligible(v.team_id,u.actor_id,r.kind) or r.archived_at is not null then raise exception 'Current contributor authority required' using errcode='42501';end if;
  if u.state not in ('uncertain','interrupted') or v.status<>'uploading' then raise exception 'Uncertain upload required' using errcode='40001';end if;
  update team_private.file_uploads set state='interrupted' where operation_id=p_operation_id;
  perform team_private.audit(v.team_id,u.actor_id,'file.missing_reconciled',v.id);
