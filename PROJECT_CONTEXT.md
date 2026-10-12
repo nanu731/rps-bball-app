@@ -1,5 +1,10 @@
 # TeamStats — Project Context and Development Sequence
 
+Owner addition (2026-10-12): coaches upload scouting reports for the upcoming
+opponent. Required future continuation scope; see PRD.md's scouting-report section.
+Formats, access/review and opponent/game linkage need decisions. Do not interrupt
+hosted activation or treat existing video approval rules as confirmed report rules.
+
 Owner added Lincoln Devine's polish guide as a UI acceptance reference; PRD.md's
 Human-use polish section records the rubric and native/security adaptations.
 Guide successfully read on 2026-10-11; token-bearing URL intentionally excluded.

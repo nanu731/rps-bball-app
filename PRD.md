@@ -610,6 +610,25 @@ Proposed acceptance criteria:
 - Eligible viewers can play published film and identify its linked game.
 - Unauthorized accounts cannot upload, approve, or retrieve restricted film.
 
+## Required component — Upcoming-opponent scouting reports
+
+Owner addition (2026-10-12): coaches can upload scouting reports for the next
+team we play. Include this in the next continuation specification/task graph;
+it is not authorization to interrupt the current hosted-activation task.
+Associate each report with its intended opponent/upcoming matchup. Exact game
+linkage versus opponent-only reports needs a decision before implementation.
+Do not invent report content or automatically generate scouting conclusions.
+
+Before implementation decide supported formats (for example PDF documents),
+viewing audience, coach upload eligibility, whether publication needs review,
+replacement/archive behavior and upload size limits. Existing practice-video
+approval rules are not automatically scouting-report rules. Resolve delegated
+product choices through Council under the existing owner authorization; actual
+reports and third-party rights remain owner-provided facts.
+Keep reports private with server-enforced access and bounded file validation;
+preserve the $0 budget and applicable upload security requirements. Display and
+upload behavior must be verified, not claimed complete from metadata alone.
+
 ## Security direction
 
 Use the Supabase publishable key in the app; keep privileged Supabase keys,
