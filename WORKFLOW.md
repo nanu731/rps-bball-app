@@ -1259,7 +1259,7 @@ open the isolated app in a responsive Simulator before those acceptance checks.
 
 ### Bounded scouting input preparation — verified2026-10-12
 
-`ScoutingReportDocument.swift` reads only bounded regular local files (5MiB),
+Source revision `93cac9a` (2026-10-12): `ScoutingReportDocument.swift` reads only bounded regular local files (5MiB),
 rejects symlinks/special files, preserves cancellation and checks native PDFKit
 parsing/pages/encryption. No network, file rewrite, upload receipt, server authority
 or publication is created. Eight real native iPhone17/26.4 tests passed: readable
@@ -1277,5 +1277,9 @@ not an obsolete path. Personal working bytes/staged entries and temporary-player
 source identities match the overnight baseline. An additional unrequested
 project.pbxproj diff appeared; parsed configuration equals HEAD (formatting only).
 It is preserved untouched/uncommitted. No current hosted schema/grants/SMS change.
-Standards/Spec review follows this slice; feature17 remains blocked on actual
+Standards review found1 missing evidence-revision label, now repaired; optional
+shared-reader extraction is deferred. Spec review found0 blocking defects for
+source-only preparation. A macOS probe accepted a corrupt compressed PDF stream
+with one page; client parsing is not full content validation or iOS/provider
+evidence. Feature17 remains blocked on actual
 private storage/validation/quotas/rights and approvals, independent of these tests.

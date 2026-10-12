@@ -279,10 +279,17 @@ Signed hosted owner/nonmember/admission/delegation/revocation acceptance remains
 pending; creating credentials/security-sensitive grants requires human action-time
 confirmation. Other ready local work continues under the strict$0 boundary.
 
-Scouting input preparation uses real synthetic native PDF documents in
+At source revision `93cac9a` (2026-10-12), scouting input preparation uses real synthetic native PDF documents in
 `ScoutingReportDocumentTests` (8 passed on iPhone17/26.4, final iPad build passed).
 No report upload/navigation was added; client parsing is not trusted server PDF
 validation or malicious-document sanitization. Actual file-provider/picker/UI and
 storage/transfer/cost acceptance remain unverified. Original8 local JSON hashes
 and both personal working/staged files survived the run unchanged; container
 paths may relocate during native tests, so compare device/file identities too.
+
+Independent source review: Standards found one missing tested-revision label,
+now repaired; optional sharing of the two bounded file readers is deferred.
+Spec found no blocking defect for source-only preparation. A synthetic macOS
+PDFKit probe accepted a corrupt compressed stream with one page: parser acceptance
+is not comprehensive content/readability validation. This probe is neither an
+iOS26.4 check nor provider acceptance. Trusted validation remains unimplemented.
