@@ -131,7 +131,9 @@ struct TeamWorkspaceView: View {
         .sheet(isPresented: $showingAdmission) { NavigationStack { TeamAdmissionView(model: model) } }
         .task {
             await account.restoreIfNeeded()
-            if account.sessionContextID != nil { await loadTeams() }
+            if account.sessionContextID != nil && !model.didLoadTeams && model.selectedTeam == nil {
+                await loadTeams()
+            }
         }
     }
 
@@ -209,21 +211,25 @@ private struct TeamRosterOverview: View {
     }
     var body: some View {
         List {
-            if model.isBusy { ProgressView("Loading team roster…") }
-            if let issue = model.issue {
+            if model.isBusy {
+                ProgressView("Loading team roster…")
+            } else if let issue = model.issue {
                 Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
                 Button("Retry") { Task { await model.selectTeam(team) } }.disabled(model.isBusy)
-            }
-            if model.access == nil {
+            } else if model.access == nil {
                 Label("Team roster is unavailable. Reload your team to check access.", systemImage: "exclamationmark.triangle")
+                Button("Retry") { Task { await model.selectTeam(team) } }
             } else {
                 let active = model.roster.filter { $0.archivedAt == nil }
-                if active.isEmpty { ContentUnavailableView("No active roster entries", systemImage: "person.3") }
+                if active.isEmpty {
+                    ContentUnavailableView("No active roster entries", systemImage: "person.3",
+                        description: Text("Ask an authorized roster manager to add the team’s players in Manage team."))
+                }
                 ForEach(active) { player in
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 8) {
                         Text(player.displayName).font(.headline)
                         Text("Jersey \(player.jerseyNumber)").foregroundStyle(.secondary)
-                    }.padding(.vertical, 4)
+                    }.padding(.vertical, 8)
                 }
             }
         }
