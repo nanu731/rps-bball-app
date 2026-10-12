@@ -447,3 +447,19 @@ Photo import now reads bounded native provider files before allocating image Dat
 all14 integrated photo tests passed. Possession review includes explicit
 Unanswered/Yes/No turnover mapping, never inferred from text or numeric0.
 Counts and optional Boolean answers enter only the existing unsaved record.
+
+
+## Team discovery review repairs — 2026-10-12
+
+Independent Standards and Spec source reviews identified transient roster-loading
+warning overlap, inconsistent new-row spacing, automatic Team-tab reload discarding
+unsent nested edits, and sign-out closing shared editors without a choice. Repairs
+make loading/error/empty states exclusive, use8-point spacing, gate initial Team
+loading to its stable context, and confirm both authenticated/error-state sign-out.
+Scouting read/upload capability labels and practice-byte bypass labels now match
+the new server contract. iPad26.4 simulator build passed after a sandbox-denied
+CoreSimulator attempt; source review is not interaction acceptance. Existing native
+UI, hosted media/capacity and physical/26.0 acceptance remain pending. Reviewed
+private-file server/validator source merged as fe13446/f0d7214; actual isolated
+server evidence is in supabase/private_files.md, with validator review repairs
+underway. No hosted activation/bootstrap or local-record upload occurred.

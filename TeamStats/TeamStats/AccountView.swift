@@ -11,6 +11,7 @@ struct AccountView: View {
     @State private var publicKey = ""
     @State private var environment: AccountConfiguration.Environment = .nonproduction
     @State private var authorizedServer = false
+    @State private var confirmSignOut = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case identifier, code, url, key }
@@ -44,7 +45,7 @@ struct AccountView: View {
                         .frame(minHeight: 44)
                     Button("Sign out", role: .destructive) {
                         focusedField = nil
-                        Task { await account.signOut() }
+                        confirmSignOut = true
                     }
                     .frame(minHeight: 44)
                 }
@@ -113,7 +114,7 @@ struct AccountView: View {
                         .frame(minHeight: 44)
                         .accessibilityIdentifier("account.retrySession")
                     if account.configuration != nil {
-                        Button("Sign out on this device", role: .destructive) { Task { await account.signOut() } }
+                    Button("Sign out on this device", role: .destructive) { confirmSignOut = true }
                             .frame(minHeight: 44)
                     }
                 }
@@ -151,6 +152,12 @@ struct AccountView: View {
         }
         .disabled(account.isBusy)
         .navigationTitle("Account")
+        .confirmationDialog("Sign out and close shared screens?", isPresented: $confirmSignOut, titleVisibility: .visible) {
+            Button("Sign out", role: .destructive) { Task { await account.signOut() } }
+            Button("Keep editing", role: .cancel) {}
+        } message: {
+            Text("Unsent edits in shared screens will close. Saved local and shared records remain unchanged.")
+        }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
