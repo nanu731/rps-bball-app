@@ -30,3 +30,18 @@ _Avoid_: Submitted draft
 
 **Real Possessions**: The owner's team-specific metric: game possessions minus turnovers plus offensive rebounds.
 _Avoid_: Estimated basketball possession formula
+
+
+**Play revision**: Saved user-authored geometry and movement steps; a published
+revision is retained when a new draft is proposed. Generic diagram marker numbers
+do not establish actual player identity.
+
+**Photo proposal**: Untrusted on-device recognized text and mapped candidate values
+that require review before entering an existing draft.
+
+**Media resource**: A private practice-video or game-film submission. Metadata or
+a link alone does not establish upload, provider rights, or playback.
+
+**Publication bypass**: Permission for an eligible author to publish their own
+valid submission without individual review; it does not create uploader eligibility
+or permission-administration authority.
