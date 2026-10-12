@@ -41,6 +41,16 @@ These are locally tested implementations, not a completed hosted release.
 | Device/release | Simulator inspection recovered, but input failed with `-10005: noWindowsAvailable`; attempts stopped. Updated private checklist covers polish/navigation, rotation, large text, VoiceOver and keyboard/recovery. Actual26.0/physical devices and signing/production/release approval remain unverified. |
 
 The connected dashboard now exposes the selected nonproduction project. The
+owner cancelled Run after its metadata RLS warning. The prepared transaction now
+explicitly revokes PUBLIC/anon/authenticated history-schema/table privileges,
+enables metadata RLS without client policies, and asserts all20 app tables retain
+RLS. Data API exposure lists public/graphql_public only. Local rollback checks
+passed2 ACL denials,2 seeded-row RLS denials, privileged tracking and preservation.
+The saved secured editor source matches after reload, with one BEGIN/COMMIT and
+unchanged app migrations. No hosted activation has run; metadata hosted readback
+remains pending. Use full-query Run as written, without selection/automatic edits.
+
+The
 owner's app/Auth Users UUID comparison was followed by a trusted SQL recheck:
 confirmed, nonanonymous, not banned/deleted, with a live Auth session. Dashboard
 Free and phone-disabled indicators were observed; no provider setting changed.

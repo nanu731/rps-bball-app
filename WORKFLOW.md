@@ -932,6 +932,19 @@ before real shared team use regardless of the approximately 100-user audience.
 ### Owner polish rubric: f682cfe audit and source repairs
 
 Hosted activation frontier: connected nonproduction dashboard is accessible.
+Owner cancelled the metadata-RLS warning before execution. Prepared source now
+revokes PUBLIC/anon/authenticated privileges on the history schema/table and
+enables metadata RLS with no client policies. A pre-bootstrap assertion checks
+denied client access, metadata RLS/policies and all20 app-table RLS flags. Data API
+schema selection excludes migration history. Local isolated rollback fixture:
+2 ACL denials,2 seeded-row RLS denials, trusted tracking and preservation passed.
+The initial local canonical-schema rehearsal stopped because history already
+existed; no existing metadata was replaced. Full-editor verification caught and
+repaired duplicate insertion; exact secured source persisted after Save/reload,
+with one BEGIN/COMMIT and unchanged nine app-migration bodies. Hosted activation
+and final hosted metadata readback remain unperformed. Run the whole reviewed
+query as written with no selection; do not request an automatic RLS rewrite.
+
 Owner-confirmed app/Auth Users UUID match was rechecked through trusted SQL:
 confirmed/nonanonymous account, no ban/deletion, live Auth session. Free badge,
 email enabled and phone disabled observed; no provider configuration changed.

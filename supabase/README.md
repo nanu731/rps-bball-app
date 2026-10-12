@@ -26,6 +26,25 @@ local tooling; no hosted project or additional dependency is configured here.
 
 ## Trust and bootstrap
 
+For trusted manual activation, keep CLI-compatible migration history in
+`supabase_migrations` private, outside the Data API's exposed schemas. Explicitly
+secure the history table after creation:
+
+```sql
+revoke all on schema supabase_migrations from public, anon, authenticated;
+revoke all on table supabase_migrations.schema_migrations from public, anon, authenticated;
+alter table supabase_migrations.schema_migrations enable row level security;
+```
+
+Add no client policies and do not force RLS on the owning administrator. Verify
+client schema/table privileges are absent while trusted migration tracking works.
+The prepared activation asserts metadata protection and RLS on all20 app tables
+before owner bootstrap. An isolated rollback-only local fixture passed both
+roles' access-denial and seeded-row RLS checks, privileged tracking and state
+preservation. Hosted metadata readback remains pending until activation executes.
+Run the full reviewed transaction as written, not a selection or automatic RLS
+rewrite; do not change app grants or app RLS to resolve a metadata warning.
+
 The trusted server administrator must first verify the actual owner's account
 in Supabase Auth. Only then may that administrator insert a team with its
 `owner_auth_uuid` set to that verified Auth UUID. The insert verifies the account,
