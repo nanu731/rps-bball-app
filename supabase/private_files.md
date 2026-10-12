@@ -135,15 +135,46 @@ archive/history and transfer exhaustion. Its injected **protocol receipts are no
 actual Storage or content-validation evidence**. It rolls back the entire new schema
 and every synthetic identity/audit row; existing records are untouched.
 
-Twenty-three stdlib HTTP/subprocess gateway tests passed, covering exact-length actual
+Twenty-four stdlib HTTP/subprocess gateway tests passed, covering exact-length actual
 HTTP route response, durable readback/digest, interruption, lost acknowledgment,
 explicit reconciliation without overwrite, denial/revocation, private error
-sanitization and pins, plus five previously failing monitoring/orphan-child cases. Monitoring
+sanitization and pins, plus five previously failing monitoring/orphan-child cases and the observed
+Storage `NoSuchKey`/HTTP400 recovery regression. Monitoring
 failure denies validation; every launched group is killed and its parent reaped
 before the parser lease is released. Unconfirmed cleanup keeps the parser blocked
 until trusted operator recovery. The provider and validator are explicitly synthetic external
 fixtures; they do not establish real Storage, PDF/AV decode, hosted enforcement or
-device playback. Actual local Storage/native-validator integration, concurrent
-signed accounts, native upload/download/restart/space/UI and hosted capacity/cost
-acceptance remain separate checks. No migration or trusted budget has been applied
-to the hosted project by this slice.
+device playback. Actual isolated integration on2026-10-12 passed **67 checks**, using server SQL
+revision `9bfac9d`, gateway revision `6eb0446`, and trusted validator revision
+`e619698`. These include fixture/identity/setup checks, not67 distinct features.
+The fresh synthetic stack retained only reviewed migration003;11 independent
+RLS/ACL/bucket/migration-history/default-unknown readbacks passed before use.
+No hosted activation/bootstrap was rerun. The earlier runtime and original
+simulator records were untouched.
+
+Four independently signed local Auth sessions exercised actual private Storage,
+full pinned native PDF/H264/AAC validation, exact durable digest/length, owner review,
+ordinary pending clip submission and authorized own-author publication. Real
+reader/uploader/anonymous-role tokens were accepted by Storage before all direct
+private-bucket reads/writes were denied. Pending/nonmember retrieval, immediate
+read-grant revocation and old-JWT denial after actual Auth logout passed. Actual
+truncated input remained unconfirmed; real missing-object reconciliation allowed
+one fresh immutable operation while retaining the old reservation. Encrypted PDF
+bytes failed trusted validation without an upload receipt. Accepted clip replacement
+retained the prior version/body. Concurrent same-account requests admitted exactly
+one active upload; different actors in different teams could not overrun the shared
+aggregate budget. No bytes, identities, charges or records were deleted.
+
+The actual Storage version returns a missing key as HTTP400 with
+`code=NoSuchKey` and `statusCode=404`; the public recovery regression failed first
+and now treats only that verified shape (or HTTP404) as missing, without mistaking
+other failures for absent bytes. Initial native/Auth REST response-shape/HTTP204
+expectations were harness repairs, not application defects. Synthetic per-run
+budget allowances are explicit trusted local configuration and never establish
+hosted cost safety.
+
+Three actual native validator cases also passed through the repaired resource
+supervisor (PDF, H264 and H264/AAC). Native app upload/download, AVPlayer playback,
+restart/offline retention/space/UI and hosted capacity/cost acceptance remain
+separate checks. The gateway and provider are real **local** services; no hosted
+file feature, production release or physical-device acceptance is claimed.
