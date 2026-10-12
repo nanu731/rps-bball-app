@@ -178,8 +178,11 @@ parameter after a second question mark, while native validation rejected it.
 The additive migration replaces the existing private validator's query extraction
 with the entire substring after the first question mark. Existing stored URLs are
 not rewritten; unsafe new practice/film saves and transitions are blocked.
-Harmless extra question marks remain valid. At base `adde255` plus this repair,
+Harmless extra question marks remain valid. The repair is committed in `a1a2af4` (based on `adde255`);
 26 Hudl and79 media regression checks passed in rollback-only loopback SQL.
 Exact tested migration SHA256: `59627e8761ecb92e1398f7366ed1304501ef578b1d3e715e8d38ee29fdf70c23`.
-Native parity regression and post-integration checks are recorded separately;
-this SQL result is not hosted/provider acceptance.
+After merging integration commit `04d1b01`, all18 native media tests passed
+on iPhone Simulator26.4 at tested revision `7ebd25c`, including the reported
+credential-query rejection and harmless-second-question-mark acceptance.
+The app/test build passed. This is fixture/loopback evidence, not hosted/provider
+acceptance; rendered Hudl UI and real authorized links remain unverified.
