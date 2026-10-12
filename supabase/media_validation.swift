@@ -52,9 +52,18 @@ final class PDFGraph {
     var objectCount = 0
     var depth = 0
     let forbidden: Set<String> = ["A", "AA", "OpenAction", "JS", "JavaScript", "EmbeddedFiles", "EF", "XFA", "AcroForm", "RichMedia", "Movie", "Sound"]
+    // Handle opaque pointers and one-word CoreGraphics wrappers. Check layout
+    // before using their identical pointer bits for bounded cycle detection.
+    func pointerIdentity<Value>(_ value: Value) -> UInt? {
+        guard MemoryLayout<Value>.size == MemoryLayout<UInt>.size else {
+            failure = .invalid_pdf
+            return nil
+        }
+        return unsafeBitCast(value, to: UInt.self)
+    }
     func dictionary(_ value: CGPDFDictionaryRef) {
         guard depth <= 100 else { failure = .resource_limit; return }
-        guard visited.insert(UInt(bitPattern: value.rawValue)).inserted else { return }
+        guard let identity = pointerIdentity(value), visited.insert(identity).inserted else { return }
         let context = Unmanaged.passUnretained(self).toOpaque()
         CGPDFDictionaryApplyFunction(value, { key, object, context in
             guard let context else { return }
@@ -79,7 +88,7 @@ final class PDFGraph {
         case .array:
             var value: CGPDFArrayRef?
             guard CGPDFObjectGetValue(object, .array, &value), let value else { failure = .invalid_pdf; return }
-            guard visited.insert(UInt(bitPattern: value.rawValue)).inserted else { return }
+            guard let identity = pointerIdentity(value), visited.insert(identity).inserted else { return }
             guard CGPDFArrayGetCount(value) <= 100_000 else { failure = .resource_limit; return }
             for index in 0..<CGPDFArrayGetCount(value) {
                 var child: CGPDFObjectRef?
@@ -90,7 +99,7 @@ final class PDFGraph {
         case .stream:
             var value: CGPDFStreamRef?
             guard CGPDFObjectGetValue(object, .stream, &value), let value else { failure = .invalid_pdf; return }
-            guard visited.insert(UInt(bitPattern: value.rawValue)).inserted else { return }
+            guard let identity = pointerIdentity(value), visited.insert(identity).inserted else { return }
             guard let dictionary = CGPDFStreamGetDictionary(value) else { failure = .invalid_pdf; return }
             self.dictionary(dictionary)
             var format = CGPDFDataFormat.raw
@@ -198,11 +207,60 @@ func validateMP4Container(_ bytes: Data) throws {
     guard foundType, foundMetadata, foundMedia else { throw ValidationFailure.invalid_video }
 }
 
+// AVFoundation may ignore some MP4 dref metadata. Independently require
+// self-contained references before any decoder sees the untrusted container.
+func validateMP4References(_ bytes: Data) throws {
+    var inspected = 0, references = 0
+    func inspect(_ range: Range<Int>, depth: Int = 0, entries: Bool = false) throws -> Int {
+        guard depth <= 32 else { throw ValidationFailure.resource_limit }
+        var offset = range.lowerBound, count = 0
+        while offset < range.upperBound {
+            guard range.upperBound - offset >= 8 else { throw ValidationFailure.invalid_video }
+            let size32 = bytes[offset..<offset+4].reduce(UInt64(0)) { $0 << 8 | UInt64($1) }
+            var header = 8
+            let size: UInt64
+            if size32 == 1 {
+                guard range.upperBound - offset >= 16 else { throw ValidationFailure.invalid_video }
+                size = bytes[offset+8..<offset+16].reduce(UInt64(0)) { $0 << 8 | UInt64($1) }; header = 16
+            } else { size = size32 == 0 ? UInt64(range.upperBound-offset) : size32 }
+            guard size >= header, size <= UInt64(range.upperBound-offset) else { throw ValidationFailure.invalid_video }
+            let type = String(decoding: bytes[offset+4..<offset+8], as: UTF8.self)
+            let body = (offset+header)..<(offset+Int(size))
+            inspected += 1
+            guard inspected <= 10_000 else { throw ValidationFailure.resource_limit }
+            if entries {
+                // Full-box version0 and the single self-contained flag, with no
+                // URL/alias payload. All other reference types fail closed.
+                guard type == "url ", body.count == 4,
+                    bytes[body].elementsEqual([0, 0, 0, 1]) else { throw ValidationFailure.unsupported_type }
+                references += 1
+            } else if ["moov", "trak", "mdia", "minf", "dinf"].contains(type) {
+                _ = try inspect(body, depth: depth+1)
+            } else if type == "dref" {
+                guard body.count >= 8,
+                    bytes[body.lowerBound..<body.lowerBound+4].elementsEqual([0, 0, 0, 0]) else { throw ValidationFailure.invalid_video }
+                let expected = bytes[body.lowerBound+4..<body.lowerBound+8].reduce(UInt64(0)) { $0 << 8 | UInt64($1) }
+                guard expected > 0, expected <= 10_000 else { throw ValidationFailure.resource_limit }
+                let actual = try inspect((body.lowerBound+8)..<body.upperBound, depth: depth+1, entries: true)
+                guard actual == expected else { throw ValidationFailure.invalid_video }
+            }
+            offset += Int(size); count += 1
+        }
+        return count
+    }
+    _ = try inspect(0..<bytes.count)
+    guard references > 0 else { throw ValidationFailure.invalid_video }
+}
+
 func validateVideo(_ bytes: Data) async throws -> [String: Int] {
     try validateMP4Container(bytes)
+    try validateMP4References(bytes)
     let file = try privateFile(bytes, suffix: "mp4")
     defer { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
-    let asset = AVURLAsset(url: file, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
+    // The receipt must describe this container's bytes. Apple's default policy
+    // still permits external local-media references, so forbid every reference.
+    let asset = AVURLAsset(url: file, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true,
+        AVURLAssetReferenceRestrictionsKey: NSNumber(value: AVAssetReferenceRestrictions.forbidAll.rawValue)])
     guard try await !asset.load(.hasProtectedContent) else { throw ValidationFailure.unsupported_type }
     let duration = try await asset.load(.duration).seconds
     guard duration.isFinite, duration > 0 else { throw ValidationFailure.invalid_video }

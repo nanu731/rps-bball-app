@@ -232,6 +232,15 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
         finally:
             process.terminate();process.wait(timeout=3)
 
+    @unittest.skipUnless(os.environ.get('TEAMSTATS_MEDIA_VALIDATOR') and os.environ.get('TEAMSTATS_MEDIA_FIXTURES'), 'Actual pinned native validator/fixtures must be configured')
+    def test_actual_portrait_clip_has_consistent_native_and_gateway_bounds(self):
+        binary=Path(os.environ['TEAMSTATS_MEDIA_VALIDATOR'])
+        config={'validator_path':str(binary),'validator_sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'temporary_directory':self.temp.name}
+        data=(Path(os.environ['TEAMSTATS_MEDIA_FIXTURES'])/'portrait-h264.mp4').read_bytes()
+        receipt=MODULE.TrustedValidator(config).validate('practice',data)
+        self.assertEqual((receipt['validation_details']['width'],receipt['validation_details']['height']),(1080,1920))
+        self.assertEqual(receipt['sha256'],hashlib.sha256(data).hexdigest())
+
     def test_non_uuid_identity_cannot_inject_provider_path(self):
         self.failure(lambda:self.gateway.upload('SYNTHETIC USER','../other',io.BytesIO(DATA),len(DATA)),'invalid_identity')
 

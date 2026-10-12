@@ -253,7 +253,7 @@ def verified_validation(kind: str, data: bytes, reply: dict) -> dict:
         details = {'pageCount': pages}
     else:
         duration, width, height = details.get('duration'), details.get('width'), details.get('height')
-        if type(duration) not in (int, float) or not math.isfinite(duration) or not 0 < duration <= 30 or type(width) is not int or type(height) is not int or not 0 < width <= 1920 or not 0 < height <= 1080 or details.get('videoCodec') != 'h264' or details.get('audioCodec') not in (None, 'aac'):
+        if type(duration) not in (int, float) or not math.isfinite(duration) or not 0 < duration <= 30 or type(width) is not int or type(height) is not int or width<=0 or height<=0 or max(width,height)>1920 or min(width,height)>1080 or details.get('videoCodec') != 'h264' or details.get('audioCodec') not in (None, 'aac'):
             raise FileFailure('validator_receipt_mismatch', 422)
         details = {'duration': duration, 'width': width, 'height': height, 'videoCodec': 'h264', 'audioCodec': details.get('audioCodec')}
     return {'byte_count': len(data), 'sha256': digest, 'content_type': media_type, 'validation_details': details}
