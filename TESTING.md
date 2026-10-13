@@ -342,7 +342,7 @@ runtime listeners were loopback-only after state-preserving binding repairs.
 All8 original local JSON files, temporary identities and personal Xcode bytes/index
 entries passed the preservation guard. New synthetic files are test fixtures.
 
-Current UI control is blocked by the locked Mac; stop repeated identical attempts.
+At that checkpoint UI control was blocked by the locked Mac; repeated identical attempts stopped.
 New Team/file/player/PDF screens still require rendered iPhone/iPad light/dark,
 rotation, large text, VoiceOver, keyboard Save, pending/failure/dirty navigation,
 known revocation and full app termination/offline reopening checks. See the private

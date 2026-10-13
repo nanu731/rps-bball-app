@@ -1452,3 +1452,9 @@ creation was superseded by the safe existing migration-history view. Local bound
 capacity window expired; inspected read-only, charges/history preserved. Original
 records, identities and protected working/staged snapshots remain unchanged this
 turn, with older snapshots retained. Exact evidence/checklist stays private.
+
+Acceptance-document reviews: Standards found one stale present-tense locked-Mac
+sentence; it now names its historical checkpoint. Spec found the missing iPhone
+synthetic-game prerequisite in the private manual checklist; creation with keyboard-
+visible Save/details is now explicit before entry checks. Targeted rereviews reported
+no remaining finding in either gap. No source change or repeated model suite.
