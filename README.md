@@ -153,6 +153,7 @@ acceptance remain pending.
 - [Architecture and source map](ARCHITECTURE.md): modules, storage and integration boundaries.
 - [Security boundaries](SECURITY.md): authority, controls and verification gaps.
 - [Testing and acceptance](TESTING.md): suites, safe prerequisites and remaining gates.
+- [UI/UX skills and autonomous verification](docs/agents/ui-ux-workflow.md): selected native guidance, skill routing and the next automation diagnostic.
 - [Glossary](GLOSSARY.md): local/shared data, completion, publication and recovery terminology.
 
 Update this flow section when visible navigation or lifecycle changes; keep
