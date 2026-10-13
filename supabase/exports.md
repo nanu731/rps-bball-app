@@ -82,7 +82,7 @@ ledger and latest-view tabs). The destination must also have a `TeamStats Latest
 tab with this exact static formula in **A2**, as exported by `LATEST_FORMULA`:
 
 ```text
-=IFERROR(LET(entries,FILTER('TeamStats Ledger'!A2:H100001,'TeamStats Ledger'!A2:A100001<>""),ordered,SORT(entries,1,TRUE,2,TRUE,3,FALSE),keys,INDEX(ordered,0,1)&"|"&INDEX(ordered,0,2),FILTER(ordered,ARRAYFORMULA(MATCH(keys,keys,0))=SEQUENCE(ROWS(ordered)))),"")
+=IFERROR(LET(entries,FILTER('TeamStats Ledger'!A2:H100001,'TeamStats Ledger'!A2:A100001<>""),ordered,SORT(entries,1,TRUE,2,TRUE,3,FALSE),keys,ARRAYFORMULA(INDEX(ordered,0,1)&"|"&INDEX(ordered,0,2)),FILTER(ordered,ARRAYFORMULA(MATCH(keys,keys,0))=SEQUENCE(ROWS(ordered)))),"")
 ```
 
 The worker only verifies this formula; delivery jobs never write it. The projection
@@ -91,10 +91,10 @@ then selects the first row per game/dataset. This avoids floating-point conversi
 of bigint generations. No dynamic user value is interpolated into a formula. The
 projection identifies latest **delivered** snapshots; the server latest command
 identifies latest **accepted** versions and reports undelivered state. Those are
-different during delivery lag. Google formula execution and live newest-first
-behavior remain unverified; loopback fixtures test the prerequisite and SQL tests
-verify the server maximum-generation projection. Activation must include actual
-Google calculation, capacity and collaborator behavior checks.
+different during delivery lag. Isolated Google calculation/newest-first readback
+passed with the repaired formula below; loopback fixtures test prerequisites and
+SQL tests verify the server projection. Automated worker delivery, operational
+destination capacity and collaborator behavior still require acceptance.
 
 ## Trusted runtime and budget gate
 
@@ -137,9 +137,10 @@ races, newer-before-older disjoint writes, timeout-applied recovery, timeout ret
 existing-ID/false-hash/cell and ledger conflicts, partial/quota errors, literal
 formula-like content, latest-view preflight, bounded requests, disabled/expired
 budget evidence and backend success/failure recording. These are contract fixtures,
-not Google integration evidence. Google credentials, billing proof, real Sheet
-batch/readback/formula execution, hosted service setup, scheduler/backoff,
-mobile delivery-status presentation and production deployment remain open.
+not Google integration evidence. The later isolated calculation check below is
+actual Google evidence. Worker credentials, billing proof, worker batch/readback,
+hosted service setup and scheduler/backoff remain open. Native status presentation
+is implemented; rendered acceptance and production deployment are separate gates.
 
 Protocol references: [atomic batches](https://developers.google.com/workspace/sheets/api/reference/rest/v4/spreadsheets/batchUpdate),
 [explicit AddSheet IDs](https://developers.google.com/workspace/sheets/api/reference/rest/v4/spreadsheets/request#AddSheetRequest),
@@ -147,3 +148,15 @@ Protocol references: [atomic batches](https://developers.google.com/workspace/sh
 [SORT](https://support.google.com/docs/answer/3093150),
 [FILTER](https://support.google.com/docs/answer/3093197),
 [Sheets limits and current billing policy](https://developers.google.com/workspace/sheets/api/limits).
+
+## Actual formula acceptance — 2026-10-13, c06c7a7 plus formula repair
+
+An isolated private Google Sheet with synthetic rows exposed a calculation defect:
+the earlier unwrapped key concatenation selected only the first game/dataset group.
+Wrapping that concatenation in `ARRAYFORMULA` returned all three tested groups.
+Actual Sheets readback verified a newer correction, late older rows, an identical
+row retry without duplication, and exact maximum-bigint generation text. The failing
+formula and six synthetic history rows are retained privately; the operational
+destination, permissions and automated delivery remain unchanged. All20 affected
+worker protocol tests passed; those HTTP fixtures do not execute Google's formula
+engine. This is destination calculation evidence, not automated export acceptance.

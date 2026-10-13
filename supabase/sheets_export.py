@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 # Installed once by the trusted operator, never changed by delivery jobs. Sorting
 # padded literal generations avoids rounding bigint generations through VALUE().
-LATEST_FORMULA = """=IFERROR(LET(entries,FILTER('TeamStats Ledger'!A2:H100001,'TeamStats Ledger'!A2:A100001<>""),ordered,SORT(entries,1,TRUE,2,TRUE,3,FALSE),keys,INDEX(ordered,0,1)&"|"&INDEX(ordered,0,2),FILTER(ordered,ARRAYFORMULA(MATCH(keys,keys,0))=SEQUENCE(ROWS(ordered)))),"")"""
+LATEST_FORMULA = """=IFERROR(LET(entries,FILTER('TeamStats Ledger'!A2:H100001,'TeamStats Ledger'!A2:A100001<>""),ordered,SORT(entries,1,TRUE,2,TRUE,3,FALSE),keys,ARRAYFORMULA(INDEX(ordered,0,1)&"|"&INDEX(ordered,0,2)),FILTER(ordered,ARRAYFORMULA(MATCH(keys,keys,0))=SEQUENCE(ROWS(ordered)))),"")"""
 
 class ExportError(Exception):
     """A safe, fixed error code. Provider response bodies are never logged."""
