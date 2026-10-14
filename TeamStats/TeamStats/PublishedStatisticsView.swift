@@ -13,7 +13,7 @@ struct PublishedStatisticsView: View {
             } else {
                 Section("Accepted dataset status") {
                     Text("These are the current server-accepted versions. Publication applies to each dataset independently.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                     ForEach(ConnectedDatasetType.allCases, id: \.self) { kind in
                         if let version = model.publishedVersions[kind] {
                             NavigationLink("\(kind.label) · Published revision \(version.revision)") {
@@ -25,7 +25,7 @@ struct PublishedStatisticsView: View {
                         Label("Partial published game — some datasets are not published.", systemImage: "info.circle")
                     }
                     Text("A missing optional count is Not entered; an entered zero is 0. No draft or pending proposal contributes to these metrics.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 if let box = model.publishedVersions[.boxScores] {
                     Section("Accepted player box scores") {
@@ -40,7 +40,7 @@ struct PublishedStatisticsView: View {
                 PublishedMetricSections(model: model)
                 Section {
                     Text("Paint-touch player totals are independently collected. No player attribution or repeated-touch interpretation is inferred from team possession records.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                 }
             }
         }
@@ -84,7 +84,7 @@ private struct PublishedMetricSections: View {
                         LabeledContent("\(connectedShotLabel(shot)) percentage", value: connectedPercentage(statistics.possessionShootingPercentage(shot, team: team)))
                     }
                     Text("Real Possessions = this team's game possessions − turnovers + offensive rebounds. Each team is calculated independently.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
             }
             Section("Box scores / Our possession sheet") {
@@ -101,7 +101,7 @@ private struct PublishedMetricSections: View {
                     Label("Reconciliation unavailable: \(connectedUnavailable(reason))", systemImage: "info.circle")
                 }
                 Text("Comparison requires completed, matching accepted data for points, twos made/missed, threes made/missed and free throws made/missed. Missing data never counts as a match.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
             }
         }
     }
@@ -125,7 +125,7 @@ struct ConnectedVersionRecords: View {
         case .unavailable:
             Label("Saved records could not be read. No totals are shown.", systemImage: "exclamationmark.triangle")
         case .boxes(let records):
-            if records.isEmpty { Text("No box-score records in this saved version.").foregroundStyle(.secondary) }
+            if records.isEmpty { Text("No box-score records in this saved version.").foregroundStyle(TeamStatsStyle.secondaryText) }
             ForEach(records, id: \.playerID) { record in
                 NavigationLink(connectedPlayerLabel(record.playerID, labels: labels)) {
                     List {
@@ -142,15 +142,15 @@ struct ConnectedVersionRecords: View {
                 }
             }
         case .paint(let records):
-            if records.isEmpty { Text("No paint-touch player records in this saved version.").foregroundStyle(.secondary) }
+            if records.isEmpty { Text("No paint-touch player records in this saved version.").foregroundStyle(TeamStatsStyle.secondaryText) }
             ForEach(records, id: \.playerID) { record in
                 LabeledContent(connectedPlayerLabel(record.playerID, labels: labels), value: summaryCount(record.total))
             }
         case .possessions(let records):
             LabeledContent("Records entered", value: String(records.count))
-            if records.isEmpty { Text("No possession records in this saved version.").foregroundStyle(.secondary) }
+            if records.isEmpty { Text("No possession records in this saved version.").foregroundStyle(TeamStatsStyle.secondaryText) }
             Text(version.status == .published ? "Accepted completed sheet. This dataset does not establish whole-game completion." : "Saved records in this dataset; not a published game total.")
-                .font(.footnote).foregroundStyle(.secondary)
+                .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
             ForEach(records.sorted { $0.number < $1.number }) { record in
                 NavigationLink("\(record.team.label) · Record \(record.number)") {
                     List {
@@ -179,7 +179,7 @@ struct ConnectedExportQueueView: View {
             Section {
                 Text("The server creates one immutable export outbox item for each accepted dataset version.")
                 Text("Only Delivered confirms a server receipt. Delivery requires a separately configured trusted worker and an approved zero-cost Google setup. Queued items do not confirm spreadsheet delivery.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(TeamStatsStyle.secondaryText)
             }
             if model.access?.isOwner != true || !model.didLoadGame {
                 Section { Text("Export queue unavailable. Owner access and a successful server load are required.") }
@@ -194,16 +194,16 @@ struct ConnectedExportQueueView: View {
                 }
                 if model.didLoadExportStatus {
                     Section("Server delivery status") {
-                        if model.exportStatus.isEmpty { Text("No export items returned for this game.").foregroundStyle(.secondary) }
+                        if model.exportStatus.isEmpty { Text("No export items returned for this game.").foregroundStyle(TeamStatsStyle.secondaryText) }
                         ForEach(model.exportStatus) { item in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(item.datasetType.label).font(.headline)
                                 Label(item.state.label, systemImage: item.state == .delivered ? "checkmark.circle" : item.state == .failed ? "exclamationmark.triangle" : "clock")
                                 Text("Publication generation \(item.publicationGeneration)")
                                 Text("Accepted version \(item.acceptedVersionID.uuidString)").font(.caption).textSelection(.enabled)
-                                Text("Delivery attempts: \(item.attempts)").foregroundStyle(.secondary)
+                                Text("Delivery attempts: \(item.attempts)").foregroundStyle(TeamStatsStyle.secondaryText)
                                 if let code = item.errorCode { Text("Reason: \(code)").textSelection(.enabled) }
-                                if let date = item.deliveredAt { Text("Confirmed \(date)").font(.caption).foregroundStyle(.secondary) }
+                                if let date = item.deliveredAt { Text("Confirmed \(date)").font(.caption).foregroundStyle(TeamStatsStyle.secondaryText) }
                             }
                         }
                     }

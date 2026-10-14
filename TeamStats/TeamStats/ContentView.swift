@@ -39,25 +39,31 @@ struct ContentView: View {
                             NavigationLink {
                                 GameDetailsView(game: game)
                             } label: {
-                                VStack(alignment: .leading) {
-                                    Text(game.opponent)
-                                        .font(.headline)
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(game.opponent).font(.headline)
+                                        .fixedSize(horizontal: false, vertical: true)
                                     Text(game.date, format: .dateTime.month().day().year())
-                                        .foregroundStyle(.secondary)
+                                        .font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor)
                                     Text("\(game.venue.rawValue) · \(game.kind.rawValue)")
                                         .font(.subheadline)
-                                        .foregroundStyle(.primary)
-                                }
+                                }.padding(.vertical, 8)
                             }
                         }
                     }
                 }
                 .navigationTitle("Local games")
                 .toolbar {
-                    Button("Add game", systemImage: "plus") {
-                        showingNewGame = true
+                    ToolbarItem(placement: .topBarLeading) {
+                        NavigationLink { TeamStatsGuide() } label: {
+                            Label("Using TeamStats", systemImage: "questionmark.circle")
+                        }
                     }
-                    .disabled(loadError != nil)
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Add game", systemImage: "plus") {
+                            showingNewGame = true
+                        }
+                        .disabled(loadError != nil)
+                    }
                 }
                 .sheet(isPresented: $showingNewGame) {
                     NewGameView { game in
@@ -81,7 +87,11 @@ struct ContentView: View {
                 List {
                     Section {
                         ForEach(temporaryRoster) { player in
-                            LabeledContent(player.name, value: "#\(player.number)")
+                            HStack(alignment: .firstTextBaseline, spacing: 16) {
+                                Text("#\(player.number)").font(.title3.bold()).monospacedDigit()
+                                    .foregroundStyle(Color.accentColor).frame(minWidth: 44, alignment: .leading)
+                                Text(player.name).font(.headline)
+                            }.frame(minHeight: 44).accessibilityElement(children: .combine)
                         }
                     } header: {
                         Text("Temporary roster")
@@ -154,8 +164,8 @@ struct Game: Codable, Identifiable {
     }
 }
 
-private enum GameStorage {
-    private static func fileURL() throws -> URL {
+enum GameStorage {
+    static func fileURL() throws -> URL {
         try FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
@@ -164,20 +174,33 @@ private enum GameStorage {
         ).appendingPathComponent("games.json")
     }
 
-    static func load() throws -> [Game] {
-        let url = try fileURL()
+    static func load() throws -> [Game] { try load(from: fileURL()) }
+
+    static func load(from url: URL) throws -> [Game] {
         let data: Data
         do {
             data = try Data(contentsOf: url)
         } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
             return []
         }
-        return try JSONDecoder().decode([Game].self, from: data)
+        let games = try JSONDecoder().decode([Game].self, from: data)
+        try validate(games)
+        return games
     }
 
-    static func save(_ games: [Game]) throws {
+    static func save(_ games: [Game]) throws { try save(games, to: fileURL()) }
+
+    static func save(_ games: [Game], to url: URL) throws {
+        try validate(games)
         let data = try JSONEncoder().encode(games)
-        try data.write(to: fileURL(), options: .atomic)
+        try data.write(to: url, options: [.atomic, .completeFileProtection])
+    }
+
+    private static func validate(_ games: [Game]) throws {
+        guard Set(games.map(\.id)).count == games.count,
+              games.allSatisfy({ !$0.opponent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) else {
+            throw CocoaError(.coderReadCorrupt)
+        }
     }
 }
 
@@ -217,7 +240,7 @@ private struct NewGameView: View {
                         .textInputAutocapitalization(.words)
                     if trimmedOpponent.isEmpty {
                         Text("Opponent is required.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                     Picker("Our team", selection: $venue) {
                         ForEach(Game.Venue.allCases, id: \.self) { venue in
@@ -232,7 +255,7 @@ private struct NewGameView: View {
                 }
                 Section {
                     Text("Saved only on this device. Player box-score drafts are available from game details.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 if let saveError {
                     Section("Could not save game") {
@@ -278,35 +301,41 @@ private struct GameDetailsView: View {
 
     var body: some View {
         Form {
-            Section("Game details") {
-                LabeledContent("Date") {
-                    Text(game.date, format: .dateTime.month().day().year())
-                }
-                LabeledContent("Opponent", value: game.opponent)
-                LabeledContent("Our team", value: game.venue.rawValue)
-                LabeledContent("Game type", value: game.kind.rawValue)
+            Section {
+                GameIdentity(opponent: game.opponent,
+                    date: game.date.formatted(.dateTime.month().day().year()),
+                    venue: game.venue.rawValue, kind: game.kind.rawValue, location: "On this device")
+                Label("Local draft — incomplete and unreviewed", systemImage: "pencil")
+                    .font(.subheadline)
             }
-            Section("Local box-score draft") {
-                Button("Single-player entry") {
-                    entryMode = .player
+            Section("Enter after-game statistics") {
+                Button { entryMode = .player } label: {
+                    TeamTaskLabel(title: "Single-player entry", detail: "One player's box score at a time", symbol: "person")
                 }
-                Button("Whole-roster table entry") {
-                    entryMode = .table
+                Button { entryMode = .table } label: {
+                    TeamTaskLabel(title: "Whole-roster table entry", detail: "The same box scores in a scrollable table", symbol: "tablecells")
                 }
-                Text("After-game entry only. Drafts are saved on this device, not published.")
-                    .foregroundStyle(.secondary)
+                Button { showingPlayerPaintTouches = true } label: {
+                    TeamTaskLabel(title: "Player paint-touch drafts", detail: "Independently recorded game totals", symbol: "person.crop.rectangle")
+                }
+                Button { showingPossessions = true } label: {
+                    TeamTaskLabel(title: "Possession draft entry", detail: "Our team left; opponent right", symbol: "rectangle.split.2x1")
+                }
             }
             Section {
-                Button("Local game summary") { showingSummary = true }
-                Button("Player paint-touch drafts") { showingPlayerPaintTouches = true }
-                Button("Possession draft entry") { showingPossessions = true }
-                Text("Incomplete, unreviewed local drafts. Advanced-sheet reconciliation is unavailable.")
-                    .foregroundStyle(.secondary)
+                Button { showingSummary = true } label: {
+                    TeamTaskLabel(title: "Local game summary", detail: "Read-only saved values and scoring checks", symbol: "list.bullet.rectangle")
+                }
+            } header: {
+                Text("Inspect saved observations")
+            } footer: {
+                Text("Saved only on this device. Drafts are not published. Advanced-sheet reconciliation is unavailable.")
             }
         }
-        .navigationTitle(game.opponent)
+        .navigationTitle("Game")
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $entryMode) { mode in
-            BoxScoreEditor(gameID: game.id, initialMode: mode)
+            BoxScoreEditor(game: game, initialMode: mode)
         }
         .sheet(isPresented: $showingPossessions) {
             PossessionEditor(game: game)

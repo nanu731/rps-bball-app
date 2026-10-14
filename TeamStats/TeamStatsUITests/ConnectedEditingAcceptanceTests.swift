@@ -91,9 +91,8 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
         if app.buttons["Done"].exists { try tap(app.buttons["Done"]) }
         try tap(app.buttons["Add marker"])
         try tap(app.buttons["Add movement step"])
-        try tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Marker, ")).firstMatch)
-        guard let firstMarker = app.buttons.matching(identifier: "Marker 1").allElementsBoundByIndex.last else { throw EditingUIIssue.missingState }
-        try tap(firstMarker)
+        // Adding the first marker already selects it; do not target a duplicated
+        // menu/court label when the actual coordinate controls are available.
         let horizontal = app.sliders["Horizontal position"]
         try reveal(horizontal)
         horizontal.adjust(toNormalizedSliderPosition: 0.8)
@@ -116,9 +115,7 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
         XCTAssertEqual(name.value as? String, title)
         try tap(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Edit position")).firstMatch)
         try tap(app.buttons["Step 1"])
-        try tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Marker, ")).firstMatch)
-        guard let savedMarker = app.buttons.matching(identifier: "Marker 1").allElementsBoundByIndex.last else { throw EditingUIIssue.missingState }
-        try tap(savedMarker)
+        try tap(app.buttons["Marker 1"].firstMatch)
         try require(app.sliders["Horizontal position"])
         XCTAssertEqual(app.sliders["Horizontal position"].value as? String, retainedPosition)
         capture("Saved drawing restored after client-only discard")
@@ -165,7 +162,10 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
     private func selectTab(_ name: String) throws {
         let button = app.buttons[name].firstMatch
         if !button.exists, app.buttons["Next Page"].exists { app.buttons["Next Page"].tap() }
-        try tap(button)
+        try require(button)
+        guard button.isHittable else { throw EditingUIIssue.unreachableControl }
+        // iPad tabs sit above the navigation bar, outside the content viewport.
+        button.tap()
     }
 
     private func require(_ element: XCUIElement) throws {
@@ -175,6 +175,9 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
     private func reveal(_ element: XCUIElement) throws {
         for _ in 0..<10 {
             if element.exists && element.isHittable {
+                // Native tabs, toolbar buttons and popover choices are not body rows.
+                // Their observed hittability and subsequent state assertions govern.
+                if element.elementType == .button { return }
                 let keyboardTop = app.keyboards.firstMatch.exists ? app.keyboards.firstMatch.frame.minY : app.frame.maxY
                 let navigation = app.navigationBars.allElementsBoundByIndex.last
                 let inToolbar = navigation?.buttons.matching(identifier: element.label).count ?? 0 > 0
@@ -190,7 +193,9 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
                     ? candidates.matching(NSPredicate(format: "label == %@", element.label)).count > 0
                     : candidates.matching(identifier: element.identifier).count > 0
             } : nil
-            let surface: XCUIElement = containing
+            let editor = app.navigationBars["Edit play"].exists
+                ? app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) : nil
+            let surface: XCUIElement = containing ?? editor
                 ?? app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable })
                 ?? containers.last(where: { $0.isHittable }) ?? app
             let rect = surface.frame.intersection(app.frame)
@@ -204,6 +209,9 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
             let end = origin.withOffset(CGVector(dx: rect.midX, dy: down ? bottom : top))
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0)
         }
+        capture("Unreachable editing control")
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = "Unreachable editing hierarchy"; hierarchy.lifetime = .keepAlways; add(hierarchy)
         throw EditingUIIssue.unreachableControl
     }
 

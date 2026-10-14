@@ -113,11 +113,15 @@ struct ConnectedStatEntryView: View {
         VStack(alignment: .leading, spacing: 12) {
             if model.isBusy { ProgressView("Contacting statistics server…") }
             if let issue = model.issue {
-                Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
             }
-            Button("Reload server state (keep entry values)") { Task { await model.reload() } }.disabled(model.isBusy)
-            Text("Reload keeps this screen's entries. If an approved recovery exists, explicitly attach these entries or load its saved values. Neither action repeats approval.")
-                .font(.footnote).foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline) {
+                Text(unavailable ? "Shared entry unavailable" : game.opponent).font(.headline)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                Button("Reload server state (keep entry values)", systemImage: "arrow.clockwise") { Task { await model.reload() } }
+                    .labelStyle(.iconOnly).disabled(model.isBusy).frame(minWidth: 44, minHeight: 44)
+            }
             if let confirmation = model.confirmation { Label(confirmation, systemImage: "checkmark.circle") }
             if !unavailable {
                 if initialDataset == .boxScores { discrepancyBanner }
@@ -126,21 +130,24 @@ struct ConnectedStatEntryView: View {
                         ForEach(BoxScoreEntryMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented).disabled(model.isBusy)
                 }
-                Text(game.opponent).font(.headline)
                 Text("Blank = not entered. Enter 0 explicitly. Use nonnegative whole numbers within the supported range.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
+                DisclosureGroup("Entry guidance") {
                 if isPaired {
                     Text("Each team's numbering is independent. These paired rows do not mean simultaneous or chronological possessions.")
                     Text("A possession runs from legal team possession until the opponent legally possesses the ball. Free throws, offensive rebounds and fouls remain within it. Period-ending actions count; a no-action hold does not.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 } else if initialDataset == .playerPaintTouches {
                     Text("A paint touch is when a player intentionally establishes two feet in the paint with the ball.")
                     Text("Enter independently collected game totals. No player attribution or repeated-touch interpretation is inferred from possessions.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 } else {
                     Text("Draft discrepancies remain saveable. Completion requires valid entered values and no proven scoring contradiction. Optional missing values stay missing.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
+                    Text("Reload keeps this screen's entries. Attach entries to an approved recovery or explicitly load its saved values; neither action repeats approval.")
+                        .font(.footnote)
+                }.font(.footnote)
                 ForEach(kinds, id: \.self) { kind in datasetControls(kind) }
             }
         }
@@ -161,7 +168,7 @@ struct ConnectedStatEntryView: View {
                         Text(boxScoreDiscrepancyDetail(boxes[player.id.uuidString] ?? [:]) ?? "")
                     }.accessibilityElement(children: .combine)
                 }
-            }.foregroundStyle(.red).accessibilityIdentifier("connected.scoring-discrepancy-warning")
+            }.foregroundStyle(TeamStatsStyle.errorText).accessibilityIdentifier("connected.scoring-discrepancy-warning")
         }
     }
 
@@ -177,7 +184,7 @@ struct ConnectedStatEntryView: View {
             Text(kind.label).font(.headline)
             if let version = baseVersions[kind] {
                 Text("\(version.status.rawValue.capitalized) · Server revision \(version.revision)")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(TeamStatsStyle.secondaryText)
                 if changed.contains(kind) { Text("Unsaved changes").font(.caption) }
                 if stale(kind) {
                     Label("The server has a different saved revision. Review its saved values before continuing.", systemImage: "exclamationmark.triangle")
@@ -200,20 +207,20 @@ struct ConnectedStatEntryView: View {
                 } else if version.status == .draft {
                     Button("Complete \(kind.label.lowercased())") { focused = nil; completionKind = kind }
                         .disabled(changed.contains(kind) || model.isBusy || model.reloadRequired || hasInvalidInputs(kind) || !hasRecords(kind))
-                    if changed.contains(kind) { Text("Save this dataset before completing it.").font(.footnote).foregroundStyle(.secondary) }
+                    if changed.contains(kind) { Text("Save this dataset before completing it.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText) }
                 } else if version.status == .superseded {
-                    Text("Superseded saved draft — read-only, incomplete and unreviewed. Its records are retained; this is not a completed dataset.").font(.footnote).foregroundStyle(.secondary)
+                    Text("Superseded saved draft — read-only, incomplete and unreviewed. Its records are retained; this is not a completed dataset.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     NavigationLink("View retained saved records") { ConnectedVersionDetailView(model: model, version: version) }
                 } else {
-                    Text("Completed data is read-only until an edit request is approved.").font(.footnote).foregroundStyle(.secondary)
+                    Text("Completed data is read-only until an edit request is approved.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     NavigationLink("View status / Request edit") { ConnectedVersionDetailView(model: model, version: version) }
                 }
             } else if let locked = lockedVersion(kind) {
                 Text("\(locked.status.rawValue.capitalized) · Read-only saved version")
                 NavigationLink("View dataset / Request edit") { ConnectedVersionDetailView(model: model, version: locked) }
-                Text("Reload after an edit request is approved to open its new working revision.").font(.footnote).foregroundStyle(.secondary)
+                Text("Reload after an edit request is approved to open its new working revision.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
             } else {
-                Text("No working draft opened.").foregroundStyle(.secondary)
+                Text("No working draft opened.").foregroundStyle(TeamStatsStyle.secondaryText)
                 Button("Start \(kind.label.lowercased()) draft") {
                     Task {
                         if let version = await model.openDraft(kind) { hydrate(version, newDraft: true) }
@@ -225,10 +232,10 @@ struct ConnectedStatEntryView: View {
 
     private var saveBar: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if !unavailable, let preparationIssue { Label(preparationIssue, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.red) }
+            if !unavailable, let preparationIssue { Label(preparationIssue, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(TeamStatsStyle.errorText) }
             if !unavailable && !invalidMessages.isEmpty {
                 Label("Fix invalid numbers: \(invalidMessages.joined(separator: "; ")).", systemImage: "exclamationmark.triangle")
-                    .foregroundStyle(.red).font(.caption)
+                    .foregroundStyle(TeamStatsStyle.errorText).font(.caption)
             }
             HStack(alignment: .center) {
                 Text(changed.isEmpty ? "Only a server confirmation establishes a saved draft." : "Save before leaving. Unsaved changes remain on this screen.")
@@ -312,7 +319,7 @@ struct ConnectedStatEntryView: View {
         return TextField("Not entered", text: Binding(get: { boxes[key]?[field.rawValue] ?? "" }, set: {
             boxes[key, default: [:]][field.rawValue] = $0
             changed.insert(.boxScores)
-        }))
+        }), prompt: Text("Not entered").foregroundColor(TeamStatsStyle.secondaryText))
         .keyboardType(.numberPad).textFieldStyle(.roundedBorder)
         .focused($focused, equals: "box:\(key):\(field.rawValue)")
         .accessibilityLabel("\(player.name), \(field.label)")
@@ -341,7 +348,7 @@ struct ConnectedStatEntryView: View {
     }
 
     @ViewBuilder private var rosterEmpty: some View {
-        Section { Text("TODO_TEAM_ROSTER — no actual covered roster available. An authorized roster administrator must add actual players before player datasets can be completed.").foregroundStyle(.secondary) }
+        Section { Text("TODO_TEAM_ROSTER — no actual covered roster available. An authorized roster administrator must add actual players before player datasets can be completed.").foregroundStyle(TeamStatsStyle.secondaryText) }
     }
 
     private var coveredRosterSection: some View {
@@ -349,7 +356,7 @@ struct ConnectedStatEntryView: View {
             ForEach(playerLabels) { player in
                 Text("\(player.name) · #\(player.jerseyNumber) · Roster version \(player.version)")
             }
-            Text("Completion confirms this covered roster. Optional box-score and player-total blanks stay missing.").font(.footnote).foregroundStyle(.secondary)
+            Text("Completion confirms this covered roster. Optional box-score and player-total blanks stay missing.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
         }
     }
 
@@ -380,7 +387,7 @@ struct ConnectedStatEntryView: View {
             Text(team == .ours ? connectedVenue(game.homeAway) : "\(game.opponent) · \(game.homeAway == "home" ? "Away" : "Home")")
             Text("Records entered: \(count)").monospacedDigit()
             Text(baseVersions[kind]?.status == .draft ? "Incomplete and unreviewed" : "This sheet retains its own server status")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.caption).foregroundStyle(TeamStatsStyle.secondaryText)
             Button("Add next \(team.label.lowercased()) record", systemImage: "plus") {
                 guard editable(kind), count < Int.max else { return }
                 possessions.append(PossessionDraft(id: UUID(), team: team, number: count + 1, turnover: false))
@@ -411,13 +418,13 @@ struct ConnectedStatEntryView: View {
                     Text("No").tag("no")
                 }.pickerStyle(.segmented).disabled(!editable(datasetKind(team)))
                 .accessibilityLabel("\(team.label), record \(number), turnover")
-                if possessions[index].turnover == nil { Text("Answer Yes or No before completing this sheet.").font(.caption).foregroundStyle(.secondary) }
+                if possessions[index].turnover == nil { Text("Answer Yes or No before completing this sheet.").font(.caption).foregroundStyle(TeamStatsStyle.secondaryText) }
             }.frame(width: possessionColumnWidth, alignment: .leading)
             .padding(.vertical, 8)
         } else {
             VStack(alignment: .leading, spacing: 8) {
                 Text("\(team.label) · No record \(number)")
-                Text("No opposite-side placeholder is saved. Use Add next record for this team.").font(.footnote).foregroundStyle(.secondary)
+                Text("No opposite-side placeholder is saved. Use Add next record for this team.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
             }.frame(width: possessionColumnWidth, alignment: .leading)
         }
     }
@@ -448,7 +455,7 @@ struct ConnectedStatEntryView: View {
                 } label: { Image(systemName: "minus").frame(minWidth: 44, minHeight: 44) }
                 .buttonStyle(.bordered).disabled(!editable || adjustedPossessionCount(text.wrappedValue, by: -1) == nil)
                 .accessibilityLabel("Decrease \(accessibility)")
-                TextField("Not entered", text: text).keyboardType(.numberPad).textFieldStyle(.roundedBorder)
+                TextField("Not entered", text: text, prompt: Text("Not entered").foregroundColor(TeamStatsStyle.secondaryText)).keyboardType(.numberPad).textFieldStyle(.roundedBorder)
                     .focused($focused, equals: focusKey).frame(minHeight: 44)
                     .accessibilityLabel(accessibility).disabled(!editable)
                 Button {
@@ -458,7 +465,7 @@ struct ConnectedStatEntryView: View {
                 .accessibilityLabel("Increase \(accessibility)")
             }
             if BoxScoreCount(text.wrappedValue) == .invalid {
-                Label("Invalid whole number", systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.red)
+                Label("Invalid whole number", systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(TeamStatsStyle.errorText)
             }
         }
     }
@@ -649,7 +656,7 @@ private struct ConnectedCompletionSheet: View {
                                 .font(.headline)
                             Text("Only existing records on this team sheet are affected. Unanswered turnovers must be answered; no opposite-side records are added.")
                             Toggle("Don't show this again", isOn: $suppressWarning)
-                            Text("This preference is saved for your account only after successful confirmed completion.").font(.footnote).foregroundStyle(.secondary)
+                            Text("This preference is saved for your account only after successful confirmed completion.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                         } else if !isPlayerDataset && hasNumericBlanks {
                             Text("Your saved preference allows blank numeric fields in added records to become 0 on this explicit completion action. Turnovers still require Yes or No.")
                         }

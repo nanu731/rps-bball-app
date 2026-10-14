@@ -9,19 +9,22 @@ struct PlaybookView: View {
     var body: some View {
         List {
             Section {
-                Text("Only accepted plays are shared with team viewers. Marker numbers are diagram roles, not roster identities.")
+                Label("Approved team plays", systemImage: "sportscourt").font(.headline).foregroundStyle(Color.accentColor)
+                Text("Marker numbers are diagram roles, not roster identities.").font(.footnote)
                 if model.isBusy { ProgressView("Contacting playbook server…") }
-                if let issue = model.issue { Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red); Button("Retry") { Task { await model.load() } } }
+                if let issue = model.issue { Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText); Button("Retry") { Task { await model.load() } } }
                 if let confirmation = model.confirmation { Text(confirmation) }
             }
             if model.didLoad {
                 Section("Published plays") {
                     if model.published.isEmpty {
-                        Text("No published plays.").foregroundStyle(.secondary)
-                        Text(model.access?.can(.playsAuthor) == true ? "Create a draft below, then save and submit it for review." : "Ask the team owner about publishing plays for viewers.").font(.footnote).foregroundStyle(.secondary)
+                        Text("No published plays.").foregroundStyle(TeamStatsStyle.secondaryText)
+                        Text(model.access?.can(.playsAuthor) == true ? "Create a draft below, then save and submit it for review." : "Ask the team owner about publishing plays for viewers.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                     ForEach(model.published) { revision in
-                        NavigationLink(revision.title) { PlayRevisionView(account: account, model: model, revision: revision) }
+                        NavigationLink { PlayRevisionView(account: account, model: model, revision: revision) } label: {
+                            TeamTaskLabel(title: revision.title, detail: "Published play · drawing and movement", symbol: "sportscourt")
+                        }
                     }
                 }
                 if model.access?.can(.playsAuthor) == true {
@@ -40,7 +43,7 @@ struct PlaybookView: View {
                             NavigationLink { PlayRevisionView(account: account, model: model, revision: revision) } label: {
                                 VStack(alignment: .leading) {
                                     Text(revision.title.isEmpty ? "Unnamed saved draft" : revision.title)
-                                    Text("Superseded saved drawing — read-only").font(.caption).foregroundStyle(.secondary)
+                                    Text("Superseded saved drawing — read-only").font(.caption).foregroundStyle(TeamStatsStyle.secondaryText)
                                 }
                             }
                         }
@@ -49,10 +52,10 @@ struct PlaybookView: View {
                 Section("Submitted / rejected revisions") {
                     ForEach(model.versions.filter { $0.status == .submitted || $0.status == .rejected }) { revision in
                         NavigationLink { PlayRevisionView(account: account, model: model, revision: revision) } label: {
-                            VStack(alignment: .leading) { Text(revision.title); Text(revision.status.rawValue.capitalized).font(.caption).foregroundStyle(.secondary) }
+                            VStack(alignment: .leading) { Text(revision.title); Text(revision.status.rawValue.capitalized).font(.caption).foregroundStyle(TeamStatsStyle.secondaryText) }
                         }
                     }
-                    if model.submissions.isEmpty { Text("No visible submissions awaiting review.").foregroundStyle(.secondary) }
+                    if model.submissions.isEmpty { Text("No visible submissions awaiting review.").foregroundStyle(TeamStatsStyle.secondaryText) }
                 }
             }
         }
@@ -98,11 +101,11 @@ private struct PlayRevisionView: View {
                 if protectedContentUnavailable {
                     Label("This play is unavailable with current access. Retained editor content is hidden.", systemImage: "lock")
                     Button("Reload and check access") { Task { await reloadRetainingBuffers() } }
-                    if let issue = model.issue { Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                    if let issue = model.issue { Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText) }
                 } else {
                     Label(revision.status == .published ? "Published revision — read-only" : "\(revision.status.rawValue.capitalized) play revision", systemImage: revision.status == .published ? "checkmark.circle" : "pencil")
                     if let issue = model.issue {
-                        Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                        Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                         Button("Reload server state (keep unsaved drawing)") { Task { await reloadRetainingBuffers() } }
                     }
                     if let confirmation = model.confirmation { Text(confirmation) }
@@ -111,7 +114,7 @@ private struct PlayRevisionView: View {
                         Text("Retained name: \(title.isEmpty ? "Unnamed draft" : title)").font(.subheadline)
                     }
                     if let message = attachmentLookupMessage {
-                        Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                        Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                         Button("Reload and check recovered draft") { Task { await reloadRetainingBuffers() } }
                     }
                     if attachmentCandidate != nil {
@@ -128,7 +131,7 @@ private struct PlayRevisionView: View {
                         Text("This saved drawing was retained after explicit recovery. It is read-only; the resumed draft has a separate identity.").font(.subheadline)
                     }
                     if editable && model.isStaleDraft(revision) && model.didLoad && !model.reloadRequired {
-                        Label("A newer play was published. This saved draft still references the previous accepted revision.", systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                        Label("A newer play was published. This saved draft still references the previous accepted revision.", systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                         Text("Resume keeps this saved drawing in read-only history and creates a new draft against the latest published play. Your unsaved name and drawing stay in this editor until you explicitly Save.").font(.subheadline)
                         Button("Resume drawing against latest published play") {
                             recoveryPointer = model.currentPublishedVersionID(playID: revision.playID)
@@ -168,7 +171,7 @@ private struct PlayRevisionView: View {
                                 Stepper("Duration", value: $diagram.steps[selectedStep - 1].duration, in: 0.1...30, step: 0.1).labelsHidden().accessibilityLabel("Step \(selectedStep) duration")
                             }
                         }
-                        if let message = diagram.validationMessage { Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                        if let message = diagram.validationMessage { Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText) }
                     } else {
                         Text(revision.title).font(.title2)
                     }
@@ -306,7 +309,7 @@ struct PlayPlaybackView: View {
         VStack(alignment: .leading, spacing: 12) {
             PlayCourt(diagram: diagram, positions: diagram.positions(at: time, reducedMotion: reducedMotion), selectedMarkerID: nil, arrows: [], select: { _ in }, move: nil)
                 .aspectRatio(1.15, contentMode: .fit)
-            if diagram.steps.isEmpty { Text("No authored movement steps.").foregroundStyle(.secondary) }
+            if diagram.steps.isEmpty { Text("No authored movement steps.").foregroundStyle(TeamStatsStyle.secondaryText) }
             if reducedMotion { Text("Reduced Motion: discrete authored positions.").font(.caption) }
             if diagram.duration > 0 {
                 Slider(value: $time, in: 0...diagram.duration, onEditingChanged: { _ in playing = false }).accessibilityLabel("Playback position in seconds")

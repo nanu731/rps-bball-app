@@ -13,11 +13,13 @@ struct MediaResourcesView: View {
     var body: some View {
         List {
             Section {
-                if !model.contentConcealed { Text(targetTitle).font(.headline) }
+                if !model.contentConcealed { Text(targetTitle).font(.title2.bold()).fixedSize(horizontal: false, vertical: true) }
                 Label(model.kind == .film ? "Full game film stays on Hudl" : "Links only — no file uploaded", systemImage: "link")
+                DisclosureGroup("Access and owner review") {
                 Text(model.kind == .film ? "Add an optional Hudl shortcut for this game. TeamStats admission does not grant Hudl access: sign into Hudl and belong to the team that shared the film. No film is uploaded, embedded or downloaded here." : "A saved link does not verify video ownership, provider access or playback. The provider may require its own login. Share only links you are authorized to share; do not paste private access tokens.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 Text(model.kind == .film ? "Pending shortcuts need owner approval unless your separate publication capability allows bypass. Saving a shortcut does not verify that the film opens." : "Pending links need owner approval. File uploads and in-app playback are not available.").font(.footnote)
+                }
             }
             if let issue = model.issue { Section { mediaError(issue, retry: { Task { await model.load() } }) } }
             if let text = model.confirmation { Section { Label(text, systemImage: "checkmark.circle") } }
@@ -25,8 +27,8 @@ struct MediaResourcesView: View {
             if model.didLoad {
                 Section("Published links") {
                     if model.published.isEmpty {
-                        Text("No published links for this \(model.kind == .practice ? "play" : "game").").foregroundStyle(.secondary)
-                        Text(model.canContribute ? "Add a link draft below, then save and submit it for owner review." : "Ask the team owner about publishing a video link.").font(.footnote).foregroundStyle(.secondary)
+                        Text("No published links for this \(model.kind == .practice ? "play" : "game").").foregroundStyle(TeamStatsStyle.secondaryText)
+                        Text(model.canContribute ? "Add a link draft below, then save and submit it for owner review." : "Ask the team owner about publishing a video link.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                     ForEach(model.published) { version in
                         NavigationLink { MediaResourceDetail(model: model, versionID: version.id) } label: { resourceLabel(version) }
@@ -36,7 +38,7 @@ struct MediaResourcesView: View {
                     ForEach(model.ownDrafts) { version in
                         Button { editor = version } label: { resourceLabel(version) }.buttonStyle(.plain)
                     }
-                    if model.ownDrafts.isEmpty { Text("No saved link drafts.").foregroundStyle(.secondary) }
+                    if model.ownDrafts.isEmpty { Text("No saved link drafts.").foregroundStyle(TeamStatsStyle.secondaryText) }
                     if model.canContribute {
                         Button(model.kind == .film ? "Add Hudl shortcut" : "Add video link", systemImage: "plus") {
                             Task {
@@ -82,7 +84,7 @@ private struct MediaResourceDetail: View {
                 Section {
                     Text(version.title.isEmpty ? "Untitled draft" : version.title).font(.headline)
                     Label(version.status.label, systemImage: version.status == .published ? "link" : "clock")
-                    Text("Saved revision \(version.revision)").font(.footnote).foregroundStyle(.secondary)
+                    Text("Saved revision \(version.revision)").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     if !version.notes.isEmpty { Text(version.notes) }
                     if let url = version.externalURL {
                         Text(version.linkURL).textSelection(.enabled)
@@ -93,7 +95,7 @@ private struct MediaResourceDetail: View {
                         Button(model.kind == .film && MediaLinkInput.hudlURL(version.linkURL) != nil ? "Open Hudl" : "Open saved provider link", systemImage: "arrow.up.right.square") { openURL(url) }
                             .frame(minHeight: 44)
                         Text(model.kind == .film ? "Opens outside TeamStats. Hudl independently controls sign-in and film access. An unavailable or denied film must be resolved with the sharing team in Hudl." : "Opens outside TeamStats. Provider login and private video access have not been verified.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                            .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     } else { Text("Video link not entered.") }
                     if !version.reviewReason.isEmpty { LabeledContent("Owner review", value: version.reviewReason) }
                 }
@@ -113,7 +115,7 @@ private struct MediaResourceDetail: View {
                         Button("Propose revised link", systemImage: "pencil") {
                             Task { editor = await model.openDraft(resourceID: version.resourceID, source: version) }
                         }.disabled(model.isBusy || model.reloadRequired)
-                        Text("The accepted link stays visible while a new private draft is reviewed.").font(.footnote).foregroundStyle(.secondary)
+                        Text("The accepted link stays visible while a new private draft is reviewed.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                 }
                 Section("Saved history") {
@@ -170,13 +172,13 @@ private struct MediaResourceEditor: View {
                 Section {
                     Label("This draft is unavailable with current access. Retained text is hidden.", systemImage: "lock")
                     Button("Reload and check access") { Task { await reloadDraft() } }.disabled(model.isBusy)
-                    if let issue = model.issue { Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                    if let issue = model.issue { Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText) }
                 }
             } else {
                 Section {
                     Label("Private link draft — not uploaded or reviewed", systemImage: "pencil")
                     Text("This link is for the selected \(model.kind == .practice ? "published play" : "shared game"). Only the owner approves pending videos.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 if draft.status == .superseded {
                     Section("Saved proposal was preserved") {
@@ -192,7 +194,7 @@ private struct MediaResourceEditor: View {
                         }
                     }
                 }
-                if let attachmentIssue { Section { Label(attachmentIssue, systemImage: "exclamationmark.triangle").foregroundStyle(.red) } }
+                if let attachmentIssue { Section { Label(attachmentIssue, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText) } }
                 if model.hasNewerPublishedLink(draft) {
                     Section("A newer link was accepted") {
                         Label("This proposal uses an earlier accepted link.", systemImage: "exclamationmark.triangle")
@@ -209,8 +211,8 @@ private struct MediaResourceEditor: View {
                     TextField(model.kind == .film ? "HTTPS Hudl link" : "HTTPS provider link", text: $input.linkURL, axis: .vertical)
                         .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled().focused($isTyping)
                     TextField("Notes (optional)", text: $input.notes, axis: .vertical).focused($isTyping)
-                    if !input.validDraft(for: model.kind) { Label(model.kind == .film ? "Use a safe HTTPS link on hudl.com or www.hudl.com, or leave the link blank for a draft. Check title and notes limits." : MediaResourceIssue.invalidInput.message, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
-                    Text(model.kind == .film ? "Supported hosts: hudl.com and www.hudl.com. No provider request occurs while typing or saving. Leave the link blank if not yet available; never include credentials, access tokens or fragments." : "No provider request occurs while typing or saving. Do not include credentials, access tokens or link fragments.").font(.footnote).foregroundStyle(.secondary)
+                    if !input.validDraft(for: model.kind) { Label(model.kind == .film ? "Use a safe HTTPS link on hudl.com or www.hudl.com, or leave the link blank for a draft. Check title and notes limits." : MediaResourceIssue.invalidInput.message, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText) }
+                    Text(model.kind == .film ? "Supported hosts: hudl.com and www.hudl.com. No provider request occurs while typing or saving. Leave the link blank if not yet available; never include credentials, access tokens or fragments." : "No provider request occurs while typing or saving. Do not include credentials, access tokens or link fragments.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }.disabled(model.isBusy)
                 Section {
                     Button("Save draft", systemImage: "square.and.arrow.down") { Task { await save() } }
@@ -221,7 +223,7 @@ private struct MediaResourceEditor: View {
                         Button("Publish my link", systemImage: "checkmark.circle") { Task { await send("publish") } }
                             .disabled(model.isBusy || model.reloadRequired || draft.status != .draft || changed || !input.readyToSubmit(for: model.kind))
                     }
-                    Text("Save changes before submitting. A published link still requires access through its provider.").font(.footnote).foregroundStyle(.secondary)
+                    Text("Save changes before submitting. A published link still requires access through its provider.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
             }
         }
@@ -268,12 +270,12 @@ private struct MediaResourceEditor: View {
 private func resourceLabel(_ version: MediaResourceVersion) -> some View {
     VStack(alignment: .leading, spacing: 4) {
         Text(version.title.isEmpty ? "Untitled draft" : version.title)
-        Text(version.status.label).font(.footnote).foregroundStyle(.secondary)
+        Text(version.status.label).font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
     }.frame(minHeight: 44, alignment: .leading)
 }
 private func mediaError(_ issue: MediaResourceIssue, retry: @escaping () -> Void) -> some View {
     VStack(alignment: .leading, spacing: 8) {
-        Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+        Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
         Button("Reload saved links", action: retry).frame(minHeight: 44)
     }
 }

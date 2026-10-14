@@ -8,14 +8,20 @@ Logo: `TODO_TEAM_LOGO`; final icon: `TODO_APP_ICON`; actual roster: `TODO_TEAM_R
 |---|---|---|---|
 | Primary accent | #7A1F3D | #E39BAD | AccentColor asset; links, navigation, selected controls |
 | Filled accent | #7A1F3D | #B4496B | TeamStatsStyle.filledAccent; prominent buttons/switches with white labels |
-| Surfaces/text | System semantic colors | System semantic colors | Native lists/forms, primary/secondary text; avoid maroon backgrounds everywhere |
-| Error/warning/success | System red/orange/green plus text/icon | Same semantic roles | Brand color never establishes a validation or permission state |
+| Surfaces/primary text | System semantic colors | System semantic colors | Native lists/forms; avoid maroon backgrounds everywhere |
+| Supporting text | Primary at75% opacity | Primary at75% opacity | TeamStatsStyle.secondaryText; readable metadata and explicit missing-value prompts |
+| Error/discrepancy text | #B42318 | #FF6961 | TeamStatsStyle.errorText plus text/icon; errors never rely only on color |
+| Warning/success | System orange/green plus text/icon | Same semantic roles | Brand color never establishes a validation or permission state |
 
 Calculated WCAG sRGB contrast: light accent against white10.04:1; dark text accent
 against #1C1C1E7.74:1; white against dark filled accent5.11:1. Dark filled accent
 against #1C1C1E3.33:1. These sample pairs are arithmetic evidence, not rendered
 acceptance for every system material/disabled state. Appearance inspection remains
 required. The brighter dark text accent must not fill white-label buttons.
+
+Sample error-text contrast:6.57:1 on white and6.03:1 on #1C1C1E.
+Supporting-text compositing gives approximately10.37:1 on white and9.97:1 on
+#1C1C1E. These are sample arithmetic pairs, not full rendered accessibility acceptance.
 
 Use system text styles/Dynamic Type, monospaced digits for aligned counts and
 labels naming the player/team/field. Modified screens use8/16/24-point spacing,

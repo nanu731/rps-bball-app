@@ -19,6 +19,11 @@ struct AccountView: View {
     var body: some View {
         Form {
             Section {
+                NavigationLink { TeamStatsGuide() } label: {
+                    TeamTaskLabel(title: "Using TeamStats", detail: "Drafts, team access, recovery and private copies", symbol: "questionmark.circle")
+                }
+            }
+            Section {
                 Label(statusText, systemImage: statusSymbol)
                 if account.isBusy {
                     ProgressView("Contacting account server…")
@@ -26,11 +31,11 @@ struct AccountView: View {
                 }
                 if let issue = account.issue {
                     Label(issue.localizedDescription, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(TeamStatsStyle.errorText)
                         .accessibilityIdentifier("account.error")
                 }
                 Text("Signing in verifies your account. Team access and permissions require server-confirmed admission and grants.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(TeamStatsStyle.secondaryText)
             }
 
             if let userID = account.verifiedUserID {
@@ -40,7 +45,7 @@ struct AccountView: View {
                         .accessibilityLabel("Verified Auth account identifier, \(userID.uuidString)")
                     Button("Open Team", action: openTeam)
                     Text("Shared games, playbook and roster are in Team. Management controls require current server permission.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     Button("Check session again") { Task { await account.restore() } }
                         .frame(minHeight: 44)
                     Button("Sign out", role: .destructive) {
@@ -66,10 +71,10 @@ struct AccountView: View {
                         Text(account.configuration?.phoneDeliveryAllowed == true
                              ? "Local synthetic test codes only. The local Auth server must have external SMS disabled."
                              : "Phone signup is supported, but remote sending is disabled while zero-cost delivery is unverified.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                     } else {
                         Text("Open the sign-in email link on this device. If your authorized server sends a typed code, you can enter it below. Delivery must stay within the $0 budget.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                     Button(method == .email ? "Request sign-in email" : "Request code") {
                         focusedField = nil
@@ -84,7 +89,7 @@ struct AccountView: View {
                 if let pendingMethod = account.pendingMethod {
                     Section("Verify \(pendingMethod.rawValue) code") {
                         Text(pendingMethod == .email ? "Open the email link on this device, or enter a code if your server provided one. The server must allow this app’s email redirect." : "Use the code from your message. Requesting a code does not sign you in.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(TeamStatsStyle.secondaryText)
                         TextField("Verification code", text: $code)
                             .keyboardType(.numberPad)
                             .textContentType(.oneTimeCode)
@@ -103,7 +108,7 @@ struct AccountView: View {
                         }
                         .frame(minHeight: 44)
                         Text("The server controls resend limits and expiry. Wait if it rejects a request, then retry.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                 }
             }
@@ -146,7 +151,7 @@ struct AccountView: View {
                     .frame(minHeight: 44)
                     .disabled(!authorizedServer || serverURL.isEmpty || publicKey.isEmpty)
                     Text("Private configuration and sessions stay in this device's Keychain. Never enter a secret or service-role key. Local game records are not uploaded by signing in.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                 }
             }
         }

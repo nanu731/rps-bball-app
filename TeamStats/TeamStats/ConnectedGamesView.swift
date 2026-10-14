@@ -30,18 +30,18 @@ struct ConnectedGamesView: View {
                             ConnectedGameDetailView(account: account, model: model, game: game)
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(game.opponent).font(.headline)
-                                Text(game.dateString).foregroundStyle(.secondary)
+                                Text(game.opponent).font(.headline).fixedSize(horizontal: false, vertical: true)
+                                Text(game.dateString).font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor)
                                 Text("\(connectedVenue(game.homeAway)) · \(connectedGameType(game.gameType))")
-                                    .font(.subheadline).foregroundStyle(.secondary)
-                            }.padding(.vertical, 4)
+                                    .font(.subheadline).foregroundStyle(.primary)
+                            }.padding(.vertical, 8)
                         }
                     }
                 }
             }
             Section {
                 Text("Shared server records. Local games and temporary players are preserved separately and are never uploaded automatically.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(TeamStatsStyle.secondaryText)
             }
         }
         .navigationTitle("Shared games")
@@ -63,7 +63,7 @@ struct ConnectedStatisticsFeedback: View {
         if let issue = model.issue {
             Section {
                 Label(issue.localizedDescription, systemImage: "exclamationmark.triangle")
-                    .foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(TeamStatsStyle.errorText).fixedSize(horizontal: false, vertical: true)
                 Button("Reload / Retry") { Task { if retryGames { await model.loadGames() } else { await model.reload() } } }.disabled(model.isBusy)
             }
         }
@@ -123,7 +123,7 @@ private struct ConnectedNewGameView: View {
                             if await model.createGame(id: gameID, dateString: connectedDateString(date), opponent: opponent, homeAway: venue, gameType: kind) { dismiss() }
                         }
                     }.disabled(model.isBusy || model.reloadRequired || opponent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    Text("A game appears in the shared list only after the server confirms it.").foregroundStyle(.secondary)
+                    Text("A game appears in the shared list only after the server confirms it.").foregroundStyle(TeamStatsStyle.secondaryText)
                 }
             }
             .navigationTitle("Add shared game")
@@ -152,13 +152,38 @@ private struct ConnectedGameDetailView: View {
         List {
             ConnectedStatisticsFeedback(model: model)
             if !hasLoadedGame {
-                Section { Text("Statistics are unavailable until this game loads successfully.").foregroundStyle(.secondary) }
+                Section { Text("Statistics are unavailable until this game loads successfully.").foregroundStyle(TeamStatsStyle.secondaryText) }
             } else {
-                Section("Game details") {
-                    LabeledContent("Date", value: game.dateString)
-                    LabeledContent("Opponent", value: game.opponent)
-                    LabeledContent("Our team", value: connectedVenue(game.homeAway))
-                    LabeledContent("Game type", value: connectedGameType(game.gameType))
+                Section {
+                    GameIdentity(opponent: game.opponent, date: game.dateString,
+                        venue: connectedVenue(game.homeAway), kind: connectedGameType(game.gameType),
+                        location: "Shared team records")
+                    Text("Dataset completion, submission and publication are separate states.").font(.footnote)
+                }
+                Section("Your entry") {
+                    NavigationLink { ConnectedStatEntryView(model: model, game: game, initialDataset: .boxScores) } label: {
+                        TeamTaskLabel(title: "Player box scores", detail: "Single-player or roster table entry", symbol: "tablecells")
+                    }
+                    NavigationLink { ConnectedStatEntryView(model: model, game: game, initialDataset: .ourPossessions) } label: {
+                        TeamTaskLabel(title: "Paired possession sheets", detail: "Independent records for each team", symbol: "rectangle.split.2x1")
+                    }
+                    NavigationLink { ConnectedStatEntryView(model: model, game: game, initialDataset: .playerPaintTouches) } label: {
+                        TeamTaskLabel(title: "Player paint-touch totals", detail: "Independently collected game totals", symbol: "person.crop.rectangle")
+                    }
+                    ForEach(model.ownVersions.filter { $0.status != .draft }) { version in
+                        NavigationLink("\(version.datasetType.label) · \(version.status.rawValue.capitalized)") {
+                            ConnectedVersionDetailView(model: model, version: version)
+                        }
+                    }
+                    Text("Drafts are incomplete and unreviewed. Completion, submission and publication are separate server actions.")
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
+                }
+                Section("Published statistics") {
+                    NavigationLink { PublishedStatisticsView(model: model, game: game) } label: {
+                        TeamTaskLabel(title: "View accepted statistics", detail: "Current server-confirmed accepted versions", symbol: "checkmark.seal")
+                    }
+                    Text("Only the current accepted version of each dataset contributes to this summary. A published dataset does not mean every dataset is complete.")
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 Section("Game Film") {
                     NavigationLink("Hudl shortcuts and owner review") {
@@ -166,7 +191,7 @@ private struct ConnectedGameDetailView: View {
                             targetTitle: game.opponent, account: account)
                     }
                     Text("Full-game films stay on Hudl. A shortcut opens Hudl separately; its account and film permissions still apply.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 Section("Scouting") {
                     NavigationLink("Scouting PDFs") {
@@ -174,39 +199,22 @@ private struct ConnectedGameDetailView: View {
                             targetTitle: game.opponent, account: account)
                     }
                     Text("Report viewing and uploading use separate team permissions; the owner approves publication.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-                Section("Published statistics") {
-                    NavigationLink("View accepted statistics") { PublishedStatisticsView(model: model, game: game) }
-                    Text("Only the current accepted version of each dataset contributes to this summary. A published dataset does not mean every dataset is complete.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-                Section("Your entry") {
-                    NavigationLink("Player box scores") { ConnectedStatEntryView(model: model, game: game, initialDataset: .boxScores) }
-                    NavigationLink("Paired possession sheets") { ConnectedStatEntryView(model: model, game: game, initialDataset: .ourPossessions) }
-                    NavigationLink("Player paint-touch totals") { ConnectedStatEntryView(model: model, game: game, initialDataset: .playerPaintTouches) }
-                    ForEach(model.ownVersions.filter { $0.status != .draft }) { version in
-                        NavigationLink("\(version.datasetType.label) · \(version.status.rawValue.capitalized)") {
-                            ConnectedVersionDetailView(model: model, version: version)
-                        }
-                    }
-                    Text("Drafts are incomplete and unreviewed. Completion, submission and publication are separate server actions.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 Section("Actual roster") {
                     if model.roster.filter({ $0.archivedAt == nil }).isEmpty {
-                        Text("TODO_TEAM_ROSTER — no active actual roster entries on the server.").foregroundStyle(.secondary)
+                        Text("TODO_TEAM_ROSTER — no active actual roster entries on the server.").foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                     ForEach(model.roster.filter { $0.archivedAt == nil }) { player in
                         VStack(alignment: .leading, spacing: 2) {
                             Text("\(player.displayName) · #\(player.jerseyNumber)")
-                            Text("Roster version \(player.version)").font(.caption).foregroundStyle(.secondary)
+                            Text("Roster version \(player.version)").font(.caption).foregroundStyle(TeamStatsStyle.secondaryText)
                         }
                     }
                 }
                 if model.access?.can(.statsReview) == true {
                     Section("Statistics review") {
-                        if model.reviewQueue.isEmpty { Text("No submitted datasets available for your review.").foregroundStyle(.secondary) }
+                        if model.reviewQueue.isEmpty { Text("No submitted datasets available for your review.").foregroundStyle(TeamStatsStyle.secondaryText) }
                         ForEach(model.reviewQueue) { version in
                             NavigationLink(version.datasetType.label) { ConnectedVersionDetailView(model: model, version: version) }
                         }
@@ -214,18 +222,18 @@ private struct ConnectedGameDetailView: View {
                 }
                 Section("Your edit requests") {
                     let requests = model.editRequests.filter { $0.requesterUserID == model.access?.userID }
-                    if requests.isEmpty { Text("No edit requests for this game.").foregroundStyle(.secondary) }
+                    if requests.isEmpty { Text("No edit requests for this game.").foregroundStyle(TeamStatsStyle.secondaryText) }
                     ForEach(requests) { request in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(request.status.rawValue.capitalized)
                             if !request.reason.isEmpty { Text(request.reason) }
-                            if !request.reviewReason.isEmpty { Text(request.reviewReason).foregroundStyle(.secondary) }
+                            if !request.reviewReason.isEmpty { Text(request.reviewReason).foregroundStyle(TeamStatsStyle.secondaryText) }
                         }
                     }
                 }
                 if model.access?.can(.datasetsReopen) == true {
                     Section("Completed-data edit review") {
-                        if model.editReviewQueue.isEmpty { Text("No pending edit requests available for your review.").foregroundStyle(.secondary) }
+                        if model.editReviewQueue.isEmpty { Text("No pending edit requests available for your review.").foregroundStyle(TeamStatsStyle.secondaryText) }
                         ForEach(model.editReviewQueue) { request in
                             NavigationLink("Review edit request") { ConnectedEditRequestReviewView(model: model, request: request) }
                         }
@@ -257,7 +265,7 @@ struct ConnectedVersionDetailView: View {
                     Text(current.datasetType.label).font(.headline)
                     LabeledContent("Server state", value: current.status.rawValue.capitalized)
                     LabeledContent("Revision", value: String(current.revision))
-                    Text("Read-only saved version. Completed data requires an approved edit request before it can change.").foregroundStyle(.secondary)
+                    Text("Read-only saved version. Completed data requires an approved edit request before it can change.").foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 ConnectedVersionRecords(model: model, version: current, labels: model.rosterLabels(for: current))
                 Section("Server actions") {
@@ -383,7 +391,7 @@ private struct ConnectedEditRequestReviewView: View {
                 if !current.reason.isEmpty { Text(current.reason) }
                 if let source = model.versions.first(where: { $0.id == current.sourceVersionID }) {
                     NavigationLink("View frozen source dataset") { ConnectedVersionDetailView(model: model, version: source) }
-                } else { Text("The source dataset has not loaded. Reload before deciding.").foregroundStyle(.secondary) }
+                } else { Text("The source dataset has not loaded. Reload before deciding.").foregroundStyle(TeamStatsStyle.secondaryText) }
             }
             if current.status.rawValue == "pending" && mayReview {
                 Section("Review") {

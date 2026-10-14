@@ -24,8 +24,17 @@ appearance, accessibility and interaction checks remain separate from contrast m
 
 Local game creation, temporary roster, manual stat drafts, and read-only game
 summaries are implemented. Scoring checks flag exact mismatches and proven
-partial-score contradictions. The latest consolidated warning presentation still
-awaits owner manual verification. The local entry screens remain local and unreviewed; shared server workflows are separate.
+partial-score contradictions. An actual isolated iPhone journey verified immediate
+consolidated warnings, multiple affected players, switching modes and saved/reopened
+values. Maximum-text and remaining device checks have their own evidence limits.
+The local entry screens remain local and unreviewed; shared server workflows are separate.
+
+“Using TeamStats” is revisitable from Local games and Account. It explains local
+versus shared work, recovery, completion and optional retained clips. It offers an
+explicit private JSON copy of saved local drafts; no import, restore or upload is
+provided. Account deletion and owner-selected privacy/reporting/retention policies
+remain visibly unfinished. New local saves request complete file protection;
+physical protection behavior remains unverified.
 
 The Account tab implements email-link and code verification, secure session
 restore, retry and sign-out. Configure an authorized nonproduction server's URL

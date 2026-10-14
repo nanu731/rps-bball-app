@@ -288,7 +288,7 @@ struct PhotoDraftImportSheet: View {
                     Text(targetLabel).font(.headline)
                     Text("Review each field and value before applying. Only this unsaved draft changes; Save and publication stay separate.")
                     Text("Recognition does not interpret shot notation or identify players. Unclear values stay unresolved.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 Section("Photo") {
                     PhotosPicker(selection: $selectedPhoto, matching: .images, preferredItemEncoding: .current) {
@@ -297,14 +297,14 @@ struct PhotoDraftImportSheet: View {
                     }
                     .disabled(isRecognizing || !proposals.isEmpty)
                     Text("Processed on this device. The app does not persist or upload the image or recognized text. Photos may download an iCloud image or cache a temporary file.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     if isRecognizing {
                         ProgressView("Reading photo…")
                         Button("Cancel recognition") { cancelRecognition() }.frame(minHeight: 44)
                     }
                     if let issue {
                         Label(issue, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.red).accessibilityIdentifier("photoReview.error")
+                            .foregroundStyle(TeamStatsStyle.errorText).accessibilityIdentifier("photoReview.error")
                     }
                     if let preview {
                         Image(uiImage: preview).resizable().scaledToFit()
@@ -314,7 +314,7 @@ struct PhotoDraftImportSheet: View {
                 if !lines.isEmpty {
                     Section("Recognized text — check against the photo") {
                         Text("Tap a line to map a value. Text can be wrong even when recognition is confident. A whole form is not automatically mapped.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                            .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                         ForEach(lines) { line in
                             Button {
                                 proposals.append(PhotoDraftProposal(sourceText: line.text, value: PhotoDraftReview.numericCandidate(from: line.text) ?? ""))
@@ -324,7 +324,7 @@ struct PhotoDraftImportSheet: View {
                                     Label("Review a value from this line", systemImage: "plus")
                                     if line.confidence < 0.5 {
                                         Label("Low-confidence text", systemImage: "exclamationmark.triangle")
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(TeamStatsStyle.secondaryText)
                                     }
                                 }.frame(minHeight: 44, alignment: .leading)
                             }.buttonStyle(.plain)
@@ -349,20 +349,20 @@ struct PhotoDraftImportSheet: View {
                                 Text("No").tag("no")
                             }
                             Text("Unanswered stays missing. Yes and No are explicit answers; neither is inferred from the photo.")
-                                .font(.footnote).foregroundStyle(.secondary)
+                                .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                         } else {
                             if PhotoDraftReview.numericCandidate(from: proposal.sourceText) == nil && !proposal.isConfirmed {
                                 Label("Value unresolved — review the photo and enter a count, or explicitly confirm blank.", systemImage: "questionmark.circle")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(TeamStatsStyle.secondaryText)
                             }
                             TextField("Reviewed value; blank = not entered", text: $proposal.value)
                                 .keyboardType(.numberPad).focused($numericField, equals: proposal.id)
                                 .accessibilityLabel("Reviewed value for \(fields.first { $0.id == proposal.fieldID }?.label ?? "unresolved field")")
                             Text("Confirmed blank replaces this field with Not entered. Explicit 0 remains 0.")
-                                .font(.footnote).foregroundStyle(.secondary)
+                                .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                         }
                         if let validation = validationIssue(proposal) {
-                            Label(validation, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                            Label(validation, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                         }
                         Toggle("I checked this field and value against the photo", isOn: $proposal.isConfirmed)
                             .disabled(proposal.fieldID == nil || validationIssue(proposal) != nil)
@@ -371,7 +371,7 @@ struct PhotoDraftImportSheet: View {
                 if !proposals.isEmpty {
                     Section {
                         if let error = reviewIssue {
-                            Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.secondary)
+                            Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.secondaryText)
                         }
                         Button("Apply reviewed values to draft") { apply() }
                             .frame(minHeight: 44).disabled(reviewedValues == nil || isRecognizing)

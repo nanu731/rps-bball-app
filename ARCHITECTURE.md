@@ -104,8 +104,13 @@ Application recovery handles retained drafts, stale versions and uncertain repli
 It is not disaster recovery after device loss, app removal or database loss.
 Local JSON is not a hosted backup; Keychain's device-only items are not a portable
 account/session backup. Published revision history is not an independent database
-backup either. No tested local-record export/import or hosted restore procedure
-is established by this snapshot. Provider backup availability/retention and any
+backup either. `LocalDraftBackup` prepares a read-only, versioned JSON snapshot of
+the four validated saved local stores; `TeamStatsGuide` offers explicit export to a
+user-selected private destination. Preparation preserves missing values/identities
+and fails on corrupt data, with isolated synthetic tests. It excludes unsaved edits,
+credentials, shared records and media. No import or tested restore procedure exists.
+New saves request complete file protection without rewriting legacy bytes; physical
+protection and backup behavior remain unverified. Provider backup availability/retention and any
 restore mechanism must be verified under the $0 budget before promising recovery.
 
 The app owner coordinates incident/data-recovery decisions and authorizes trusted

@@ -20,9 +20,9 @@ struct TeamAdministrationView: View {
             AdministrationFeedback(model: model)
             Section("Teams") {
                 if model.teams.isEmpty && model.didLoadTeams {
-                    Text("No active team is available from the server.").foregroundStyle(.secondary)
+                    Text("No active team is available from the server.").foregroundStyle(TeamStatsStyle.secondaryText)
                 } else if !model.didLoadTeams && !model.isBusy {
-                    Text("The team list has not loaded. Reload to check server data.").foregroundStyle(.secondary)
+                    Text("The team list has not loaded. Reload to check server data.").foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 ForEach(model.teams) { team in
                     Button {
@@ -47,7 +47,7 @@ struct TeamAdministrationView: View {
                             Text(team.id.uuidString).font(.caption).textSelection(.enabled)
                         }
                         Text("Share this code privately. A join request still needs administrator admission.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                            .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                     NavigationLink("Shared games and statistics") {
                         ConnectedGamesView(account: account, teamID: team.id)
@@ -64,7 +64,7 @@ struct TeamAdministrationView: View {
                         Button("Delegate permission administration") { administrationScreen = .delegation }.disabled(model.isBusy)
                     }
                     if !access.isOwner {
-                        ForEach(access.capabilities) { capability in Text(capability.label).foregroundStyle(.secondary) }
+                        ForEach(access.capabilities) { capability in Text(capability.label).foregroundStyle(TeamStatsStyle.secondaryText) }
                     }
                 }
             }
@@ -88,7 +88,7 @@ struct TeamAdministrationView: View {
                 Text("Use the team UUID supplied by your administrator. A request does not activate membership. Actual team setup requires the verified owner account on the server.")
             }.disabled(model.isBusy)
             Section {
-                Text("Server roster identities are separate from the temporary local roster. Local records are preserved and are never uploaded by this screen.").foregroundStyle(.secondary)
+                Text("Server roster identities are separate from the temporary local roster. Local records are preserved and are never uploaded by this screen.").foregroundStyle(TeamStatsStyle.secondaryText)
             }
         }
         .navigationTitle("Team administration")
@@ -125,15 +125,15 @@ private struct AdministrationFeedback: View {
         if let issue = model.identityIssue {
             Section {
                 Label("Verified account contacts are unavailable.", systemImage: "exclamationmark.triangle")
-                Text(issue.localizedDescription).font(.footnote).foregroundStyle(.secondary)
-                Text("Account UUIDs remain available; contacts do not determine permissions.").font(.footnote).foregroundStyle(.secondary)
+                Text(issue.localizedDescription).font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
+                Text("Account UUIDs remain available; contacts do not determine permissions.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 Button("Retry account contacts") { Task { await model.reload() } }.disabled(model.isBusy)
             }
         }
         if let issue = model.issue {
             Section {
                 Label(issue.localizedDescription, systemImage: "exclamationmark.triangle")
-                    .foregroundStyle(.red).accessibilityIdentifier("administration.error")
+                    .foregroundStyle(TeamStatsStyle.errorText).accessibilityIdentifier("administration.error")
                 Button("Reload / Retry") { Task { await model.reload() } }
                     .disabled(model.isBusy)
             }
@@ -158,13 +158,13 @@ private struct AdministrationRosterView: View {
             if model.access == nil {
                 Section {
                     Text("Roster data is unavailable until the team reloads successfully.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                     Button("Reload team") { Task { await model.reload() } }.disabled(model.isBusy)
                 }
             } else {
                 Section("Active roster") {
                     let entries = model.roster.filter { $0.archivedAt == nil }
-                    if entries.isEmpty { Text("No actual server roster entries.").foregroundStyle(.secondary) }
+                    if entries.isEmpty { Text("No actual server roster entries.").foregroundStyle(TeamStatsStyle.secondaryText) }
                     ForEach(entries) { entry in
                         VStack(alignment: .leading, spacing: 8) {
                             Text(entry.displayName).font(.headline)
@@ -179,11 +179,11 @@ private struct AdministrationRosterView: View {
                 }
                 Section("Archived roster") {
                     let entries = model.roster.filter { $0.archivedAt != nil }
-                    if entries.isEmpty { Text("No archived entries.").foregroundStyle(.secondary) }
+                    if entries.isEmpty { Text("No archived entries.").foregroundStyle(TeamStatsStyle.secondaryText) }
                     ForEach(entries) { entry in
                         VStack(alignment: .leading) {
                             Text(entry.displayName)
-                            Text("Jersey \(entry.jerseyNumber) • Archived").foregroundStyle(.secondary)
+                            Text("Jersey \(entry.jerseyNumber) • Archived").foregroundStyle(TeamStatsStyle.secondaryText)
                         }
                     }
                 }
@@ -246,7 +246,7 @@ private struct AdministrationRosterEditor: View {
                             Button("Keep editing") {}
                         } message: { Text("Your typed name and number will be replaced by the latest loaded player values.") }
                     }
-                    Text("Use owner-provided actual roster details. Temporary local identities are not imported.").foregroundStyle(.secondary)
+                    Text("Use owner-provided actual roster details. Temporary local identities are not imported.").foregroundStyle(TeamStatsStyle.secondaryText)
                 }.disabled(isBusy)
                 Section {
                     Button(entry == nil ? "Add player on server" : "Save player on server") {
@@ -261,7 +261,7 @@ private struct AdministrationRosterEditor: View {
                 }
             } else {
                 Section {
-                    Text("Roster editing is unavailable until authorized access to this team reloads. Your typed values remain in memory.").foregroundStyle(.secondary)
+                    Text("Roster editing is unavailable until authorized access to this team reloads. Your typed values remain in memory.").foregroundStyle(TeamStatsStyle.secondaryText)
                     Button("Reload team access") { Task { await model.reload() } }.disabled(isBusy)
                 }
             }
@@ -301,7 +301,7 @@ private struct AdministrationIdentityView: View {
                 if let email = identity.email { Text("Verified email: \(email)").textSelection(.enabled) }
                 if let phone = identity.phone { Text("Verified phone: \(phone)").textSelection(.enabled) }
                 if identity.email == nil && identity.phone == nil {
-                    Text("No verified contact available").foregroundStyle(.secondary)
+                    Text("No verified contact available").foregroundStyle(TeamStatsStyle.secondaryText)
                 }
             }
             Text("Auth account: \(userID.uuidString)").font(.caption).textSelection(.enabled)
@@ -320,7 +320,7 @@ private struct AdministrationMembershipView: View {
             AdministrationFeedback(model: model)
             if model.access?.canReadAdministration == true {
                 Section("Server membership") {
-                    if model.memberships.isEmpty { Text("No membership records returned.").foregroundStyle(.secondary) }
+                    if model.memberships.isEmpty { Text("No membership records returned.").foregroundStyle(TeamStatsStyle.secondaryText) }
                     ForEach(model.memberships) { member in
                         VStack(alignment: .leading, spacing: 8) {
                             AdministrationIdentityView(model: model, userID: member.userID)
@@ -349,7 +349,7 @@ private struct AdministrationMembershipView: View {
                 }
             } else {
                 Section {
-                    Text("Membership data is unavailable. Reload team access before viewing or changing admission.").foregroundStyle(.secondary)
+                    Text("Membership data is unavailable. Reload team access before viewing or changing admission.").foregroundStyle(TeamStatsStyle.secondaryText)
                     if model.issue == nil { Button("Reload team access") { Task { await model.reload() } }.disabled(model.isBusy) }
                 }
             }
@@ -396,14 +396,14 @@ private struct AdministrationCapabilityView: View {
                     }.disabled(model.isBusy || model.access == nil || targetID.isEmpty || !grantable.contains(capability))
                 }.disabled(model.isBusy)
                 Section {
-                    Text("Operational permission and permission to grant it are separate. Delegated grants must expire within your owner-issued envelope. The server rechecks authority on every change.").foregroundStyle(.secondary)
+                    Text("Operational permission and permission to grant it are separate. Delegated grants must expire within your owner-issued envelope. The server rechecks authority on every change.").foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 if model.access?.isOwner == false {
                     Section("Your delegation limits") {
                         ForEach(model.access?.grantEnvelopes ?? []) { envelope in
                             ForEach(envelope.allowedCapabilities) { Text($0.label) }
                             if let date = envelope.expiry {
-                                Text("Grant expiry must be no later than \(date.formatted(date: .abbreviated, time: .shortened))").foregroundStyle(.secondary)
+                                Text("Grant expiry must be no later than \(date.formatted(date: .abbreviated, time: .shortened))").foregroundStyle(TeamStatsStyle.secondaryText)
                             }
                         }
                     }
@@ -412,14 +412,14 @@ private struct AdministrationCapabilityView: View {
                     ForEach(model.grants.filter { $0.userID.uuidString == targetID }) { grant in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(grant.capability.label)
-                            Text(grant.revokedAt == nil ? "Recorded grant; effective access is rechecked by server" : "Revoked").font(.caption).foregroundStyle(.secondary)
+                            Text(grant.revokedAt == nil ? "Recorded grant; effective access is rechecked by server" : "Revoked").font(.caption).foregroundStyle(TeamStatsStyle.secondaryText)
                             if let expiry = grant.expiresAt, let date = administrationDate(expiry) { Text(date, style: .date).font(.caption) }
                         }
                     }
                 }
             } else {
                 Section {
-                    Text("Authorized team access is unavailable. Reload before viewing or changing these permissions.").foregroundStyle(.secondary)
+                    Text("Authorized team access is unavailable. Reload before viewing or changing these permissions.").foregroundStyle(TeamStatsStyle.secondaryText)
                     if model.issue == nil { Button("Reload team access") { Task { await model.reload() } }.disabled(model.isBusy) }
                 }
             }
@@ -460,7 +460,7 @@ private struct AdministrationDelegationView: View {
                 Section("Owner-issued delegation") {
                     AdministrationTargetPicker(model: model, selection: $targetID)
                     DatePicker("Expiry", selection: $expiry, in: Date()..., displayedComponents: [.date, .hourAndMinute])
-                    Text("Select the exact capabilities this account may grant or revoke. Delegation does not grant operational access, allow onward delegation, or change the owner.").foregroundStyle(.secondary)
+                    Text("Select the exact capabilities this account may grant or revoke. Delegation does not grant operational access, allow onward delegation, or change the owner.").foregroundStyle(TeamStatsStyle.secondaryText)
                     ForEach(TeamCapability.allCases) { capability in
                         Toggle(capability.label, isOn: Binding(get: { capabilities.contains(capability) }, set: { if $0 { capabilities.insert(capability) } else { capabilities.remove(capability) } }))
                     }
@@ -477,15 +477,15 @@ private struct AdministrationDelegationView: View {
                     }.disabled(isBusy || model.access?.isOwner != true || targetID.isEmpty || capabilities.isEmpty)
                 }.disabled(isBusy)
                 Section("Server delegation records") {
-                    if model.delegations.isEmpty { Text("No delegation records.").foregroundStyle(.secondary) }
+                    if model.delegations.isEmpty { Text("No delegation records.").foregroundStyle(TeamStatsStyle.secondaryText) }
                     ForEach(model.delegations) { delegation in
                         VStack(alignment: .leading, spacing: 8) {
                             AdministrationIdentityView(model: model, userID: delegation.delegateUserID)
                             ForEach(delegation.allowedCapabilities) { Text($0.label) }
                             if let date = administrationDate(delegation.expiresAt) {
-                                Text("Expires \(date.formatted(date: .abbreviated, time: .shortened))").foregroundStyle(.secondary)
+                                Text("Expires \(date.formatted(date: .abbreviated, time: .shortened))").foregroundStyle(TeamStatsStyle.secondaryText)
                             }
-                            if delegation.revokedAt != nil { Text("Revoked").foregroundStyle(.secondary) }
+                            if delegation.revokedAt != nil { Text("Revoked").foregroundStyle(TeamStatsStyle.secondaryText) }
                             else {
                                 Button("Revoke delegation", role: .destructive) { Task { await model.revokeDelegation(delegation) } }
                                     .disabled(isBusy || model.access?.isOwner != true)
@@ -495,7 +495,7 @@ private struct AdministrationDelegationView: View {
                 }
             } else {
                 Section {
-                    Text("Authorized team access is unavailable. Reload before viewing or changing these permissions.").foregroundStyle(.secondary)
+                    Text("Authorized team access is unavailable. Reload before viewing or changing these permissions.").foregroundStyle(TeamStatsStyle.secondaryText)
                     if model.issue == nil { Button("Reload team access") { Task { await model.reload() } }.disabled(isBusy) }
                 }
             }

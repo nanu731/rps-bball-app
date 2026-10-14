@@ -32,14 +32,14 @@ struct TeamWorkspaceView: View {
                     if let issue = model.issue {
                         Section {
                             Label(issue.localizedDescription, systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(.red)
+                                .foregroundStyle(TeamStatsStyle.errorText)
                             Button("Retry", action: requestReload).disabled(model.isBusy)
                         }
                     }
                     Section("Your teams") {
                         if model.didLoadTeams && model.teams.isEmpty {
                             Text("No active team is available. Use your administrator’s invitation code to request admission.")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(TeamStatsStyle.secondaryText)
                         }
                         ForEach(model.teams) { team in
                             Button {
@@ -69,7 +69,7 @@ struct TeamWorkspaceView: View {
                 }
                 Section {
                     Text("Shared team records are separate from device-local drafts. Signing in never uploads your local games.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
             }
             .navigationTitle("Team")
@@ -79,19 +79,19 @@ struct TeamWorkspaceView: View {
                 if let team = model.selectedTeam, let access = model.access {
                     List {
                         Section {
-                            Text(team.name).font(.headline)
+                            Text(team.name).font(.title2.bold()).fixedSize(horizontal: false, vertical: true)
                             Label("Active membership confirmed by server", systemImage: "checkmark.circle")
-                                .font(.footnote).foregroundStyle(.secondary)
+                                .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                         }
                         Section("Team activities") {
                             NavigationLink { ConnectedGamesView(account: account, teamID: team.id) } label: {
-                                Label("Shared games and statistics", systemImage: "basketball")
+                                TeamTaskLabel(title: "Shared games and statistics", detail: "After-game entry, accepted data and review", symbol: "basketball")
                             }
                             NavigationLink { PlaybookView(account: account, teamID: team.id) } label: {
-                                Label("Playbook", systemImage: "book.closed")
+                                TeamTaskLabel(title: "Playbook", detail: "Team plays, movement and practice clips", symbol: "book.closed")
                             }
                             NavigationLink { TeamRosterOverview(account: account, team: team) } label: {
-                                Label("Team roster", systemImage: "person.3")
+                                TeamTaskLabel(title: "Team roster", detail: "Actual server roster; separate from temporary players", symbol: "person.3")
                             }
                         }
                         if access.canReadAdministration || access.can(.rosterManage) {
@@ -100,7 +100,7 @@ struct TeamWorkspaceView: View {
                                     TeamAdministrationView(account: account, initialTeamID: team.id)
                                 } label: { Label("Manage team", systemImage: "person.badge.key") }
                                 Text("Available controls depend on current server permissions.")
-                                    .font(.footnote).foregroundStyle(.secondary)
+                                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                             }
                         }
                     }
@@ -184,11 +184,11 @@ private struct TeamAdmissionView: View {
                     }
                 }.disabled(model.isBusy || UUID(uuidString: invitation.trimmingCharacters(in: .whitespacesAndNewlines)) == nil)
                 Text("Use the code provided by your administrator. A request does not activate membership.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
             }.disabled(model.isBusy)
             if model.isBusy { Section { ProgressView("Requesting admission…") } }
             if let issue = model.issue {
-                Section { Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                Section { Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText) }
             }
             if let confirmation = model.confirmation { Section { Text(confirmation) } }
         }
@@ -220,7 +220,7 @@ private struct TeamRosterOverview: View {
             if model.isBusy {
                 ProgressView("Loading team roster…")
             } else if let issue = model.issue {
-                Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                Label(issue.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                 Button("Retry") { Task { await model.selectTeam(team) } }.disabled(model.isBusy)
             } else if model.access == nil {
                 Label("Team roster is unavailable. Reload your team to check access.", systemImage: "exclamationmark.triangle")
@@ -234,7 +234,7 @@ private struct TeamRosterOverview: View {
                 ForEach(active) { player in
                     VStack(alignment: .leading, spacing: 8) {
                         Text(player.displayName).font(.headline)
-                        Text("Jersey \(player.jerseyNumber)").foregroundStyle(.secondary)
+                        Text("Jersey \(player.jerseyNumber)").foregroundStyle(TeamStatsStyle.secondaryText)
                     }.padding(.vertical, 8)
                 }
             }

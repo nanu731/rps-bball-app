@@ -43,7 +43,7 @@ struct GameSummaryView: View {
                     LabeledContent("Our team", value: game.venue.rawValue)
                     LabeledContent("Game type", value: game.kind.rawValue)
                     Text("Read-only saved data. Use the entry screens to edit. Advanced-sheet reconciliation is unavailable.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 if !loaded {
                     ProgressView("Loading saved drafts")
@@ -70,7 +70,7 @@ struct GameSummaryView: View {
                                 let records = possessions.filter { $0.team == team }.sorted { $0.number < $1.number }
                                 LabeledContent("Records entered", value: String(records.count))
                                 Text("Records entered, not final game possessions. Each team's numbering is independent.")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(TeamStatsStyle.secondaryText)
                                 if records.isEmpty { Text("No possession records saved for this team.") }
                                 ForEach(records) { record in
                                     NavigationLink("\(team.label) · Record \(record.number)") {
@@ -93,7 +93,7 @@ struct GameSummaryView: View {
 
     private func failure(_ name: String, error: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Could not load \(name): \(error)").foregroundStyle(.red)
+            Text("Could not load \(name): \(error)").foregroundStyle(TeamStatsStyle.errorText)
             Button("Retry loading saved drafts") { load() }.frame(minHeight: 44)
         }
     }
@@ -127,12 +127,12 @@ private struct PlayerSummaryView: View {
             Section {
                 Text("\(player.name) · #\(player.number)").font(.headline)
                 Text("Temporary roster. Local draft — incomplete and unreviewed.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(TeamStatsStyle.secondaryText)
             }
             Section("Saved box score") {
                 if let boxError {
                     Text("Could not load box score: \(boxError). Return to the summary to Retry.")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(TeamStatsStyle.errorText)
                 } else {
                     let values = boxScore?.values ?? [:]
                     ShotCheckNotice(message: summaryShotCheck(values))
@@ -145,11 +145,11 @@ private struct PlayerSummaryView: View {
             Section("Independent player game total") {
                 if let paintError {
                     Text("Could not load paint touches: \(paintError). Return to the summary to Retry.")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(TeamStatsStyle.errorText)
                 } else {
                     LabeledContent("Game-total paint touches", value: summaryCount(paintTouch?.total))
                     Text("Independently recorded; not calculated from possession records.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                 }
             }
         }
@@ -166,7 +166,7 @@ private struct PossessionSummaryView: View {
             Section {
                 Text("\(record.team.label) · Record \(record.number)").font(.headline)
                 Text("Local draft — incomplete and unreviewed")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(TeamStatsStyle.secondaryText)
             }
             Section("Saved possession record") {
                 ForEach(PossessionField.allCases, id: \.self) { field in

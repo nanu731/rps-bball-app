@@ -175,9 +175,7 @@ final class ConnectedMediaAcceptanceTests: XCTestCase {
     private func exerciseVideoControls() throws {
         // These are system AVKit controls. If the runtime does not expose them,
         // fail with its actual hierarchy rather than guessing a custom player state.
-        if !app.buttons["Play"].exists {
-            try tap(app.otherElements["Video"].firstMatch)
-        }
+        try revealVideoControls()
         try require(app.buttons["Play"])
         let timeline = try nativeTimeline()
         guard let initial = timeline.value as? String, !initial.isEmpty else {
@@ -188,6 +186,8 @@ final class ConnectedMediaAcceptanceTests: XCTestCase {
         let advanced = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value != %@", initial), object: timeline)
         guard XCTWaiter.wait(for: [advanced], timeout: 5) == .completed else { throw MediaUIIssue.playbackDidNotAdvance }
         capture("Actual native video advancing")
+        // AVKit hides controls while playing. Reveal them before requesting Pause.
+        try revealVideoControls()
         try tap(app.buttons["Pause"])
         guard let before = timeline.value as? String, !before.isEmpty else {
             throw MediaUIIssue.nativeTimelineUnavailable
@@ -197,9 +197,25 @@ final class ConnectedMediaAcceptanceTests: XCTestCase {
         guard XCTWaiter.wait(for: [moved], timeout: 5) == .completed else { throw MediaUIIssue.scrubDidNotMove }
         try require(app.buttons["Play"])
         capture("Actual native video paused and scrubbed")
-        try tap(app.buttons["Play"])
-        try require(app.buttons["Pause"], timeout: 5)
-        try tap(app.buttons["Pause"])
+    }
+
+    private func revealVideoControls() throws {
+        if !app.buttons["Play"].exists && !app.buttons["Pause"].exists {
+            let video = app.otherElements["Video"].firstMatch
+            try require(video)
+            let subject = app.images["Liftable subject available"].firstMatch
+            guard subject.exists else { throw MediaUIIssue.nativeTimelineUnavailable }
+            let frame = video.frame, image = subject.frame.intersection(frame)
+            let leftGap = image.minX - frame.minX
+            let rightGap = frame.maxX - image.maxX
+            guard leftGap > 2 || rightGap > 2 else { throw MediaUIIssue.nativeTimelineUnavailable }
+            // Center taps hit the native image-analysis layer in retained failures.
+            // Reveal AVKit through its observed letterbox, not that image overlay.
+            let x = leftGap > 2 ? leftGap / 2 : frame.width - rightGap / 2
+            video.coordinate(withNormalizedOffset: .zero)
+                .withOffset(CGVector(dx: x, dy: frame.height / 2)).tap()
+            capture("Native letterbox control reveal")
+        }
     }
 
     private func nativeTimeline() throws -> XCUIElement {

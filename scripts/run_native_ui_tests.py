@@ -39,6 +39,8 @@ def prepare(root, destination, account_setup=False):
         project = project.replace("TeamStatsTests", test_name)
     project = replace_exact(project, "PRODUCT_BUNDLE_IDENTIFIER = com.narayanlekhi.TeamStats;",
                             f"PRODUCT_BUNDLE_IDENTIFIER = {APP_ID};", 2)
+    project = replace_exact(project, f"PRODUCT_BUNDLE_IDENTIFIER = {APP_ID};",
+                            f'PRODUCT_BUNDLE_IDENTIFIER = {APP_ID};\n\t\t\t\tINFOPLIST_KEY_CFBundleDisplayName = "TeamStats UI TEST";', 2)
     if not account_setup:
         project = replace_exact(project, 'BUNDLE_LOADER = "$(TEST_HOST)";',
                                 "TEST_TARGET_NAME = TeamStats;", 2)

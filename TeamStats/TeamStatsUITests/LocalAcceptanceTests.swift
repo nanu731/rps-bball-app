@@ -107,6 +107,81 @@ final class LocalAcceptanceTests: XCTestCase {
         capture("Reopened edited paint draft")
     }
 
+    func testLargeTextFieldsAndKeyboardSaveRemainReachable() {
+        let game = createGame("large-text reachability")
+        tap(app.buttons["Single-player entry"])
+        let fields = ["points", "twosMade", "twosMissed", "threesMade", "threesMissed",
+                     "freeThrowsMade", "freeThrowsMissed", "offensiveRebounds", "defensiveRebounds",
+                     "assists", "turnovers", "steals", "blocks", "fouls", "chargesDrawn"]
+        for name in fields {
+            let input = field("\(first).\(name)")
+            XCTAssertTrue(input.isHittable)
+            XCTAssertLessThanOrEqual(input.frame.width, app.frame.width)
+        }
+        replace(field("\(first).chargesDrawn"), with: "0")
+        XCTAssertTrue(app.keyboards.firstMatch.exists)
+        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        capture("Large-text last field and keyboard-visible Save")
+        tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        hideKeyboard()
+        tap(app.buttons["Done"])
+        app.terminate(); app.launch(); openGame(game)
+        tap(app.buttons["Single-player entry"])
+        // Search the long accessibility-size form in its actual field order,
+        // rather than treating the final row as a nearby offscreen control.
+        for name in fields { _ = field("\(first).\(name)") }
+        XCTAssertEqual(contents(field("\(first).chargesDrawn")), "0")
+        capture("Large-text saved value after relaunch")
+    }
+
+    func testGamePresentationGuideAndExportCancellation() {
+        _ = createGame("presentation")
+        capture("Native game identity and entry actions")
+        tap(app.buttons["Single-player entry"])
+        capture("Native grouped scoring and missing inputs")
+        tap(app.buttons["Done"])
+        tap(app.navigationBars["Game"].buttons["Local games"])
+        capture("Native local game list")
+        tap(app.buttons["Using TeamStats"])
+        XCTAssertTrue(app.navigationBars["Using TeamStats"].exists)
+        capture("Revisitable native guide")
+        XCTAssertFalse(app.buttons["Cancel"].exists)
+        tap(app.buttons["Export saved local drafts"])
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 10))
+        capture("User-directed JSON export picker")
+        app.buttons["Cancel"].tap()
+        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.buttons["Cancel"])
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
+        XCTAssertTrue(app.navigationBars["Using TeamStats"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Export saved local drafts"].isHittable)
+        XCTAssertFalse(text(containing: "Saved local-draft copy").exists)
+        capture("Guide after export cancellation")
+    }
+
+    func testPreviouslySavedSyntheticGamePresentation() throws {
+        guard let raw = ProcessInfo.processInfo.environment["TEAMSTATS_CONNECTED_UI_FIXTURE"],
+              let fixture = try JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: Any],
+              let game = fixture["localGameOpponent"] as? String, game.hasPrefix("TEST ONLY") else {
+            throw XCTSkip("An existing synthetic game must be named explicitly")
+        }
+        let row = app.staticTexts[game].firstMatch
+        for _ in 0..<30 {
+            if row.exists && row.isHittable { break }
+            app.collectionViews.firstMatch.swipeUp()
+        }
+        openGame(game)
+        capture("Previously saved synthetic game details")
+        tap(app.buttons["Single-player entry"])
+        capture("Previously saved synthetic individual entry")
+        tap(app.buttons["Roster table"])
+        capture("Previously saved synthetic roster table")
+        tap(app.buttons["Done"])
+        tap(app.buttons["Local game summary"])
+        capture("Previously saved synthetic summary")
+        // This journey never types or saves: the selected record remains unchanged.
+    }
+
     func testIndependentPossessionsScrollingAndSave() {
         let game = createGame("paired possessions")
         tap(app.buttons["Possession draft entry"])
@@ -210,14 +285,16 @@ final class LocalAcceptanceTests: XCTestCase {
 
     private enum Axis { case vertical, verticalUp, horizontal }
 
-    private func reveal(_ element: XCUIElement, axis: Axis = .vertical,
+    private func reveal(_ element: XCUIElement, axis: Axis = .vertical, isInput: Bool = false,
                         file: StaticString = #filePath, line: UInt = #line) {
         for attempt in 0..<12 {
             if element.exists && element.isHittable {
-                if element.elementType != .textField { return }
+                if !isInput { return }
                 let keyboardTop = app.keyboards.firstMatch.exists ? app.keyboards.firstMatch.frame.minY : app.frame.maxY
                 let save = app.buttons["Save draft"]
-                let bottom = min(keyboardTop, save.exists && save.isHittable ? save.frame.minY : app.frame.maxY)
+                let footer = app.otherElements["local-draft-save-controls"].firstMatch
+                let footerTop = footer.exists ? footer.frame.minY : save.exists && save.isHittable ? save.frame.minY : app.frame.maxY
+                let bottom = min(keyboardTop, footerTop)
                 let formTop = app.collectionViews.allElementsBoundByIndex.last?.frame.minY ?? 0
                 let rect = element.frame
                 // A partly visible field is hittable, but its trailing typing point
@@ -226,35 +303,34 @@ final class LocalAcceptanceTests: XCTestCase {
                 if rect.minY >= formTop && rect.maxY <= bottom && rect.minX >= navigation.minX && rect.maxX <= navigation.maxX { return }
             }
             let containers = app.collectionViews.allElementsBoundByIndex + app.scrollViews.allElementsBoundByIndex
-            let exists = element.exists
-            let containing = exists ? containers.reversed().first {
-                let candidates = $0.descendants(matching: element.elementType)
-                if !element.identifier.isEmpty { return candidates.matching(identifier: element.identifier).count > 0 }
-                return candidates.matching(NSPredicate(format: "label == %@", element.label)).count > 0
-            } : nil
             // A lazy Form may not expose its offscreen fields yet. Prefer its collection
-            // instead of scrolling the separate, always-visible entry header.
+            // without querying the identity/frame of a virtualized offscreen row.
             let fallback = axis != .horizontal ? app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable }) : nil
-            let surface: XCUIElement = containing ?? fallback ?? containers.last(where: { $0.isHittable }) ?? app
+            let surface: XCUIElement = fallback ?? containers.last(where: { $0.isHittable }) ?? app
             let rect = surface.frame.intersection(app.frame)
             let keyboardTop = app.keyboards.firstMatch.exists ? app.keyboards.firstMatch.frame.minY : app.frame.maxY
             let save = app.buttons["Save draft"]
+            let footer = app.otherElements["local-draft-save-controls"].firstMatch
+            let footerTop = footer.exists ? footer.frame.minY : save.exists && save.isHittable ? save.frame.minY : app.frame.maxY
             let tabs = app.tabBars.firstMatch
-            let bottom = min(rect.maxY, keyboardTop, save.exists && save.isHittable ? save.frame.minY : app.frame.maxY, tabs.exists && tabs.isHittable ? tabs.frame.minY : app.frame.maxY) - 16
+            let bottom = min(rect.maxY, keyboardTop, footerTop, tabs.exists && tabs.isHittable ? tabs.frame.minY : app.frame.maxY) - 16
             let navigationBottom = app.navigationBars.allElementsBoundByIndex.last?.frame.maxY ?? 0
             let top = max(rect.minY, navigationBottom) + 16
             let origin = app.coordinate(withNormalizedOffset: .zero)
             if axis == .horizontal {
-                let rightward = element.exists && element.frame.midX < app.frame.midX
+                let rightward = attempt >= 6
                 let start = origin.withOffset(CGVector(dx: rightward ? rect.minX + 20 : rect.maxX - 20, dy: (top + bottom) / 2))
                 let end = origin.withOffset(CGVector(dx: rightward ? rect.maxX - 20 : rect.minX + 20, dy: (top + bottom) / 2))
                 start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0)
             } else {
-                let downward = element.exists ? element.frame.midY < top : axis == .verticalUp || attempt >= 6
+                let downward = axis == .verticalUp ? attempt < 6 : attempt >= 6
                 // Collection frames extend under the software keyboard; drag only in
                 // their visible viewport, never across keyboard keys or Save.
                 let start = origin.withOffset(CGVector(dx: rect.midX, dy: downward ? top : bottom))
-                let distance = min(100, (bottom - top) * 0.65)
+                // Short drags protect an active field; ordinary navigation can span
+                // several screens at maximum text size and needs a full viewport search.
+                let available = (bottom - top) * 0.65
+                let distance = isInput ? min(100, available) : available
                 let end = origin.withOffset(CGVector(dx: rect.midX, dy: downward ? top + distance : bottom - distance))
                 start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0)
             }
@@ -268,7 +344,7 @@ final class LocalAcceptanceTests: XCTestCase {
 
     private func field(_ id: String, axis: Axis = .vertical) -> XCUIElement {
         let element = app.textFields[id]
-        reveal(element, axis: id.hasSuffix(".points") && axis == .vertical ? .verticalUp : axis)
+        reveal(element, axis: id.hasSuffix(".points") && axis == .vertical ? .verticalUp : axis, isInput: true)
         return element
     }
 
@@ -278,9 +354,15 @@ final class LocalAcceptanceTests: XCTestCase {
     }
 
     private func hideKeyboard() {
-        // iPad exposes both a keyboard dismissal key and the app footer action.
-        let actions = app.buttons.matching(identifier: "Hide keyboard").allElementsBoundByIndex
-        guard let action = actions.first(where: { $0.isHittable }) else {
+        // iPhone exposes the app's keyboard Done; iPad also has Hide keyboard.
+        // Exclude navigation Done, which closes the editor rather than the keyboard.
+        let navigationFrames = app.navigationBars.allElementsBoundByIndex.map(\.frame)
+        let actions = app.buttons.matching(identifier: "Hide keyboard").allElementsBoundByIndex +
+            app.buttons.matching(identifier: "Done").allElementsBoundByIndex
+        guard let action = actions.first(where: { candidate in
+            candidate.isHittable && candidate.isEnabled &&
+                !navigationFrames.contains(where: { $0.intersects(candidate.frame) })
+        }) else {
             XCTFail("No visible keyboard dismissal action"); return
         }
         action.tap()
@@ -290,9 +372,10 @@ final class LocalAcceptanceTests: XCTestCase {
         if app.keyboards.firstMatch.exists && app.buttons["Hide keyboard"].exists {
             hideKeyboard()
         }
-        reveal(field, axis: axis)
-        // LabeledContent exposes the whole row; its editable control is on the trailing side.
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        reveal(field, axis: axis, isInput: true)
+        // LabeledContent can stack its label above the input at accessibility sizes.
+        // The retained maximum-text snapshot's midpoint hit its label, not the input.
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.85)).tap()
         let old = contents(field)
         if !old.isEmpty { field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count)) }
         if !value.isEmpty { field.typeText(value) }
@@ -317,7 +400,14 @@ final class LocalAcceptanceTests: XCTestCase {
     private func openGame(_ name: String) {
         XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 15))
         tap(app.staticTexts[name].firstMatch)
-        XCTAssertTrue(app.buttons["Single-player entry"].waitForExistence(timeout: 5))
+        // Native Forms virtualize offscreen rows. Search with native scrolling
+        // without asking a disappearing offscreen row for its frame.
+        let entry = app.buttons["Single-player entry"]
+        for _ in 0..<8 {
+            if entry.exists && entry.isHittable { break }
+            app.collectionViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(entry.exists && entry.isHittable)
     }
 
     private func capture(_ name: String) {

@@ -218,6 +218,12 @@ final class ConnectedAcceptanceTests: XCTestCase {
         try require(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@",
             fixture.syntheticActorUUID.uuidString)).firstMatch)
         try selectTab("Team")
+        // A real transient team-load failure is distinct from an empty team list.
+        // Use the offered recovery once; never fabricate membership for navigation.
+        if app.buttons["Retry"].exists && app.buttons["Retry"].isHittable {
+            capture("Actual team-load failure before Retry")
+            app.buttons["Retry"].tap()
+        }
         try tap(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", fixture.teamName)).firstMatch)
         try require(app.navigationBars["Team home"])
         try tap(app.buttons["Playbook"])
@@ -233,6 +239,31 @@ final class ConnectedAcceptanceTests: XCTestCase {
         try tap(app.buttons["Previous step"])
         XCTAssertEqual(marker.label, origin, "Previous step must restore the authored origin")
         capture("Actual Reduce Motion authored origin")
+    }
+
+    func testObserveSystemRotationLock() throws {
+        guard ProcessInfo.processInfo.environment["TEAMSTATS_CONNECTED_UI_FIXTURE"] != nil else {
+            throw XCTSkip("An authorized isolated-device fixture is required")
+        }
+        app = XCUIApplication(bundleIdentifier: "com.narayanlekhi.TeamStats.UIAcceptance")
+        app.launch()
+        XCUIDevice.shared.press(.home)
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        defer { app.activate() }
+        springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.02))
+            .press(forDuration: 0.05, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.65)))
+        let state = XCTAttachment(string: springboard.debugDescription)
+        state.name = "Observed system rotation controls"; state.lifetime = .keepAlways; add(state)
+        let image = XCTAttachment(screenshot: springboard.screenshot())
+        image.name = "Observed system Control Center"; image.lifetime = .keepAlways; add(image)
+        let controls = springboard.buttons.matching(NSPredicate(format:
+            "label CONTAINS[c] %@ OR label CONTAINS[c] %@", "orientation", "rotation"))
+        guard controls.count == 1 else {
+            throw XCTSkip("System rotation lock has no unique observed control; no setting changed")
+        }
+        let observed = XCTAttachment(string: "\(controls.firstMatch.label); value=\(String(describing: controls.firstMatch.value)); selected=\(controls.firstMatch.isSelected)")
+        observed.name = "Observed rotation lock answer"; observed.lifetime = .keepAlways; add(observed)
+        // Observation only. Any actual rotation claim still requires changed geometry.
     }
 
     private func reduceMotionSwitch(in settings: XCUIApplication) throws -> XCUIElement {

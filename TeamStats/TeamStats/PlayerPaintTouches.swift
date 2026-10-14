@@ -31,7 +31,7 @@ enum PlayerPaintTouchStorage {
 
     static func save(_ records: [PlayerPaintTouchRecord], to url: URL) throws {
         try validate(records)
-        try JSONEncoder().encode(records).write(to: url, options: .atomic)
+        try JSONEncoder().encode(records).write(to: url, options: [.atomic, .completeFileProtection])
     }
 
     static func updating(_ records: [PlayerPaintTouchRecord],
@@ -71,14 +71,14 @@ struct PlayerPaintTouchEditor: View {
                     Text(game.opponent).font(.headline)
                     Text("Temporary roster")
                     Text("Incomplete, unreviewed drafts saved on this device.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                     Text("A paint touch is when a player intentionally establishes two feet in the paint with the ball.")
                     Text("Enter independently collected player game totals. These are not calculated from possessions. Blank means unentered; zero is explicit.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 if let loadError {
                     Section("Could not load drafts") {
-                        Text(loadError).foregroundStyle(.red)
+                        Text(loadError).foregroundStyle(TeamStatsStyle.errorText)
                         Button("Retry") { load() }
                     }
                 } else if loaded {
@@ -97,7 +97,7 @@ struct PlayerPaintTouchEditor: View {
                                         values[player.id] = text
                                         changed()
                                     }
-                                ))
+                                ), prompt: Text("Unentered").foregroundColor(TeamStatsStyle.secondaryText))
                                 .keyboardType(.numberPad)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(minHeight: 44)
@@ -108,7 +108,7 @@ struct PlayerPaintTouchEditor: View {
                             }
                             if BoxScoreCount(values[player.id] ?? "") == .invalid {
                                 Text("Enter a nonnegative whole number within the supported integer range, or leave blank.")
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(TeamStatsStyle.errorText)
                             }
                         }
                     }
@@ -124,15 +124,15 @@ struct PlayerPaintTouchEditor: View {
             }
             .safeAreaInset(edge: .bottom) {
                 VStack(alignment: .leading, spacing: 8) {
-                    if invalid { Text("Fix invalid entries before saving.").foregroundStyle(.red) }
-                    if let saveError { Text("Could not save drafts: \(saveError)").foregroundStyle(.red) }
+                    if invalid { Text("Fix invalid entries before saving.").foregroundStyle(TeamStatsStyle.errorText) }
+                    if let saveError { Text("Could not save drafts: \(saveError)").foregroundStyle(TeamStatsStyle.errorText) }
                     if focusedPlayer != nil {
                         Button("Hide keyboard") { focusedPlayer = nil }
                             .frame(minHeight: 44)
                     }
                     HStack {
                         Text(hasChanges ? "Unsaved changes" : saved ? "Draft saved locally" : "Local draft")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(TeamStatsStyle.secondaryText)
                         Spacer()
                         Button("Save draft") { save() }
                             .buttonStyle(.borderedProminent)
@@ -143,6 +143,8 @@ struct PlayerPaintTouchEditor: View {
                 }
                 .padding()
                 .background(.bar)
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("local-draft-save-controls")
             }
             .interactiveDismissDisabled(hasChanges)
             .task { load() }

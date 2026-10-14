@@ -84,7 +84,7 @@ enum PossessionStorage {
 
     static func save(_ records: [PossessionRecord], to url: URL) throws {
         try validate(records)
-        try JSONEncoder().encode(records).write(to: url, options: .atomic)
+        try JSONEncoder().encode(records).write(to: url, options: [.atomic, .completeFileProtection])
     }
 
     static func updating(_ records: [PossessionRecord], with drafts: [PossessionRecord]) -> [PossessionRecord] {
@@ -150,7 +150,7 @@ struct PossessionEditor: View {
                                     }
                                     if drafts.isEmpty {
                                         Text("No possession records added. Add the next possession for either team.")
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(TeamStatsStyle.secondaryText)
                                             .frame(width: max(1, geometry.size.width - 32), alignment: .leading)
                                     }
                                     ForEach(rowNumbers, id: \.self) { number in
@@ -245,7 +245,7 @@ struct PossessionEditor: View {
                                     drafts[index].values[field.rawValue] = text
                                     changed()
                                 }
-                            ))
+                            ), prompt: Text("Unentered").foregroundColor(TeamStatsStyle.secondaryText))
                             .keyboardType(.numberPad)
                             .textFieldStyle(.roundedBorder)
                             .frame(minWidth: 100, minHeight: 44)
@@ -274,13 +274,13 @@ struct PossessionEditor: View {
                     .accessibilityLabel("\(team.label) possession \(number), Turnover")
                 }
                 if let field = drafts[index].invalidField {
-                    Text("Invalid \(field.label.lowercased()).").font(.caption).foregroundStyle(.red)
+                    Text("Invalid \(field.label.lowercased()).").font(.caption).foregroundStyle(TeamStatsStyle.errorText)
                 }
             }
             .frame(width: columnWidth, alignment: .leading)
         } else {
             Text("\(team.label) possession \(number) not added.")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(TeamStatsStyle.secondaryText)
                 .frame(width: columnWidth, alignment: .leading)
         }
     }
@@ -306,7 +306,7 @@ struct PossessionEditor: View {
 
     private var saveBar: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if let invalidMessage { Text(invalidMessage).font(.caption).foregroundStyle(.red) }
+            if let invalidMessage { Text(invalidMessage).font(.caption).foregroundStyle(TeamStatsStyle.errorText) }
             if let saveError { Text("Could not save draft: \(saveError)").font(.caption) }
             if focusedField != nil {
                 HStack {

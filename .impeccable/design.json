@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-14T13:13:25.647929Z",
+  "title": "Design System: TeamStats",
+  "extensions": {
+    "colorMeta": {
+      "accent-light": {
+        "role": "primary",
+        "displayName": "Provisional light maroon"
+      },
+      "accent-dark": {
+        "role": "primary",
+        "displayName": "Provisional dark text maroon"
+      },
+      "filled-accent-dark": {
+        "role": "primary",
+        "displayName": "Provisional dark filled maroon"
+      },
+      "error-light": {
+        "role": "error",
+        "displayName": "Light discrepancy text"
+      },
+      "error-dark": {
+        "role": "error",
+        "displayName": "Dark discrepancy text"
+      }
+    },
+    "typographyMeta": {
+      "game-title": {
+        "displayName": "Native game title",
+        "purpose": "SwiftUI title2 bold for factual opponent; Dynamic Type selects metrics."
+      },
+      "task-heading": {
+        "displayName": "Native task heading",
+        "purpose": "SwiftUI headline task label, with subheadline detail."
+      },
+      "body": {
+        "displayName": "Native body",
+        "purpose": "SwiftUI body observations; monospaced digits where counts align."
+      },
+      "supporting": {
+        "displayName": "Native supporting copy",
+        "purpose": "Context-selected subheadline, footnote or caption, preserving Dynamic Type."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": []
+  },
+  "components": [],
+  "narrative": {
+    "northStar": "The Game Ledger",
+    "overview": "TeamStats uses a recognizable game identity and a readable scorekeeper ledger. Native system surfaces hold the observations; provisional maroon marks navigation and useful actions. Real opponent, date and venue facts establish context before entry or inspection.\n\nThe interface uses system typography, purposeful SF Symbols, wrapping text and native forms, lists, sheets and toolbars. Local drafts and server-confirmed shared records remain visibly distinct. Missing observations, validation errors and save receipts are stated in words rather than inferred from styling.",
+    "keyCharacteristics": [
+      "Game identity before game tasks.",
+      "Native text styles and adaptive semantic surfaces.",
+      "Aligned numeric observations, with missing values kept visible.",
+      "One consolidated discrepancy warning, with text and an icon.",
+      "Task guidance is available without preceding every input."
+    ],
+    "rules": [
+      {
+        "name": "The State Is Written Rule",
+        "body": "Maroon identifies navigation and actions; explicit words establish draft, pending, saved and server-confirmed states.",
+        "section": "colors"
+      },
+      {
+        "name": "The Native Type Rule",
+        "body": "Use SwiftUI text styles and Dynamic Type; numeric observations may use monospaced digits without replacing the system text family.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Surface Rule",
+        "body": "Use native semantic surfaces and separators for grouping; decorative shadows and glass cards do not establish hierarchy.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do retain readable game identity and local/shared provenance before the task.",
+      "Do use system text styles, flexible wrapping and at least 44-point interactive areas in modified controls.",
+      "Do retain blank observations as visibly unentered and show validation with readable text.",
+      "Do keep Save in a keyboard-aware native safe-area control and provide a keyboard dismissal action.",
+      "Do keep policy and entry guidance accessible through native disclosure and revisitable help.",
+      "Do inspect actual light/dark and accessibility-size layouts; source tokens alone are not acceptance."
+    ],
+    "donts": [
+      "Don’t present provisional maroon values as an official school specification.",
+      "Don’t use color alone to communicate a discrepancy, permission or successful save.",
+      "Don’t invent logos, roster identities, statistics or approved policies.",
+      "Don’t introduce decorative gradient heroes, glass cards, emoji headings, generic card grids or custom scrolling physics.",
+      "Don’t silently replace missing observations with zeros or treat a local save as publication.",
+      "Don’t inherit unresolved contrast or reachability findings as design rules."
+    ]
+  }
+}

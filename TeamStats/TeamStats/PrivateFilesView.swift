@@ -22,25 +22,28 @@ struct PrivateFilesView: View {
     var body: some View {
         List {
             Section {
-                Text(targetTitle).font(.headline)
-                Text("Choosing a file does not publish it. Shared files require trusted validation and the applicable owner review or publication permission.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                Text(targetTitle).font(.title2.bold()).fixedSize(horizontal: false, vertical: true)
+                Label(model.kind == .practice ? "Private practice clips" : "Private scouting PDFs", systemImage: model.kind == .practice ? "play.rectangle" : "doc.richtext")
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor)
+                DisclosureGroup("Uploading and publication") {
+                    Text("Choosing a file does not publish it. Shared files require trusted validation and applicable owner review or publication permission.").font(.footnote)
+                }
             }
             if model.isBusy { ProgressView("Checking saved files…") }
             if let issue = model.issue {
                 Section {
-                    Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                    Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                     Button("Reload saved files") { Task { await model.load() } }.disabled(model.isBusy)
                 }
             }
             if let confirmation = model.confirmation {
-                Label(confirmation, systemImage: "checkmark.circle").foregroundStyle(.secondary)
+                Label(confirmation, systemImage: "checkmark.circle").foregroundStyle(TeamStatsStyle.secondaryText)
             }
             if model.didLoad && !model.contentConcealed {
                 Section("Published files") {
                     if model.published.isEmpty {
                         Text("No published files are available for this \(model.kind == .practice ? "play" : "game").")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                     ForEach(model.published) { version in
                         NavigationLink { FileRecordView(model: model, initial: version, account: account) } label: { fileLabel(version) }
@@ -77,7 +80,7 @@ struct PrivateFilesView: View {
     private func fileLabel(_ version: PrivateFileVersion) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(version.title.isEmpty ? "Untitled file draft" : version.title).font(.headline)
-            Text(version.status.fileLabel).font(.subheadline).foregroundStyle(.secondary)
+            Text(version.status.fileLabel).font(.subheadline).foregroundStyle(TeamStatsStyle.secondaryText)
         }.padding(.vertical, 8)
     }
 }
@@ -127,7 +130,7 @@ private struct FileDraftEditor: View {
         Form {
             if let issue = model.issue {
                 Section {
-                    Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                    Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                     Button("Reload saved state; keep typed text") { Task { await model.load() } }.disabled(busy)
                 }
             }
@@ -136,13 +139,13 @@ private struct FileDraftEditor: View {
             } else if !draftVisible {
                 if model.contentConcealed || model.didLoad {
                     Label("Current access does not allow this draft to be displayed.", systemImage: "lock")
-                } else { Text("The saved draft is unavailable until loading succeeds. Typed input is preserved.").foregroundStyle(.secondary) }
+                } else { Text("The saved draft is unavailable until loading succeeds. Typed input is preserved.").foregroundStyle(TeamStatsStyle.secondaryText) }
                 if model.issue == nil { Button("Reload saved state") { Task { await model.load() } }.disabled(busy) }
             } else {
                 if let version, let refreshed = model.versions.first(where: { $0.id == version.id }), refreshed.revision != version.revision {
                     Section("Compare refreshed version") {
                         LabeledContent("Saved title", value: refreshed.title.isEmpty ? "Not entered" : refreshed.title)
-                        Text(refreshed.status.fileLabel).foregroundStyle(.secondary)
+                        Text(refreshed.status.fileLabel).foregroundStyle(TeamStatsStyle.secondaryText)
                         if !refreshed.notes.isEmpty { LabeledContent("Saved notes", value: refreshed.notes) }
                         Button("Use refreshed revision after comparing") { self.version = refreshed; savedInput = PrivateFileInput(refreshed) }
                             .disabled(busy)
@@ -154,18 +157,18 @@ private struct FileDraftEditor: View {
                             Task { if let reserved = await model.retryReservation() { accept(reserved) } }
                         }.disabled(busy)
                         Text("This retries the same reservation identity without sending the file again. Recover it before choosing a different file.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                            .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                 }
-                if let preparationError { Label(preparationError, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                if let preparationError { Label(preparationError, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText) }
                 if busy { ProgressView(preparing ? "Preparing selected file…" : "Waiting for server confirmation…") }
                 Section("File draft") {
-                    if let version { Text(version.status.fileLabel).foregroundStyle(.secondary) }
+                    if let version { Text(version.status.fileLabel).foregroundStyle(TeamStatsStyle.secondaryText) }
                     TextField("Title (may be blank in a draft)", text: $input.title).focused($focused).disabled(!editable || busy)
                     TextField("Notes", text: $input.notes, axis: .vertical).focused($focused).disabled(!editable || busy)
                     if !input.validDraft {
                         Label("Use at most 120 title characters and 1,000 note characters without unsupported control characters.", systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(TeamStatsStyle.errorText)
                     }
                     if version == nil {
                         Button(bytes == nil ? "Choose file" : "Choose a different file") { focused = false; choosingFile = true }
@@ -175,7 +178,7 @@ private struct FileDraftEditor: View {
                     Text(model.kind == .practice
                         ? "MP4 with H.264 video and optional AAC audio; up to 10 MiB, 30 seconds and 1920 × 1080 in either orientation. Originals are not compressed."
                         : "Readable PDF up to 5 MiB, without encryption, active actions, forms or attachments. Trusted validation runs after upload.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 if let version, version.status == .uploading {
                     Section("Unconfirmed upload") {
@@ -201,7 +204,7 @@ private struct FileDraftEditor: View {
                 }
                 if let version, version.status == .ready && editable {
                     Section("Submit saved file") {
-                        Text("Save title and notes before submitting. Publication is confirmed only by the server.").font(.footnote).foregroundStyle(.secondary)
+                        Text("Save title and notes before submitting. Publication is confirmed only by the server.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                         Button("Submit for owner review") { transition(version, .submit) }.disabled(busy || changed || input.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         if model.canPublishOwn {
                             Button("Publish own clip without review") { transition(version, .publish) }.disabled(busy || changed || input.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -295,7 +298,7 @@ private struct FileRecordView: View {
         Form {
             if let issue = model.issue {
                 Section {
-                    Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                    Label(issue.message, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                     Button("Reload saved files; keep review text") { Task { await model.load() } }.disabled(model.isBusy)
                 }
             }
@@ -305,7 +308,7 @@ private struct FileRecordView: View {
                 if model.isBusy { ProgressView("Waiting for server confirmation…") }
                 Section("Saved version") {
                     Text(current.title.isEmpty ? "Untitled saved file" : current.title).font(.headline)
-                    Text(current.status.fileLabel).foregroundStyle(.secondary)
+                    Text(current.status.fileLabel).foregroundStyle(TeamStatsStyle.secondaryText)
                     if !current.notes.isEmpty { Text(current.notes) }
                     if !current.reviewReason.isEmpty { LabeledContent("Review reason", value: current.reviewReason) }
                     if let count = current.byteCount {
@@ -315,7 +318,7 @@ private struct FileRecordView: View {
                     if model.kind == .practice && model.published.contains(where: { $0.id == current.id }) {
                         Button("Keep on this device") { open(keep: true) }.disabled(model.isBusy)
                         Text("Keeps a verified copy for offline playback. Delivered copies cannot reliably be recalled; future remote access still checks current permissions.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                            .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                 }
                 if model.access?.isOwner == true && current.status == .submitted {
@@ -327,7 +330,7 @@ private struct FileRecordView: View {
                 }
                 if model.canContribute && model.published.contains(where: { $0.id == current.id }) {
                     Section {
-                        Text("A correction uploads a new immutable version. The published file stays available until its successor is approved.").font(.footnote).foregroundStyle(.secondary)
+                        Text("A correction uploads a new immutable version. The published file stays available until its successor is approved.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                         Button("Upload a replacement") {
                             replacement = FileEditorSelection(replacing: model.resources.first { $0.id == current.resourceID })
                         }.disabled(model.isBusy || model.reloadRequired)
@@ -337,7 +340,7 @@ private struct FileRecordView: View {
                    let resource = model.resources.first(where: { $0.id == current.resourceID && $0.publishedVersionID == current.id && $0.archivedAt == nil }) {
                     Section {
                         Button("Archive published resource") { confirmArchive = true }.disabled(model.isBusy)
-                        Text("Archive hides the current resource from routine viewing while preserving files and history.").font(.footnote).foregroundStyle(.secondary)
+                        Text("Archive hides the current resource from routine viewing while preserving files and history.").font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     }
                     .confirmationDialog("Archive this resource?", isPresented: $confirmArchive, titleVisibility: .visible) {
                         Button("Archive", role: .destructive) { Task { _ = await model.archive(resource) } }
@@ -347,7 +350,7 @@ private struct FileRecordView: View {
             } else {
                 if model.contentConcealed || model.didLoad {
                     Label("This file is unavailable for the current account. Reload to check access.", systemImage: "lock")
-                } else { Text("The saved file is unavailable until loading succeeds.").foregroundStyle(.secondary) }
+                } else { Text("The saved file is unavailable until loading succeeds.").foregroundStyle(TeamStatsStyle.secondaryText) }
                 if model.issue == nil { Button("Reload saved files") { Task { await model.load() } }.disabled(model.isBusy) }
             }
         }
@@ -424,7 +427,7 @@ private struct LocalFileViewer: View {
                         }
                         if playbackFailed {
                             Label("Playback could not start. The saved file is preserved.", systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(.red).padding(16)
+                                .foregroundStyle(TeamStatsStyle.errorText).padding(16)
                             Button("Close and recheck file") { dismiss() }.frame(minHeight: 44)
                         }
                         if let player, let item = player.currentItem {
@@ -473,12 +476,12 @@ struct OfflineClipsView: View {
         List {
             Section {
                 Text("Use “Keep on this device” on a published practice clip to retain it. Existing device copies are reused; this screen never downloads automatically.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
             }
             if checking { ProgressView("Checking access and saved copy…") }
             if let loadError {
                 Section {
-                    Label(loadError, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                    Label(loadError, systemImage: "exclamationmark.triangle").foregroundStyle(TeamStatsStyle.errorText)
                     Button("Retry", action: loadCatalog).disabled(checking)
                 }
             }
@@ -495,7 +498,7 @@ struct OfflineClipsView: View {
                 Button { Task { await open(row) } } label: {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(row.clip.title).font(.headline)
-                        Label("Kept on this device", systemImage: "arrow.down.circle").font(.subheadline).foregroundStyle(.secondary)
+                        Label("Kept on this device", systemImage: "arrow.down.circle").font(.subheadline).foregroundStyle(TeamStatsStyle.secondaryText)
                     }.padding(.vertical, 8)
                 }.disabled(checking)
             }

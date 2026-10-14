@@ -68,8 +68,16 @@ Connected server denial conceals affected content and requires authorized recove
 Do not describe that as proof that all downloaded data has been securely erased.
 In-memory buffers, account switching, backgrounding and process termination need
 device checks. Local legacy JSON is a separate store; atomic writes protect write
-integrity, not confidentiality. OS/file protection and backup behavior remain to be
-verified. No automatic upload or migration of existing local data is permitted.
+integrity, not confidentiality. New atomic saves request complete file protection;
+existing bytes are not rewritten to migrate protection. Simulator cannot establish
+the physical protection class or locked-device behavior; those checks remain open.
+No automatic upload or migration of existing local data is permitted.
+
+The revisitable guide can export a user-directed, plaintext JSON copy of the four
+saved local stores only: games, box scores, possessions and player paint touches.
+Preparation fails closed on any load error. Unsaved edits, account configuration,
+credentials, shared records and retained media are excluded. The user must choose a
+private destination; export does not provide encryption, import or tested recovery.
 
 ## Untrusted input and integrations
 
@@ -119,8 +127,10 @@ coordinated cleanup. No unapproved record deletion, provider reset or public
 disclosure follows automatically from a report.
 
 See [architecture recovery boundaries](ARCHITECTURE.md#backup-and-recovery-boundary).
-Local-data protection/backup behavior, account-switch retention and restore testing
-remain open. `TODO_BACKUP_RECOVERY_POLICY` must identify an approved operator,
+Physical local-data protection, destination backup/retention and restore testing
+remain open. Local export preparation has isolated synthetic regression coverage;
+this is separate from device or provider disaster recovery.
+`TODO_BACKUP_RECOVERY_POLICY` must identify an approved operator,
 retention/recovery objectives and a $0-compatible verified method; documentation
 must not imply paid provider backups or tested disaster recovery.
 

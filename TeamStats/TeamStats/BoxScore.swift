@@ -83,7 +83,7 @@ enum BoxScoreStorage {
 
     static func save(_ records: [PlayerBoxScore], to url: URL) throws {
         try validate(records)
-        try JSONEncoder().encode(records).write(to: url, options: .atomic)
+        try JSONEncoder().encode(records).write(to: url, options: [.atomic, .completeFileProtection])
     }
 
     static func updating(_ records: [PlayerBoxScore], with drafts: [PlayerBoxScore]) -> [PlayerBoxScore] {
@@ -150,7 +150,7 @@ struct ShotCheckNotice: View {
                 Label(message, systemImage: "exclamationmark.triangle")
                     .font(.headline)
             } else {
-                Text(message).foregroundStyle(.secondary)
+                Text(message).foregroundStyle(TeamStatsStyle.secondaryText)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -173,7 +173,8 @@ enum BoxScoreEntryMode: String, CaseIterable, Identifiable {
 }
 
 struct BoxScoreEditor: View {
-    let gameID: UUID
+    let game: Game
+    private var gameID: UUID { game.id }
     @Environment(\.dismiss) private var dismiss
     @State private var mode: BoxScoreEntryMode
     @State private var selectedPlayerID = temporaryRoster[0].id
@@ -185,9 +186,13 @@ struct BoxScoreEditor: View {
     @State private var saved = false
     @State private var headerHeight: CGFloat = 0
     @State private var photoPlayer: TemporaryPlayer?
+    @ScaledMetric(relativeTo: .body) private var countWidth = 132.0
+    @ScaledMetric(relativeTo: .body) private var playerWidth = 190.0
+    @FocusState private var focusedCount: String?
+    private var inputWidth: CGFloat { min(countWidth, 280) }
 
-    init(gameID: UUID, initialMode: BoxScoreEntryMode) {
-        self.gameID = gameID
+    init(game: Game, initialMode: BoxScoreEntryMode) {
+        self.game = game
         _mode = State(initialValue: initialMode)
     }
 
@@ -237,6 +242,17 @@ struct BoxScoreEditor: View {
             .navigationTitle("Box-score draft")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if let player = temporaryRoster.first(where: { $0.id == selectedPlayerID }) {
+                        Button("Review photo for this player", systemImage: "photo") { photoPlayer = player }
+                            .accessibilityLabel("Review photo for this player")
+                            .disabled(!loaded || loadError != nil)
+                    }
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { focusedCount = nil }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }.disabled(hasChanges)
                 }
@@ -245,23 +261,26 @@ struct BoxScoreEditor: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if !invalidEntries.isEmpty {
                         Text("Fix invalid numbers: \(invalidEntries.joined(separator: "; ")).")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(TeamStatsStyle.errorText)
                             .font(.caption)
                     }
                     if let saveError { Text("Could not save draft: \(saveError)").font(.caption) }
-                    HStack {
-                        Text(hasChanges ? "Unsaved changes — save before closing." :
-                             (saved ? "Draft saved on this device." : "Incomplete drafts can be saved."))
-                            .font(.caption)
-                        Spacer()
-                        Button("Save draft", action: save)
-                            .buttonStyle(.borderedProminent)
-                            .tint(TeamStatsStyle.filledAccent)
-                            .disabled(!loaded || !invalidEntries.isEmpty)
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            Text(saveStatus).font(.caption).fixedSize()
+                            Spacer(minLength: 8)
+                            saveButton.fixedSize()
+                        }
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(saveStatus).font(.caption)
+                            saveButton.frame(maxWidth: .infinity)
+                        }
                     }
                 }
                 .padding()
                 .background(.regularMaterial)
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("local-draft-save-controls")
             }
         }
         .interactiveDismissDisabled(hasChanges)
@@ -275,10 +294,27 @@ struct BoxScoreEditor: View {
         }
     }
 
+    private var saveStatus: String {
+        hasChanges ? "Unsaved changes" :
+            saved ? "Draft saved on this device." : "Local draft"
+    }
+
+    private var saveButton: some View {
+        Button(action: save) { Text("Save draft").frame(minHeight: 44) }
+            .buttonStyle(.borderedProminent)
+            .tint(TeamStatsStyle.filledAccent)
+            .disabled(!loaded || !invalidEntries.isEmpty)
+    }
+
     private var entryHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
             let players = temporaryRoster.filter { mode == .table || $0.id == selectedPlayerID }
             let affected = players.filter { boxScoreDiscrepancyDetail(drafts[$0.id] ?? [:]) != nil }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(game.opponent).font(.headline).fixedSize(horizontal: false, vertical: true)
+                Text(game.date, format: .dateTime.month().day().year()).font(.caption)
+                    .foregroundStyle(TeamStatsStyle.secondaryText)
+            }
             if !affected.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Points don’t align with made baskets.", systemImage: "exclamationmark.triangle")
@@ -292,7 +328,7 @@ struct BoxScoreEditor: View {
                         .accessibilityElement(children: .combine)
                     }
                 }
-                .foregroundStyle(.red)
+                .foregroundStyle(TeamStatsStyle.errorText)
                 .accessibilityIdentifier("scoring-discrepancy-warning")
             }
             Picker("Entry mode", selection: $mode) {
@@ -300,11 +336,13 @@ struct BoxScoreEditor: View {
             }
             .pickerStyle(.segmented)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Temporary roster · Local draft").font(.headline)
-                Text("Blank = not entered. Enter 0 explicitly. Nonnegative whole numbers only.")
+                Label("Temporary roster · Local draft", systemImage: "iphone").font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor)
                 Text(scoringSummary)
-                Text("Advanced-sheet reconciliation unavailable; possession drafts are incomplete and unreviewed.")
-                    .foregroundStyle(.secondary)
+                DisclosureGroup("Entry guidance") {
+                    Text("Blank = not entered. Enter 0 explicitly. Nonnegative whole numbers only.")
+                    Text("Advanced-sheet reconciliation unavailable; possession drafts are incomplete and unreviewed.")
+                        .foregroundStyle(TeamStatsStyle.secondaryText)
+                }
             }
             .font(.footnote)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -314,16 +352,26 @@ struct BoxScoreEditor: View {
 
     private var playerForm: some View {
         Form {
-            Picker("Player", selection: $selectedPlayerID) {
-                ForEach(temporaryRoster) { Text("\($0.name) #\($0.number)").tag($0.id) }
+            Section {
+                Picker("Player", selection: $selectedPlayerID) {
+                    ForEach(temporaryRoster) { Text("\($0.name) #\($0.number)").tag($0.id) }
+                }
             }
             if let player = temporaryRoster.first(where: { $0.id == selectedPlayerID }) {
-                Section("Player box score") {
-                    Button("Review photo for this player", systemImage: "photo") { photoPlayer = player }
-                    ForEach(BoxScoreField.allCases, id: \.self) { field in
-                        LabeledContent(field.label) { entry(player, field).frame(width: 95) }
+                Section {
+                    ForEach([BoxScoreField.points, .twosMade, .twosMissed, .threesMade, .threesMissed, .freeThrowsMade, .freeThrowsMissed], id: \.self) { field in
+                        LabeledContent(field.label) { entry(player, field).frame(width: inputWidth) }
                     }
-                    LabeledContent("Total rebounds", value: rebounds(player))
+                } header: {
+                    Text("Scoring").foregroundStyle(Color.primary)
+                }
+                Section {
+                    ForEach([BoxScoreField.offensiveRebounds, .defensiveRebounds, .assists, .turnovers, .steals, .blocks, .fouls, .chargesDrawn], id: \.self) { field in
+                        LabeledContent(field.label) { entry(player, field).frame(width: inputWidth) }
+                    }
+                    LabeledContent("Total rebounds", value: rebounds(player)).monospacedDigit()
+                } header: {
+                    Text("Rebounds and contributions").foregroundStyle(Color.primary)
                 }
                 if boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) == nil {
                     Section("Points check") {
@@ -338,9 +386,9 @@ struct BoxScoreEditor: View {
         ScrollView([.horizontal, .vertical]) {
             Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 12) {
                 GridRow {
-                    Text("Temporary player").frame(width: 170, alignment: .leading)
+                    Text("Temporary player").frame(width: playerWidth, alignment: .leading)
                     ForEach(BoxScoreField.allCases, id: \.self) { field in
-                        Text(field.label).frame(width: 95)
+                        Text(field.label).foregroundStyle(Color.accentColor).frame(width: countWidth, alignment: .leading)
                     }
                     Text("Total rebounds").frame(width: 130)
                     Text("Points check").frame(width: 270, alignment: .leading)
@@ -352,9 +400,9 @@ struct BoxScoreEditor: View {
                             Button("Review photo", systemImage: "photo") { photoPlayer = player }
                                 .frame(minHeight: 44)
                                 .accessibilityLabel("Review photo for \(player.name)")
-                        }.frame(width: 170, alignment: .leading)
+                        }.frame(width: playerWidth, alignment: .leading)
                         ForEach(BoxScoreField.allCases, id: \.self) { field in
-                            entry(player, field).frame(width: 95)
+                            entry(player, field).frame(width: inputWidth)
                         }
                         Text(rebounds(player)).frame(width: 130)
                         Group {
@@ -377,9 +425,12 @@ struct BoxScoreEditor: View {
                 saved = false
                 saveError = nil
             }
-        ))
+        ), prompt: Text("Not entered").foregroundColor(TeamStatsStyle.secondaryText))
         .keyboardType(.numberPad)
         .textFieldStyle(.roundedBorder)
+        .monospacedDigit()
+        .frame(minHeight: 44)
+        .focused($focusedCount, equals: "\(player.id).\(field.rawValue)")
         .overlay(RoundedRectangle(cornerRadius: 5).stroke(count(player, field) == .invalid ? .red : .clear))
         .accessibilityLabel("\(player.name), \(field.label)")
         .accessibilityIdentifier("\(player.id).\(field.rawValue)")

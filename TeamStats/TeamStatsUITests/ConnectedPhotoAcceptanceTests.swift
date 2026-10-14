@@ -157,20 +157,32 @@ final class ConnectedPhotoAcceptanceTests: XCTestCase {
     }
     private func reveal(_ element: XCUIElement) throws {
         for attempt in 0..<10 {
-            if element.exists && element.isHittable { return }
-            let surface = app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable })
+            let footer = app.otherElements["local-draft-save-controls"].firstMatch
+            let footerTop = footer.exists ? footer.frame.minY : app.frame.maxY
+            if element.exists && element.isHittable {
+                if element.elementType != .textField || element.frame.maxY <= footerTop { return }
+            }
+            let paintBar = app.navigationBars["Player paint touches"]
+            let paint = paintBar.exists && paintBar.isHittable
+                ? app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) : nil
+            let surface = paint ?? app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable })
                 ?? app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) ?? app!
             let top = max(surface.frame.minY, app.navigationBars.allElementsBoundByIndex.last?.frame.maxY ?? 0) + 24
             let tabs = app.tabBars.firstMatch
             let bottom = min(surface.frame.maxY,
                 app.keyboards.firstMatch.exists ? app.keyboards.firstMatch.frame.minY : app.frame.maxY,
-                tabs.exists ? tabs.frame.minY : app.frame.maxY) - 24
+                footerTop, tabs.exists && tabs.frame.minY > top ? tabs.frame.minY : app.frame.maxY) - 24
             guard bottom > top else { throw PhotoUIIssue.missingControl }
             let down = element.exists ? element.frame.midY < top : attempt >= 5
             let origin = app.coordinate(withNormalizedOffset: .zero)
             let start = origin.withOffset(CGVector(dx: surface.frame.midX, dy: down ? top : bottom))
             let end = origin.withOffset(CGVector(dx: surface.frame.midX, dy: down ? bottom : top))
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0)
+        }
+        if mayCaptureApp {
+            capture("Unreachable photo-flow control")
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Photo-flow control hierarchy"; hierarchy.lifetime = .keepAlways; add(hierarchy)
         }
         throw PhotoUIIssue.missingControl
     }
