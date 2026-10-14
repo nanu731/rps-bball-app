@@ -261,7 +261,7 @@ private struct NewGameView: View {
             .interactiveDismissDisabled(hasChanges)
             .confirmationDialog("Discard unsaved game details?", isPresented: $confirmingLeave, titleVisibility: .visible) {
                 Button("Discard unsaved details", role: .destructive) { dismiss() }
-                Button("Keep editing", role: .cancel) { }
+                Button("Keep editing") { }
             } message: {
                 Text("These new game details have not been saved. Existing games stay unchanged.")
             }

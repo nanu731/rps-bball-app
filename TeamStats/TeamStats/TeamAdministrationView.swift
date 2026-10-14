@@ -243,7 +243,7 @@ private struct AdministrationRosterEditor: View {
                         }
                         .confirmationDialog("Replace unsaved player text?", isPresented: $replaceTextRequested, titleVisibility: .visible) {
                             Button("Replace typed text with loaded server values") { loadCurrentValues() }
-                            Button("Keep editing", role: .cancel) {}
+                            Button("Keep editing") {}
                         } message: { Text("Your typed name and number will be replaced by the latest loaded player values.") }
                     }
                     Text("Use owner-provided actual roster details. Temporary local identities are not imported.").foregroundStyle(.secondary)
@@ -275,7 +275,7 @@ private struct AdministrationRosterEditor: View {
                         .disabled(isBusy)
                         .confirmationDialog("Leave unsaved player text?", isPresented: $discardTextRequested, titleVisibility: .visible) {
                             Button("Discard unsaved text", role: .destructive) { dismiss() }
-                            Button("Keep editing", role: .cancel) {}
+                            Button("Keep editing") {}
                         } message: { Text("Leaving discards only this form's unsaved name and number. Saved roster entries and historical records are retained.") }
                 }
             }

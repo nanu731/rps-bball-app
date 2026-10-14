@@ -7,6 +7,7 @@ struct TeamWorkspaceView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var model: TeamAdministration
     @State private var columns: NavigationSplitViewVisibility = .all
+    @State private var compactColumn: NavigationSplitViewColumn = .sidebar
     @State private var pendingTeam: ServerTeam?
     @State private var confirmTeamChange = false
     @State private var reloadTeamsRequested = false
@@ -19,7 +20,7 @@ struct TeamWorkspaceView: View {
     }
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns) {
+        NavigationSplitView(columnVisibility: $columns, preferredCompactColumn: $compactColumn) {
             List {
                 if account.sessionContextID == nil {
                     Section {
@@ -47,6 +48,7 @@ struct TeamWorkspaceView: View {
                                     confirmTeamChange = true
                                 } else if model.selectedTeam?.id == team.id {
                                     columns = sizeClass == .compact ? .detailOnly : .all
+                                    compactColumn = .detail
                                 }
                                 else { select(team) }
                             } label: {
@@ -121,7 +123,7 @@ struct TeamWorkspaceView: View {
                 pendingTeam = nil
                 reloadTeamsRequested = false
             }
-            Button("Keep current screens", role: .cancel) {
+            Button("Keep current screens") {
                 pendingTeam = nil
                 reloadTeamsRequested = false
             }
@@ -138,6 +140,7 @@ struct TeamWorkspaceView: View {
     }
 
     private func loadTeams() async {
+        compactColumn = .sidebar
         await model.loadTeams()
         if model.teams.count == 1, let team = model.teams.first { await model.selectTeam(team) }
     }
@@ -145,7 +148,10 @@ struct TeamWorkspaceView: View {
     private func select(_ team: ServerTeam) {
         Task {
             await model.selectTeam(team)
-            if model.selectedTeam?.id == team.id { columns = sizeClass == .compact ? .detailOnly : .all }
+            if model.selectedTeam?.id == team.id {
+                columns = sizeClass == .compact ? .detailOnly : .all
+                compactColumn = .detail
+            }
         }
     }
 
@@ -197,7 +203,7 @@ private struct TeamAdmissionView: View {
         }
         .confirmationDialog("Discard the unsent invitation code?", isPresented: $confirmClose, titleVisibility: .visible) {
             Button("Discard code", role: .destructive) { dismiss() }
-            Button("Keep editing", role: .cancel) {}
+            Button("Keep editing") {}
         }
     }
 }

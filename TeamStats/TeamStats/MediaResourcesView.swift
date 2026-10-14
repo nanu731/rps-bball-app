@@ -137,7 +137,7 @@ private struct MediaResourceDetail: View {
             }
         }
         .confirmationDialog("Leave this review?", isPresented: $confirmLeave, titleVisibility: .visible) {
-            Button("Keep editing", role: .cancel) {}
+            Button("Keep editing") {}
             Button("Discard unsent review reason", role: .destructive) { dismiss() }
         } message: {
             Text("The review reason has not been sent. Saved links and review decisions remain unchanged.")
@@ -229,7 +229,7 @@ private struct MediaResourceEditor: View {
         .navigationTitle(model.kind == .film ? "Edit Hudl shortcut" : "Edit video link")
         .interactiveDismissDisabled(model.isBusy || changed)
         .confirmationDialog("Close this draft?", isPresented: $confirmLeave, titleVisibility: .visible) {
-            Button("Keep editing", role: .cancel) {}
+            Button("Keep editing") {}
             Button("Discard unsaved text", role: .destructive) { dismiss() }
         } message: {
             Text("Only this screen's unsaved text will be discarded. Saved links and their history remain unchanged.")

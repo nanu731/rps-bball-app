@@ -234,7 +234,7 @@ private struct FileDraftEditor: View {
         }
         .confirmationDialog("Close without saving unsent changes?", isPresented: $confirmClose, titleVisibility: .visible) {
             Button("Discard unsent changes", role: .destructive) { dismiss() }
-            Button("Keep editing", role: .cancel) {}
+            Button("Keep editing") {}
         } message: { Text("Saved records and original files remain unchanged.") }
         .fileImporter(isPresented: $choosingFile, allowedContentTypes: model.kind == .practice ? [.mpeg4Movie] : [.pdf]) { result in
             switch result {
@@ -362,7 +362,7 @@ private struct FileRecordView: View {
         }
         .confirmationDialog("Close without submitting review text?", isPresented: $confirmClose, titleVisibility: .visible) {
             Button("Discard unsent review text", role: .destructive) { dismiss() }
-            Button("Keep editing", role: .cancel) {}
+            Button("Keep editing") {}
         } message: { Text("Saved versions and review history remain unchanged.") }
         .task { await model.load() }
         .sheet(item: $preview) { item in NavigationStack { LocalFileViewer(preview: item) } }

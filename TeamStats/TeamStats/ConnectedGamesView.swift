@@ -134,7 +134,7 @@ private struct ConnectedNewGameView: View {
             .interactiveDismissDisabled(model.isBusy || hasUnsavedDetails)
             .confirmationDialog("Discard unsaved game details?", isPresented: $confirmDiscard, titleVisibility: .visible) {
                 Button("Discard unsaved details", role: .destructive) { dismiss() }
-                Button("Keep editing", role: .cancel) { }
+                Button("Keep editing") { }
             } message: {
                 Text("This discards only the details entered in this form. No saved game or statistics are changed.")
             }
@@ -353,7 +353,7 @@ struct ConnectedVersionActionSheet: View {
             .interactiveDismissDisabled(model.isBusy || !reason.isEmpty)
             .confirmationDialog("Discard unsaved reason?", isPresented: $confirmDiscard, titleVisibility: .visible) {
                 Button("Discard unsaved reason", role: .destructive) { dismiss() }
-                Button("Keep editing", role: .cancel) { }
+                Button("Keep editing") { }
             } message: {
                 Text("This discards only this form's unsaved reason. Saved statistics and server decisions are unchanged.")
             }
@@ -409,7 +409,7 @@ private struct ConnectedEditRequestReviewView: View {
         }
         .confirmationDialog("Discard unsaved review reason?", isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button("Discard unsaved reason", role: .destructive) { dismiss() }
-            Button("Keep editing", role: .cancel) { }
+            Button("Keep editing") { }
         } message: {
             Text("This discards only your unsaved review reason. The edit request and any saved server decision are unchanged.")
         }

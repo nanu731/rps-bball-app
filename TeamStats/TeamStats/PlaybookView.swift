@@ -222,7 +222,7 @@ private struct PlayRevisionView: View {
         .navigationBarBackButtonHidden(true)
         .interactiveDismissDisabled(model.isBusy || changed || !reason.isEmpty)
         .confirmationDialog("Leave this play?", isPresented: $confirmLeave, titleVisibility: .visible) {
-            Button("Keep editing", role: .cancel) {}
+            Button("Keep editing") {}
             Button("Discard unsaved edits", role: .destructive) { dismiss() }
         } message: {
             Text("The unsaved name, drawing or review reason on this screen will be discarded. Saved revisions remain unchanged.")
@@ -311,11 +311,9 @@ struct PlayPlaybackView: View {
             if diagram.duration > 0 {
                 Slider(value: $time, in: 0...diagram.duration, onEditingChanged: { _ in playing = false }).accessibilityLabel("Playback position in seconds")
                 Text("\(time, specifier: "%.1f") of \(diagram.duration, specifier: "%.1f") seconds").monospacedDigit().font(.caption)
-                HStack {
-                    Button(playing ? "Pause" : "Play", systemImage: playing ? "pause.fill" : "play.fill") { if time >= diagram.duration { time = 0 }; playing.toggle() }
-                    Button("Replay", systemImage: "arrow.counterclockwise") { time = 0; playing = true }
-                    Button("Previous step", systemImage: "backward.end.fill") { advanceStep(forward: false) }.labelStyle(.iconOnly)
-                    Button("Next step", systemImage: "forward.end.fill") { advanceStep(forward: true) }.labelStyle(.iconOnly)
+                ViewThatFits(in: .horizontal) {
+                    HStack { playbackButtons }
+                    VStack(alignment: .leading, spacing: 8) { playbackButtons }
                 }.buttonStyle(.bordered).controlSize(.large)
             }
             ForEach(diagram.markers) { marker in
@@ -335,6 +333,14 @@ struct PlayPlaybackView: View {
         }
         .onDisappear { playing = false }
         .onChange(of: diagram) { playing = false; time = 0 }
+    }
+    @ViewBuilder private var playbackButtons: some View {
+        Button(playing ? "Pause" : "Play", systemImage: playing ? "pause.fill" : "play.fill") { if time >= diagram.duration { time = 0 }; playing.toggle() }
+            .fixedSize(horizontal: true, vertical: false)
+        Button("Replay", systemImage: "arrow.counterclockwise") { time = 0; playing = true }
+            .fixedSize(horizontal: true, vertical: false)
+        Button("Previous step", systemImage: "backward.end.fill") { advanceStep(forward: false) }.labelStyle(.iconOnly)
+        Button("Next step", systemImage: "forward.end.fill") { advanceStep(forward: true) }.labelStyle(.iconOnly)
     }
     private func advanceStep(forward: Bool) {
         playing = false

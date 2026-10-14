@@ -154,7 +154,7 @@ struct AccountView: View {
         .navigationTitle("Account")
         .confirmationDialog("Sign out and close shared screens?", isPresented: $confirmSignOut, titleVisibility: .visible) {
             Button("Sign out", role: .destructive) { Task { await account.signOut() } }
-            Button("Keep editing", role: .cancel) {}
+            Button("Keep editing") {}
         } message: {
             Text("Unsent edits in shared screens will close. Saved local and shared records remain unchanged.")
         }
