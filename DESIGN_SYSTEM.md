@@ -54,3 +54,25 @@ form footer; iPad keyboard-visible new-game Save passed. These limited local vie
 do not accept every entry/Team/player/PDF screen or VoiceOver/Reduce Motion. Unreliable
 app-control automation requires the recorded manual checks; no visual redesign was
 inferred from an input-tool failure. Screenshots remain private.
+
+
+Recovered native acceptance,2026-10-13: explicit neutral Keep editing actions remain
+visible in confirmation popovers; compact team navigation uses the native preferred
+detail column only after matching server selection. Authored-play controls use native
+ViewThatFits horizontal-to-vertical fallback, retaining intrinsic Play/Replay labels
+and accessible step actions. Inspected XXXL iPhone playback and iPad keyboard-visible
+paint Save are readable; earlier light/dark/landscape checks retain their limited
+local scope. Maximum accessibility size, VoiceOver, Reduce Motion and every connected
+screen remain separate acceptance checks. No decorative loading delay or custom
+scroll physics was added.
+
+Local game venue/type metadata now uses native primary text after a visible native
+contrast finding; its subheadline size still gives hierarchy. A full native audit
+pass remains unestablished after the narrow repair. Do not infer accessibility
+acceptance from source colors or screenshots alone.
+
+Maximum accessibility text/dark iPad playback controls are reachable in portrait,
+with native vertical button fallback and inspected readable labels. Rotation remains
+unverified: the strict actual-window test retained portrait dimensions. This limited
+view does not accept every entry screen, VoiceOver or Reduce Motion. Original
+simulator appearance/text settings were restored; no broad redesign was inferred.

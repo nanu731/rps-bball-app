@@ -410,3 +410,89 @@ app/Auth offline startup remains unverified; two-test-host clip playback is earl
 separate evidence. Actual26.0, physical devices, real marked forms/Hudl rights,
 branding/roster, signing/distribution and release remain unverified. Stop repeated
 failed automation; the private manual checklist records exact actions/expectations.
+
+
+## Recovered acceptance and hosted follow-ups — 2026-10-13
+
+Current status PARTIAL. The dated2026-10-12 input failure above is historical;
+isolated native XCUITest now performs real interactions without resetting devices
+or deleting containers. `scripts/run_native_ui_tests.py` copies the existing project
+into ignored private storage and installs only the separate UIAcceptance bundle.
+Original project/index files are unchanged. Fixtures are opt-in ignored synthetic
+configuration; ordinary app-host setup and rendered UI remain separate. Use explicit
+journeys on an already booted simulator. Unconfigured-state checks require the
+separate app to be unconfigured; no helper wipes a configured container to achieve it.
+Timeout/nonzero results remain failures even when cleanup succeeds. Screenshots,
+source hashes, logs and result bundles stay private.
+
+| Evidence | Actual result and limitation |
+|---|---|
+| Hosted follow-ups | Applied reviewed Hudl/contact/private-file follow-ups and domain-conflict migration13;22 app tables retain RLS, private history ACL/unexposed schema retained, SMS off and hosted capacity disabled. |
+| Signed hosted users |45 checks passed with five verified controlled synthetic accounts, including ordinary/outsider/pending denial, bounded grants/revocation, stale revisions, distinct review and corrections. Existing22-table aggregate counts preserved independently; no row-content proof. |
+| Domain-conflict repair | Five native regressions failed before repair; six focused conflict/legacy cases passed after.547 affected pgTAP assertions passed in isolated rollback; gateway regression passed.26 function pins/34 changed raises reviewed; actual hosted stale commands now return409. |
+| Actual Google formula | Private fixture passes multiple group projection, late older rows, correction isolation,20-digit version preservation and retry without duplicate rows.20 worker protocol tests passed. Automatic OAuth/runtime delivery remains unavailable. |
+| Native local entry | iPhone/iPad26.4 new-game keyboard Save/details; paint blank/explicit0/+/-/invalid/clear/save/edit/relaunch; explicit Keep editing/discard retain unsaved/saved values. XXXL text, not maximum accessibility size. |
+| Actual local connected UI | Local email/PKCE/GetUser verification and restore; iPhone server-confirmed Team selection, protected Manage team, routine roster, shared/local separation and authored movement. Adaptive play controls inspected after repair. |
+| Retained media | Actual local validated/published20-second synthetic clip retained through app-host setup; saved-list/viewer navigation rendered. Full-app cold startup with exact actual backend stopped opens the retained viewer with unknown-rights disclosure; restart retains exact video bytes. This is not native play/pause/scrub acceptance. |
+| Remaining automation gaps | Native video Play/timeline absent from the actual hierarchy after bounded attempts. iPhone paired bottom-field Save/relaunch passed; full scoring/table and iPad opponent-field keyboard focus remain open. Do not infer a product defect or repeat unchanged attempts. |
+| External/device gates | Hosted worker/capacity, automatic Google export and team-email sender; real forms/Hudl rights, roster/branding; full changed-screen accessibility/Reduce Motion, actual26.0, hardware, performance and distribution. |
+
+Independent source Standards and Spec reviews report0 actionable findings for the
+repair slices. Earlier151 executed/4 skipped broad tests retain their original scope;
+unaffected suites were not repeated. The private manual checklist specifies the
+remaining user actions and differentiates rendered, model, local and hosted evidence.
+
+
+### Additional native results and audit limitation — 2026-10-14
+
+Per-case passes: iPhone paired blank/zero/independent-record/bottom-field keyboard
+Save/relaunch and sign-out concealment; iPad actual Auth setup; both families'
+Scouting/Hudl/accepted-statistics destinations and published PDF open/Close. Actual
+local synthetic two-page PDF upload/validation/submission/approval/hash readback
+preserves the prior missing operation/history and earlier media digests. iPhone
+scroll/zoom/Close passed; iPad scroll/zoom-out passed, zoom-in confirmation pending.
+The new `ConnectedScoutingAcceptanceTests` is opt-in, uses actual saved published
+bytes and records explicit skips when PDF text is not exposed; a skip is not zoom
+acceptance. Screenshot comparison supplements gesture execution.
+
+Game-list contrast audit failed before and after the narrow primary-text repair,
+although the repaired text renders darker. Its handler exempts only partially
+occluded static content, reveals it and re-audits; visible contrast and description
+failures are retained. Do not call the whole accessibility audit green. iPad video
+controls likewise remain absent from the actual hierarchy after one independent
+attempt; no repeated unchanged attempts or custom player changes are justified.
+Settings-based Reduce Motion tests must record/restore the actual initial value;
+a killed test needs manual verification/restoration before another attempt.
+
+### Controlled account-switch journey — 2026-10-14
+
+Actual iPad UI sign-out and fresh local email/PKCE verification of a distinct viewer
+passed. Its saved library was empty, the former actor's clip title was concealed,
+and server-confirmed membership did not expose Manage team. Explicit Keep created
+one new actor-scoped copy; the former actor's exact clip bytes were unchanged.
+Viewer-only signed removal preserved the owner, older memberships/grants and all
+older audit-row digests. The first rendered denial attempt stopped before the
+rights request because a duplicate iPad tab control left Account selected; it is
+not denial acceptance. The bounded retest selected the inner native control, confirmed selection and
+passed actual request/denial/title concealment. Auth-session revocation is separate from this membership test.
+
+Direct iPhone entry verified live lower-bound/exact mismatch, incomplete-state banner
+removal, derived rebounds and explicit0. Desktop relock blocked the later Save;
+no persistence claim is made from that buffer. Maximum-text/dark setting commands
+alone did not visibly change its captured screen and are not layout acceptance.
+
+Actual subsequent viewer sign-out and original synthetic-owner PKCE/GetUser restore
+passed. The restored owner's retained-title case passed even though the same bundle's
+maximum-text rotation case failed; outcomes are retained per case. Actual dark/max
+rendering is confirmed by screenshot, but control reachability initially failed
+because the helper scrolled the sidebar. The corrected detail-scroll adapter passed dark/max portrait reachability. Both
+captures were still portrait; a subsequent actual-shape assertion failed820×1180.
+Rotation remains unverified despite a successful orientation command. The test
+records/restores the initial orientation and cannot silently credit rotation.
+
+Final continuation evidence: maximum accessibility text/dark iPad play-control
+reachability is a portrait-only pass. The stricter rotation check failed because
+its window remained820×1180; no unchanged retry or app defect inference. Both
+simulators' light/large settings were restored and read back. Standards/Spec reviews
+resolved their findings; private screenshots/failures and current manual checklist
+remain retained. Physical testing remains owner-deferred; full acceptance PARTIAL.

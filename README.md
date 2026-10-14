@@ -38,18 +38,17 @@ default sender cannot edit templates; do not upgrade for codes. Remote SMS stays
 disabled under the $0 budget. Actual local Auth/gateway/native SDK tests passed;
 limited owner hosted email sign-in and identity/session preflight are recorded.
 The owner executed reviewed nonproduction activation; independent hosted SQL
-readback passed. Team-wide email delivery and signed authorization acceptance
-remain pending. Shared entry/review and accepted summaries are accessible from Team → Shared games and statistics. These use real server commands;
-local games are kept separate. Native fixtures and real local SDK workflows passed; hosted setup
-and two-device UI checks are still pending. The owner can inspect per-game server export status with independent error/Retry. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
+readback passed. Signed synthetic nonproduction authorization acceptance passed; team-wide email
+delivery remains pending. Shared entry/review and accepted summaries are accessible from Team → Shared games and statistics. These use real server commands;
+local games are kept separate. Native fixtures and real local SDK workflows passed; hosted signed access passed, while remaining full device workflows are unverified. The owner can inspect per-game server export status with independent error/Retry. A trusted [export worker](supabase/exports.md) is implemented with Google disabled
 by default; actual Sheets delivery, full-form photo accuracy and hosted media delivery remain
 pending. Published plays offer private practice clips and earlier reviewed links;
 shared games offer scouting PDFs and Hudl shortcuts. Actual isolated file transfer,
-validation, owner review and native playback passed; hosted delivery remains disabled. Provider
+validation, owner review and retained-viewer navigation passed; video controls remain unverified and hosted delivery disabled. Provider
 links require independent access, and saving them proves no rights or playback.
 Playbook authoring/review/court-movement playback is available from Team → Playbook;
-local database and native SDK verification passed, while device interaction and
-hosted verification remain pending.
+local database and native SDK verification passed, with iPhone published movement and hosted signed checks passed; authored editing
+and full device acceptance remain pending.
 Photo review is available inside local/shared player and possession drafts. Choose
 a photo, review recognized text, map existing fields and confirm values; applying
 changes only the unsaved buffer. Whole-form notation/player mapping is not inferred.
@@ -70,12 +69,11 @@ in their separate tab and are never automatically uploaded.
 
 Shared game → Game Film opens reviewed Hudl shortcuts. New film links require
 safe HTTPS destinations on hudl.com/www.hudl.com; historical metadata stays intact.
-Hudl independently controls access. Real provider opening and the new workspace's
-rendered/interaction acceptance remain pending; source wiring is not that evidence.
+Hudl independently controls access. Both simulator families passed synthetic Hudl/scouting navigation; real provider links and rights remain unverified.
 
 | Feature | Path and current limit |
 | --- | --- |
-| Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Hosted SQL readback passed; signed permission acceptance pending; real SMS disabled. |
+| Account | Account tab; private device configuration, email link/code verification, session Retry/sign-out. Hosted SQL readback passed; signed synthetic permission acceptance passed; real SMS disabled. |
 | Owner administration | Team → Manage team; membership admission, roster add/edit/archive, separate grants and bounded delegation. Historical identities retained. |
 | Shared statistics | Team → Shared games and statistics; games, individual/table box scores, independent paired possessions and player paint totals. No automatic upload of local records. |
 | Completion and review | Shared game details; server-confirmed independent completion, approved edit requests, review/publication and accepted summaries. Possession zero conversion uses the confirmed warning flow. |
@@ -95,18 +93,21 @@ request before its recovered working draft can receive retained entries.
 
 ### Release readiness
 
-This branch is not a completed hosted integration or release. Nonproduction
-signed access/lifecycle acceptance, team email delivery, trusted Google
-worker configuration and hosted media capacity/delivery remain blocked. Isolated
-actual upload/transfer enforcement and native playback passed.
-New UI needs iPhone/iPad rotation, larger text, VoiceOver, keyboard/Save and
-recovery/photo interaction checks. Current isolated app rendering passed representative local light/dark, larger-text
-and rotation checks; iPad keyboard-visible new-game Save passed. App entry/tab
-presses and iPhone typing remain unreliable through automation. Remaining new
-interactions, including connected media/full-app offline playback, remain unverified. Earlier owner
-verification does not verify new screens. Real branding/icon, signing/distribution
-and explicit production/release approval remain outstanding. No paid service,
-public submission or automatic production-data upload is enabled.
+This branch is not release-ready. Signed nonproduction access/lifecycle checks passed;
+team email delivery, trusted Google worker configuration and hosted media
+capacity/delivery remain blocked. Actual isolated file validation/upload/review and
+explicit retention passed. Full-app offline startup opens a previously retained
+clip with an honest unknown-rights disclosure; native video play/pause/scrub remains
+unverified. XCUITest recovered real input without resetting simulators, although
+several bounded journeys remain blocked by native control exposure or focus.
+
+Representative local light/dark, larger-text and rotation checks passed, and the
+current device-specific evidence is recorded in TESTING.md. Full changed-screen
+appearance, maximum text reachability, Reduce Motion, VoiceOver, shared recovery/
+completion, photo interaction and hardware/actual26.0 acceptance remain open.
+Physical testing is explicitly deferred. Real branding/roster, signing/distribution
+and production approval remain outstanding. No paid service, public submission or
+automatic original-record upload is enabled.
 
 The owner-requested polish audit added unsaved-navigation confirmations, pending
 field locks/progress, clearer admission next actions and protected-content hiding

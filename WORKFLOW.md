@@ -1,12 +1,20 @@
 # TeamStats — Planning and Implementation Workflow
 
-Current source/local acceptance snapshot (2026-10-12): native private clips/scouting,
-Team discovery, verified administration and optional retained playback are implemented.
-Full integration151 executed/4 opt-in skips passed, followed by8 affected recovery
-checks after the final narrow repair. Representative local rendering now has partial acceptance; unreliable app input
-automation blocks the remaining interactions;
-hosted capacity/signed access, Google/sender, real assets/forms and device/release
-acceptance remain pending. Later dated checkpoints supersede earlier source gaps.
+Current acceptance snapshot (2026-10-14): isolated XCUITest recovered native input.
+Five controlled users passed45 signed nonproduction access/review/correction checks;
+reviewed migration history contains13 versions. Both26.4 simulators passed local
+paint drafts, dirty-navigation recovery and published-PDF open/Close. iPad verified
+account switching, distinct retention, known-denial concealment and owner restoration
+passed. iPhone paired
+entry/save/relaunch, sign-out concealment, protected Team navigation and authored
+movement passed. Full-app cold startup opened an authorized retained clip with the
+actual local backend stopped; this proves viewer/cache recovery, not video controls.
+The actual local two-page PDF workflow and iPhone scroll/zoom passed; iPad scroll/
+zoom-out passed, zoom-in confirmation remains separate. Native contrast audit still
+fails despite darker game-list metadata; retain the report for investigation.
+Hosted media/$0 capacity, automatic Google delivery, team email, remaining rendered/
+accessibility/hardware checks and real assets/forms gate acceptance. Status PARTIAL.
+Later dated checkpoints supersede earlier gaps while retaining historical evidence.
 
 ## Authorized implementation continuation — 2026-10-12
 
@@ -1458,3 +1466,109 @@ sentence; it now names its historical checkpoint. Spec found the missing iPhone
 synthetic-game prerequisite in the private manual checklist; creation with keyboard-
 visible Save/details is now explicit before entry checks. Targeted rereviews reported
 no remaining finding in either gap. No source change or repeated model suite.
+
+
+### Actual provider and recovered native acceptance — 2026-10-13
+
+Three reviewed nonproduction follow-ups are applied; migration history now contains
+13 versions including the appended domain-conflict repair. An actual stale command
+initially timed out. Deliberate domain conflicts now use PT409/HTTP409 rather than
+transaction-retry SQLSTATE40001; the 26 pinned definitions otherwise retain their
+permissions and behavior. Native/gateway readers retain legacy-code compatibility.
+No production deployment, original-owner bootstrap repeat, hosted file activation,
+local-record upload or paid service occurred. SMS remains disabled; unknown hosted
+capacity rejects reservations without creating file versions.
+
+Five distinct controlled synthetic accounts passed45 named hosted checks: signed
+admission/grants/bounded delegation, denied direct writes, revocation, missing versus
+zero, stale saves, distinct review, completion versus publication, correction lineage,
+Hudl validation and fail-closed capacity. Independent count-only readback preserves
+existing rows' aggregate counts across22 tables outside the new TEST ONLY team;
+this is not row-content/digest proof. The original timed-out checkpoint remains
+unconfirmed and retained. No active stale request remained before continuation.
+
+Actual private Google fixture exposed and repaired a latest-projection formula that
+previously selected only one game/dataset group. Multiple groups, late older versions,
+correction isolation,20-digit versions and idempotent retry passed. The operational
+Sheet was unchanged. This is provider formula evidence, not automatic worker delivery.
+
+Native fixes: compact Team selection opens its server-confirmed detail; explicit
+Keep editing remains visible in iPad popovers; play buttons adapt to larger text
+without splitting words. Independent Standards/Spec reviews found no remaining
+source issue. Builds passed. Both device families passed synthetic new-game Save/
+details, local paint blank/zero/counters/invalid/clearing/save/edit/relaunch and dirty
+navigation. iPhone actual local Auth restore, protected Manage team/routine roster,
+local/shared separation and authored movement passed. Full-app offline startup/viewer
+passed with the actual backend stopped and retained video bytes unchanged afterward;
+play/pause/scrub is still separate and blocked by absent native control exposure.
+Private screenshots were inspected; the tested larger size was XXXL, not the maximum
+accessibility size. Earlier light/dark/rotation evidence covers representative local
+screens only. VoiceOver, Reduce Motion, remaining full entry/review/media journeys,
+actual26.0 and physical-device acceptance remain open.
+
+Protected working/index bytes and8 original JSON stores/temp identities remain
+unchanged from this continuation's initial snapshot. The newer personal UI-state
+bytes observed at entry were preserved with all older snapshots; no guessed restore.
+
+
+### Additional actual native acceptance — 2026-10-14
+
+At source704bd3e, iPhone paired-entry blank/zero/counters, independent opposite-side
+record, last free-throw field, keyboard Save and relaunch passed. Saved readback has
+unique record identities, preserved missing values and explicit0; all original
+records/temp identities remain unchanged. iPhone sign-out hides the former actor's
+retained clip while preserving its bytes. iPad actual local email/PKCE account setup
+passed. Both families passed Scouting/Hudl/accepted-statistics navigation and actual
+previously validated PDF open/Close; these per-case passes remain valid even when an
+unrelated case in the same bundle failed.
+
+Fresh local PDF validation initially failed closed because the configured renderer
+no longer matched its approved checksum. The changed original tool was retained,
+not trusted or overwritten. An independently verified46-package upstream closure
+(39 strict native-signature checks) passed bounded rendering and the actual pinned
+validator. Only the owned loopback gateway's two renderer settings changed; no app
+dependency, hosted worker or budget activation. New explicit upload after confirmed
+missing bytes retains the old operation/checkpoint/history. Actual upload/submit/
+owner approval and published hash/page-count readback passed; other media digests
+remain unchanged. A labeled two-page PDF opened/scrolled/zoomed/closed on iPhone;
+iPad scrolling and zoom-out passed, zoom-in confirmation remains pending.
+
+The native contrast audit reported visible venue/game-type subheadline contrast.
+Source6aeedc9 uses system primary text there; builds pass and private screenshots
+show darker metadata. The audit still fails after that repair, including native
+navigation-bar occlusion; a complete audit pass is not claimed. Independent source
+Standards/Spec reviews found0 issues. No broad palette change or speculative fix.
+
+Remaining exact UI gaps: full scoring-table journey; iPad opponent-field keyboard
+focus; native AVKit Play/timeline exposure; rendered completion/correction/recovery,
+photo Apply/Cancel, authored drawing, delayed writes,
+maximum accessibility size/Reduce Motion/VoiceOver and full appearance coverage.
+Mac desktop controls became unavailable after lock; native XCUITest continues.
+Owner deferred physical testing; no physical install/test occurred. Actual26.0,
+physical performance, real marked forms/Hudl rights and distribution remain separate.
+
+### Account, scoring and layout follow-up — 2026-10-14
+
+Direct iPhone controls verified derived rebounds (2 + 3 = 5), the reported partial
+contradiction (points4/threes7 implies at least21), immediate banner removal with
+an incomplete noncontradictory check, explicit free-throw0 and exact4-versus3 mismatch.
+The Mac relocked before Save; that synthetic buffer remains unsaved. Table scope,
+saved summary and this buffer's persistence are not claimed from those edits.
+
+Actual iPad sign-out and distinct email/PKCE viewer verification passed. The former
+actor's library was concealed, and the verified viewer lacked Manage team. Explicit
+Keep created its own retained copy. Signed removal of only that synthetic viewer
+preserved the owner, older memberships/grants and older audit-row digests. Opening
+its retained clip detected current denial and concealed the title. Viewer sign-out,
+fresh original-owner PKCE/GetUser restore and original retained-title visibility
+passed. Both actor video hashes stayed unchanged; the viewer remains removed.
+These are membership checks, separate from Auth-session revocation.
+
+The PDF test now describes pinch execution; screenshot evidence supplies actual
+zoom results and iPad zoom-in remains unverified. A detail-scroll test correction
+passed maximum-text dark iPad play-control reachability in portrait. Both captures
+remained portrait; a stricter rotation assertion failed at820×1180 despite the
+orientation command. The app declares landscape support, but actual current rotation
+is unverified. No speculative app fix or further unchanged retry. Both simulators'
+original light/large settings were restored and read back. The iPhone synthetic
+unsaved buffer remains intact. Physical testing is owner-deferred. Acceptance PARTIAL.
