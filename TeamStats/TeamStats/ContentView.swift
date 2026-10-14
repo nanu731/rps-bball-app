@@ -46,7 +46,7 @@ struct ContentView: View {
                                         .foregroundStyle(.secondary)
                                     Text("\(game.venue.rawValue) · \(game.kind.rawValue)")
                                         .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(.primary)
                                 }
                             }
                         }
