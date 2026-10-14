@@ -99,7 +99,7 @@ PostgREST RPC argument names; dates are finite timestamp strings and IDs are UUI
 
 Every administration mutation requires the `p_expected_access_revision` captured
 from `team_access` when the administration screen loaded. It has no default and
-NULL cannot bypass the check. Under the team lock, a mismatch raises `40001` and
+NULL cannot bypass the check. Under the team lock, a mismatch raises `PT409` (HTTP 409) and
 leaves membership, grants, roster and audit unchanged; reload before retrying. A
 successful mutation increments `teams.access_revision` in the same transaction.
 Bootstrap starts at 1. A new pending admission request increments it; an
@@ -126,8 +126,24 @@ Capability names are `stats.review`, `stats.publish`, `datasets.reopen`,
 `roster.manage`, `members.manage`, `plays.author`, `plays.review`, `plays.publish`,
 `practice.upload`, `practice.review`, `practice.publish`, `film.upload`,
 `film.review`, `film.publish`. Access failures use SQLSTATE `42501`, stale administration/roster
-versions `40001`, and invalid command arguments `22023` (table constraints may
+versions `PT409` (HTTP 409), and invalid command arguments `22023` (table constraints may
 also return standard Postgres validation errors).
+
+## Domain conflicts and RPC retries
+
+Migration `202610140001_domain_conflict_responses.sql` replaces 34 deliberate
+conflict raises in 26 pinned TeamStats functions with SQLSTATE `PT409` (HTTP 409).
+It checks exact source hashes and preserves function identities, signatures,
+argument defaults, owner, security mode, search paths and ACLs; divergent source
+stops the transaction. It changes no records, policies, grants or historical
+migrations. Apply migrations in order through the trusted administrator.
+
+A domain conflict means reload current data and explicitly retry; it must not
+trigger transaction replay. Supabase documents that custom `40001` raises can
+[loop in PostgREST 14](https://supabase.com/docs/guides/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions-77326b).
+Genuine PostgreSQL serialization failures retain `40001`; native/gateway clients
+recognize both codes as conflicts without inventing success or replaying edits.
+The SDK fixtures exercise HTTP 409 separately from actual provider acceptance.
 
 ## Local verification and remaining limits
 

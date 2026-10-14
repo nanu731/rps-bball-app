@@ -40,7 +40,7 @@ select throws_ok($$insert into public.play_versions(team_id,play_id,author_user_
 select throws_ok($$select public.play_transition(pg_temp.team(),pg_temp.id('draft'),1,'submit')$$,'22023',null,'empty draft cannot be submitted');
 select lives_ok($$select pg_temp.keep('draft',public.play_save_draft(pg_temp.team(),pg_temp.id('draft'),pg_temp.rev('draft'),'SYNTHETIC PLAY',pg_temp.diagram()))$$,'valid geometry saved');
 select is(pg_temp.body('draft')->'diagram',pg_temp.diagram(),'stored diagram preserves stable markers and authored steps');
-select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('draft'),1,'STALE',pg_temp.diagram())$$,'40001',null,'stale revision rejected');
+select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('draft'),1,'STALE',pg_temp.diagram())$$,'PT409',null,'stale revision rejected');
 select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('draft'),pg_temp.rev('draft'),'BAD',jsonb_set(pg_temp.diagram(),'{markers,0,origin,x}','1.1'))$$,'22023',null,'out-of-court geometry rejected');
 select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('draft'),pg_temp.rev('draft'),'BAD',jsonb_set(pg_temp.diagram(),'{steps,0,duration}','0'))$$,'22023',null,'invalid duration rejected');
 select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('draft'),pg_temp.rev('draft'),'BAD',jsonb_set(pg_temp.diagram(),'{steps,0,positions}','[]'))$$,'22023',null,'step missing a marker position rejected');
@@ -74,7 +74,7 @@ select pg_temp.login(4);
 select lives_ok($$select pg_temp.keep('bypass',public.play_open_draft(pg_temp.team(),pg_temp.play(),pg_temp.id('accepted')))$$,'second author opens concurrent successor');
 select lives_ok($$select pg_temp.keep('bypass',public.play_transition(pg_temp.team(),pg_temp.id('bypass'),pg_temp.rev('bypass'),'publish'))$$,'authorized publisher accepts own successor without individual review');
 select pg_temp.login(2);
-select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('successor'),pg_temp.rev('successor'),'STALE BASE',pg_temp.diagram())$$,'40001',null,'published-base conflict prevents overwriting newer acceptance');
+select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('successor'),pg_temp.rev('successor'),'STALE BASE',pg_temp.diagram())$$,'PT409',null,'published-base conflict prevents overwriting newer acceptance');
 select is((select count(*)::int from public.play_versions where status='published'),2,'immutable published history remains readable');
 reset role;
 select throws_ok($$update public.play_versions set diagram='{"markers":[],"steps":[]}',revision=revision+1 where id=pg_temp.id('accepted')$$,'42501',null,'accepted geometry immutable even through trusted SQL');

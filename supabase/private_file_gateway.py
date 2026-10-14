@@ -81,7 +81,7 @@ class Providers:
             except (ValueError, AttributeError):
                 code = None
                 missing_storage_key = False
-            mapping = {'42501': ('access_denied', 403), '40001': ('reload_or_reconcile', 409),
+            mapping = {'42501': ('access_denied', 403), '40001': ('reload_or_reconcile', 409), 'PT409': ('reload_or_reconcile', 409),
                        '22023': ('invalid_file_input', 422), 'P0001': ('capacity_unavailable', 503)}
             if error.code == 404 or missing_storage_key:
                 raise FileFailure('object_not_found', 404) from None

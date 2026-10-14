@@ -52,7 +52,7 @@ select throws_ok($$select public.media_open_draft(pg_temp.team(),pg_temp.resourc
 select throws_ok($$insert into public.media_resource_versions(team_id,resource_id,author_user_id,status) values(pg_temp.team(),pg_temp.resource(1),'b1000000-0000-4000-8000-000000000002','published')$$,'42501',null,'direct metadata publication denied');
 select lives_ok($$select pg_temp.keep('practice',public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'','',''))$$,'incomplete draft can be saved without invented values');
 select throws_ok($$select public.media_transition(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'submit')$$,'22023',null,'incomplete draft cannot be submitted');
-select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),1,'STALE','https://video.example.invalid/watch','')$$,'40001',null,'stale draft save rejected');
+select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),1,'STALE','https://video.example.invalid/watch','')$$,'PT409',null,'stale draft save rejected');
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','http://video.example.invalid/watch','')$$,'22023',null,'non-HTTPS link rejected');
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','https://user:secret@video.example.invalid/watch','')$$,'22023',null,'URL user credentials rejected');
 select throws_ok($$select public.media_save_draft(pg_temp.team(),pg_temp.id('practice'),pg_temp.rev('practice'),'BAD','https://video.example.invalid/#token=synthetic','')$$,'22023',null,'token-bearing fragments rejected');
@@ -94,7 +94,7 @@ select pg_temp.login(2);
 select throws_ok($$select public.media_transition(pg_temp.team(),pg_temp.id('correction'),pg_temp.rev('correction'),'publish')$$,'42501',null,'ordinary successor cannot bypass review');
 select pg_temp.keep('correction',public.media_transition(pg_temp.team(),pg_temp.id('correction'),pg_temp.rev('correction'),'submit'));
 select pg_temp.login(1);
-select throws_ok($$select public.media_transition(pg_temp.team(),pg_temp.id('correction'),pg_temp.rev('correction'),'approve')$$,'40001',null,'stale submitted successor cannot overwrite newer accepted link');
+select throws_ok($$select public.media_transition(pg_temp.team(),pg_temp.id('correction'),pg_temp.rev('correction'),'approve')$$,'PT409',null,'stale submitted successor cannot overwrite newer accepted link');
 select lives_ok($$select pg_temp.keep('correction',public.media_transition(pg_temp.team(),pg_temp.id('correction'),pg_temp.rev('correction'),'reject','Newer accepted link exists'))$$,'owner can reject stale proposal');
 select pg_temp.login(2);
 select lives_ok($$select pg_temp.keep('revised',public.media_open_draft(pg_temp.team(),pg_temp.resource(1),'practice',pg_temp.play(),pg_temp.id('correction')))$$,'rejected author opens fresh reviewed successor');
@@ -142,8 +142,8 @@ select pg_temp.keep('newer',public.media_transition(pg_temp.team(),pg_temp.id('n
 select pg_temp.login(2);
 select pg_temp.keep('revised',public.media_save_draft(pg_temp.team(),pg_temp.id('revised'),pg_temp.rev('revised'),'MY SYNTHETIC SAVED PROPOSAL','https://video.example.invalid/my-proposal','Saved author notes'));
 select is(public.media_open_draft(pg_temp.team(),pg_temp.resource(1),'practice',pg_temp.play(),pg_temp.id('newer')),pg_temp.body('revised'),'opening newer source does not silently rebase existing draft');
-select throws_ok($$select public.media_resume_draft(pg_temp.team(),pg_temp.id('revised'),1,pg_temp.id('newer'))$$,'40001',null,'resume rejects stale expected draft revision');
-select throws_ok($$select public.media_resume_draft(pg_temp.team(),pg_temp.id('revised'),pg_temp.rev('revised'),pg_temp.id('bypass'))$$,'40001',null,'resume rejects stale expected accepted pointer');
+select throws_ok($$select public.media_resume_draft(pg_temp.team(),pg_temp.id('revised'),1,pg_temp.id('newer'))$$,'PT409',null,'resume rejects stale expected draft revision');
+select throws_ok($$select public.media_resume_draft(pg_temp.team(),pg_temp.id('revised'),pg_temp.rev('revised'),pg_temp.id('bypass'))$$,'PT409',null,'resume rejects stale expected accepted pointer');
 select pg_temp.login(9);
 select throws_ok($$select public.media_resume_draft(pg_temp.team(),pg_temp.id('revised'),pg_temp.rev('revised'),pg_temp.id('newer'))$$,'42501',null,'another active member cannot resume private saved proposal');
 select pg_temp.login(2);

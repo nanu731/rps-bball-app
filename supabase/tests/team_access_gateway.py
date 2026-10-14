@@ -132,7 +132,7 @@ def main():
  code,_=mutate(owner,team,'team_set_membership',{'p_user_id':ids[1],'p_status':'removed'})
  check('owner gateway removal succeeds',code in [200,204])
  code,reply=mutate(owner,team,'team_set_membership',{'p_user_id':ids[1],'p_status':'active'},captured)
- check('signed stale membership RPC cannot undo removal',code in [409,500] and reply.get('code')=='40001',{'status':code,'sqlstate':reply.get('code')})
+ check('signed stale membership RPC cannot undo removal',code==409 and reply.get('code')=='PT409',{'status':code,'sqlstate':reply.get('code')})
  code,rows=request(REST+'/teams?id=eq.'+team+'&select=id',token=member['access_token'])
  check('removed signed member immediately loses existing team read',code==200 and rows==[])
  code,_=mutate(owner,team,'team_set_membership',{'p_user_id':ids[1],'p_status':'active'})

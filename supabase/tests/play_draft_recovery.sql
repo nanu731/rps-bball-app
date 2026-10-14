@@ -44,10 +44,10 @@ select lives_ok($$select pg_temp.keep('latest',public.play_open_draft(pg_temp.te
 select lives_ok($$select pg_temp.keep('latest',public.play_save_draft(pg_temp.team(),pg_temp.id('latest'),pg_temp.rev('latest'),'SYNTHETIC NEW ACCEPTED',pg_temp.diagram(0.9)))$$,'second author saves different successor');
 select lives_ok($$select pg_temp.keep('latest',public.play_transition(pg_temp.team(),pg_temp.id('latest'),pg_temp.rev('latest'),'publish'))$$,'second author publishes correction');
 select pg_temp.login(2);
-select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('stale'),pg_temp.rev('stale'),'UNSAVED',pg_temp.diagram(0.7))$$,'40001',null,'old author save correctly conflicts with new accepted base');
+select throws_ok($$select public.play_save_draft(pg_temp.team(),pg_temp.id('stale'),pg_temp.rev('stale'),'UNSAVED',pg_temp.diagram(0.7))$$,'PT409',null,'old author save correctly conflicts with new accepted base');
 select is(public.play_open_draft(pg_temp.team(),pg_temp.play(),pg_temp.id('latest')),pg_temp.body('stale'),'ordinary opening never silently rebases the saved stale draft');
-select throws_ok($$select public.play_recover_draft(pg_temp.team(),pg_temp.id('stale'),1,pg_temp.id('latest'))$$,'40001',null,'stale expected revision denied');
-select throws_ok($$select public.play_recover_draft(pg_temp.team(),pg_temp.id('stale'),pg_temp.rev('stale'),pg_temp.id('base'))$$,'40001',null,'stale expected accepted pointer denied');
+select throws_ok($$select public.play_recover_draft(pg_temp.team(),pg_temp.id('stale'),1,pg_temp.id('latest'))$$,'PT409',null,'stale expected revision denied');
+select throws_ok($$select public.play_recover_draft(pg_temp.team(),pg_temp.id('stale'),pg_temp.rev('stale'),pg_temp.id('base'))$$,'PT409',null,'stale expected accepted pointer denied');
 select pg_temp.login(3);
 select throws_ok($$select public.play_recover_draft(pg_temp.team(),pg_temp.id('stale'),pg_temp.rev('stale'),pg_temp.id('latest'))$$,'42501',null,'another author cannot recover private saved geometry');
 select pg_temp.login(5);

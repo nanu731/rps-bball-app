@@ -76,6 +76,16 @@ final class AdministrationTests: XCTestCase {
         XCTAssertEqual(fixture.commands[1].parameters["p_roster_id"] as? String, fixtureRosterID.uuidString)
     }
 
+    func testLegacySerializationErrorStillRequiresReload() async throws {
+        let fixture = AdministrationFixture(mode: .staleOnce, conflictCode: "40001")
+        let model = fixture.model()
+        await load(model)
+        await model.archiveRoster(try XCTUnwrap(model.roster.first))
+        XCTAssertEqual(model.issue, .conflict)
+        XCTAssertNil(model.confirmation); XCTAssertNil(model.access)
+        XCTAssertEqual(fixture.commands.count, 1)
+    }
+
     func testSeparateMembershipCapabilityAndBoundedDelegationCommands() async throws {
         let fixture = AdministrationFixture()
         let model = fixture.model()
@@ -258,13 +268,14 @@ private final class AdministrationFixture: @unchecked Sendable {
     struct Command { let name: String; let parameters: [String: Any] }
     private let lock = NSLock()
     private let mode: Mode
+    private let conflictCode: String
     private var commandValues: [Command] = []
     private var offsets: [Int] = []
     private var didFail = false
     private var identityReadCount = 0
     private var deniedIdentities = false
     let key = UUID().uuidString
-    init(mode: Mode = .standard) { self.mode = mode }
+    init(mode: Mode = .standard, conflictCode: String = "PT409") { self.mode = mode; self.conflictCode = conflictCode }
     var commands: [Command] { lock.withLock { commandValues } }
     var rosterOffsets: [Int] { lock.withLock { offsets } }
     var identityRequests: Int { lock.withLock { identityReadCount } }
@@ -305,7 +316,7 @@ private final class AdministrationFixture: @unchecked Sendable {
             commandValues.append(Command(name: name, parameters: parameters))
             if mode == .denied || (mode == .staleOnce && !didFail) {
                 didFail = true
-                return json(["code": mode == .denied ? "42501" : "40001", "message": "SENSITIVE_FIXTURE_PAYLOAD", "details": "SENSITIVE_FIXTURE_PAYLOAD", "hint": NSNull()], status: 400)
+                return json(["code": mode == .denied ? "42501" : conflictCode, "message": "SENSITIVE_FIXTURE_PAYLOAD", "details": "SENSITIVE_FIXTURE_PAYLOAD", "hint": NSNull()], status: mode == .denied ? 403 : conflictCode == "PT409" ? 409 : 500)
             }
             if mode == .ambiguousSave { return json(["code": "503", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 503) }
             if name == "team_request_membership" { return (200, Data("\"pending\"".utf8)) }

@@ -64,7 +64,7 @@ class GatewayTests(unittest.TestCase):
                     if case.revoked:self.send({'code':'42501','message':'PRIVATE diagnostic must not escape'},403);return
                     self.send({'id':VERSION,'status':'uploading'});return
                 if name=='file_worker_claim_upload':
-                    if case.claimed and not args['p_reconcile']:self.send({'code':'40001'},500);return
+                    if case.claimed and not args['p_reconcile']:self.send({'code':'PT409'},409);return
                     case.claimed=True
                     self.send({'version_id':VERSION,'team_id':TEAM,'kind':'scouting','object_path':PATH,'declared_bytes':len(DATA)});return
                 if name=='file_worker_finish':

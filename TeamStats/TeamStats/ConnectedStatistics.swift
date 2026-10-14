@@ -658,7 +658,7 @@ final class ConnectedStatistics {
         if let error = error as? ConnectedStatisticsIssue { return error }
         else if let error = error as? PostgrestError {
             switch error.code {
-            case "40001": return .conflict
+            case "40001", "PT409": return .conflict
             case "42501": return .denied
             case "22023", "23514", "23503": return .invalidInput
             default: return .server

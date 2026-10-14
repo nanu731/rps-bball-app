@@ -13,12 +13,12 @@ Every argument below has the `p_` prefix. UUIDs are JSON strings. Dataset types:
 - `stats_create_game(team_id, game_id, date, opponent, home_away, game_type)`:
   date is `YYYY-MM-DD`; home_away is `home`/`away`; game_type is
   `regularSeason`/`playoff`. A caller-owned stable game UUID makes identical
-  retries idempotent. Changed metadata under the same UUID fails with `40001`.
+  retries idempotent. Changed metadata under the same UUID fails with `PT409` (HTTP 409).
 - `stats_open_draft(team_id, game_id, dataset_type)`: returns the author's
   existing draft on retry. Completed data needs an approved edit request.
 - `stats_save_draft(team_id, version_id, expected_revision, records,
   covered_roster = [])`: replaces the complete record batch atomically. A
-  repeated save using its old revision fails with `40001`, so a caller must
+  repeated save using its old revision fails with `PT409` (HTTP 409), so a caller must
   reload after an ambiguous network result. Draft contradictions remain saved.
 - `stats_save_drafts(team_id, items)`: an atomic batch returning a version array.
   Items are `{version_id: UUID, expected_revision: Int, records: [...],
@@ -108,7 +108,7 @@ is scoped to `datasets.reopen`; export outbox reads require
 ownership. Read current accepted records via a dataset's `published_version_id`.
 
 All mutation commands use the entity's `expected_revision`; stale operations
-fail `40001`. Forbidden access uses `42501`; invalid collected data uses `22023`.
+fail `PT409` (HTTP 409). Forbidden access uses `42501`; invalid collected data uses `22023`.
 Publication additionally compares the draft's captured published base with the
 current accepted pointer under the game lock. Acceptance advances a per-game
 publication generation and inserts exactly one immutable outbox item for the

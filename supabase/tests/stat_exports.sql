@@ -70,7 +70,7 @@ select throws_ok($$select public.stats_export_configure(pg_temp.team(),'SYNTHETI
 select lives_ok($$select public.stats_export_configure(pg_temp.team(),'SYNTHETIC_EXPORT_DESTINATION',0,100,101,3)$$,'trusted configuration binds destination');
 select lives_ok($$select public.stats_export_configure(pg_temp.team(),'SYNTHETIC_EXPORT_DESTINATION',0,100,101,3)$$,'same trusted configuration retries safely');
 select throws_ok($$select public.stats_export_configure(pg_temp.team(),'DIFFERENT_DESTINATION',0,100,101,3)$$,
- '40001',null,'destination cannot be silently rebound');
+ 'PT409',null,'destination cannot be silently rebound');
 select throws_ok($$select public.stats_export_configure('a3000000-0000-4000-8000-000000000002','SYNTHETIC_EXPORT_DESTINATION',0,100,101,3)$$,
  '23505',null,'one destination cannot allocate overlapping ranges for a second team');
 select pg_temp.keep('r1',public.stats_export_reserve(pg_temp.job('first-status')));

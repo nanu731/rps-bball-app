@@ -53,7 +53,7 @@ select lives_ok($$select pg_temp.keep('game',public.stats_create_game(pg_temp.te
 select is(public.stats_create_game(pg_temp.team(),pg_temp.game(),'2026-10-10','SYNTHETIC OPPONENT','away','regularSeason'),pg_temp.body('game'),
  'stable game retry returns identical metadata');
 select throws_ok($$select public.stats_create_game(pg_temp.team(),pg_temp.game(),'2026-10-10','CHANGED','away','regularSeason')$$,
- '40001',null,'same game identity cannot overwrite metadata');
+ 'PT409',null,'same game identity cannot overwrite metadata');
 select is((select count(*)::int from public.games),1,'game retries never duplicate rows');
 select throws_ok($$insert into public.games(id,team_id,date,opponent,home_away,game_type,created_by)
  values(gen_random_uuid(),pg_temp.team(),'2026-10-10','SYNTHETIC','home','playoff','91000000-0000-4000-8000-000000000002')$$,
@@ -75,7 +75,7 @@ select throws_ok($$select public.stats_complete(pg_temp.team(),pg_temp.id('box')
  '22023',null,'completion rejects partial scoring lower-bound contradiction');
 select is(pg_temp.body('box')->'records'->0->'values'->'points','4'::jsonb,'contradictory entered points stay visible');
 select throws_ok($$select public.stats_save_draft(pg_temp.team(),pg_temp.id('box'),1,pg_temp.box('{}'),pg_temp.roster())$$,
- '40001',null,'stale save cannot replace newer draft');
+ 'PT409',null,'stale save cannot replace newer draft');
 select throws_ok($$select public.stats_save_draft(pg_temp.team(),pg_temp.id('box'),pg_temp.rev('box'),pg_temp.box('{"points":-1}'),pg_temp.roster())$$,
  '22023',null,'negative counts rejected');
 select throws_ok($$select public.stats_save_draft(pg_temp.team(),pg_temp.id('box'),pg_temp.rev('box'),pg_temp.box('{"points":1.5}'),pg_temp.roster())$$,
@@ -197,7 +197,7 @@ select is(pg_temp.body('paint')->'records'->0->'total','null'::jsonb,'published 
 select throws_ok($$select public.stats_save_draft(pg_temp.team(),pg_temp.id('paint'),pg_temp.rev('paint'),'[]',pg_temp.roster())$$,
  '42501',null,'publication capability never bypasses completed-data editing approval');
 select throws_ok($$select public.stats_publish(pg_temp.team(),pg_temp.id('paint'),pg_temp.rev('paint')-1)$$,
- '40001',null,'old publish retry cannot enqueue duplicate work');
+ 'PT409',null,'old publish retry cannot enqueue duplicate work');
 -- Approved edit requests keep acceptance visible and preserve competing drafts.
 select pg_temp.login(2);
 select pg_temp.keep('request',public.stats_request_edit(pg_temp.team(),pg_temp.id('box'),pg_temp.rev('box'),'Synthetic correction request'));
@@ -215,7 +215,7 @@ select is(pg_temp.body('edit')->>'author_user_id','91000000-0000-4000-8000-00000
 select is((select published_version_id from public.stat_datasets where dataset_type='box_scores'),pg_temp.id('box'),
  'reopening keeps previous accepted pointer visible');
 select throws_ok($$select public.stats_review_edit(pg_temp.team(),pg_temp.id('request'),1,true)$$,
- '40001',null,'stale edit approval cannot create another working revision');
+ 'PT409',null,'stale edit approval cannot create another working revision');
 select pg_temp.login(6);
 select pg_temp.keep('viewer-request',public.stats_request_edit(pg_temp.team(),pg_temp.id('box'),pg_temp.rev('box')));
 select pg_temp.login(5);
@@ -225,7 +225,7 @@ select pg_temp.login(2);
 select pg_temp.keep('secondrequest',public.stats_request_edit(pg_temp.team(),pg_temp.id('box'),pg_temp.rev('box')));
 select pg_temp.login(5);
 select throws_ok($$select public.stats_review_edit(pg_temp.team(),pg_temp.id('secondrequest'),pg_temp.rev('secondrequest'),true)$$,
- '40001',null,'approval never overwrites requester existing unfinished draft');
+ 'PT409',null,'approval never overwrites requester existing unfinished draft');
 select lives_ok($$select public.stats_review_edit(pg_temp.team(),pg_temp.id('secondrequest'),pg_temp.rev('secondrequest'),false,'Already has a working draft')$$,
  'reviewer can decline conflicting request without changing working data');
 select pg_temp.login(2);
@@ -241,7 +241,7 @@ select pg_temp.login(3);
 select lives_ok($$select pg_temp.keep('edit',public.stats_review(pg_temp.team(),pg_temp.id('edit'),pg_temp.rev('edit'),true))$$,
  'review acceptance replaces only accepted pointer and queues correction');
 select throws_ok($$select public.stats_review(pg_temp.team(),pg_temp.id('viewer-edit'),pg_temp.rev('viewer-edit'),true)$$,
- '40001',null,'proposal captured from older accepted base cannot overwrite newer acceptance');
+ 'PT409',null,'proposal captured from older accepted base cannot overwrite newer acceptance');
 select pg_temp.login(1);
 select is((select published_version_id from public.stat_datasets where dataset_type='box_scores'),pg_temp.id('edit'),'new accepted correction is current');
 select is((select count(*)::int from public.stat_export_outbox),3,'one outbox item per box, paint and accepted correction');
@@ -259,7 +259,7 @@ select pg_temp.keep('viewer-opponent',public.stats_open_draft(pg_temp.team(),pg_
 select throws_ok($$select public.stats_save_drafts(pg_temp.team(),jsonb_build_array(
  pg_temp.item('viewer-pos',pg_temp.pos('ours','{"paintTouches":7}','false')),
  pg_temp.item('viewer-opponent',pg_temp.pos('opponent','{}','false'),999)))$$,
- '40001',null,'stale second batch item rolls back first sheet save');
+ 'PT409',null,'stale second batch item rolls back first sheet save');
 select is((select revision from public.stat_versions where id=pg_temp.id('viewer-pos')),pg_temp.rev('viewer-pos'),'failed batch preserves first draft revision');
 select is((select records from public.stat_versions where id=pg_temp.id('viewer-pos')),pg_temp.body('viewer-pos')->'records','failed batch preserves first draft values');
 select throws_ok($$select public.stats_save_drafts(pg_temp.team(),jsonb_build_array(

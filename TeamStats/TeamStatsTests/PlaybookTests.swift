@@ -308,7 +308,7 @@ private final class PlayFixture: @unchecked Sendable {
             let index = rows.firstIndex { $0["id"] as? String == parameters["p_version_id"] as? String }!
             guard rows[index]["status"] as? String == "draft", rows[index]["revision"] as? Int == parameters["p_expected_revision"] as? Int,
                   pointer == parameters["p_expected_published_version_id"] as? String else {
-                return try respond(["code": "40001", "message": "Synthetic recovery conflict"], status: 500)
+                return try respond(["code": "PT409", "message": "Synthetic recovery conflict"], status: 409)
             }
             rows[index]["status"] = "superseded"; rows[index]["revision"] = (rows[index]["revision"] as! Int) + 1
             let superseded = rows[index]
@@ -327,7 +327,7 @@ private final class PlayFixture: @unchecked Sendable {
             if saving { saveRequests += 1 }
             if saving && denySave { return try respond(["code": "42501", "message": "Synthetic denied"], status: 403) }
             if saving && transientSaveFailure { return try respond(["code": "XX000", "message": "Synthetic unavailable"], status: 500) }
-            if saving && failSave { return try respond(["code": "40001", "message": "Synthetic conflict"], status: 500) }
+            if saving && failSave { return try respond(["code": "PT409", "message": "Synthetic conflict"], status: 409) }
             let index = rows.firstIndex { $0["id"] as? String == parameters["p_version_id"] as? String }!
             rows[index]["revision"] = (rows[index]["revision"] as! Int) + 1
             if saving { rows[index]["title"] = parameters["p_title"]; rows[index]["diagram"] = parameters["p_diagram"] }

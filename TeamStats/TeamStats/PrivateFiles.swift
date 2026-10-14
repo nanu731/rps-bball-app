@@ -323,7 +323,7 @@ final class PrivateFiles {
     private func fail(_ error: Error, denialVersion: UUID? = nil) {
         if let error = error as? PrivateFileIssue { issue = error }
         else if let error = error as? PostgrestError {
-            switch error.code { case "42501": issue = .denied; case "40001": issue = .conflict; case "P0001": issue = .capacity; default: issue = .server }
+            switch error.code { case "42501": issue = .denied; case "40001", "PT409": issue = .conflict; case "P0001": issue = .capacity; default: issue = .server }
         } else if let error = error as? ClipRetentionIssue {
             switch error { case .insufficientSpace: issue = .insufficientSpace; case .integrity: issue = .integrity; case .locked: issue = .denied; case .storage: issue = .storage }
         } else { issue = .server }

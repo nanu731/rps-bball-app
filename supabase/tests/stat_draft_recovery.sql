@@ -73,8 +73,8 @@ select throws_ok($$select public.stats_save_draft(pg_temp.team(),pg_temp.id('a-d
 select throws_ok($$select public.stats_request_edit(pg_temp.team(),pg_temp.id('a-draft'),pg_temp.rev('a-draft')+1,'SYNTHETIC INVALID COMPLETION')$$,'42501',null,'superseded draft cannot claim completed-source editing eligibility');
 select lives_ok($$select pg_temp.keep('same-base-request',public.stats_request_edit(pg_temp.team(),pg_temp.id('v2'),pg_temp.rev('v2'),'SYNTHETIC SAME BASE REQUEST'))$$,'author can request current source again but existing current working data remains protected');
 select pg_temp.login(1);
-select throws_ok($$select public.stats_review_edit(pg_temp.team(),pg_temp.id('same-base-request'),pg_temp.rev('same-base-request'),true)$$,'40001',null,'same-base unfinished draft still rejects approval');
-select throws_ok($$select public.stats_review_edit(pg_temp.team(),pg_temp.id('a-current-request'),1,true)$$,'40001',null,'approval cannot be replayed with stale request revision');
+select throws_ok($$select public.stats_review_edit(pg_temp.team(),pg_temp.id('same-base-request'),pg_temp.rev('same-base-request'),true)$$,'PT409',null,'same-base unfinished draft still rejects approval');
+select throws_ok($$select public.stats_review_edit(pg_temp.team(),pg_temp.id('a-current-request'),1,true)$$,'PT409',null,'approval cannot be replayed with stale request revision');
 reset role;
 select throws_ok($$update public.stat_versions set records='[]',revision=revision+1 where id=pg_temp.id('a-draft')$$,'42501',null,'superseded saved records immutable even through trusted update');
 set local role authenticated;

@@ -42,7 +42,7 @@ embedding parents. Do not fetch all team history and hide it on the device.
 - `file_reserve(p_team_id,p_resource_id,p_kind,p_target_id,p_operation_id,
   p_declared_bytes,p_title,p_notes='',p_base_published_version_id=null)` returns a
   stable version. Repeat the same operation to reconcile a lost reservation reply;
-  changing identity/length/source raises `40001`. Corrections pass the captured
+  changing identity/length/source raises `PT409` (HTTP 409). Corrections pass the captured
   accepted pointer; each version receives a distinct immutable object path.
 - `file_save(p_team_id,p_version_id,p_expected_revision,p_title,p_notes)` edits only
   the author's uploading/ready metadata. Incomplete title/notes may be saved.
@@ -57,7 +57,7 @@ embedding parents. Do not fetch all team history and hide it on the device.
 - `file_delivery(p_team_id,p_version_id,p_operation_id)` reserves one complete-file
   transfer, returning version ID/length/SHA256/type, never a bearer URL.
 
-Access failure is `42501`, stale/conflicting operation `40001`, invalid fields
+Access failure is `42501`, stale/conflicting operation `PT409` (HTTP 409), invalid fields
 `22023`, and unknown/stale/exhausted trusted capacity `P0001`. These discrepancies
 are recoverable errors, never successful empty data or fabricated uploads.
 

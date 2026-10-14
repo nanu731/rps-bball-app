@@ -333,7 +333,7 @@ private final class MediaFixture: @unchecked Sendable {
                 }
                 if name == "media_save_draft" {
                     if deniedSave { return json(["code": "42501", "message": "Synthetic denied"], status: 403) }
-                    if mode == .conflict || mode == .failure { return json(["code": mode == .conflict ? "40001" : "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 500) }
+                    if mode == .conflict || mode == .failure { return json(["code": mode == .conflict ? "PT409" : "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: mode == .conflict ? 409 : 500) }
                     revision += 1; title = params["p_title"] as? String ?? ""; url = params["p_link_url"] as? String ?? ""; notes = params["p_notes"] as? String ?? ""
                     var value = version()
                     if mode == .malformed { value["team_id"] = UUID().uuidString }

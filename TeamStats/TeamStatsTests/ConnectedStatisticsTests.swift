@@ -265,7 +265,7 @@ final class ConnectedStatisticsTests: XCTestCase {
         await model.loadGames(); await model.loadGame(try XCTUnwrap(model.games.first))
         XCTAssertThrowsError(try XCTUnwrap(model.ownVersions.first).boxScores())
     }
-    func testConflictHTTP500RequiresReloadAndNeverReplaysPost() async throws {
+    func testConflictHTTP409RequiresReloadAndNeverReplaysPost() async throws {
         let fixture = StatisticsFixture(mode: .conflictOnce)
         let model = fixture.model()
         await model.loadGames(); await model.loadGame(try XCTUnwrap(model.games.first))
@@ -537,7 +537,7 @@ private final class StatisticsFixture: @unchecked Sendable {
             }
             if name == "stats_save_drafts", mode == .denied || mode == .serverFailure || (mode == .conflictOnce && !didFail) {
                 didFail = true; revision = 2
-                return json(["code": mode == .conflictOnce ? "40001" : mode == .denied ? "42501" : "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD", "details": "SENSITIVE_FIXTURE_PAYLOAD", "hint": NSNull()], status: 500)
+                return json(["code": mode == .conflictOnce ? "PT409" : mode == .denied ? "42501" : "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD", "details": "SENSITIVE_FIXTURE_PAYLOAD", "hint": NSNull()], status: mode == .conflictOnce ? 409 : 500)
             }
             if name == "stats_create_game" { return json(game()) }
             if name == "stats_save_drafts", isRecoveryMode, var working = workingVersion,

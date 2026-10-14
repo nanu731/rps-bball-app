@@ -41,7 +41,7 @@ current capability grants while serialized on the team:
   Save. Opening a draft alone never silently rebases it.
 
 Every save/transition checks both expected revision and current accepted base.
-Conflicts return SQLSTATE `40001`; denied access `42501`; invalid inputs `22023`
+Conflicts return SQLSTATE `PT409` (HTTP 409); denied access `42501`; invalid inputs `22023`
 (or UUID parse `22P02`). The native model never automatically repeats a POST and
 requires reload after uncertain mutations. Audit events are append-only. A 1 MiB
 request bound and 0.1–30 second step durations protect playback/resource handling;

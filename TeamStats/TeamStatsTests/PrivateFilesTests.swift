@@ -15,6 +15,15 @@ final class PrivateFilesTests: XCTestCase {
         XCTAssertEqual(query.first { $0.name == "file_resources.play_id" }?.value, "eq.\(privateTarget.uuidString)")
         XCTAssertTrue(query.first { $0.name == "select" }?.value?.contains("file_resource_versions_team_id_resource_id_fkey!inner") == true)
     }
+    func testHTTP409ConflictDoesNotInventReservationOrAutomaticRetry() async throws {
+        let fixture = NativeFileFixture(mode: .conflict), model = try fixture.model()
+        await model.load()
+        var input = PrivateFileInput(); input.title = "TEST ONLY CONFLICT"
+        let result = await model.reserve(data: nativeFileBytes, input: input)
+        XCTAssertNil(result); XCTAssertEqual(model.issue, .conflict)
+        XCTAssertNil(model.pendingVersion)
+        XCTAssertEqual(fixture.commands.filter { $0.0 == "file_reserve" }.count, 1)
+    }
     func testLostReservationReplyRetriesExactOperationWithoutInventingSuccess() async throws {
         let fixture = NativeFileFixture(mode: .lostReservation), model = try fixture.model()
         await model.load()
@@ -120,7 +129,7 @@ private let privateResource = UUID(uuidString: "b4000000-0000-4000-8000-00000000
 private let privateVersion = UUID(uuidString: "b5000000-0000-4000-8000-000000000001")!
 private let nativeFileBytes = Data("TEST ONLY protocol file bytes".utf8)
 private final class NativeFileFixture: @unchecked Sendable {
-    enum Mode { case standard, empty, lostReservation, uploadFailure, corruptDownload, oversizedDownload, interruptedDownload, denied, unavailable }
+    enum Mode { case standard, conflict, empty, lostReservation, uploadFailure, corruptDownload, oversizedDownload, interruptedDownload, denied, unavailable }
     let key = UUID().uuidString
     private let lock = NSLock(); private var mode: Mode
     private var allRequests: [URLRequest] = [], allCommands: [(String, [String: Any])] = []
@@ -158,6 +167,7 @@ private final class NativeFileFixture: @unchecked Sendable {
                 allCommands.append((name, arguments))
                 if name == "team_access" { return ok(["team_id": privateTeam.uuidString, "user_id": privateActor.uuidString, "is_owner": true, "access_revision": 1, "capabilities": [], "grant_envelopes": []]) }
                 if name == "file_reserve" {
+                    if mode == .conflict { return (409, json(["code": "PT409", "message": "PRIVATE conflict detail"]), "application/json", false) }
                     operation = UUID(uuidString: arguments["p_operation_id"] as! String)!; resource = UUID(uuidString: arguments["p_resource_id"] as! String)!
                     if mode == .lostReservation && allCommands.filter({ $0.0 == name }).count == 1 { return (503, json(["error": "PRIVATE uncertain reservation"]), "application/json", false) }
                     return ok(version(status: "uploading", receipt: false))

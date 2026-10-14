@@ -113,7 +113,7 @@ select lives_ok(format('select public.team_save_roster(p_team_id => %L,p_display
   'authorized roster edit retains identity');
 select throws_ok(format('select public.team_save_roster(p_team_id => %L,p_display_name => %L,p_jersey_number => %L,p_roster_id => %L,p_expected_version => 1,p_expected_access_revision => %L)',
   '20000000-0000-4000-8000-000000000001','SYNTHETIC PLAYER STALE','3', (select id from test_roster_result), (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001')),
-  '40001', null, 'stale roster save rejected');
+  'PT409', null, 'stale roster save rejected');
 select public.team_archive_roster(p_team_id => '20000000-0000-4000-8000-000000000001',p_roster_id => (select id from test_roster_result),p_expected_version => 2,p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'));
 select is((select count(*)::int from public.roster_entries where id=(select id from test_roster_result) and archived_at is not null),1,
   'archived roster identity remains readable for historical references');
@@ -193,7 +193,7 @@ select throws_ok($$select public.team_set_membership(
   p_team_id => '20000000-0000-4000-8000-000000000001',
   p_user_id => '00000000-0000-4000-8000-000000000005', p_status => 'active',
   p_expected_access_revision => (select revision from test_access_snapshot where scenario='membership'))$$,
-  '40001', null, 'old membership screen cannot undo a newer removal');
+  'PT409', null, 'old membership screen cannot undo a newer removal');
 select is((select status from public.team_memberships where team_id='20000000-0000-4000-8000-000000000001'
   and user_id='00000000-0000-4000-8000-000000000005'),'removed','stale admission leaves current removal intact');
 select is((public.team_access('20000000-0000-4000-8000-000000000001')->>'access_revision')::bigint,
@@ -207,7 +207,7 @@ select throws_ok($$select public.team_set_capability(
   p_team_id => '20000000-0000-4000-8000-000000000001',
   p_user_id => '00000000-0000-4000-8000-000000000004',p_capability => 'plays.author',p_enabled => true,
   p_expected_access_revision => (select revision from test_access_snapshot where scenario='capability'))$$,
-  '40001', null, 'old grant screen cannot undo a newer revocation');
+  'PT409', null, 'old grant screen cannot undo a newer revocation');
 select is((select count(*)::int from public.capability_grants where team_id='20000000-0000-4000-8000-000000000001'
   and user_id='00000000-0000-4000-8000-000000000004' and capability='plays.author' and revoked_at is null),0,
   'stale grant leaves revoked capability intact');
@@ -215,7 +215,7 @@ select throws_ok($$select public.team_set_capability(
   p_team_id => '20000000-0000-4000-8000-000000000001',
   p_user_id => '00000000-0000-4000-8000-000000000004',p_capability => 'plays.author',p_enabled => true,
   p_expected_access_revision => null)$$,
-  '40001', null, 'null expected access revision cannot bypass stale-command protection');
+  'PT409', null, 'null expected access revision cannot bypass stale-command protection');
 select is((public.team_access('20000000-0000-4000-8000-000000000001')->>'access_revision')::bigint,
   (select revision+1 from test_access_snapshot where scenario='capability'),
   'newer revocation increments revision once; stale/null grant commands change nothing');
