@@ -1,20 +1,28 @@
 # TeamStats — Planning and Implementation Workflow
 
-Current acceptance snapshot (2026-10-14): isolated XCUITest recovered native input.
-Five controlled users passed45 signed nonproduction access/review/correction checks;
-reviewed migration history contains13 versions. Both26.4 simulators passed local
-paint drafts, dirty-navigation recovery and published-PDF open/Close. iPad verified
-account switching, distinct retention, known-denial concealment and owner restoration
-passed. iPhone paired
-entry/save/relaunch, sign-out concealment, protected Team navigation and authored
-movement passed. Full-app cold startup opened an authorized retained clip with the
-actual local backend stopped; this proves viewer/cache recovery, not video controls.
-The actual local two-page PDF workflow and iPhone scroll/zoom passed; iPad scroll/
-zoom-out passed, zoom-in confirmation remains separate. Native contrast audit still
-fails despite darker game-list metadata; retain the report for investigation.
-Hosted media/$0 capacity, automatic Google delivery, team email, remaining rendered/
-accessibility/hardware checks and real assets/forms gate acceptance. Status PARTIAL.
-Later dated checkpoints supersede earlier gaps while retaining historical evidence.
+Current acceptance snapshot (2026-10-14, native design continuation): PARTIAL.
+The reviewed game-centered SwiftUI pass adds real game context, task rows,
+grouped scoring inputs, compact guidance, readable missing values and a bounded
+revisitable guide. Explicit four-store local JSON export is implemented; no
+restore, migration or upload. Future local saves request atomic complete file
+protection; existing bytes are not rewritten. API-use privacy metadata is not
+legal/distribution acceptance. See DESIGN.md and DESIGN_SYSTEM.md.
+
+The native model run executed 168 tests, 7 skipped, 0 failures. Final simulator
+build passed. Actual isolated iPhone scoring/table/two-player warnings, save and
+relaunch passed; iPad shared game keyboard Save/completion and guide/export-picker
+Cancel passed. Phone drawing/recovery and actual Reduce Motion passed. Representative
+light/dark phone/tablet captures were inspected. Maximum-text phone fields,
+keyboard Save/receipt and cold storage readback passed in an earlier bounded run;
+final maximum-text reopening/short-footer recapture was interrupted and is not a pass.
+Native contrast audit and actual landscape remain unresolved; photo Apply/Cancel,
+repeatable AVKit controls, VoiceOver, hardware and actual 26.0 remain unverified.
+
+Prior 45 signed hosted checks/13 migrations and actual private Google projection
+fixture evidence remain valid; owner bootstrap was not repeated. Hosted media
+capacity/worker, automatic Google delivery and team email stay disabled without
+verified $0 prerequisites. SMS stays disabled. No production/public release or
+original-record upload occurred. Later dated checkpoints supersede earlier gaps.
 
 ## Authorized implementation continuation — 2026-10-12
 
@@ -1094,7 +1102,7 @@ Private audit/manual checklist now explicitly covers delayed/failed Save, duplic
 taps, dirty Back/swipe/Keep editing, replacement confirmation, denied→failed→
 authorized Retry, independent errors, pending admission, keyboard Save, Dynamic
 Type, VoiceOver and light/dark. Physical slow-network, low-power, process
-termination and actual26.0 testing remain separate. Restore a visible unlocked
+termination and actual 26.0 testing remain separate. Restore a visible unlocked
 Simulator window and use clearly labeled isolated fixtures to finish these gates.
 
 Owner approved the concrete engineering/test structure and official Supabase SDK.
@@ -1345,7 +1353,7 @@ bytes/one page/source preservation, exact5MiB, oversized, locked/unlocked encryp
 malformed/empty/non-PDF, unavailable/remote/directory/symlink/FIFO and cancellation.
 Readable/size/encryption regressions failed first; one initial test-option compiler
 error was repaired and is not runtime evidence. Final iPad26.4 build passed.
-PDFKit APIs used are available before the26.0 deployment target; actual26.0 and
+PDFKit APIs used are available before the26.0 deployment target; actual 26.0 and
 physical devices remain untested. This is native input preparation, not a report
 upload screen, trusted content sanitizer or provider integration.
 
@@ -1443,7 +1451,7 @@ real forms/assets and physical/26.0/signing remain exact external/device gates.
 
 ### Rendered acceptance continuation — 2026-10-12,source4da97b6
 
-Current isolated build/in-place installs passed on both26.4 simulators; both opened.
+Current isolated build/in-place installs passed on both 26.4 simulators; both opened.
 Representative local empty/forms/details screenshots passed light/dark, five text
 increments and settled landscape inspection. iPad synthetic new-game Save with
 software keyboard and saved metadata passed. iPhone native large-text scroll reached
@@ -1504,7 +1512,7 @@ play/pause/scrub is still separate and blocked by absent native control exposure
 Private screenshots were inspected; the tested larger size was XXXL, not the maximum
 accessibility size. Earlier light/dark/rotation evidence covers representative local
 screens only. VoiceOver, Reduce Motion, remaining full entry/review/media journeys,
-actual26.0 and physical-device acceptance remain open.
+actual 26.0 and physical-device acceptance remain open.
 
 Protected working/index bytes and8 original JSON stores/temp identities remain
 unchanged from this continuation's initial snapshot. The newer personal UI-state
@@ -1572,3 +1580,68 @@ orientation command. The app declares landscape support, but actual current rota
 is unverified. No speculative app fix or further unchanged retry. Both simulators'
 original light/large settings were restored and read back. The iPhone synthetic
 unsaved buffer remains intact. Physical testing is owner-deferred. Acceptance PARTIAL.
+
+### Deliberate native design and local readiness — 2026-10-14
+
+The game ledger direction is recorded in DESIGN.md/.impeccable/design.json,
+with DESIGN_SYSTEM.md as the native token authority. Local/shared game identity,
+dataset state and task rows precede details. Scoring groups and native guidance
+disclosure reduce persistent preamble; selected-player photo review stays in the
+toolbar. One scoring warning remains above modes, without changing validation,
+missing/zero semantics, saveable discrepancies or server-confirmed permissions.
+Play, clip, scouting and Hudl rows use concise native hierarchy; guide text has a
+scaled tablet reading width. No invented school assets, metrics or UI dependency.
+
+LocalDraftBackup.swift exports only validated saved games, box scores, possessions
+and player totals, with stable IDs and missing values intact. It fails if any
+store cannot load, excludes credentials/shared caches/media and never restores or
+uploads. TeamStatsGuide.swift provides revisitable help and explicit unknown policy
+markers. Four local atomic writers request complete file protection only on new
+saves. Physical locked-device protection remains unverified; legacy files are not
+silently migrated. PrivacyInfo.xcprivacy describes actual required API reasons;
+owner privacy/support/retention/deletion policies and release review are still gates.
+
+Actual isolated26.4 acceptance: phone individual/table scoring, two affected players,
+immediate warning changes, shared edits, draft Save/relaunch and saved summary;
+pad shared new-game software-keyboard Save, independent possession sides, explicit
+completion warning/read-only reopening; phone drawing/movement/client-only discard
+recovery and actual Reduce Motion; both saved-record presentations; pad guide and
+real export-picker Cancel back to guide. Original saved synthetic comparison records
+were not edited. Earlier unsaved phone test buffer was explicitly saved and verified.
+Maximum-text phone reached15 fields and keyboard-visible Save, with receipt and
+cold JSON readback preserving explicit0/missing values; final UI reopening and the
+shortened footer recapture were interrupted, so no complete maximum-text pass.
+
+A measured light Scoring heading defect (3.29:1) was repaired with explicit
+Color.primary; current tablet crop measures18.82:1, phone dark heading is visibly
+primary. Native date-contrast audit remains failed although its opaque crop measures
+7.46:1; no complete audit exemption/pass. Rotation command did not establish geometry;
+a read-only OS-control observer skipped absent a unique lock control. Photo Apply/
+Cancel stopped after three distinct failed focus/scroll experiments; only the approved
+unique synthetic image label was confirmed. Pad actual video advance/Pause/scrub
+was observed, but repeated native auto-hide/snapshot failures prevent a full controls
+pass. Detailed remaining checks are private. No app/container reset or guessed fix.
+
+Independent Standards and Spec reviews:0 unresolved source findings. Fresh native
+finish review confirms identity, task-first entry and guide measure repairs; whole-app
+acceptance remains partial. Final existing-project simulator build passed; model
+run: 168 executed, 7 skipped, 0 failed. Source fingerprints and private results distinguish
+working source from earlier commits. Mac relocked; native tests continued.
+
+Two personal staged entries, unrelated PBX working/index bytes,8 original JSONs
+and temporary identities were preserved. Personal UI-state working bytes differed
+at entry and again after the interrupted test; both versions and older snapshots
+were retained, staged entry unchanged, cause unconfirmed. No guessed restoration.
+No hosted activation, owner rebootstrap, original upload, spending, SMS or physical
+testing. Actual26.0, real forms/Hudl rights/assets/roster and distribution stay separate.
+
+Original simulator installation verified after source commit `1126d6a`: both original
+apps were stopped before update, previous app bundles retained privately, and the
+new binary installed in place without uninstall/reset or launch. Installed executable
+hashes and TeamStatsSourceRevision identify `1126d6a` on both devices. Generated
+provenance metadata was followed by local re-signing with preserved entitlements;
+strict signature verification passed on both installed bundles. The OS relocated
+the data-container paths; all Documents/Application Support content hashes,8 original
+JSONs and temporary identities stayed unchanged. The unrelated local PBX configuration
+was used unchanged. This proves installation/preservation, not new original-data UI
+acceptance. Separate UI TEST results remain synthetic and provider-scoped.

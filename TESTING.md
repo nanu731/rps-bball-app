@@ -1,6 +1,6 @@
 # TeamStats testing and acceptance
 
-Reviewed 2026-10-12 at source snapshot `737ca4a`. This is the test entry point,
+Updated 2026-10-14 for the native design/readiness continuation. This is the test entry point,
 not a new claim that suites were rerun or a release was approved. Read
 [ARCHITECTURE.md](ARCHITECTURE.md) for the source map and
 [SECURITY.md](SECURITY.md) for boundaries that require denied-access tests.
@@ -435,7 +435,7 @@ source hashes, logs and result bundles stay private.
 | Actual local connected UI | Local email/PKCE/GetUser verification and restore; iPhone server-confirmed Team selection, protected Manage team, routine roster, shared/local separation and authored movement. Adaptive play controls inspected after repair. |
 | Retained media | Actual local validated/published20-second synthetic clip retained through app-host setup; saved-list/viewer navigation rendered. Full-app cold startup with exact actual backend stopped opens the retained viewer with unknown-rights disclosure; restart retains exact video bytes. This is not native play/pause/scrub acceptance. |
 | Remaining automation gaps | Native video Play/timeline absent from the actual hierarchy after bounded attempts. iPhone paired bottom-field Save/relaunch passed; full scoring/table and iPad opponent-field keyboard focus remain open. Do not infer a product defect or repeat unchanged attempts. |
-| External/device gates | Hosted worker/capacity, automatic Google export and team-email sender; real forms/Hudl rights, roster/branding; full changed-screen accessibility/Reduce Motion, actual26.0, hardware, performance and distribution. |
+| External/device gates | Hosted worker/capacity, automatic Google export and team-email sender; real forms/Hudl rights, roster/branding; full changed-screen accessibility/Reduce Motion, actual 26.0, hardware, performance and distribution. |
 
 Independent source Standards and Spec reviews report0 actionable findings for the
 repair slices. Earlier151 executed/4 skipped broad tests retain their original scope;
@@ -496,3 +496,40 @@ its window remained820×1180; no unchanged retry or app defect inference. Both
 simulators' light/large settings were restored and read back. Standards/Spec reviews
 resolved their findings; private screenshots/failures and current manual checklist
 remain retained. Physical testing remains owner-deferred; full acceptance PARTIAL.
+
+## Native design/readiness continuation — 2026-10-14
+
+The full isolated model run executed 168 tests, 7 skipped, 0 failed; five backup
+checks cover identities, optional/zero round-trip, private-file exclusion, corrupt
+store failure and duplicate/invalid games. File-protection tests cover new saves
+and unchanged legacy bytes; physical protection assertion skips on Simulator.
+Final existing-project simulator build passed. No unchanged hosted bootstrap,
+RLS/Retry or full model suite was repeated to manufacture new evidence.
+
+Actual UI cases passed independently of other failures in mixed bundles: phone
+scoring/two-player table/save/relaunch; pad shared game keyboard Save/completion;
+phone drawing/recovery and actual Reduce Motion; both saved-record presentation;
+pad guide/export native Cancel returning to guide. Explicit local export file
+creation at a chosen destination remains unverified; Cancel is not a saved export.
+
+Maximum-text phone reached15 fields and saved with software keyboard visible;
+receipt plus cold storage readback preserved explicit0 and missing values. Final
+maximum-text UI reopening/short-footer recapture was interrupted (exit-15; incomplete
+xcresult), not passed. Actual landscape/VoiceOver/physical26.0 remain pending.
+Date native contrast audit still fails despite a measured7.46:1 opaque crop; repaired
+light Scoring header now measures18.82:1. This is not whole-app contrast certification.
+Photo Cancel/Apply and repeatable native AVKit controls remain bounded automation
+gaps; observed tablet playback/Pause/scrub is a subset, not a full repeatable pass.
+Private screenshots, result logs, source fingerprints and precise owner checklist
+are retained outside the public repository. Original records/identities unchanged.
+
+Original simulator installation verified after source commit `1126d6a`: both original
+apps were stopped before update, previous app bundles retained privately, and the
+new binary installed in place without uninstall/reset or launch. Installed executable
+hashes and TeamStatsSourceRevision identify `1126d6a` on both devices. Generated
+provenance metadata was followed by local re-signing with preserved entitlements;
+strict signature verification passed on both installed bundles. The OS relocated
+the data-container paths; all Documents/Application Support content hashes,8 original
+JSONs and temporary identities stayed unchanged. The unrelated local PBX configuration
+was used unchanged. This proves installation/preservation, not new original-data UI
+acceptance. Separate UI TEST results remain synthetic and provider-scoped.
