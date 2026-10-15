@@ -1661,12 +1661,24 @@ Matt Pocock prototype guidance and five-advisor/anonymous-peer Council completed
 Private proposal, synthetic fixtures, confirmed brief and acceptance plan are ready.
 The existing-plan Local Codex route was selected without Cloud activation, API-key
 billing, dependencies or purchases. Generation is blocked before producing files:
-“Failed to synchronize managed preferences.” The exposed connection test repeats
-this error; configuration-only reads succeed but do not prove generation. The
-workspace still reports its single run active. No duplicate run or unrequested
-cancellation, policy bypass, production UI/backend change or real-record use.
+“Failed to synchronize managed preferences.” At the owner’s explicit request, the
+stalled worker was cancelled; termination is verified (failed terminal status,
+child exited, zero artifacts). No replacement generation was started.
 
-No rendered prototype, interaction/layout/contrast check or visual approval is
-claimed. Resume the same recorded project/run after the connection gate is resolved;
-then inspect phone/tablet, both appearances and larger text before proposing bounded
-native implementation. Private artifacts remain outside the public repository.
+Read-only ephemeral session startup succeeds with the installed CLI, the actual
+project folder, safe launcher flags and the installed helper; no model turns or
+session history were created by these probes. The connected Test still fails after
+worker termination. This narrows the failure to the running connection context,
+without establishing its exact cause. Managed policies, permissions, credentials
+and app settings remain unchanged. A broader write/network probe was rejected by
+automatic approval review; read-only, network-disabled comparisons were used instead.
+Desktop control timed out, so a workspace restart could not be performed safely.
+
+Owner recovery step: quit/reopen the connected Local Codex design workspace, then
+Settings → Models & providers → Test for Codex CLI; leave security and managed
+policies unchanged. After Test succeeds, use the recorded project and confirmed
+brief for one fresh generation, retaining the failed request’s evidence. No rendered
+prototype, interaction/layout/contrast check or visual approval is claimed. Inspect
+phone/tablet, both appearances and larger text before proposing bounded native
+implementation. Private artifacts remain outside the public repository; production
+UI/backend, app records and protected working/index bytes remain unchanged.
