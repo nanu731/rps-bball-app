@@ -742,3 +742,28 @@ the data-container paths; all Documents/Application Support content hashes,8 ori
 JSONs and temporary identities stayed unchanged. The unrelated local PBX configuration
 was used unchanged. This proves installation/preservation, not new original-data UI
 acceptance. Separate UI TEST results remain synthetic and provider-scoped.
+
+### Proposed sports-ledger prototype — 2026-10-15
+
+Owner requests a separate browser-viewable design prototype before approving any
+further SwiftUI redesign. Supplied ESPN and Rutgers Prep screenshots were inspected
+and privately retained. Proposed direction: prominent but honestly incomplete matchup
+scoring, underlined section navigation, compact read-only basketball tables with
+player expansion, and a distinct comfortable individual/table editor sharing one
+in-memory draft. Native accessibility and existing collection/completion/permission
+rules remain constraints; the default system-form appearance is not the target.
+Existing DESIGN.md and DESIGN_SYSTEM.md remain authoritative until visual approval.
+
+Matt Pocock prototype guidance and five-advisor/anonymous-peer Council completed.
+Private proposal, synthetic fixtures, confirmed brief and acceptance plan are ready.
+The existing-plan Local Codex route was selected without Cloud activation, API-key
+billing, dependencies or purchases. Generation is blocked before producing files:
+“Failed to synchronize managed preferences.” The exposed connection test repeats
+this error; configuration-only reads succeed but do not prove generation. The
+workspace still reports its single run active. No duplicate run or unrequested
+cancellation, policy bypass, production UI/backend change or real-record use.
+
+No rendered prototype, interaction/layout/contrast check or visual approval is
+claimed. Resume the same recorded project/run after the connection gate is resolved;
+then inspect phone/tablet, both appearances and larger text before proposing bounded
+native implementation. Private artifacts remain outside the public repository.
