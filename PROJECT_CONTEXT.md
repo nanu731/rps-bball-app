@@ -755,27 +755,35 @@ rules remain constraints; the default system-form appearance is not the target.
 Existing DESIGN.md and DESIGN_SYSTEM.md remain authoritative until visual approval.
 
 Matt Pocock prototype guidance and five-advisor/anonymous-peer Council completed.
-Private proposal, synthetic fixtures, confirmed brief and acceptance plan are ready.
-The existing-plan Local Codex route was selected without Cloud activation, API-key
-billing, dependencies or purchases. Generation is blocked before producing files:
-“Failed to synchronize managed preferences.” At the owner’s explicit request, the
-stalled worker was cancelled; termination is verified (failed terminal status,
-child exited, zero artifacts). No replacement generation was started.
+The initial Local Codex run failed before generation; its worker was stopped only
+after explicit owner authorization. Owner restart recovered the connection Test.
+The connector transport remained closed, so the existing workspace's native controls
+ran the confirmed brief. One generation and two sequential repairs finished successfully;
+no in-flight run was duplicated. Strict additional spending stayed $0: existing-plan
+Local Codex, no Cloud activation, API-key billing, dependencies or purchases.
 
-Read-only ephemeral session startup succeeds with the installed CLI, the actual
-project folder, safe launcher flags and the installed helper; no model turns or
-session history were created by these probes. The connected Test still fails after
-worker termination. This narrows the failure to the running connection context,
-without establishing its exact cause. Managed policies, permissions, credentials
-and app settings remain unchanged. A broader write/network probe was rejected by
-automatic approval review; read-only, network-disabled comparisons were used instead.
-Desktop control timed out, so a workspace restart could not be performed safely.
+The private browser prototype now connects Game details, read-only expandable box
+scores and a spacious individual/roster editor sharing one raw draft. Actual browser
+inspection covered phone and tablet widths, light/dark and 150% text. Demonstrated
+repairs corrected dark text inheritance/placeholders, missing independent possession
+status rows, crowded phone counters, unnecessary wide larger-text stacking and an
+all-missing points subtotal that had incorrectly displayed zero. No points now shows
+Not entered; an explicit zero remains zero. Private source, references, screenshots
+and the proposed design specification remain excluded from the public repository.
 
-Owner recovery step: quit/reopen the connected Local Codex design workspace, then
-Settings → Models & providers → Test for Codex CLI; leave security and managed
-policies unchanged. After Test succeeds, use the recorded project and confirmed
-brief for one fresh generation, retaining the failed request’s evidence. No rendered
-prototype, interaction/layout/contrast check or visual approval is claimed. Inspect
-phone/tablet, both appearances and larger text before proposing bounded native
-implementation. Private artifacts remain outside the public repository; production
-UI/backend, app records and protected working/index bytes remain unchanged.
+Browser checks passed: connected navigation/explicit player editing; exact versus
+partial scoring checks and one immediate banner; missing/zero/counter behavior;
+invalid/overflow input and safe arithmetic; shared modes and saved/draft separation;
+unsaved navigation/focus recovery; simulated Save without completion/review/publication;
+loading/empty/error-Retry/pending recovery; native two-axis table scrolling and visible
+keyboard-focused Save. Sampled text/background contrast pairs pass; no page overflow
+was observed at inspected widths. Independent Standards and Spec reviews found the
+same missing-score edge case; its correction was reproduced in-browser and both
+rechecks report zero remaining findings. Browser console reported no warnings/errors.
+
+This is a synthetic, memory-only design proposal, not measured efficiency improvement,
+finished SwiftUI or release acceptance. Native Simulator/device, VoiceOver, Dynamic
+Type and software-keyboard checks remain separate. No production UI/backend, saved
+app records, credentials, permissions or protected Xcode working/index bytes changed.
+Existing DESIGN.md and DESIGN_SYSTEM.md remain authoritative; owner visual approval
+is required before a bounded native implementation. No app-wide redesign started.
