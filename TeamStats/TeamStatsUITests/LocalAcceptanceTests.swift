@@ -93,7 +93,7 @@ final class LocalAcceptanceTests: XCTestCase {
         XCTAssertTrue(text(containing: "Temporary Player 2").exists)
         replace(field(second + ".points"), with: "0")
         XCTAssertTrue(app.keyboards.firstMatch.exists)
-        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
         tap(app.buttons["Save draft"])
         XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
         XCTAssertTrue(app.navigationBars["Box-score draft"].buttons["Done"].isEnabled)
@@ -105,7 +105,7 @@ final class LocalAcceptanceTests: XCTestCase {
         let last = field(second + ".freeThrowsMissed", axis: .horizontal)
         replace(last, with: "0", axis: .horizontal)
         capture("Native table far-right field, horizontal indicator hidden")
-        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
         tap(app.buttons["Save draft"])
         tap(app.navigationBars["Box-score draft"].buttons["Done"])
         app.terminate(); app.launch(); selectTab("Local drafts"); openGame(game)
@@ -113,6 +113,26 @@ final class LocalAcceptanceTests: XCTestCase {
         XCTAssertEqual(contents(field(second + ".points")), "0")
         XCTAssertEqual(contents(field(second + ".freeThrowsMissed", axis: .horizontal)), "0")
         capture("Reopened native roster ledger")
+        if app.keyboards.firstMatch.exists { hideKeyboard() }
+        let checkHeading = app.scrollViews["box-score-roster-table"].staticTexts["Points check"].firstMatch
+        reveal(checkHeading, axis: .horizontal)
+        XCTAssertTrue(checkHeading.isHittable)
+        capture("Derived columns reachable at the end of the native ledger")
+    }
+
+    func testNativeHeaderPanMovesStatistics() {
+        app.terminate(); app.launch(); selectTab("Local drafts")
+        _ = createGame("native heading pan")
+        tap(app.buttons["Whole-roster table entry"])
+        let points = app.textFields[first + ".points"]
+        let before = points.frame.minX
+        capture("Native table before direct heading swipe")
+        app.staticTexts["Offensive rebounds"].swipeLeft(velocity: .slow)
+        let after = points.frame.minX
+        let geometry = XCTAttachment(string: "Points x before: \(before); after: \(after)")
+        geometry.lifetime = .keepAlways; add(geometry)
+        capture("Native table after direct heading swipe")
+        XCTAssertLessThan(after, before - 20, "A native heading swipe must move statistical columns")
     }
 
     func testApprovedLedgerLandscapeGeometry() {
@@ -126,9 +146,10 @@ final class LocalAcceptanceTests: XCTestCase {
         tap(app.buttons["Single-player entry"])
         replace(field(first + ".chargesDrawn"), with: "0")
         XCTAssertTrue(app.keyboards.firstMatch.exists)
-        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
         capture("Actual landscape window, keyboard-visible Save")
         tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
     }
 
     func testApprovedLargeTextRenderedLayout() {
@@ -147,10 +168,30 @@ final class LocalAcceptanceTests: XCTestCase {
         replace(field(first + ".threesMade"), with: "7")
         XCTAssertTrue(text(containing: "Check scoring").isHittable)
         XCTAssertTrue(app.keyboards.firstMatch.exists)
-        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
         capture("Maximum-text keyboard-visible Save")
         tap(app.buttons["Save draft"])
         XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+    }
+
+    func testMaximumTextRosterTraversal() {
+        app.terminate()
+        app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch(); selectTab("Local drafts")
+        _ = createGame("maximum text roster traversal")
+        tap(app.buttons["Whole-roster table entry"])
+        capture("Maximum-text first player wrapping")
+        for number in 1...5 {
+            let name = app.staticTexts["Temporary Player \(number) #\(number)"].firstMatch
+            reveal(name)
+            XCTAssertTrue(name.isHittable, "Every temporary player's wrapped identity must be reachable")
+            capture("Maximum-text roster player \(number) reached")
+            let photo = app.buttons["Review photo for Temporary Player \(number)"].firstMatch
+            reveal(photo, isInput: true)
+            XCTAssertTrue(photo.isHittable)
+            capture("Maximum-text player \(number) lower identity and adaptive photo action")
+        }
+        capture("Maximum-text fifth player wrapping after roster traversal")
     }
 
     func testPaintCountersClearingInvalidAndKeyboardSave() {
@@ -173,7 +214,7 @@ final class LocalAcceptanceTests: XCTestCase {
         XCTAssertTrue(app.buttons["Save draft"].isEnabled)
         replace(count, with: "3")
         XCTAssertTrue(app.keyboards.firstMatch.exists)
-        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
         capture("Paint keyboard Save")
         tap(app.buttons["Save draft"])
         XCTAssertTrue(text(containing: "Draft saved locally").waitForExistence(timeout: 5))
@@ -204,7 +245,7 @@ final class LocalAcceptanceTests: XCTestCase {
         }
         replace(field("\(first).chargesDrawn"), with: "0")
         XCTAssertTrue(app.keyboards.firstMatch.exists)
-        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
         capture("Large-text last field and keyboard-visible Save")
         tap(app.buttons["Save draft"])
         XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
@@ -283,7 +324,7 @@ final class LocalAcceptanceTests: XCTestCase {
         hideKeyboard()
         // Reach the bottom field of the right column, while retaining independent record numbering.
         replace(field("opponent.1.freeThrowsMissed"), with: "0")
-        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
         capture("Opponent bottom field and Save")
         tap(app.buttons["Save draft"]); tap(app.buttons["Done"])
         app.terminate(); app.launch(); openGame(game)
@@ -371,6 +412,29 @@ final class LocalAcceptanceTests: XCTestCase {
 
     private func reveal(_ element: XCUIElement, axis: Axis = .vertical, isInput: Bool = false,
                         file: StaticString = #filePath, line: UInt = #line) {
+        let table = app.scrollViews["box-score-roster-table"]
+        if axis == .horizontal, table.exists {
+            let labels = ["Points", "Offensive rebounds", "Defensive rebounds", "Assists", "Turnovers",
+                          "Steals", "Blocks", "Fouls", "Charges drawn", "Twos made", "Twos missed",
+                          "Threes made", "Threes missed", "Free throws made", "Free throws missed",
+                          "Total rebounds", "Points check"]
+            for _ in 0..<10 {
+                let viewport = table.frame
+                let identityEnd = table.staticTexts["Temporary Player 1 #1"].frame.maxX + 4
+                let target = element.frame
+                if element.isHittable, target.minX >= identityEnd, target.maxX <= viewport.maxX { return }
+                let headings = table.staticTexts.matching(NSPredicate(format: "label IN %@", labels))
+                let visible = headings.allElementsBoundByIndex.filter {
+                    let frame = $0.frame
+                    return frame.midX > identityEnd + 16 && frame.midX < viewport.maxX - 16 && $0.isHittable
+                }
+                guard let heading = visible.last else { break }
+                if target.minX < identityEnd { heading.swipeRight(velocity: .slow) }
+                else { heading.swipeLeft(velocity: .slow) }
+            }
+            // Preserve the original narrow-screen adapter when no heading fits.
+            // The heading path above has separate passing iPad evidence.
+        }
         for attempt in 0..<12 {
             if element.exists && element.isHittable {
                 if !isInput { return }
@@ -447,6 +511,11 @@ final class LocalAcceptanceTests: XCTestCase {
     }
 
     private func tap(_ element: XCUIElement, axis: Axis = .vertical) {
+        if element.label == "Save draft", element.isEnabled, app.frame.contains(element.frame) {
+            // Use the visible control; the caller must still verify an actual save receipt.
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            return
+        }
         reveal(element, axis: axis); element.tap()
     }
 
@@ -469,12 +538,13 @@ final class LocalAcceptanceTests: XCTestCase {
         let actions = app.buttons.matching(identifier: "Hide keyboard").allElementsBoundByIndex +
             app.buttons.matching(identifier: "Done").allElementsBoundByIndex
         guard let action = actions.first(where: { candidate in
-            candidate.isHittable && candidate.isEnabled &&
+            candidate.isEnabled && app.frame.contains(candidate.frame) &&
                 !navigationFrames.contains(where: { $0.intersects(candidate.frame) })
         }) else {
             XCTFail("No visible keyboard dismissal action"); return
         }
-        action.tap()
+        // iPad's floating number pad marks the visible keyboard toolbar unhittable.
+        action.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     private func replace(_ field: XCUIElement, with value: String, axis: Axis = .vertical) {

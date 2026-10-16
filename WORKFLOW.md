@@ -1720,3 +1720,36 @@ stalled, so the identified test process was interrupted. Further unchanged retri
 stopped. Mac lock blocked desktop accessibility interaction. TESTING.md contains the
 remaining one-device-at-a-time checklist. Original apps/records were never reset or
 deleted; simulator appearance was restored and private evidence retained.
+
+##2026-10-16 — native slice acceptance follow-up
+
+Continued only f294c61 acceptance. Privately preserved the current three protected
+Xcode working/index entries and174 original JSON files; no new unexpected drift.
+Diagnosed the horizontal test path with native heading swipes and bounded alternate
+adapters; no custom app gesture physics. Source repairs are restricted to native
+page sizing, maximum-text heading/space allocation and adaptive Review photo
+label fitting with the complete accessibility name retained.
+
+The final adaptive source builds as universal TeamStats UI TEST1.0(1), isolated
+bundle com.narayanlekhi.TeamStats.UIAcceptance, min26.0 on actual26.4 simulators.
+TESTING.md is the acceptance ledger; prior scoring/save/relaunch passes are not
+relabeled as final-repair execution. Final affected replays are recorded there.
+Standards0 open findings; Spec0. The landscape test now requires an actual saved
+receipt rather than accepting a tap alone; rotation itself remains unaccepted.
+
+Stopped unchanged shared/far-right retries after unreachable-control/time-bound
+results. Floating iPad number-pad screenshots showed visible controls despite
+AX-unhittable results; successful activation still requires a saved-state receipt.
+Rotation/system controls, Reduce Motion and physical iOS VoiceOver remain separate
+limits. Preserve the manual checklist; do not start another feature or repeat
+settled bootstrap/provider work. Strict$0 and existing record/authority boundaries
+remain unchanged.
+
+Final affected results: iPhone maximum-text keyboard Save/receipt and all5 lower
+identity/action traversals passed; iPad all5 lower identity/action traversals passed
+with the same repaired universal binary. Final screenshots inspected. iPad floating
+number-pad Save produced no receipt; its maximum-text case stopped on notice AX
+hittability before Save. Final far-right numeric/derived access, shared-mode Save,
+settled rotation, complete max-text notice traversal, Reduce Motion and iOS
+VoiceOver remain manual. No further unchanged UI retries. Appearance/keyboard
+behavior restored. See TESTING.md for exact actions and evidence boundaries.

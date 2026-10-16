@@ -17,6 +17,38 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
         app.terminate()
     }
 
+    func testSharedBoxScoreCalmNoticeRendering() throws {
+        let fixture = try openVerifiedTeam()
+        guard fixture.sharedGameOpponent.hasPrefix("TEST ONLY native shared scoring ") else {
+            throw EditingUIIssue.unsafeFixture
+        }
+        try tap(app.buttons["Shared games and statistics"])
+        try tap(app.staticTexts[fixture.sharedGameOpponent].firstMatch)
+        try tap(app.buttons["Player box scores"])
+        let start = app.buttons["Start player box scores draft"]
+        if start.exists { try tap(start) }
+        let points = app.textFields.matching(NSPredicate(format:
+            "identifier BEGINSWITH %@ AND identifier ENDSWITH %@", "box:", ":points")).firstMatch
+        try require(points)
+        guard points.label.hasPrefix("TEST ONLY"), points.isEnabled else { throw EditingUIIssue.unsafeFixture }
+        let playerPrefix = String(points.identifier.dropLast("points".count))
+        try replace(points, with: "4")
+        try replace(app.textFields[playerPrefix + "threesMade"], with: "7")
+        let notice = app.staticTexts["Check scoring"]
+        try require(notice)
+        XCTAssertTrue(app.frame.contains(notice.frame))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "at least 21")).firstMatch.exists)
+        capture("Shared individual calm lower-bound scoring notice")
+        try tap(app.buttons["Roster table"])
+        XCTAssertEqual(app.textFields[playerPrefix + "points"].value as? String, "4")
+        XCTAssertTrue(app.frame.contains(notice.frame))
+        XCTAssertTrue(app.buttons["Roster table"].isSelected)
+        capture("Shared roster common counters and nonblocking scoring notice")
+        try tap(app.buttons["Save draft"])
+        try require(app.staticTexts["Server confirmed all draft changes."])
+        capture("Shared contradictory draft saved with server confirmation")
+    }
+
     func testNewSharedPossessionDraftAndExplicitCompletion() throws {
         _ = try openVerifiedTeam()
         try tap(app.buttons["Shared games and statistics"])
@@ -136,7 +168,9 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
         }
         continueAfterFailure = false
         app = XCUIApplication(bundleIdentifier: "com.narayanlekhi.TeamStats.UIAcceptance")
-        app.terminate(); app.launch()
+        app.terminate()
+        app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
+        app.launch()
         try selectTab("Account")
         try require(app.staticTexts["Account verified"])
         try require(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@",
@@ -179,11 +213,14 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
                 // Their observed hittability and subsequent state assertions govern.
                 if element.elementType == .button { return }
                 let keyboardTop = app.keyboards.firstMatch.exists ? app.keyboards.firstMatch.frame.minY : app.frame.maxY
-                let navigation = app.navigationBars.allElementsBoundByIndex.last
+                let navigation = app.navigationBars["Box-score entry"].exists
+                    ? app.navigationBars["Box-score entry"] : app.navigationBars.allElementsBoundByIndex.last
                 let inToolbar = navigation?.buttons.matching(identifier: element.label).count ?? 0 > 0
                 let top = navigation?.frame.maxY ?? app.frame.minY
                 let tabs = app.tabBars.firstMatch
-                let bottom = min(keyboardTop, tabs.exists ? tabs.frame.minY : app.frame.maxY)
+                let save = app.buttons["Save draft"]
+                let saveTop = save.exists && save.isHittable ? save.frame.minY - 24 : app.frame.maxY
+                let bottom = min(keyboardTop, saveTop, tabs.exists ? tabs.frame.minY : app.frame.maxY)
                 if inToolbar || (element.frame.minY >= top && element.frame.maxY <= bottom) { return }
             }
             let containers = app.collectionViews.allElementsBoundByIndex + app.scrollViews.allElementsBoundByIndex
@@ -195,14 +232,27 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
             } : nil
             let editor = app.navigationBars["Edit play"].exists
                 ? app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) : nil
-            let surface: XCUIElement = containing ?? editor
-                ?? app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable })
-                ?? containers.last(where: { $0.isHittable }) ?? app
-            let rect = surface.frame.intersection(app.frame)
+            let boxForm = app.collectionViews["connected-box-score-player-form"]
+            let scoringHeader = app.scrollViews.containing(.staticText, identifier: "Check scoring").firstMatch
+            let inScoringHeader = scoringHeader.exists && scoringHeader.descendants(matching: element.elementType)
+                .matching(NSPredicate(format: "label == %@", element.label)).count > 0
+            let contentSurface: XCUIElement? = (boxForm.exists ? boxForm : nil) ?? containing ?? editor
+            let surface: XCUIElement
+            if inScoringHeader { surface = scoringHeader }
+            else {
+                surface = contentSurface ?? app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable })
+                    ?? containers.last(where: { $0.isHittable }) ?? app
+            }
+            let navigation = app.navigationBars["Box-score entry"].exists
+                ? app.navigationBars["Box-score entry"].frame : app.navigationBars.allElementsBoundByIndex.last?.frame ?? app.frame
+            let viewport = CGRect(x: navigation.minX, y: app.frame.minY, width: navigation.width, height: app.frame.height)
+            let rect = surface.frame.intersection(viewport)
             let tabs = app.tabBars.firstMatch
             let keyboardTop = app.keyboards.firstMatch.exists ? app.keyboards.firstMatch.frame.minY : app.frame.maxY
-            let bottom = min(rect.maxY, keyboardTop, tabs.exists && tabs.isHittable ? tabs.frame.minY : app.frame.maxY) - 24
-            let top = max(rect.minY, app.navigationBars.allElementsBoundByIndex.last?.frame.maxY ?? 0) + 24
+            let save = app.buttons["Save draft"]
+            let saveTop = save.exists && save.isHittable ? save.frame.minY - 24 : app.frame.maxY
+            let bottom = min(rect.maxY, keyboardTop, saveTop, tabs.exists && tabs.isHittable ? tabs.frame.minY : app.frame.maxY) - 24
+            let top = max(rect.minY, navigation.maxY) + 24
             let down = element.exists && element.frame.midY < top
             let origin = app.coordinate(withNormalizedOffset: .zero)
             let start = origin.withOffset(CGVector(dx: rect.midX, dy: down ? top : bottom))

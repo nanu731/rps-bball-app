@@ -320,6 +320,7 @@ enum BoxScoreEntryMode: String, CaseIterable, Identifiable {
 struct BoxScoreEditor: View {
     let game: Game
     private var gameID: UUID { game.id }
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.dismiss) private var dismiss
     @State private var mode: BoxScoreEntryMode
     @State private var selectedPlayerID = temporaryRoster[0].id
@@ -333,6 +334,8 @@ struct BoxScoreEditor: View {
     @State private var photoPlayer: TemporaryPlayer?
     @ScaledMetric(relativeTo: .body) private var countWidth = 200.0
     @ScaledMetric(relativeTo: .body) private var playerWidth = 156.0
+    @ScaledMetric(relativeTo: .body) private var reboundsWidth = 130.0
+    @ScaledMetric(relativeTo: .body) private var checkWidth = 270.0
     @FocusState private var focusedCount: String?
 
     init(game: Game, initialMode: BoxScoreEntryMode, initialPlayerID: String? = nil) {
@@ -432,6 +435,7 @@ struct BoxScoreEditor: View {
             }
         }
         .interactiveDismissDisabled(hasChanges)
+        .presentationSizing(.page)
         .task { load() }
         .sheet(item: $photoPlayer) { player in
             PhotoDraftImportSheet(targetLabel: "Selected game · \(player.name) #\(player.number)",
@@ -471,6 +475,9 @@ struct BoxScoreEditor: View {
                 Label("Temporary roster · Local draft", systemImage: "iphone").font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor)
                 Text(scoringSummary)
                 DisclosureGroup("Entry guidance") {
+                    if dynamicTypeSize.isAccessibilitySize {
+                        Text("In the roster table, swipe across for statistics and vertically for players.")
+                    }
                     Text("Blank = not entered. Enter 0 explicitly. Nonnegative whole numbers only.")
                     Text("Advanced-sheet reconciliation unavailable; possession drafts are incomplete and unreviewed.")
                         .foregroundStyle(TeamStatsStyle.secondaryText)
@@ -522,9 +529,11 @@ struct BoxScoreEditor: View {
         GeometryReader { geometry in
             let identityWidth = min(playerWidth, geometry.size.width * 0.4)
             VStack(alignment: .leading, spacing: 8) {
-                Text("Swipe for more stats.")
-                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText).padding(.horizontal)
-                BoxScoreTable(width: identityWidth + countWidth * CGFloat(BoxScoreField.allCases.count) + 400) { offset in
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Text("Swipe for more stats.")
+                        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText).padding(.horizontal)
+                }
+                BoxScoreTable(width: identityWidth + countWidth * CGFloat(BoxScoreField.allCases.count) + reboundsWidth + checkWidth) { offset in
                     HStack(spacing: 0) {
                         Text("Player").font(.caption.bold())
                             .frame(width: identityWidth, alignment: .leading)
@@ -533,8 +542,8 @@ struct BoxScoreEditor: View {
                             Text(field.label).font(.caption.bold())
                                 .frame(width: countWidth, alignment: .leading)
                         }
-                        Text("Total rebounds").frame(width: 130)
-                        Text("Points check").frame(width: 270, alignment: .leading)
+                        Text("Total rebounds").font(.caption.bold()).frame(width: reboundsWidth)
+                        Text("Points check").font(.caption.bold()).frame(width: checkWidth, alignment: .leading)
                     }.background(Color(uiColor: .secondarySystemBackground))
                 } rows: { offset in
                     VStack(spacing: 0) {
@@ -543,25 +552,34 @@ struct BoxScoreEditor: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                 Text("\(player.name) #\(player.number)").font(.headline)
                                     .fixedSize(horizontal: false, vertical: true)
-                                    Button("Review photo", systemImage: "photo") { photoPlayer = player }
-                                        .frame(minHeight: 44).accessibilityLabel("Review photo for \(player.name)")
+                                    Button { photoPlayer = player } label: {
+                                        ViewThatFits(in: .horizontal) {
+                                            Label("Review photo", systemImage: "photo")
+                                                .fixedSize(horizontal: true, vertical: false)
+                                            Image(systemName: "photo")
+                                        }
+                                        .frame(width: identityWidth, alignment: .leading)
+                                    }
+                                    .frame(minWidth: 44, minHeight: 44)
+                                    .accessibilityLabel("Review photo for \(player.name)")
                                 }
                                 .frame(width: identityWidth, alignment: .leading).padding(.vertical, 12)
                                 .background(.background).offset(x: offset).zIndex(1)
                                 ForEach(BoxScoreField.allCases, id: \.self) { field in
                                     entry(player, field).padding(.horizontal, 8).frame(width: countWidth)
                                 }
-                                Text(rebounds(player)).frame(width: 130)
+                                Text(rebounds(player)).frame(width: reboundsWidth)
                                 VStack(alignment: .leading) {
                                     if boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) == nil {
                                         ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
                                     }
-                                }.frame(width: 270, alignment: .leading)
+                                }.frame(width: checkWidth, alignment: .leading)
                             }.padding(.vertical, 8)
                             Divider()
                         }
                     }
                 }
+                .accessibilityIdentifier("box-score-roster-table")
             }
         }
     }

@@ -270,6 +270,7 @@ struct ConnectedStatEntryView: View {
                 coveredRosterSection
             }
         }
+        .accessibilityIdentifier("connected-box-score-player-form")
     }
 
     private var boxTable: some View {

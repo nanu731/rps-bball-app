@@ -535,46 +535,77 @@ was used unchanged. This proves installation/preservation, not new original-data
 acceptance. Separate UI TEST results remain synthetic and provider-scoped.
 
 
-## Approved native game ledger —2026-10-15: PARTIAL
+## Approved native game ledger —2026-10-16: PARTIAL
 
-Final isolated app: **TeamStats UI TEST**, bundle `com.narayanlekhi.TeamStats.UIAcceptance`.
-Both iPhone17/iPad(A16) use iOS/iPadOS26.4. Final builds, installs, launches and strict
-signature checks passed; deployment target26.0 is not actual26.0 runtime evidence.
+Acceptance follow-up to f294c61. Installed isolated app: **TeamStats UI TEST**,
+bundle `com.narayanlekhi.TeamStats.UIAcceptance`, version1.0(1), minimum26.0.
+The final universal simulator binary supports both device families; installed and
+launched on iPhone17 / iPad(A16), both26.4. This is not actual26.0 runtime evidence.
+
+Rendered defects repaired: insufficient maximum-text iPad roster space, oversized
+derived headings, and a phone Review photo label fragmented into character-sized
+lines. Native page sizing, scaled caption headings and relocated swipe guidance
+recover space. A native adaptive label uses the photo symbol when the full action
+label cannot fit; its complete player-specific accessibility name and minimum
+44-point target remain. No font cap, custom app gestures, data/validation change,
+dependency or redesign. Standards0 open findings; Spec0. A missing post-tap saved
+receipt assertion in the landscape test was corrected; that test is not accepted.
 
 | Check | Actual result |
 |---|---|
-| Focused Foundation/storage validation |8 executed,1 simulator file-protection skip,0 failures; missing/zero/partial/overflow subtotal regression included. |
-| Phone scoring notice and modes |Passed native partial/exact checks, appearance/removal, two-player disclosure, shared unsaved edits, counter1→0, negative blocking, draft Save and relaunch. |
-| Phone saved viewer/table |Passed expansion/selected-player editing, explicit zero, Save/Done, saved refresh, last numeric free-throw-miss column and relaunch; before final typography-only name wrapping. |
-| iPad latest maximum text |Passed portrait navigation, visible calm notice, keyboard-visible Save and saved receipt after final wrapping repair. |
-| Rendered comparison |Private phone/tablet light/dark portrait captures inspected against the approved prototype; native source reviews do not substitute for complete layout acceptance. |
-| iPad far-right input |Pending: bounded native UI pans could not reach the last field. Remote accessibility hierarchy errors also appeared. This is neither a pass nor a demonstrated app defect. |
-| Rotation |Pending: concurrent simulator runs were unreliable; phone actual-window expectation timed out and snapshots stalled. An iPad geometry assertion alone and inconsistent captures do not accept settled landscape. |
-| VoiceOver/Reduce Motion |Not performed for this slice: desktop control reported the Mac locked. |
-| Preservation |Original record hashes, stable temporary identities and all protected Xcode working/index entries checked separately; no duplicates in isolated game/player stores. |
+| Final build |Universal simulator build/install/launch passed. Both devices ran the same final repaired app binary. |
+| Final iPhone, dark, maximum text |2 cases passed: keyboard-visible contradictory draft Save with actual receipt (119.913s); all5 player identities traversed through their jerseys and fully visible adaptive actions (324.031s). Before/lower captures inspected. Tall names require vertical scrolling. |
+| Final iPad, light, maximum-text roster |Passed all5 identities and lower actions (130.530s). Captures show wrapped names/jerseys and fitting photo icons through player5. |
+| Final iPad keyboard |Normal-font coordinate Save tap dismissed the floating number pad but produced no saved receipt; case failed (29.178s). Maximum-text case stopped at notice AX-hittability (59.924s), before Save. Screenshots show the notice/Save visibly in bounds; visibility is not successful activation. No further retries or app keyboard workaround. |
+| Final column access |Not accepted. Phone bounded pans reached Free throws made; the final numeric field remained outside the viewport. Alternate replay hit its300s limit. Final iPad journey stopped at the initial Save check. All numeric/derived columns, far-right edit and reopen still need the manual check below. |
+| Latest full scoring journey, before final adaptive-label repair |Phone passed partial/exact checks, appearance/removal, two-player disclosure, mode-shared unsaved edits, counter1→0, negative blocking, draft Save and relaunch (243.477s). Not relabeled as a final-build replay after the last repair. Final phone maximum-text Save independently confirms discrepant drafts remain saveable. |
+| Shared entry |Earlier actual local-service iPad capture showed calm Check scoring with points4/threes7→at least21. Phone alternate stopped reaching Threes made. Shared mode switching and server Save remain unverified for this slice; no hosted pass inferred. |
+| Rotation |Simulator bezel rotated but content stayed sideways portrait; native Settings reproduced it. No settled landscape or app-specific defect inferred. Portrait restored. |
+| VoiceOver |Unavailable in the installed Simulator/accessibility API. Actual iOS screen-reader acceptance requires an authorized unlocked physical device, previously deferred. AX labels are not a VoiceOver pass. |
+| Reduce Motion |Desktop and alternate native Settings interaction did not enable it; switch remained0. No On-state app pass. Unchanged attempts stopped. |
+| Horizontal indicator |Axis-specific suppression retained. Still captures after panning and sampled retained pre-adaptive-repair video frames show no bar. Final-build absence during active panning remains manual; native video capture failed with SimRenderServer code2. |
+| Earlier model/storage checks |8 executed,1 simulator file-protection skip,0 failures. Not repeated: storage, arithmetic and missingness logic did not change. |
+| Preservation |174 original JSON-file hashes, stable temporary identities, protected Xcode working bytes/index entries unchanged. Original apps never reset/uninstalled. Current personal UI-state bytes and older snapshots retained; no guessed restoration. |
 
-Final normal-font source after the last name-wrapping repair built on both devices;
-the final additional rendered check was iPad portrait. Full maximum-text roster
-traversal, final phone recapture and shared-entry rendering are still unverified.
+Private results, recordings, screenshots, source fingerprints and preservation
+snapshots remain ignored under `.scratch/`. Final affected phone evidence is the
+044916657743Z run; final iPad evidence uses that same universal binary. Final phone
+dark / iPad light captures were inspected; other appearance/rotation combinations
+are not final-build passes. Phone light appearance and iPad connected-hardware-
+keyboard behavior were restored. No bootstrap repeat, original upload, backend
+activation, dependency or paid action. Local/shared separation and current-authority checks are unchanged.
+
+### Exact remaining manual checks
+
+Use only **TeamStats UI TEST** and clearly labeled TEST ONLY games. Preserve the
+original app/data; do not reset or uninstall anything to recover automation.
+
+1. On each device open a test game → Enter stats → Roster table. Swipe headings
+   through every numeric column to Free throws missed, then Total rebounds and
+   Points check. Expect readable player context and values outside the pinned
+   column, and no horizontal indicator while actively panning. Enter0 for one
+   player's final numeric field, Save, Done/reopen/relaunch: expect0 retained once.
+   On iPad explicitly record what happens with the floating number pad open:
+   one Save tap must not be called successful without a receipt. If it only
+   dismisses the pad, check the next Save tap separately and report that behavior.
+2. Rotate native Settings first and confirm content actually settles in landscape.
+   Then rotate the test app on each device: inspect header, Check scoring/disclosure,
+   both modes, columns and keyboard Save; return to portrait. Sideways portrait
+   screenshots do not pass. Restore responsive Simulator controls without resetting.
+3. With the actual isolated local services and verified synthetic account, open the
+   dedicated current-task TEST ONLY shared scoring game → Player box scores.
+   Enter points4/threes made7, other makes blank: expect at least21. Switch modes,
+   confirm4/7 remain, Save and require server confirmation. Do not complete/publish.
+4. At maximum text, scroll the entry header itself to read the entire Check scoring
+   title and affected-player details with keyboard open/closed. Check current
+   light/dark contrast and reachable controls. The phone receipt passed, but its
+   compact keyboard-visible header capture shows only part of the notice title.
+5. Turn Reduce Motion ON and visibly confirm it; repeat entry navigation, counters,
+   scrolling and Save. Expect usable native controls without decorative motion.
+   Restore the previous setting afterward.
+6. On an authorized unlocked physical device with an isolated build, enable iOS
+   VoiceOver: player/stat/value labels, missing versus zero, plus/minus bounds,
+   reading order and disclosure. Editing must not steal focus or repeatedly
+   announce the notice; discrepancies must remain saveable. Restore prior settings.
+
 No actual26.0, physical-device, hosted-service or release acceptance is claimed.
-
-### Remaining owner checks
-
-Use only clearly labeled TEST ONLY games in TeamStats UI TEST. Unlock the Mac and
-operate one Simulator at a time; preserve the original TeamStats app and all records.
-
-1. On iPad open a test game → Enter stats → Roster table. Swipe the column headings
-   to Free throws missed, enter0 for one player, Save draft with the keyboard showing,
-   then Done/reopen/relaunch. Expect0 retained, one player row, and no horizontal bar
-   during or after panning; all other columns must remain reachable.
-2. On both devices inspect light/dark and maximum text. Scroll every player/name,
-   jersey, header and statistic; confirm full identity/details can be read, mode
-   controls and keyboard Save remain reachable, and no value disappears behind the
-   pinned identity. Inspect the final phone wrapping repair in particular.
-3. Rotate each device separately, wait for a visibly settled landscape window and
-   return to portrait. Check the header, notice disclosure, both entry modes, all
-   table columns and keyboard Save for clipping or inaccessible content.
-4. Enable VoiceOver: check player/stat labels, plus/minus actions, reading order and
-   multiple-player disclosure. Editing should not steal focus or repeatedly announce
-   the notice. Enable Reduce Motion and repeat navigation/scrolling; expect native
-   controls without decorative motion. Restore the prior accessibility settings.

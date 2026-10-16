@@ -814,3 +814,38 @@ VoiceOver/Reduce Motion checks. Full maximum-text roster traversal and shared-en
 rendering remain separate checks. No simulator reset, app deletion, original upload,
 backend activation or paid service occurred. Protected Xcode bytes/index entries and
 original records remain unchanged; native acceptance, not another feature, is next.
+
+## Native slice acceptance follow-up —2026-10-16
+
+Follow-up to f294c61 only. Rendered evidence demonstrated a cramped maximum-text
+iPad roster, oversized derived headings and fragmented phone Review photo text.
+Native page sizing, scaled caption headings, moving accessibility-size swipe
+guidance into Entry guidance, and an adaptive photo icon address those specific
+gaps. The full player-specific action name and minimum44-point target remain.
+Scoring, storage, identities and server authority are unchanged.
+
+The repaired universal simulator source builds with minimum26.0; actual tests use
+26.4. TESTING.md separates final-repair results, earlier passes and exact manual
+checks. A prior full phone scoring/mode/save/relaunch journey passed before the
+last adaptive photo-label repair. Independent Standards and Spec reviews have
+zero open findings; a test receipt assertion gap was corrected.
+
+Simulator rotation also failed in native Settings; Reduce Motion could not be
+enabled through desktop or alternate XCTest controls. iOS VoiceOver needs an
+authorized physical device, previously deferred. Shared rendering has partial
+actual local-service evidence; repeated blocked interactions are parked. No
+release readiness, hosted acceptance or actual26.0/physical-device pass is claimed.
+
+All174 original JSON-file hashes, temporary identities and protected Xcode
+working/index entries are preserved. Current personal UI-state bytes and retained
+snapshots remain authoritative; no guessed restoration occurred. No original app
+reset/uninstall, original upload, bootstrap repeat, dependency or paid action.
+
+Final affected results: iPhone maximum-text keyboard Save/receipt and all5 lower
+identity/action traversals passed; iPad all5 lower identity/action traversals passed
+with the same repaired universal binary. Final screenshots inspected. iPad floating
+number-pad Save produced no receipt; its maximum-text case stopped on notice AX
+hittability before Save. Final far-right numeric/derived access, shared-mode Save,
+settled rotation, complete max-text notice traversal, Reduce Motion and iOS
+VoiceOver remain manual. No further unchanged UI retries. Appearance/keyboard
+behavior restored. See TESTING.md for exact actions and evidence boundaries.

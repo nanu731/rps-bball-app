@@ -110,3 +110,14 @@ Use scalable system type/columns and wrapping. The entry header has a shrinkable
 remains a native keyboard-aware safe-area action. Pinned identity columns are capped
 at40% of available width, leaving statistics reachable at larger text sizes. Native acceptance for this new slice is tracked separately in TESTING.md;
 prototype browser evidence alone is not native verification.
+
+Native acceptance follow-up: use page sizing for the local box-score sheet so the
+roster retains usable vertical space on iPad at accessibility sizes. Scale derived
+columns as well as numeric columns; keep their headings in the same caption style.
+At accessibility sizes place swipe guidance in Entry guidance rather than using
+additional fixed space above the roster. Do not cap system text size.
+
+In the pinned player column, use the full native Review photo label when it fits
+and the system photo icon when it does not. Keep the complete player-specific
+accessibility name and a minimum44-point target; never fragment a long action
+label into character-sized lines or cap Dynamic Type to make it fit.
