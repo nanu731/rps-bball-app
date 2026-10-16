@@ -533,3 +533,48 @@ the data-container paths; all Documents/Application Support content hashes,8 ori
 JSONs and temporary identities stayed unchanged. The unrelated local PBX configuration
 was used unchanged. This proves installation/preservation, not new original-data UI
 acceptance. Separate UI TEST results remain synthetic and provider-scoped.
+
+
+## Approved native game ledger —2026-10-15: PARTIAL
+
+Final isolated app: **TeamStats UI TEST**, bundle `com.narayanlekhi.TeamStats.UIAcceptance`.
+Both iPhone17/iPad(A16) use iOS/iPadOS26.4. Final builds, installs, launches and strict
+signature checks passed; deployment target26.0 is not actual26.0 runtime evidence.
+
+| Check | Actual result |
+|---|---|
+| Focused Foundation/storage validation |8 executed,1 simulator file-protection skip,0 failures; missing/zero/partial/overflow subtotal regression included. |
+| Phone scoring notice and modes |Passed native partial/exact checks, appearance/removal, two-player disclosure, shared unsaved edits, counter1→0, negative blocking, draft Save and relaunch. |
+| Phone saved viewer/table |Passed expansion/selected-player editing, explicit zero, Save/Done, saved refresh, last numeric free-throw-miss column and relaunch; before final typography-only name wrapping. |
+| iPad latest maximum text |Passed portrait navigation, visible calm notice, keyboard-visible Save and saved receipt after final wrapping repair. |
+| Rendered comparison |Private phone/tablet light/dark portrait captures inspected against the approved prototype; native source reviews do not substitute for complete layout acceptance. |
+| iPad far-right input |Pending: bounded native UI pans could not reach the last field. Remote accessibility hierarchy errors also appeared. This is neither a pass nor a demonstrated app defect. |
+| Rotation |Pending: concurrent simulator runs were unreliable; phone actual-window expectation timed out and snapshots stalled. An iPad geometry assertion alone and inconsistent captures do not accept settled landscape. |
+| VoiceOver/Reduce Motion |Not performed for this slice: desktop control reported the Mac locked. |
+| Preservation |Original record hashes, stable temporary identities and all protected Xcode working/index entries checked separately; no duplicates in isolated game/player stores. |
+
+Final normal-font source after the last name-wrapping repair built on both devices;
+the final additional rendered check was iPad portrait. Full maximum-text roster
+traversal, final phone recapture and shared-entry rendering are still unverified.
+No actual26.0, physical-device, hosted-service or release acceptance is claimed.
+
+### Remaining owner checks
+
+Use only clearly labeled TEST ONLY games in TeamStats UI TEST. Unlock the Mac and
+operate one Simulator at a time; preserve the original TeamStats app and all records.
+
+1. On iPad open a test game → Enter stats → Roster table. Swipe the column headings
+   to Free throws missed, enter0 for one player, Save draft with the keyboard showing,
+   then Done/reopen/relaunch. Expect0 retained, one player row, and no horizontal bar
+   during or after panning; all other columns must remain reachable.
+2. On both devices inspect light/dark and maximum text. Scroll every player/name,
+   jersey, header and statistic; confirm full identity/details can be read, mode
+   controls and keyboard Save remain reachable, and no value disappears behind the
+   pinned identity. Inspect the final phone wrapping repair in particular.
+3. Rotate each device separately, wait for a visibly settled landscape window and
+   return to portrait. Check the header, notice disclosure, both entry modes, all
+   table columns and keyboard Save for clipping or inaccessible content.
+4. Enable VoiceOver: check player/stat labels, plus/minus actions, reading order and
+   multiple-player disclosure. Editing should not steal focus or repeatedly announce
+   the notice. Enable Reduce Motion and repeat navigation/scrolling; expect native
+   controls without decorative motion. Restore the prior accessibility settings.

@@ -46,7 +46,7 @@ The interface uses system typography, purposeful SF Symbols, wrapping text and n
 - Game identity before game tasks.
 - Native text styles and adaptive semantic surfaces.
 - Aligned numeric observations, with missing values kept visible.
-- One consolidated discrepancy warning, with text and an icon.
+- One calm scoring notice, with text and an informational icon.
 - Task guidance is available without preceding every input.
 
 This is a source-derived native record, not a web theme or release acceptance.
@@ -78,8 +78,7 @@ materials are deliberately not replaced with fixed light/dark hex guesses.
 
 ### Status
 
-- **Discrepancies and errors:** adaptive error tokens accompany readable text;
-  the consolidated scoring warning includes a warning symbol.
+- **Entry discrepancies:** a restrained informational symbol and secondary supporting text identify a saveable draft inconsistency. Invalid numbers and failed operations retain actionable adaptive error text.
 - **Warning and success:** existing system orange/green roles include text or
   icons. Neither these colors nor maroon establishes authority by itself.
 
@@ -119,10 +118,12 @@ The reused spacing rhythm is the frontmatter scale; compact stacks also use
 column, 8-point vertical padding and a 44-point minimum interactive area.
 
 Box-score entry separates Scoring from Rebounds and contributions. Its header
-is independently scrollable and uses no more than 45% of the available editor
-height. The ledger table scrolls on both axes; scaled count width starts at
-132 points and player width at 190 points, while numeric input width is bounded
-at 280 points. These are measured native points, not CSS pixel breakpoints.
+is independently scrollable with a shrinkable200-point maximum. Mode controls
+stay outside it, and native layout respects the keyboard and bottom Save area. The ledger table scrolls on both axes; scaled editing columns start at200 points and player identity at156 points;
+read-only numeric columns start at76 points and player identity at164 points.
+Both identity columns are capped at40% of the available width; text wraps rather
+than covering every statistic.
+Direct numeric entry shares a row with44-point counter targets. These are measured native points, not CSS pixel breakpoints.
 
 Possession columns retain our team on the left and opponent on the right.
 Native two-axis scrolling measures the overflow rather than intercepting
@@ -169,12 +170,14 @@ explicit 0. The keyboard can be dismissed without saving or changing a value.
 
 ### Scoring discrepancy
 
-One text-and-icon warning above entry-mode controls identifies affected players.
-Individual mode scopes it to the selected player; table mode includes affected
-players. It distinguishes an exact mismatch from a partial lower-bound
-contradiction, updating immediately with shared unsaved values. Useful incomplete
-and invalid-input information remains separate; discrepancies can still be saved
-as drafts.
+One calm “Check scoring” notice above entry-mode controls identifies affected
+players. Individual mode scopes it to the selected player; table mode includes
+all affected players, with inline disclosure for multiple-player details. A small
+info symbol, native headline and secondary supporting text avoid an urgent red
+alert block. No modal, acknowledgment, focus move or explicit live announcement.
+Exact mismatches and partial lower bounds remain distinct; discrepancies are
+saveable, while invalid inputs and failed saves keep separate actionable feedback.
+This2026-10-15 owner decision supersedes the older red-warning requirement.
 
 ### Save and recovery
 
@@ -235,3 +238,20 @@ Source evidence: TeamStats/TeamStats/DesignSystem.swift, AccentColor.colorset,
 ContentView.swift, BoxScore.swift, Possession.swift, PlayerPaintTouches.swift,
 TeamStatsGuide.swift, TeamWorkspaceView.swift and PlaybookView.swift. Capture
 locations, synthetic fixtures and provider configuration remain private.
+
+## Approved native sports-ledger section —2026-10-15
+
+The approved prototype's local game/header/read-only box-score/editor flow now
+governs this bounded section. Use the maroon identity strip, dark matchup with
+explicit light text, honest entered-data subtotal/coverage, local-draft status and
+underlined section navigation. Saved read-only player rows expand supported stats
+and independently collected paint totals; Edit opens the selected player's separate
+unsaved draft. No score, roster, completion or publication is fabricated.
+
+Compact read-only columns differ from comfortable counter/text entry. Native
+horizontal indicators are hidden; vertical scrolling and indicators remain native.
+Local tables keep player identity visible using observed native scroll geometry,
+not custom gestures or synchronized scrollers. Fields keep player/stat labels,
+Dynamic Type and bottom safe-area Save. Existing shared-box entry reuses the calm
+notice/counters while preserving its server-confirmed workflow; unrelated screens
+and the legacy full local summary retain their current presentation.

@@ -11,7 +11,12 @@ final class LocalAcceptanceTests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication(bundleIdentifier: "com.narayanlekhi.TeamStats.UIAcceptance")
         XCTAssertEqual(ProcessInfo.processInfo.environment["DEVELOPER_DIR"], "/Applications/Xcode.app/Contents/Developer")
+        XCUIDevice.shared.orientation = .portrait
         app.activate()
+        let portrait = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            self.app.frame.height > self.app.frame.width
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [portrait], timeout: 8), .completed)
         selectTab("Local drafts")
     }
 
@@ -29,19 +34,25 @@ final class LocalAcceptanceTests: XCTestCase {
         tap(app.buttons["Single-player entry"])
         let points = field("\(first).points")
         XCTAssertEqual(contents(points), "")
+        tap(app.buttons[first + ".points.increase"])
+        XCTAssertEqual(contents(points), "1")
+        tap(app.buttons[first + ".points.decrease"])
+        XCTAssertEqual(contents(points), "0")
+        replace(points, with: "-1")
+        XCTAssertFalse(app.buttons["Save draft"].isEnabled)
         replace(points, with: "4")
         replace(field("\(first).threesMade"), with: "7")
         XCTAssertTrue(text(containing: "Partial lower bound:").exists)
         XCTAssertTrue(text(containing: "at least 21").exists)
         capture("Partial scoring warning")
         replace(field("\(first).threesMade"), with: "")
-        XCTAssertFalse(text(containing: "Points don’t align with made baskets.").exists)
+        XCTAssertFalse(text(containing: "Check scoring").exists)
         replace(field("\(first).twosMade"), with: "0")
         replace(field("\(first).threesMade"), with: "0")
         replace(field("\(first).freeThrowsMade"), with: "0")
         XCTAssertTrue(text(containing: "Exact mismatch:").exists)
         replace(field("\(first).points"), with: "0")
-        XCTAssertFalse(text(containing: "Points don’t align with made baskets.").exists)
+        XCTAssertFalse(text(containing: "Check scoring").exists)
         // The points field is at the top; switch modes without saving this explicit zero.
         tap(app.buttons["Roster table"])
         XCTAssertEqual(contents(field("\(first).points")), "0")
@@ -49,7 +60,8 @@ final class LocalAcceptanceTests: XCTestCase {
         replace(field("\(second).points"), with: "1")
         replace(field("\(second).twosMade", axis: .horizontal), with: "2", axis: .horizontal)
         if app.keyboards.firstMatch.exists { hideKeyboard() }
-        reveal(text(containing: "Points don’t align with made baskets."))
+        reveal(text(containing: "Check scoring"))
+        tap(app.buttons["scoring-discrepancy-warning.details"])
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@ AND label CONTAINS %@", "Temporary Player 1", "Exact mismatch:")).firstMatch.exists)
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@ AND label CONTAINS %@", "Temporary Player 2", "Partial lower bound:")).firstMatch.exists)
         XCTAssertTrue(text(containing: "Exact mismatch:").exists)
@@ -60,16 +72,85 @@ final class LocalAcceptanceTests: XCTestCase {
         XCTAssertTrue(text(containing: "Exact mismatch:").exists)
         tap(app.buttons["Save draft"])
         XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
-        tap(app.buttons["Done"])
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
         app.terminate(); app.launch()
         openGame(game)
         tap(app.buttons["Single-player entry"])
         XCTAssertEqual(contents(field("\(first).points")), "4")
         XCTAssertEqual(contents(field("\(first).threesMade")), "0")
-        tap(app.buttons["Done"])
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
         tap(app.buttons["Local game summary"])
         XCTAssertTrue(text(containing: "Local draft — incomplete and unreviewed").waitForExistence(timeout: 5))
         capture("Saved local summary")
+    }
+
+    func testApprovedBoxScoreViewerAndScrolling() {
+        let game = createGame("approved ledger")
+        tap(app.buttons["View box score"])
+        capture("Approved native saved box score, missing values")
+        tap(app.buttons["box-score.expand." + second])
+        tap(app.buttons["Edit player stats for Temporary Player 2"])
+        XCTAssertTrue(text(containing: "Temporary Player 2").exists)
+        replace(field(second + ".points"), with: "0")
+        XCTAssertTrue(app.keyboards.firstMatch.exists)
+        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Box-score draft"].buttons["Done"].isEnabled)
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
+        XCTAssertTrue(app.buttons["box-score.expand." + second].exists)
+        capture("Approved saved box score, expanded explicit zero")
+        tap(app.buttons["Enter stats"])
+        tap(app.buttons["Roster table"])
+        let last = field(second + ".freeThrowsMissed", axis: .horizontal)
+        replace(last, with: "0", axis: .horizontal)
+        capture("Native table far-right field, horizontal indicator hidden")
+        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        tap(app.buttons["Save draft"])
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
+        app.terminate(); app.launch(); selectTab("Local drafts"); openGame(game)
+        tap(app.buttons["Whole-roster table entry"])
+        XCTAssertEqual(contents(field(second + ".points")), "0")
+        XCTAssertEqual(contents(field(second + ".freeThrowsMissed", axis: .horizontal)), "0")
+        capture("Reopened native roster ledger")
+    }
+
+    func testApprovedLedgerLandscapeGeometry() {
+        let game = createGame("landscape ledger")
+        defer { XCUIDevice.shared.orientation = .portrait }
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let landscape = NSPredicate { _, _ in self.app.frame.width > self.app.frame.height }
+        let rotation = expectation(for: landscape, evaluatedWith: app)
+        wait(for: [rotation], timeout: 8)
+        XCTAssertGreaterThan(app.frame.width, app.frame.height, "Actual app window must be landscape")
+        tap(app.buttons["Single-player entry"])
+        replace(field(first + ".chargesDrawn"), with: "0")
+        XCTAssertTrue(app.keyboards.firstMatch.exists)
+        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        capture("Actual landscape window, keyboard-visible Save")
+        tap(app.buttons["Save draft"])
+    }
+
+    func testApprovedLargeTextRenderedLayout() {
+        app.terminate()
+        app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch(); selectTab("Local drafts")
+        _ = createGame("large native ledger")
+        capture("Maximum-text native game header")
+        tap(app.buttons["View box score"])
+        capture("Maximum-text read-only box score")
+        tap(app.buttons["Enter stats"])
+        tap(app.buttons["Roster table"])
+        capture("Maximum-text roster, player context and partial next column")
+        tap(app.buttons["Single player"])
+        replace(field(first + ".points"), with: "4")
+        replace(field(first + ".threesMade"), with: "7")
+        XCTAssertTrue(text(containing: "Check scoring").isHittable)
+        XCTAssertTrue(app.keyboards.firstMatch.exists)
+        XCTAssertTrue(app.buttons["Save draft"].isHittable)
+        capture("Maximum-text keyboard-visible Save")
+        tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
     }
 
     func testPaintCountersClearingInvalidAndKeyboardSave() {
@@ -108,6 +189,9 @@ final class LocalAcceptanceTests: XCTestCase {
     }
 
     func testLargeTextFieldsAndKeyboardSaveRemainReachable() {
+        app.terminate()
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch(); selectTab("Local drafts")
         let game = createGame("large-text reachability")
         tap(app.buttons["Single-player entry"])
         let fields = ["points", "twosMade", "twosMissed", "threesMade", "threesMissed",
@@ -124,8 +208,8 @@ final class LocalAcceptanceTests: XCTestCase {
         capture("Large-text last field and keyboard-visible Save")
         tap(app.buttons["Save draft"])
         XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
-        hideKeyboard()
-        tap(app.buttons["Done"])
+        if app.keyboards.firstMatch.exists { hideKeyboard() }
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
         app.terminate(); app.launch(); openGame(game)
         tap(app.buttons["Single-player entry"])
         // Search the long accessibility-size form in its actual field order,
@@ -295,7 +379,9 @@ final class LocalAcceptanceTests: XCTestCase {
                 let footer = app.otherElements["local-draft-save-controls"].firstMatch
                 let footerTop = footer.exists ? footer.frame.minY : save.exists && save.isHittable ? save.frame.minY : app.frame.maxY
                 let bottom = min(keyboardTop, footerTop)
-                let formTop = app.collectionViews.allElementsBoundByIndex.last?.frame.minY ?? 0
+                let playerForm = app.scrollViews["box-score-player-form"]
+                let formTop = playerForm.exists ? playerForm.frame.minY :
+                    app.collectionViews.allElementsBoundByIndex.last?.frame.minY ?? 0
                 let rect = element.frame
                 // A partly visible field is hittable, but its trailing typing point
                 // can lie outside an iPad sheet. Use that sheet's actual viewport.
@@ -305,9 +391,18 @@ final class LocalAcceptanceTests: XCTestCase {
             let containers = app.collectionViews.allElementsBoundByIndex + app.scrollViews.allElementsBoundByIndex
             // A lazy Form may not expose its offscreen fields yet. Prefer its collection
             // without querying the identity/frame of a virtualized offscreen row.
-            let fallback = axis != .horizontal ? app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable }) : nil
+            let playerForm = app.scrollViews["box-score-player-form"]
+            let header = app.scrollViews["box-score-entry-header"]
+            let inHeader = element.exists && header.exists && !element.identifier.isEmpty &&
+                header.descendants(matching: .any).matching(identifier: element.identifier).count > 0
+            let fallback = axis != .horizontal && inHeader ? header :
+                axis != .horizontal && playerForm.exists ? playerForm :
+                axis != .horizontal ? app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable }) : nil
             let surface: XCUIElement = fallback ?? containers.last(where: { $0.isHittable }) ?? app
-            let rect = surface.frame.intersection(app.frame)
+            let navigation = app.navigationBars.allElementsBoundByIndex.last?.frame ?? app.frame
+            let viewport = CGRect(x: navigation.minX, y: app.frame.minY,
+                                  width: navigation.width, height: app.frame.height)
+            let rect = surface.frame.intersection(viewport)
             let keyboardTop = app.keyboards.firstMatch.exists ? app.keyboards.firstMatch.frame.minY : app.frame.maxY
             let save = app.buttons["Save draft"]
             let footer = app.otherElements["local-draft-save-controls"].firstMatch
@@ -318,19 +413,32 @@ final class LocalAcceptanceTests: XCTestCase {
             let top = max(rect.minY, navigationBottom) + 16
             let origin = app.coordinate(withNormalizedOffset: .zero)
             if axis == .horizontal {
-                let rightward = attempt >= 6
-                let start = origin.withOffset(CGVector(dx: rightward ? rect.minX + 20 : rect.maxX - 20, dy: (top + bottom) / 2))
-                let end = origin.withOffset(CGVector(dx: rightward ? rect.maxX - 20 : rect.minX + 20, dy: (top + bottom) / 2))
+                let delta = element.exists ? element.frame.minX - rect.midX : 0
+                let rightward = element.exists ? delta < 0 : attempt >= 10
+                let distance = element.exists ? min(abs(delta), rect.width - 40) : rect.width - 40
+                // Column headings belong to the same native horizontal scroller;
+                // do not start a pan inside an editable text field's selection area.
+                let heading = app.staticTexts["Player"].firstMatch
+                let y = heading.exists && heading.isHittable ? heading.frame.midY : (top + bottom) / 2
+                let start = origin.withOffset(CGVector(dx: rightward ? rect.minX + 20 : rect.maxX - 20, dy: y))
+                let end = origin.withOffset(CGVector(dx: rightward ? rect.minX + 20 + distance : rect.maxX - 20 - distance, dy: y))
                 start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0)
             } else {
-                let downward = axis == .verticalUp ? attempt < 6 : attempt >= 6
+                let downward: Bool
+                if element.exists && element.frame.minY < top {
+                    downward = true
+                } else if element.exists && element.frame.maxY > bottom {
+                    downward = false
+                } else {
+                    downward = axis == .verticalUp ? attempt < 6 : attempt >= 6
+                }
                 // Collection frames extend under the software keyboard; drag only in
                 // their visible viewport, never across keyboard keys or Save.
                 let start = origin.withOffset(CGVector(dx: rect.midX, dy: downward ? top : bottom))
                 // Short drags protect an active field; ordinary navigation can span
                 // several screens at maximum text size and needs a full viewport search.
-                let available = (bottom - top) * 0.65
-                let distance = isInput ? min(100, available) : available
+                let available = (bottom - top) * 0.85
+                let distance = isInput && app.keyboards.firstMatch.exists ? min(100, available) : available
                 let end = origin.withOffset(CGVector(dx: rect.midX, dy: downward ? top + distance : bottom - distance))
                 start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0)
             }
@@ -343,6 +451,7 @@ final class LocalAcceptanceTests: XCTestCase {
     }
 
     private func field(_ id: String, axis: Axis = .vertical) -> XCUIElement {
+        if app.keyboards.firstMatch.exists { hideKeyboard() }
         let element = app.textFields[id]
         reveal(element, axis: id.hasSuffix(".points") && axis == .vertical ? .verticalUp : axis, isInput: true)
         return element
@@ -369,7 +478,7 @@ final class LocalAcceptanceTests: XCTestCase {
     }
 
     private func replace(_ field: XCUIElement, with value: String, axis: Axis = .vertical) {
-        if app.keyboards.firstMatch.exists && app.buttons["Hide keyboard"].exists {
+        if app.keyboards.firstMatch.exists {
             hideKeyboard()
         }
         reveal(field, axis: axis, isInput: true)
@@ -400,14 +509,7 @@ final class LocalAcceptanceTests: XCTestCase {
     private func openGame(_ name: String) {
         XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 15))
         tap(app.staticTexts[name].firstMatch)
-        // Native Forms virtualize offscreen rows. Search with native scrolling
-        // without asking a disappearing offscreen row for its frame.
-        let entry = app.buttons["Single-player entry"]
-        for _ in 0..<8 {
-            if entry.exists && entry.isHittable { break }
-            app.collectionViews.firstMatch.swipeUp()
-        }
-        XCTAssertTrue(entry.exists && entry.isHittable)
+        reveal(app.buttons["Single-player entry"])
     }
 
     private func capture(_ name: String) {

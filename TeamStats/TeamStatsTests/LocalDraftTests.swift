@@ -2,6 +2,19 @@ import XCTest
 @testable import TeamStats
 
 final class LocalDraftTests: XCTestCase {
+    func testGameHeaderSubtotalPreservesMissingZeroPartialAndOverflow() {
+        let missing = BoxScoreSubtotal([nil, nil])
+        XCTAssertEqual(missing.valueText, "Not entered")
+        XCTAssertEqual(missing.entered, 0)
+        let zero = BoxScoreSubtotal([nil, 0])
+        XCTAssertEqual(zero.valueText, "0")
+        XCTAssertEqual(zero.entered, 1)
+        let partial = BoxScoreSubtotal([4, 0, nil])
+        XCTAssertEqual(partial.valueText, "4")
+        XCTAssertEqual(partial.coverageText, "Entered points subtotal · 2 of 3 player totals")
+        XCTAssertEqual(BoxScoreSubtotal([Int.max, 1]).valueText, "Unavailable")
+    }
+
     @MainActor
     func testExplicitDraftSavesUseCompleteProtectionIncludingReplacement() async throws {
         #if targetEnvironment(simulator)

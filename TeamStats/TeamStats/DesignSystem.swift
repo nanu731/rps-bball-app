@@ -64,3 +64,52 @@ struct TeamTaskLabel: View {
         .accessibilityLabel(title).accessibilityHint(detail)
     }
 }
+
+/// Score context is an entered-data subtotal, never a manufactured final result.
+struct GameLedgerHeader: View {
+    let game: Game
+    let points: String
+    let coverage: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("TeamStats").font(.headline)
+                Spacer()
+                Text("After game").font(.subheadline)
+            }
+            .padding(16).foregroundStyle(.white).background(TeamStatsStyle.filledAccent)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("\(game.date.formatted(.dateTime.month().day().year())) · \(game.kind.rawValue)")
+                    .font(.subheadline).foregroundStyle(Color.white.opacity(0.8))
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: 24) { ourScore; opponentScore }
+                    VStack(alignment: .leading, spacing: 16) { ourScore; opponentScore }
+                }
+            }
+            .padding(16).foregroundStyle(.white)
+            .background(Color(white: 0.06))
+            Label("Local draft — incomplete and unreviewed", systemImage: "pencil")
+                .font(.subheadline.weight(.semibold)).padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(uiColor: .secondarySystemBackground))
+        }
+    }
+
+    private var ourScore: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Our team · \(game.venue.rawValue)").font(.headline)
+            Text(points).font(.largeTitle.bold()).monospacedDigit()
+            Text(coverage).font(.footnote)
+            Text("Not a final score").font(.footnote)
+        }.frame(minWidth: 140, maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var opponentScore: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(game.opponent).font(.headline)
+            Text("Not available").font(.title3.weight(.semibold))
+            Text("Opponent score is not collected in player box scores.").font(.footnote)
+        }.frame(minWidth: 140, maxWidth: .infinity, alignment: .leading)
+    }
+}

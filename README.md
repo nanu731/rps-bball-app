@@ -25,8 +25,11 @@ appearance, accessibility and interaction checks remain separate from contrast m
 Local game creation, temporary roster, manual stat drafts, and read-only game
 summaries are implemented. Scoring checks flag exact mismatches and proven
 partial-score contradictions. An actual isolated iPhone journey verified immediate
-consolidated warnings, multiple affected players, switching modes and saved/reopened
+consolidated scoring feedback, multiple affected players, switching modes and saved/reopened
 values. Maximum-text and remaining device checks have their own evidence limits.
+The approved native game ledger adds saved box-score viewing, explicit player editing,
+and one calm “Check scoring” notice above entry modes. Horizontal indicators are
+hidden while native table scrolling remains available. See TESTING.md for current acceptance.
 The local entry screens remain local and unreviewed; shared server workflows are separate.
 
 “Using TeamStats” is revisitable from Local games and Account. It explains local
@@ -143,7 +146,7 @@ or every current gesture has passed. See [TESTING.md](TESTING.md) for limitation
 
 | User task | Path and result |
 |---|---|
-| Local practice entry | Local drafts → Add game → game details → box-score/possession/player paint-touch drafts → Save draft → read-only summary. Saved only on this device; not official data. |
+| Local practice entry | Local drafts → Add game → Game → View box score → expand a player → Edit player stats. Individual/table entry shares one draft; a calm Check scoring notice explains proven discrepancies without blocking Save draft. Possession/player paint-touch drafts and the read-only summary remain available from Game. Saved only on this device; not official data. |
 | Join the team | Account → private server configuration → email sign-in on the same device → Team tab. Request admission if needed; pending admission grants no active-member access. SMS remains disabled. |
 | Enter shared statistics | Team → Shared games and statistics → game → editable dataset → Save → explicit completion → submit for review, or authorized publication. Server reply determines status. |
 | View accepted statistics | Shared game → accepted summary. Accepted versions drive supported metrics/reconciliation; missing inputs remain unavailable. |

@@ -787,3 +787,30 @@ Type and software-keyboard checks remain separate. No production UI/backend, sav
 app records, credentials, permissions or protected Xcode working/index bytes changed.
 Existing DESIGN.md and DESIGN_SYSTEM.md remain authoritative; owner visual approval
 is required before a bounded native implementation. No app-wide redesign started.
+
+
+## Approved native game-ledger slice —2026-10-15
+
+Implementation is in place; rendered acceptance remains PARTIAL. The owner-approved
+local Game → saved box score → explicit player editing flow uses the provisional
+maroon matchup hierarchy, honest saved subtotals, expandable read-only player rows,
+native counters and one calm Check scoring notice. This supersedes the older red
+entry-warning requirement. Only horizontal indicators are hidden; native gestures
+and vertical scrolling remain. Shared box entry reuses the notice/counter controls
+without changing server authority or dataset commands. Unrelated screens are deferred.
+
+Both final isolated26.4 builds install and launch as TeamStats UI TEST, with verified
+signatures and minimum target26.0. Model tests executed8, skipped1, failed0. Actual
+phone scoring/mode/save/relaunch and final-free-throw editing journeys passed before
+the final narrow name-wrapping patch. Final iPad dark maximum-text portrait notice,
+keyboard-visible Save and saved receipt passed after that patch. Private portrait
+screenshots were inspected against the prototype. Standards and Spec reviews have
+zero actionable source findings. See TESTING.md for precise evidence boundaries.
+
+iPad far-right input remains unverified after bounded XCTest reachability failures.
+Settled landscape is unverified: concurrent simulator trials were unreliable, phone
+rotation timed out and captures were inconsistent. Mac lock prevented desktop
+VoiceOver/Reduce Motion checks. Full maximum-text roster traversal and shared-entry
+rendering remain separate checks. No simulator reset, app deletion, original upload,
+backend activation or paid service occurred. Protected Xcode bytes/index entries and
+original records remain unchanged; native acceptance, not another feature, is next.

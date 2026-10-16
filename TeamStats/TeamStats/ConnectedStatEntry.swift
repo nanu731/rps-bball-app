@@ -28,7 +28,7 @@ struct ConnectedStatEntryView: View {
     @State private var photoTarget: ConnectedPhotoTarget?
     @FocusState private var focused: String?
     @ScaledMetric(relativeTo: .body) private var possessionColumnWidth = 340.0
-    @ScaledMetric(relativeTo: .body) private var boxColumnWidth = 110.0
+    @ScaledMetric(relativeTo: .body) private var boxColumnWidth = 200.0
 
     private var isPaired: Bool { initialDataset == .ourPossessions || initialDataset == .opponentPossessions }
     private var kinds: [ConnectedDatasetType] { isPaired ? [.ourPossessions, .opponentPossessions] : [initialDataset] }
@@ -158,18 +158,10 @@ struct ConnectedStatEntryView: View {
     @ViewBuilder private var discrepancyBanner: some View {
         let scoped = playerLabels.filter { mode == .table || $0.id.uuidString == selectedPlayerID }
         let affected = scoped.filter { boxScoreDiscrepancyDetail(boxes[$0.id.uuidString] ?? [:]) != nil }
-        if !affected.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Points don’t align with made baskets.", systemImage: "exclamationmark.triangle")
-                    .font(.headline).accessibilityAddTraits(.isHeader)
-                ForEach(affected) { player in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(player.name).fontWeight(.semibold)
-                        Text(boxScoreDiscrepancyDetail(boxes[player.id.uuidString] ?? [:]) ?? "")
-                    }.accessibilityElement(children: .combine)
-                }
-            }.foregroundStyle(TeamStatsStyle.errorText).accessibilityIdentifier("connected.scoring-discrepancy-warning")
-        }
+        ScoringNotice(discrepancies: affected.compactMap { player in
+            guard let detail = boxScoreDiscrepancyDetail(boxes[player.id.uuidString] ?? [:]) else { return nil }
+            return ScoringDiscrepancy(id: player.id.uuidString, player: player.name, detail: detail)
+        }, identifier: "connected.scoring-discrepancy-warning")
     }
 
     private func hasInvalidInputs(_ kind: ConnectedDatasetType) -> Bool {
@@ -267,7 +259,7 @@ struct ConnectedStatEntryView: View {
                             focused = nil; photoTarget = .box(player)
                         }.disabled(!editable(.boxScores))
                         ForEach(BoxScoreField.allCases, id: \.self) { field in
-                            LabeledContent(field.label) { boxEntry(player, field).frame(minWidth: 95) }
+                            VStack(alignment: .leading, spacing: 8) { Text(field.label).font(.headline); boxEntry(player, field) }
                         }
                         LabeledContent("Total rebounds", value: bufferRebounds(boxes[player.id.uuidString] ?? [:]))
                     }
@@ -312,18 +304,15 @@ struct ConnectedStatEntryView: View {
                 }.padding()
             }
         }
+        .scrollIndicators(.hidden, axes: .horizontal)
     }
 
     private func boxEntry(_ player: ConnectedRosterLabel, _ field: BoxScoreField) -> some View {
         let key = player.id.uuidString
-        return TextField("Not entered", text: Binding(get: { boxes[key]?[field.rawValue] ?? "" }, set: {
+        return BoxScoreCountEntry(text: Binding(get: { boxes[key]?[field.rawValue] ?? "" }, set: {
             boxes[key, default: [:]][field.rawValue] = $0
             changed.insert(.boxScores)
-        }), prompt: Text("Not entered").foregroundColor(TeamStatsStyle.secondaryText))
-        .keyboardType(.numberPad).textFieldStyle(.roundedBorder)
-        .focused($focused, equals: "box:\(key):\(field.rawValue)")
-        .accessibilityLabel("\(player.name), \(field.label)")
-        .frame(minHeight: 44)
+        }), label: "\(player.name), \(field.label)", identifier: "box:\(key):\(field.rawValue)", focus: $focused)
         .disabled(!editable(.boxScores))
     }
 

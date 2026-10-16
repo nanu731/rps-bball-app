@@ -147,7 +147,7 @@ pickers, alerts, and counters. Target at least 44-point interactive areas.
 Use a consistent spacing rhythm (8/16/24 points where appropriate), adapting
 for accessibility rather than forcing fixed dimensions. Numeric displays may
 use monospaced digits. Error text must have a textual/icon cue, not color alone.
-Reserve system red for errors/discrepancies with text/icons; use the confirmed maroon primary accent through documented semantic tokens.
+Reserve error red for invalid input and failed operations with text/icons. Saveable scoring discrepancies use a calm informational notice; use the confirmed maroon accent through documented semantic tokens.
 Use native scrolling, keyboard-safe Save, and accessibility labels identifying
 player/team/field. These are forward standards, not authorization for a broad
 refactor. The owner-approved consolidated scoring warning is a reusable pattern.
@@ -253,13 +253,26 @@ Confirmed manual box-score behavior:
   Missing points, invalid scoring inputs and arithmetic overflow must give honest
   incomplete/unavailable states. Misses contribute no points and are not required.
   Share the check across individual entry, roster table and summary. In entry,
-  show one red text/icon warning below the navigation title and above mode controls:
-  “Points don’t align with made baskets.” List selected-player discrepancies in
-  individual mode and all affected players in table mode, distinguishing exact
-  mismatches from partial lower bounds. Update immediately and hide when none
-  exist. Avoid repeated field warnings; retain incomplete/invalid check information.
-  Keep the header scrollable/adaptive at larger text sizes. Read-only summary
-  presentation is unchanged. Discrepancies stay saveable drafts.
+  use one restrained “Check scoring” notice near the top, above mode controls.
+  Use a small informational icon, readable native typography and restrained semantic
+  color, without a red alert block, modal or acknowledgment. Briefly explain that
+  entered points and made baskets differ. Show selected-player discrepancies in
+  individual mode and all affected players in table mode; use inline disclosure for
+  multiple-player details. Preserve exact mismatch versus partial lower-bound detail.
+  Update/remove feedback immediately without moving focus or repeatedly announcing
+  it while typing. Discrepancies remain saveable drafts; invalid numeric input and
+  save failures keep their distinct blocking/recovery behavior. Keep larger text,
+  VoiceOver, fields and Save usable. This owner decision (2026-10-15) supersedes the
+  prominent red-warning heading requirement; validation/completion rules do not change.
+- Approved first native visual slice: game-details matchup/score context, read-only
+  compact box score with expandable player details and explicit Edit, and connected
+  individual/table entry. Use the approved maroon sports-ledger hierarchy; no web
+  embedding or unrelated Account/administration/playbook/media/scouting redesign.
+  Missing scores never appear as zero; incomplete aggregates identify entered inputs.
+- Hide the horizontal scroll indicator in overflowing box-score tables using supported
+  native SwiftUI controls. Preserve horizontal swiping, vertical access, player/column
+  context, keyboard/accessibility navigation and larger text. A partial next column
+  or quiet static hint may reveal overflow; no replacement progress track or animation.
 - Game-total box-score points must agree with the corresponding team's total
   points derived from made shots on the advanced possession sheet. Perform that
   comparison only when the required matching datasets are available/complete.

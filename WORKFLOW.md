@@ -1690,3 +1690,33 @@ Type and software-keyboard checks remain separate. No production UI/backend, sav
 app records, credentials, permissions or protected Xcode working/index bytes changed.
 Existing DESIGN.md and DESIGN_SYSTEM.md remain authoritative; owner visual approval
 is required before a bounded native implementation. No app-wide redesign started.
+
+
+##2026-10-15 — approved native game-ledger implementation
+
+Implemented the bounded local game-header/read-only box-score/entry slice from
+prototype21eccd4. Owner feedback replaces the urgent red entry warning with one
+nonblocking Check scoring notice, concise exact/lower-bound details and native
+multiple-player disclosure. Horizontal indicators are hidden with native controls.
+Shared entry reuses the common notice/counters; authority and storage are unchanged.
+
+Rendered evidence exposed and repaired counter overlap, a collapsed empty check
+column, mode controls clipped inside the header, keyboard/Save underlap and an
+unchanged text-binding write that redirtied a saved draft. Native stack layout,
+reserved check-column width, guarded writes and wrapping names address those issues.
+No custom gesture physics, dependency, migration or broad redesign was introduced.
+
+Both final26.4 isolated builds/installations and signature checks passed. Focused
+Foundation checks:8 executed,1 skipped,0 failures. Phone scoring/shared-mode edits,
+missing/zero/counters, invalid blocking, Save/Done/viewer refresh, last numeric column
+and relaunch passed in the recorded runs; final typography-only repair then built on
+both devices and passed iPad maximum-text portrait notice/keyboard Save. Independent
+Standards/Spec final reviews report zero actionable source findings.
+
+Acceptance remains PARTIAL. iPad far-right native input could not be reached by the
+bounded UI adapter; no success or app defect is inferred. Concurrent rotation trials
+were not reliable acceptance; phone orientation timed out and snapshot retrieval
+stalled, so the identified test process was interrupted. Further unchanged retries
+stopped. Mac lock blocked desktop accessibility interaction. TESTING.md contains the
+remaining one-device-at-a-time checklist. Original apps/records were never reset or
+deleted; simulator appearance was restored and private evidence retained.

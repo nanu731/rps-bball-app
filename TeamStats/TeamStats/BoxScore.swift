@@ -113,6 +113,27 @@ func boxScoreSum(_ numbers: [Int]) -> Int? {
     return sum
 }
 
+struct BoxScoreSubtotal {
+    let entered: Int
+    let players: Int
+    private let sum: Int?
+
+    init(_ points: [Int?]) {
+        let known = points.compactMap { $0 }
+        entered = known.count
+        players = points.count
+        sum = boxScoreSum(known)
+    }
+
+    var valueText: String {
+        entered == 0 ? "Not entered" : sum.map(String.init) ?? "Unavailable"
+    }
+
+    var coverageText: String {
+        "Entered points subtotal · \(entered) of \(players) player totals"
+    }
+}
+
 func boxScoreShotCheck(_ values: [String: String]) -> String {
     let fields: [BoxScoreField] = [.points, .twosMade, .threesMade, .freeThrowsMade]
     let counts = fields.map { BoxScoreCount(values[$0.rawValue] ?? "") }
@@ -166,6 +187,130 @@ func boxScoreDiscrepancyDetail(_ values: [String: String]) -> String? {
     return "\(kind): \(message.dropFirst(prefix.count))"
 }
 
+struct ScoringDiscrepancy: Identifiable {
+    let id: String
+    let player: String
+    let detail: String
+}
+
+/// Informational draft feedback; invalid numbers and failed saves have separate errors.
+struct ScoringNotice: View {
+    let discrepancies: [ScoringDiscrepancy]
+    let identifier: String
+    @State private var showingDetails = false
+
+    var body: some View {
+        if !discrepancies.isEmpty {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "info.circle")
+                    .font(.subheadline)
+                    .foregroundStyle(TeamStatsStyle.secondaryText).accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Check scoring").font(.headline).accessibilityAddTraits(.isHeader)
+                        .accessibilityIdentifier(identifier)
+                    Text("Entered points and made baskets differ.")
+                        .font(.subheadline).foregroundStyle(TeamStatsStyle.secondaryText)
+                    if discrepancies.count == 1, let item = discrepancies.first {
+                        detail(item)
+                    } else {
+                        DisclosureGroup("Scoring details · \(discrepancies.count) players", isExpanded: $showingDetails) {
+                            ForEach(discrepancies) { detail($0).padding(.vertical, 4) }
+                        }
+                        .font(.subheadline)
+                        .accessibilityIdentifier("\(identifier).details")
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 8)
+        }
+    }
+
+    private func detail(_ item: ScoringDiscrepancy) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(item.player).fontWeight(.semibold)
+            Text(item.detail)
+        }
+        .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Shared by local and shared entry, using the existing blank/zero/overflow rules.
+struct BoxScoreCountEntry: View {
+    @Binding var text: String
+    let label: String
+    let identifier: String
+    let focus: FocusState<String?>.Binding
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                counter(-1)
+                TextField("Not entered", text: $text,
+                          prompt: Text("Not entered").foregroundColor(TeamStatsStyle.secondaryText))
+                    .keyboardType(.numberPad).textFieldStyle(.roundedBorder)
+                    .monospacedDigit().multilineTextAlignment(.center)
+                    .frame(minWidth: 64, maxWidth: 140, minHeight: 44)
+                    .focused(focus, equals: identifier)
+                    .accessibilityLabel(label).accessibilityIdentifier(identifier)
+                counter(1)
+            }
+            if BoxScoreCount(text) == .invalid {
+                Text("Enter a nonnegative whole number within the supported range.")
+                    .font(.caption).foregroundStyle(TeamStatsStyle.errorText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func counter(_ delta: Int) -> some View {
+        Button {
+            if let next = adjustedPossessionCount(text, by: delta) { text = next }
+        } label: {
+            Image(systemName: delta == 1 ? "plus" : "minus")
+                .frame(minWidth: 20, minHeight: 30)
+        }
+        .buttonStyle(.bordered).controlSize(.regular)
+        .frame(minWidth: 44, minHeight: 44)
+        .disabled(adjustedPossessionCount(text, by: delta) == nil)
+        .accessibilityLabel("\(delta == 1 ? "Add one" : "Subtract one"), \(label)")
+        .accessibilityIdentifier("\(identifier).\(delta == 1 ? "increase" : "decrease")")
+    }
+}
+
+/// One native horizontal scroller keeps columns aligned. Vertical scrolling is independent.
+/// Geometry pins identity cells; it never intercepts or replaces native gestures.
+struct BoxScoreTable<Header: View, Rows: View>: View {
+    let width: CGFloat
+    let header: (CGFloat) -> Header
+    let rows: (CGFloat) -> Rows
+    @State private var horizontalOffset: CGFloat = 0
+
+    init(width: CGFloat, @ViewBuilder header: @escaping (CGFloat) -> Header,
+         @ViewBuilder rows: @escaping (CGFloat) -> Rows) {
+        self.width = width
+        self.header = header
+        self.rows = rows
+    }
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            VStack(spacing: 0) {
+                header(horizontalOffset)
+                Divider()
+                ScrollView(.vertical) { rows(horizontalOffset) }
+            }
+            .frame(width: width)
+        }
+        .scrollIndicators(.hidden, axes: .horizontal)
+        .onScrollGeometryChange(for: CGFloat.self) { max(0, $0.contentOffset.x) } action: { _, value in
+            horizontalOffset = value
+        }
+    }
+}
+
 enum BoxScoreEntryMode: String, CaseIterable, Identifiable {
     case player = "Single player"
     case table = "Roster table"
@@ -186,14 +331,14 @@ struct BoxScoreEditor: View {
     @State private var saved = false
     @State private var headerHeight: CGFloat = 0
     @State private var photoPlayer: TemporaryPlayer?
-    @ScaledMetric(relativeTo: .body) private var countWidth = 132.0
-    @ScaledMetric(relativeTo: .body) private var playerWidth = 190.0
+    @ScaledMetric(relativeTo: .body) private var countWidth = 200.0
+    @ScaledMetric(relativeTo: .body) private var playerWidth = 156.0
     @FocusState private var focusedCount: String?
-    private var inputWidth: CGFloat { min(countWidth, 280) }
 
-    init(game: Game, initialMode: BoxScoreEntryMode) {
+    init(game: Game, initialMode: BoxScoreEntryMode, initialPlayerID: String? = nil) {
         self.game = game
         _mode = State(initialValue: initialMode)
+        _selectedPlayerID = State(initialValue: initialPlayerID ?? temporaryRoster[0].id)
     }
 
     private var invalidEntries: [String] {
@@ -218,25 +363,28 @@ struct BoxScoreEditor: View {
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geometry in
-                VStack(spacing: 12) {
-                    if let loadError {
-                        ContentUnavailableView {
-                            Label("Could not load box scores", systemImage: "exclamationmark.triangle")
-                        } description: {
-                            Text(loadError)
-                        } actions: {
-                            Button("Retry", action: load)
-                        }
-                    } else if loaded {
-                        ScrollView {
-                            entryHeader
-                                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
-                        }
-                        .frame(height: min(headerHeight, geometry.size.height * 0.45))
-                        .scrollBounceBehavior(.basedOnSize)
-                        if mode == .player { playerForm } else { rosterTable }
+            VStack(spacing: 12) {
+                if let loadError {
+                    ContentUnavailableView {
+                        Label("Could not load box scores", systemImage: "exclamationmark.triangle")
+                    } description: {
+                        Text(loadError)
+                    } actions: {
+                        Button("Retry", action: load)
                     }
+                } else if loaded {
+                    ScrollView {
+                        entryHeader
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
+                    }
+                    .frame(maxHeight: min(headerHeight, 200))
+                    .scrollBounceBehavior(.basedOnSize)
+                    .accessibilityIdentifier("box-score-entry-header")
+                    Picker("Entry mode", selection: $mode) {
+                        ForEach(BoxScoreEntryMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented).padding(.horizontal)
+                    if mode == .player { playerForm } else { rosterTable }
                 }
             }
             .navigationTitle("Box-score draft")
@@ -310,31 +458,15 @@ struct BoxScoreEditor: View {
         VStack(alignment: .leading, spacing: 12) {
             let players = temporaryRoster.filter { mode == .table || $0.id == selectedPlayerID }
             let affected = players.filter { boxScoreDiscrepancyDetail(drafts[$0.id] ?? [:]) != nil }
+            ScoringNotice(discrepancies: affected.compactMap { player in
+                guard let detail = boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) else { return nil }
+                return ScoringDiscrepancy(id: player.id, player: player.name, detail: detail)
+            }, identifier: "scoring-discrepancy-warning")
             VStack(alignment: .leading, spacing: 4) {
-                Text(game.opponent).font(.headline).fixedSize(horizontal: false, vertical: true)
+                Text(game.opponent).font(.subheadline.weight(.semibold)).lineLimit(1)
                 Text(game.date, format: .dateTime.month().day().year()).font(.caption)
                     .foregroundStyle(TeamStatsStyle.secondaryText)
             }
-            if !affected.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("Points don’t align with made baskets.", systemImage: "exclamationmark.triangle")
-                        .font(.headline)
-                        .accessibilityAddTraits(.isHeader)
-                    ForEach(affected) { player in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(player.name).fontWeight(.semibold)
-                            Text(boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) ?? "")
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
-                }
-                .foregroundStyle(TeamStatsStyle.errorText)
-                .accessibilityIdentifier("scoring-discrepancy-warning")
-            }
-            Picker("Entry mode", selection: $mode) {
-                ForEach(BoxScoreEntryMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
             VStack(alignment: .leading, spacing: 4) {
                 Label("Temporary roster · Local draft", systemImage: "iphone").font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor)
                 Text(scoringSummary)
@@ -351,89 +483,98 @@ struct BoxScoreEditor: View {
     }
 
     private var playerForm: some View {
-        Form {
-            Section {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
                 Picker("Player", selection: $selectedPlayerID) {
                     ForEach(temporaryRoster) { Text("\($0.name) #\($0.number)").tag($0.id) }
                 }
-            }
-            if let player = temporaryRoster.first(where: { $0.id == selectedPlayerID }) {
-                Section {
-                    ForEach([BoxScoreField.points, .twosMade, .twosMissed, .threesMade, .threesMissed, .freeThrowsMade, .freeThrowsMissed], id: \.self) { field in
-                        LabeledContent(field.label) { entry(player, field).frame(width: inputWidth) }
+                if let player = temporaryRoster.first(where: { $0.id == selectedPlayerID }) {
+                    Text("Scoring").font(.title3.bold()).accessibilityAddTraits(.isHeader)
+                    ForEach([BoxScoreField.points, .twosMade, .twosMissed, .threesMade, .threesMissed,
+                             .freeThrowsMade, .freeThrowsMissed], id: \.self) { field in
+                        entryRow(player, field)
                     }
-                } header: {
-                    Text("Scoring").foregroundStyle(Color.primary)
-                }
-                Section {
-                    ForEach([BoxScoreField.offensiveRebounds, .defensiveRebounds, .assists, .turnovers, .steals, .blocks, .fouls, .chargesDrawn], id: \.self) { field in
-                        LabeledContent(field.label) { entry(player, field).frame(width: inputWidth) }
+                    Text("Rebounds and contributions").font(.title3.bold()).accessibilityAddTraits(.isHeader)
+                    ForEach([BoxScoreField.offensiveRebounds, .defensiveRebounds, .assists,
+                             .turnovers, .steals, .blocks, .fouls, .chargesDrawn], id: \.self) { field in
+                        entryRow(player, field)
                     }
                     LabeledContent("Total rebounds", value: rebounds(player)).monospacedDigit()
-                } header: {
-                    Text("Rebounds and contributions").foregroundStyle(Color.primary)
-                }
-                if boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) == nil {
-                    Section("Points check") {
+                    if boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) == nil {
                         ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
                     }
                 }
-            }
+            }.padding(16)
+        }
+        .frame(maxHeight: .infinity).clipped()
+        .accessibilityIdentifier("box-score-player-form")
+    }
+
+    private func entryRow(_ player: TemporaryPlayer, _ field: BoxScoreField) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(field.label).font(.headline)
+            entry(player, field)
+            Divider()
         }
     }
 
     private var rosterTable: some View {
-        ScrollView([.horizontal, .vertical]) {
-            Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 12) {
-                GridRow {
-                    Text("Temporary player").frame(width: playerWidth, alignment: .leading)
-                    ForEach(BoxScoreField.allCases, id: \.self) { field in
-                        Text(field.label).foregroundStyle(Color.accentColor).frame(width: countWidth, alignment: .leading)
-                    }
-                    Text("Total rebounds").frame(width: 130)
-                    Text("Points check").frame(width: 270, alignment: .leading)
-                }.font(.caption.bold())
-                ForEach(temporaryRoster) { player in
-                    GridRow {
-                        VStack(alignment: .leading) {
-                            Text("\(player.name) #\(player.number)")
-                            Button("Review photo", systemImage: "photo") { photoPlayer = player }
-                                .frame(minHeight: 44)
-                                .accessibilityLabel("Review photo for \(player.name)")
-                        }.frame(width: playerWidth, alignment: .leading)
+        GeometryReader { geometry in
+            let identityWidth = min(playerWidth, geometry.size.width * 0.4)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Swipe for more stats.")
+                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText).padding(.horizontal)
+                BoxScoreTable(width: identityWidth + countWidth * CGFloat(BoxScoreField.allCases.count) + 400) { offset in
+                    HStack(spacing: 0) {
+                        Text("Player").font(.caption.bold())
+                            .frame(width: identityWidth, alignment: .leading)
+                            .padding(.vertical, 8).background(.background).offset(x: offset).zIndex(1)
                         ForEach(BoxScoreField.allCases, id: \.self) { field in
-                            entry(player, field).frame(width: inputWidth)
+                            Text(field.label).font(.caption.bold())
+                                .frame(width: countWidth, alignment: .leading)
                         }
-                        Text(rebounds(player)).frame(width: 130)
-                        Group {
-                            if boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) == nil {
-                                ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
-                            }
-                        }.frame(width: 270, alignment: .leading)
+                        Text("Total rebounds").frame(width: 130)
+                        Text("Points check").frame(width: 270, alignment: .leading)
+                    }.background(Color(uiColor: .secondarySystemBackground))
+                } rows: { offset in
+                    VStack(spacing: 0) {
+                        ForEach(temporaryRoster) { player in
+                            HStack(alignment: .top, spacing: 0) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                Text("\(player.name) #\(player.number)").font(.headline)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    Button("Review photo", systemImage: "photo") { photoPlayer = player }
+                                        .frame(minHeight: 44).accessibilityLabel("Review photo for \(player.name)")
+                                }
+                                .frame(width: identityWidth, alignment: .leading).padding(.vertical, 12)
+                                .background(.background).offset(x: offset).zIndex(1)
+                                ForEach(BoxScoreField.allCases, id: \.self) { field in
+                                    entry(player, field).padding(.horizontal, 8).frame(width: countWidth)
+                                }
+                                Text(rebounds(player)).frame(width: 130)
+                                VStack(alignment: .leading) {
+                                    if boxScoreDiscrepancyDetail(drafts[player.id] ?? [:]) == nil {
+                                        ShotCheckNotice(message: boxScoreShotCheck(drafts[player.id] ?? [:]))
+                                    }
+                                }.frame(width: 270, alignment: .leading)
+                            }.padding(.vertical, 8)
+                            Divider()
+                        }
                     }
                 }
-            }.padding()
+            }
         }
     }
 
     private func entry(_ player: TemporaryPlayer, _ field: BoxScoreField) -> some View {
-        TextField("Not entered", text: Binding(
+        BoxScoreCountEntry(text: Binding(
             get: { drafts[player.id]?[field.rawValue] ?? "" },
             set: {
+                guard (drafts[player.id]?[field.rawValue] ?? "") != $0 else { return }
                 drafts[player.id, default: [:]][field.rawValue] = $0
-                hasChanges = true
-                saved = false
-                saveError = nil
-            }
-        ), prompt: Text("Not entered").foregroundColor(TeamStatsStyle.secondaryText))
-        .keyboardType(.numberPad)
-        .textFieldStyle(.roundedBorder)
-        .monospacedDigit()
-        .frame(minHeight: 44)
-        .focused($focusedCount, equals: "\(player.id).\(field.rawValue)")
-        .overlay(RoundedRectangle(cornerRadius: 5).stroke(count(player, field) == .invalid ? .red : .clear))
-        .accessibilityLabel("\(player.name), \(field.label)")
-        .accessibilityIdentifier("\(player.id).\(field.rawValue)")
+                hasChanges = true; saved = false; saveError = nil
+            }), label: "\(player.name), \(field.label)",
+            identifier: "\(player.id).\(field.rawValue)", focus: $focusedCount)
     }
 
     private func count(_ player: TemporaryPlayer, _ field: BoxScoreField) -> BoxScoreCount {
@@ -479,6 +620,130 @@ struct BoxScoreEditor: View {
             saveError = nil
         } catch {
             saveError = error.localizedDescription
+        }
+    }
+}
+
+/// Saved values only. Entry remains an explicit action with its own unsaved buffer.
+struct SavedBoxScoreTable: View {
+    let records: [PlayerBoxScore]
+    let paintTouches: [PlayerPaintTouchRecord]
+    let paintError: String?
+    @Binding var expanded: Set<String>
+    let edit: (TemporaryPlayer) -> Void
+    @ScaledMetric(relativeTo: .body) private var columnWidth = 76.0
+    @ScaledMetric(relativeTo: .body) private var playerWidth = 164.0
+
+    var body: some View {
+        GeometryReader { geometry in
+            let identityWidth = min(playerWidth, geometry.size.width * 0.4)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Box score").font(.title2.bold()).accessibilityAddTraits(.isHeader)
+                Text("Saved values · Temporary roster").font(.subheadline)
+                Text("Swipe across for more statistics. Not entered is shown as —; zero stays 0.")
+                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
+                if records.isEmpty { Text("No box-score records saved for this game.").font(.subheadline) }
+                BoxScoreTable(width: identityWidth + columnWidth * CGFloat(BoxScoreField.allCases.count + 1)) { offset in
+                    HStack(spacing: 0) {
+                        Text("Player").font(.caption.bold()).frame(width: identityWidth, alignment: .leading)
+                            .padding(.vertical, 12).background(.background).offset(x: offset).zIndex(1)
+                        ForEach(BoxScoreField.allCases, id: \.self) { field in
+                            Text(abbreviation(field)).font(.caption.bold()).frame(width: columnWidth)
+                                .accessibilityLabel(field.label)
+                            if field == .points { Text("REB").font(.caption.bold()).frame(width: columnWidth).accessibilityLabel("Total rebounds") }
+                        }
+                    }.background(Color(uiColor: .secondarySystemBackground))
+                } rows: { offset in
+                    VStack(spacing: 0) {
+                        ForEach(temporaryRoster) { player in
+                            let values = records.first { $0.playerID == player.id }?.values ?? [:]
+                            HStack(spacing: 0) {
+                                Button {
+                                    if expanded.contains(player.id) { expanded.remove(player.id) }
+                                    else { expanded.insert(player.id) }
+                                } label: {
+                                    HStack(alignment: .top, spacing: 8) {
+                                        Image(systemName: expanded.contains(player.id) ? "chevron.down" : "chevron.right")
+                                            .font(.caption).accessibilityHidden(true)
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(player.name).font(.headline)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                            Text("#\(player.number)").font(.subheadline)
+                                        }
+                                    }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("\(player.name), number \(player.number), read-only details")
+                                .accessibilityValue(expanded.contains(player.id) ? "Expanded" : "Collapsed")
+                                .accessibilityIdentifier("box-score.expand.\(player.id)")
+                                .frame(width: identityWidth).padding(.vertical, 8)
+                                .background(.background).offset(x: offset).zIndex(1)
+                                ForEach(BoxScoreField.allCases, id: \.self) { field in
+                                    Text(values[field.rawValue].map(String.init) ?? "—")
+                                        .monospacedDigit().frame(width: columnWidth)
+                                        .accessibilityLabel("\(player.name), \(field.label), \(summaryCount(values[field.rawValue]))")
+                                    if field == .points {
+                                        Text(rebounds(values)).monospacedDigit().frame(width: columnWidth)
+                                            .accessibilityLabel("\(player.name), total rebounds, \(summaryRebounds(values))")
+                                    }
+                                }
+                            }
+                            Divider()
+                            if expanded.contains(player.id) {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("\(player.name) · Read-only details").font(.headline)
+                                    ShotCheckNotice(message: summaryShotCheck(values))
+                                    Text("Total rebounds: \(summaryRebounds(values))")
+                                    if let paintError {
+                                        Text("Could not load player paint touches: \(paintError). Retry from Game details.")
+                                            .foregroundStyle(TeamStatsStyle.errorText)
+                                    } else {
+                                        Text("Game-total paint touches: \(summaryCount(paintTouches.first { $0.playerID == player.id }?.total))")
+                                        Text("Independently recorded; not inferred from possessions.")
+                                            .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
+                                    }
+                                    Button("Edit player stats") { edit(player) }
+                                        .buttonStyle(.bordered).frame(minHeight: 44)
+                                        .accessibilityLabel("Edit player stats for \(player.name)")
+                                }
+                                .padding(16).frame(width: max(0, min(geometry.size.width, 640)), alignment: .leading)
+                                .background(.background).offset(x: offset)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Divider()
+                            }
+                        }
+                    }
+                }
+                DisclosureGroup("Stat abbreviations") {
+                    Text(BoxScoreField.allCases.map { "\(abbreviation($0)): \($0.label)" }.joined(separator: "; "))
+                    Text("REB: offensive plus defensive rebounds; both inputs are required.")
+                }.font(.footnote)
+            }.padding(.horizontal, 16).padding(.vertical, 12)
+        }
+    }
+
+    private func rebounds(_ values: [String: Int]) -> String {
+        guard let offensive = values["offensiveRebounds"], let defensive = values["defensiveRebounds"] else { return "—" }
+        return boxScoreSum([offensive, defensive]).map(String.init) ?? "Unavailable"
+    }
+
+    private func abbreviation(_ field: BoxScoreField) -> String {
+        switch field {
+        case .points: "PTS"
+        case .offensiveRebounds: "ORB"
+        case .defensiveRebounds: "DRB"
+        case .assists: "AST"
+        case .turnovers: "TO"
+        case .steals: "STL"
+        case .blocks: "BLK"
+        case .fouls: "PF"
+        case .chargesDrawn: "CHG"
+        case .twosMade: "2PM"
+        case .twosMissed: "2P miss"
+        case .threesMade: "3PM"
+        case .threesMissed: "3P miss"
+        case .freeThrowsMade: "FTM"
+        case .freeThrowsMissed: "FT miss"
         }
     }
 }

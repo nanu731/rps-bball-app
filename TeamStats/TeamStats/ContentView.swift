@@ -295,57 +295,125 @@ private struct NewGameView: View {
 private struct GameDetailsView: View {
     let game: Game
     @State private var entryMode: BoxScoreEntryMode?
+    @State private var entryPlayerID: String?
     @State private var showingPossessions = false
     @State private var showingPlayerPaintTouches = false
     @State private var showingSummary = false
+    @State private var showingBoxScore = false
+    @State private var expandedPlayers: Set<String> = []
+    @State private var boxes: [PlayerBoxScore] = []
+    @State private var paint: [PlayerPaintTouchRecord] = []
+    @State private var possessions: [PossessionRecord] = []
+    @State private var errors: [String: String] = [:]
+    @State private var loaded = false
+    @State private var headerHeight: CGFloat = 0
+
+    private var subtotal: BoxScoreSubtotal {
+        BoxScoreSubtotal(temporaryRoster.map { player in boxes.first { $0.playerID == player.id }?.values["points"] })
+    }
 
     var body: some View {
-        Form {
-            Section {
-                GameIdentity(opponent: game.opponent,
-                    date: game.date.formatted(.dateTime.month().day().year()),
-                    venue: game.venue.rawValue, kind: game.kind.rawValue, location: "On this device")
-                Label("Local draft — incomplete and unreviewed", systemImage: "pencil")
-                    .font(.subheadline)
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                ScrollView {
+                    GameLedgerHeader(game: game,
+                        points: !loaded ? "Loading" : errors["box"] == nil ? subtotal.valueText : "Unavailable",
+                        coverage: errors["box"] == nil ? subtotal.coverageText : "Could not load box scores")
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
+                }
+                .frame(height: min(headerHeight, geometry.size.height * 0.4))
+                .scrollBounceBehavior(.basedOnSize)
+                HStack(spacing: 0) {
+                    sectionButton("Game", selected: !showingBoxScore) { showingBoxScore = false }
+                    sectionButton("Box score", selected: showingBoxScore) { showingBoxScore = true }
+                    sectionButton("Enter stats", selected: entryMode != nil) { entryMode = .player }
+                }
+                Divider()
+                if showingBoxScore {
+                    if let error = errors["box"] {
+                        ContentUnavailableView {
+                            Label("Could not load box scores", systemImage: "exclamationmark.triangle")
+                        } description: { Text(error) } actions: { Button("Retry", action: reload) }
+                    } else if loaded {
+                        SavedBoxScoreTable(records: boxes, paintTouches: paint, paintError: errors["paint"],
+                            expanded: $expandedPlayers) { player in
+                                entryPlayerID = player.id; entryMode = .player
+                            }
+                    } else { ProgressView("Loading saved box scores") }
+                } else { gameTasks }
             }
-            Section("Enter after-game statistics") {
-                Button { entryMode = .player } label: {
-                    TeamTaskLabel(title: "Single-player entry", detail: "One player's box score at a time", symbol: "person")
-                }
-                Button { entryMode = .table } label: {
-                    TeamTaskLabel(title: "Whole-roster table entry", detail: "The same box scores in a scrollable table", symbol: "tablecells")
-                }
-                Button { showingPlayerPaintTouches = true } label: {
-                    TeamTaskLabel(title: "Player paint-touch drafts", detail: "Independently recorded game totals", symbol: "person.crop.rectangle")
-                }
-                Button { showingPossessions = true } label: {
-                    TeamTaskLabel(title: "Possession draft entry", detail: "Our team left; opponent right", symbol: "rectangle.split.2x1")
-                }
+            .background(Color(uiColor: .systemBackground))
+        }
+        .navigationTitle("Game").navigationBarTitleDisplayMode(.inline)
+        .task { reload() }
+        .sheet(item: $entryMode, onDismiss: reload) { mode in
+            BoxScoreEditor(game: game, initialMode: mode, initialPlayerID: entryPlayerID)
+        }
+        .sheet(isPresented: $showingPossessions, onDismiss: reload) { PossessionEditor(game: game) }
+        .sheet(isPresented: $showingPlayerPaintTouches, onDismiss: reload) { PlayerPaintTouchEditor(game: game) }
+        .sheet(isPresented: $showingSummary) { GameSummaryView(game: game) }
+    }
+
+    private func sectionButton(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title).font(.subheadline.weight(selected ? .bold : .regular))
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .overlay(alignment: .bottom) { if selected { Rectangle().frame(height: 3) } }
+        }
+        .buttonStyle(.plain).accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private var gameTasks: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Game details").font(.title2.bold()).accessibilityAddTraits(.isHeader)
+                Button("View box score") { showingBoxScore = true }
+                    .buttonStyle(.borderedProminent).tint(TeamStatsStyle.filledAccent).frame(minHeight: 44)
+                task("Single-player entry", "One player's box score at a time", "person") { entryMode = .player }
+                task("Whole-roster table entry", "The same draft, with native table scrolling", "tablecells") { entryMode = .table }
+                task("Player paint-touch drafts", "Independently recorded game totals", "person.crop.rectangle") { showingPlayerPaintTouches = true }
+                task("Possession draft entry", "Our team left; opponent right", "rectangle.split.2x1") { showingPossessions = true }
+                task("Local game summary", "All saved observations, read-only", "list.bullet.rectangle") { showingSummary = true }
+                Text("Record status").font(.title3.bold()).accessibilityAddTraits(.isHeader)
+                status("Player box scores", detail: "\(boxes.count) saved records", error: errors["box"])
+                status("Our-team possessions", detail: "\(possessions.filter { $0.team == .ours }.count) records entered", error: errors["possessions"])
+                status("Opponent possessions", detail: "\(possessions.filter { $0.team == .opponent }.count) records entered", error: errors["possessions"])
+                status("Player paint touches", detail: "\(paint.filter { $0.total != nil }.count) entered totals", error: errors["paint"])
+                Text("Saved on this device, not submitted or published. Possession counts are records entered, not final game possessions.")
+                    .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
+            }.padding(16)
+        }
+    }
+
+    private func task(_ title: String, _ detail: String, _ symbol: String, action: @escaping () -> Void) -> some View {
+        VStack(spacing: 8) {
+            Button(action: action) { TeamTaskLabel(title: title, detail: detail, symbol: symbol) }.buttonStyle(.plain)
+            Divider()
+        }
+    }
+
+    private func status(_ title: String, detail: String, error: String?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.headline)
+            if let error {
+                Text("Could not load: \(error)").foregroundStyle(TeamStatsStyle.errorText)
+                Button("Retry saved observations", action: reload).frame(minHeight: 44)
+            } else {
+                Text(loaded ? detail : "Loading saved records")
+                Text("Incomplete · Unreviewed").foregroundStyle(TeamStatsStyle.secondaryText)
             }
-            Section {
-                Button { showingSummary = true } label: {
-                    TeamTaskLabel(title: "Local game summary", detail: "Read-only saved values and scoring checks", symbol: "list.bullet.rectangle")
-                }
-            } header: {
-                Text("Inspect saved observations")
-            } footer: {
-                Text("Saved only on this device. Drafts are not published. Advanced-sheet reconciliation is unavailable.")
-            }
-        }
-        .navigationTitle("Game")
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $entryMode) { mode in
-            BoxScoreEditor(game: game, initialMode: mode)
-        }
-        .sheet(isPresented: $showingPossessions) {
-            PossessionEditor(game: game)
-        }
-        .sheet(isPresented: $showingPlayerPaintTouches) {
-            PlayerPaintTouchEditor(game: game)
-        }
-        .sheet(isPresented: $showingSummary) {
-            GameSummaryView(game: game)
-        }
+            Divider()
+        }.font(.subheadline)
+    }
+
+    private func reload() {
+        do { boxes = try BoxScoreStorage.load(from: BoxScoreStorage.fileURL()).filter { $0.gameID == game.id }; errors["box"] = nil }
+        catch { boxes = []; errors["box"] = error.localizedDescription }
+        do { paint = try PlayerPaintTouchStorage.load(from: PlayerPaintTouchStorage.fileURL()).filter { $0.gameID == game.id }; errors["paint"] = nil }
+        catch { paint = []; errors["paint"] = error.localizedDescription }
+        do { possessions = try PossessionStorage.load(from: PossessionStorage.fileURL()).filter { $0.gameID == game.id }; errors["possessions"] = nil }
+        catch { possessions = []; errors["possessions"] = error.localizedDescription }
+        loaded = true
     }
 }
 

@@ -10,7 +10,7 @@ Logo: `TODO_TEAM_LOGO`; final icon: `TODO_APP_ICON`; actual roster: `TODO_TEAM_R
 | Filled accent | #7A1F3D | #B4496B | TeamStatsStyle.filledAccent; prominent buttons/switches with white labels |
 | Surfaces/primary text | System semantic colors | System semantic colors | Native lists/forms; avoid maroon backgrounds everywhere |
 | Supporting text | Primary at75% opacity | Primary at75% opacity | TeamStatsStyle.secondaryText; readable metadata and explicit missing-value prompts |
-| Error/discrepancy text | #B42318 | #FF6961 | TeamStatsStyle.errorText plus text/icon; errors never rely only on color |
+| Error text | #B42318 | #FF6961 | TeamStatsStyle.errorText plus text/icon; saveable entry discrepancies use the calm notice below |
 | Warning/success | System orange/green plus text/icon | Same semantic roles | Brand color never establishes a validation or permission state |
 
 Calculated WCAG sRGB contrast: light accent against white10.04:1; dark text accent
@@ -82,3 +82,31 @@ with native vertical button fallback and inspected readable labels. Rotation rem
 unverified: the strict actual-window test retained portrait dimensions. This limited
 view does not accept every entry screen, VoiceOver or Reduce Motion. Original
 simulator appearance/text settings were restored; no broad redesign was inferred.
+
+## Approved game-ledger slice —2026-10-15
+
+Owner approved prototype21eccd4 with a calmer scoring notice and hidden horizontal
+indicator. Local game details now use a maroon product strip, explicit white-on-dark
+matchup, honest saved points subtotal/coverage and local provenance, then underlined
+Game/Box score/Enter stats sections. No opponent box-score total is invented. Other
+app screens retain their existing design until separately scoped.
+
+Entry uses one “Check scoring” informational notice first in its scrollable header,
+above compact game context and mode controls. A small native
+info symbol, headline and secondary supporting text replace the urgent red block.
+Single-player details are immediate; multiple-player detail uses native disclosure.
+No modal, acknowledgment, focus move, custom live announcement or save blocking
+for discrepancies. Invalid numbers/save failures retain actionable error treatment.
+
+Read-only tables separate compact aligned observations from explicit player editing.
+Numeric entry adds native plus/minus buttons and retains direct typing/missingness.
+Horizontal scroll indicators are hidden with the axis-specific SwiftUI modifier;
+vertical indicators remain native. One horizontal scroller aligns headings and rows;
+geometry pins local player identity without replacing native gestures. Header stays
+outside vertical row scrolling. All cells label player/stat/value accessibly.
+
+Use scalable system type/columns and wrapping. The entry header has a shrinkable
+200-point maximum; expanded notice scrolls, mode controls stay outside it, and Save
+remains a native keyboard-aware safe-area action. Pinned identity columns are capped
+at40% of available width, leaving statistics reachable at larger text sizes. Native acceptance for this new slice is tracked separately in TESTING.md;
+prototype browser evidence alone is not native verification.
