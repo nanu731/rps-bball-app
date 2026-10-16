@@ -849,3 +849,24 @@ hittability before Save. Final far-right numeric/derived access, shared-mode Sav
 settled rotation, complete max-text notice traversal, Reduce Motion and iOS
 VoiceOver remain manual. No further unchanged UI retries. Appearance/keyboard
 behavior restored. See TESTING.md for exact actions and evidence boundaries.
+
+## Two failed native checks —2026-10-16
+
+The c1ada8d follow-up resolves the iPad Save failure as system-keypad popup
+dismissal, not persistence failure; explicit Save retains input and cold-reopens
+without duplicate keys. Static notice hit testing was an invalid readability
+criterion. Focused phone evidence also exposed a35-point header after the long
+saved receipt wrapped: “Saved locally” now preserves room while retaining the full
+accessibility receipt. Scoring, storage, identities and server authority are unchanged.
+
+Final build and five focused iPhone/iPad26.4 journeys passed; complete enlarged
+text lines, keyboard Save, relaunch values and final numeric/derived columns were
+inspected. TESTING.md holds exact results, source/artifact identity and remaining
+limits. Original records and protected working/staged entries are preserved;
+pre-session personal UI-state drift is retained privately. Strict$0 remains.
+
+Accessibility Inspector supports Simulator reading-order/speech inspection; actual
+VoiceOver acceptance is separate. Installed26.4 lacks the newer Simulator controls;
+a capable toolchain or separately authorized device is the remaining prerequisite.
+Rotation, shared-entry and Reduce Motion checks were not repeated. Physical and
+actual26.0 testing stay deferred. No release-readiness claim or next feature.

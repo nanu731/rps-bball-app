@@ -1753,3 +1753,24 @@ hittability before Save. Final far-right numeric/derived access, shared-mode Sav
 settled rotation, complete max-text notice traversal, Reduce Motion and iOS
 VoiceOver remain manual. No further unchanged UI retries. Appearance/keyboard
 behavior restored. See TESTING.md for exact actions and evidence boundaries.
+
+## Two failed native checks —2026-10-16
+
+Diagnosed from c1ada8d with isolated synthetic drafts and private preservation
+snapshots. First iPad Save-coordinate tap dismissed a system modal keypad; explicit
+Save then persisted0 with one stable game/player key. Corrected tests distinguish
+popup dismissal, visible keyboard, keyboard Done, static exposure and activation.
+Offscreen static heading hit testing was removed; real inputs retain hit checks.
+
+A focused phone replay demonstrated that a wrapping saved confirmation compressed
+the notice viewport to35 points. The sole app repair shows “Saved locally,” retaining
+the original full accessibility receipt. The failing maximum-text replay then passed,
+and complete glyph lines were inspected. Final builds and five affected device
+journeys passed (phone2, iPad3); direct records verify reopening, unique keys and
+unchanged unrelated data. See TESTING.md for durations and exact evidence boundaries.
+
+Protected working/index entries and all174 original JSON hashes remain intact;
+current versus older personal UI-state snapshots are retained without restoration.
+iPad keyboard preference restored. No dependency, backend/provider action or cost.
+Simulator Inspector reading-order/speech support was checked separately from actual
+VoiceOver; broader acceptance and deferred physical/26.0 checks remain open.

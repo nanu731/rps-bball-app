@@ -120,6 +120,37 @@ final class LocalAcceptanceTests: XCTestCase {
         capture("Derived columns reachable at the end of the native ledger")
     }
 
+    func testFloatingKeypadSaveAndReopen() throws {
+        try XCTSkipIf(app.frame.width < 600, "Floating numeric keypad diagnosis requires the iPad destination")
+        let game = createGame("keypad save diagnosis")
+        tap(app.buttons["Single-player entry"])
+        replace(field(first + ".points"), with: "0")
+        let popup = app.otherElements["PopoverDismissRegion"]
+        let hadPopup = popup.exists
+        XCTAssertTrue(hadPopup, "This diagnosis requires the iPad floating numeric keypad")
+        capture("Before Save with native keypad")
+        let save = app.buttons["Save draft"]
+        XCTAssertTrue(save.isEnabled)
+        XCTAssertTrue(app.frame.contains(save.frame))
+        save.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        if hadPopup {
+            XCTAssertTrue(popup.waitForNonExistence(timeout: 3))
+            XCTAssertTrue(text(containing: "Unsaved changes").exists)
+            XCTAssertEqual(contents(app.textFields[first + ".points"]), "0")
+            XCTAssertFalse(text(containing: "Draft saved on this device.").exists)
+            capture("First tap dismissed system popup, input retained")
+            XCTAssertTrue(save.isHittable)
+            save.tap()
+        }
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        capture("Actual save receipt after native keypad dismissal")
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
+        app.terminate(); app.launch(); selectTab("Local drafts"); openGame(game)
+        tap(app.buttons["Single-player entry"])
+        XCTAssertEqual(contents(field(first + ".points")), "0")
+        capture("Explicit zero reopened after cold launch")
+    }
+
     func testNativeHeaderPanMovesStatistics() {
         app.terminate(); app.launch(); selectTab("Local drafts")
         _ = createGame("native heading pan")
@@ -133,6 +164,26 @@ final class LocalAcceptanceTests: XCTestCase {
         geometry.lifetime = .keepAlways; add(geometry)
         capture("Native table after direct heading swipe")
         XCTAssertLessThan(after, before - 20, "A native heading swipe must move statistical columns")
+    }
+
+    func testFinalStatColumnsSaveAndReopen() {
+        let game = createGame("final column acceptance")
+        tap(app.buttons["Whole-roster table entry"])
+        replace(field(first + ".freeThrowsMissed", axis: .horizontal), with: "0", axis: .horizontal)
+        capture("Final numeric column edited, keyboard Save reachable")
+        tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
+        app.terminate(); app.launch(); selectTab("Local drafts"); openGame(game)
+        tap(app.buttons["Whole-roster table entry"])
+        XCTAssertEqual(contents(field(first + ".freeThrowsMissed", axis: .horizontal)), "0")
+        let table = app.scrollViews["box-score-roster-table"]
+        for label in ["Total rebounds", "Points check"] {
+            let heading = table.staticTexts[label].firstMatch
+            reveal(heading, axis: .horizontal)
+            XCTAssertTrue(heading.exists)
+            capture("Final derived column: \(label)")
+        }
     }
 
     func testApprovedLedgerLandscapeGeometry() {
@@ -156,22 +207,96 @@ final class LocalAcceptanceTests: XCTestCase {
         app.terminate()
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch(); selectTab("Local drafts")
-        _ = createGame("large native ledger")
-        capture("Maximum-text native game header")
-        tap(app.buttons["View box score"])
-        capture("Maximum-text read-only box score")
-        tap(app.buttons["Enter stats"])
-        tap(app.buttons["Roster table"])
-        capture("Maximum-text roster, player context and partial next column")
-        tap(app.buttons["Single player"])
+        let game = createGame("maximum notice diagnosis")
+        tap(app.buttons["Single-player entry"])
         replace(field(first + ".points"), with: "4")
         replace(field(first + ".threesMade"), with: "7")
-        XCTAssertTrue(text(containing: "Check scoring").isHittable)
+        let notice = app.staticTexts["scoring-discrepancy-warning"]
+        XCTAssertTrue(notice.exists)
+        XCTAssertEqual(notice.label, "Check scoring")
         XCTAssertTrue(app.keyboards.firstMatch.exists)
         XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
         capture("Maximum-text keyboard-visible Save")
+        // The iPad number pad is a system popup: dismiss it before interacting
+        // with the underlying header. Static information needs no activation.
+        let hadKeypadPopup = app.otherElements["PopoverDismissRegion"].exists
+        dismissKeypadPopup()
         tap(app.buttons["Save draft"])
         XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        if !hadKeypadPopup { XCTAssertTrue(app.keyboards.firstMatch.exists) }
+        inspectScrollableScoringNotice(hadKeypadPopup ? "iPad popup dismissed" : "Keyboard visible")
+        hideKeyboard()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
+        inspectScrollableScoringNotice("Keyboard closed")
+        replace(field(first + ".points"), with: "4")
+        XCTAssertTrue(app.buttons["Save draft"].isEnabled, "Discrepancies remain saveable")
+        tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
+        app.terminate(); app.launch(); selectTab("Local drafts"); openGame(game)
+        tap(app.buttons["Single-player entry"])
+        XCTAssertEqual(contents(field(first + ".points")), "4")
+        XCTAssertEqual(contents(field(first + ".threesMade")), "7")
+    }
+
+    private func inspectScrollableScoringNotice(_ phase: String) {
+        let header = app.scrollViews["box-score-entry-header"]
+        let parts = [app.staticTexts["scoring-discrepancy-warning"],
+                     text(containing: "Entered points and made baskets differ."),
+                     text(containing: "Partial lower bound:")]
+        XCTAssertTrue(parts.allSatisfy(\.exists))
+        XCTAssertTrue(parts[2].label.contains("Temporary Player 1"))
+        XCTAssertTrue(parts[2].label.contains("at least 21"))
+        func viewport() -> CGRect {
+            let frame = header.frame
+            let top = max(frame.minY, app.navigationBars["Box-score draft"].frame.maxY)
+            return CGRect(x: frame.minX, y: top, width: frame.width, height: frame.maxY - top)
+        }
+        func pan(up: Bool) {
+            let rect = viewport()
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            let before = parts[0].frame.minY
+            origin.withOffset(CGVector(dx: rect.midX, dy: rect.minY + rect.height * (up ? 0.75 : 0.25)))
+                .press(forDuration: 0.05,
+                       thenDragTo: origin.withOffset(CGVector(dx: rect.midX, dy: rect.minY + rect.height * (up ? 0.25 : 0.75))),
+                       withVelocity: .slow, thenHoldForDuration: 0.2)
+            XCTAssertGreaterThan(abs(parts[0].frame.minY - before), 1, "Stop if the header gesture makes no progress")
+        }
+        for _ in 0..<32 {
+            if parts[0].frame.minY >= viewport().minY - 2 { break }
+            pan(up: false)
+        }
+        // Track overlapping visible text bands across native scrolling. A tall
+        // static paragraph need not fit in one viewport or have a tap point.
+        var coveredThrough = Array(repeating: CGFloat(0), count: parts.count)
+        for step in 0..<32 {
+            let visible = viewport()
+            XCTAssertGreaterThan(visible.height, 20)
+            for (index, part) in parts.enumerated() {
+                let frame = part.frame
+                XCTAssertGreaterThan(frame.width, 0)
+                XCTAssertGreaterThan(frame.height, 0)
+                XCTAssertGreaterThanOrEqual(frame.minX, visible.minX)
+                XCTAssertLessThanOrEqual(frame.maxX, visible.maxX)
+                let start = max(0, visible.minY - frame.minY)
+                let end = min(frame.height, visible.maxY - frame.minY)
+                if end > start, start <= coveredThrough[index] + 2 {
+                    coveredThrough[index] = max(coveredThrough[index], end)
+                }
+            }
+            capture("\(phase) scoring text band \(step)")
+            if parts.enumerated().allSatisfy({ coveredThrough[$0.offset] >= $0.element.frame.height - 2 }) { return }
+            pan(up: true)
+        }
+        XCTFail("The full scoring notice was not readable through native header scrolling")
+    }
+
+    private func dismissKeypadPopup() {
+        let popup = app.otherElements["PopoverDismissRegion"]
+        guard popup.exists else { return }
+        let title = app.navigationBars["Box-score draft"]
+        title.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(popup.waitForNonExistence(timeout: 3), "System keypad popup must dismiss without changing the draft")
     }
 
     func testMaximumTextRosterTraversal() {
@@ -414,26 +539,28 @@ final class LocalAcceptanceTests: XCTestCase {
                         file: StaticString = #filePath, line: UInt = #line) {
         let table = app.scrollViews["box-score-roster-table"]
         if axis == .horizontal, table.exists {
-            let labels = ["Points", "Offensive rebounds", "Defensive rebounds", "Assists", "Turnovers",
-                          "Steals", "Blocks", "Fouls", "Charges drawn", "Twos made", "Twos missed",
-                          "Threes made", "Threes missed", "Free throws made", "Free throws missed",
-                          "Total rebounds", "Points check"]
-            for _ in 0..<10 {
+            for _ in 0..<28 {
                 let viewport = table.frame
                 let identityEnd = table.staticTexts["Temporary Player 1 #1"].frame.maxX + 4
                 let target = element.frame
-                if element.isHittable, target.minX >= identityEnd, target.maxX <= viewport.maxX { return }
-                let headings = table.staticTexts.matching(NSPredicate(format: "label IN %@", labels))
-                let visible = headings.allElementsBoundByIndex.filter {
-                    let frame = $0.frame
-                    return frame.midX > identityEnd + 16 && frame.midX < viewport.maxX - 16 && $0.isHittable
-                }
-                guard let heading = visible.last else { break }
-                if target.minX < identityEnd { heading.swipeRight(velocity: .slow) }
-                else { heading.swipeLeft(velocity: .slow) }
+                if isInput, target.minX >= identityEnd, target.maxX <= viewport.maxX, element.isHittable { return }
+                if !isInput, target.midX >= identityEnd, target.midX <= viewport.maxX { return }
+                // Anchor to this editor's header, never the saved viewer behind
+                // its sheet. Traverse the available viewport, not a short label.
+                let heading = table.staticTexts["Player"].firstMatch.frame
+                let left = identityEnd + 8
+                let right = viewport.maxX - 16
+                guard right - left >= 44, viewport.contains(CGPoint(x: right, y: heading.midY)) else { break }
+                let towardStart = target.minX < identityEnd
+                let origin = app.coordinate(withNormalizedOffset: .zero)
+                origin.withOffset(CGVector(dx: towardStart ? left : right, dy: heading.midY))
+                    .press(forDuration: 0.05,
+                           thenDragTo: origin.withOffset(CGVector(dx: towardStart ? right : left, dy: heading.midY)),
+                           withVelocity: .slow, thenHoldForDuration: 0)
+                if abs(element.frame.minX - target.minX) < 1 { break }
             }
-            // Preserve the original narrow-screen adapter when no heading fits.
-            // The heading path above has separate passing iPad evidence.
+            XCTFail("Native editor header did not reveal the requested column", file: file, line: line)
+            return
         }
         for attempt in 0..<12 {
             if element.exists && element.isHittable {
@@ -512,6 +639,7 @@ final class LocalAcceptanceTests: XCTestCase {
 
     private func tap(_ element: XCUIElement, axis: Axis = .vertical) {
         if element.label == "Save draft", element.isEnabled, app.frame.contains(element.frame) {
+            dismissKeypadPopup()
             // Use the visible control; the caller must still verify an actual save receipt.
             element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             return

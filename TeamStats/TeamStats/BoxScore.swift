@@ -418,12 +418,12 @@ struct BoxScoreEditor: View {
                     if let saveError { Text("Could not save draft: \(saveError)").font(.caption) }
                     ViewThatFits(in: .horizontal) {
                         HStack {
-                            Text(saveStatus).font(.caption).fixedSize()
+                            saveStatusLabel.fixedSize()
                             Spacer(minLength: 8)
                             saveButton.fixedSize()
                         }
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(saveStatus).font(.caption)
+                            saveStatusLabel
                             saveButton.frame(maxWidth: .infinity)
                         }
                     }
@@ -449,6 +449,12 @@ struct BoxScoreEditor: View {
     private var saveStatus: String {
         hasChanges ? "Unsaved changes" :
             saved ? "Draft saved on this device." : "Local draft"
+    }
+
+    private var saveStatusLabel: some View {
+        Text(saved && !hasChanges ? "Saved locally" : saveStatus)
+            .font(.caption)
+            .accessibilityLabel(saveStatus)
     }
 
     private var saveButton: some View {

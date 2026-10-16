@@ -575,37 +575,112 @@ are not final-build passes. Phone light appearance and iPad connected-hardware-
 keyboard behavior were restored. No bootstrap repeat, original upload, backend
 activation, dependency or paid action. Local/shared separation and current-authority checks are unchanged.
 
+### Two-check diagnosis —2026-10-16 (baseline c1ada8d)
+
+Both original failures are resolved. The scoped changes are in BoxScore.swift
+(saved-status presentation only) and LocalAcceptanceTests.swift. No storage,
+validation, identity, authority or notice-activation behavior changed.
+
+- **iPad floating keypad:** `PopoverDismissRegion` consumes the first outside tap
+  at Save. It dismisses the system popup, retaining0 and Unsaved changes; it does
+  not invoke Save. Explicit Save afterward produces the receipt, enables Done
+  and survives cold launch. The adapter now dismisses the popup deliberately
+  before testing Save, never treating dismissal as success or blindly retrying
+  a write. The destination-specific probe skips iPhone rather than requiring an
+  iPad-only popup there.
+- **Maximum-text Check scoring:** a tap-point assertion was inappropriate as the
+  sole static-text readability check, especially behind a modal keypad. Acceptance
+  now checks full accessible labels, overlapping visible bands below the navigation
+  overlay and actual screenshots. Failed reset gestures previously began under
+  that overlay; corrected gestures stop if they make no progress.
+- **Additional demonstrated phone defect:** after Save, the long two-line receipt
+  compressed the visible header to about35 points, clipping enlarged glyphs.
+  The visible receipt is now “Saved locally”; its full “Draft saved on this device.”
+  accessibility label remains. Before/after native replay failed/passed respectively.
+  Inspected final bands show every complete enlarged glyph line, including the
+  entire title, explanation, player and partial lower bound4→at least21. Nothing
+  became tappable, urgent, modal or blocking.
+- **Horizontal columns:** the adapter anchors to the active editor header rather
+  than a background viewer/short label. Offscreen static heading hit testing threw
+  an invalid-activation-point error; static traversal now uses geometry plus
+  inspected captures. Numeric inputs still require actual hittability. Both devices
+  reached/edited the last free-throw-miss field, saved0, cold-reopened0, and reached
+  readable Total rebounds and Points check. The app's native scroll code is unchanged.
+
+Final repaired-build evidence (actual26.4, minimum target26.0):
+
+| Device | Focused journey | Result |
+| --- | --- | --- |
+| iPhone17 | Maximum text: visible keyboard and confirmed keyboard-closed full notice traversal, editing/Save, saved/reopened4/7 | PASS188.001s |
+| iPhone17 | Final numeric0, Save/receipt, relaunch0 and derived columns | PASS152.418s |
+| iPad(A16) | Maximum text: full notice after popup dismissal and after keyboard Done, editing/Save, saved/reopened4/7 | PASS95.514s |
+| iPad(A16) | Final numeric0, Save/receipt, relaunch0 and derived columns | PASS99.610s |
+| iPad(A16) | Floating-keypad first-tap dismissal preserves0, explicit Save, cold reopening0 | PASS37.109s |
+
+Final build commands passed; five final focused journeys passed, no failures/skips.
+Screenshots and private QA crop indexes were inspected; originals remain unchanged.
+iPad popup dismissal hides numeric keys while retaining focus/toolbar: it is not
+claimed as full traversal through an open modal keypad. Phone full traversal with
+visible keys was verified. Current captures use light appearance; earlier dark,
+rotation/shared/Reduce Motion evidence is not relabeled as final-build execution.
+
+Installed: **TeamStats UI TEST1.0(1)**, isolated bundle
+`com.narayanlekhi.TeamStats.UIAcceptance`, iPhone/iPad26.4. Both installed builds'
+app-code fingerprints match; executable signing bytes may differ. Private source
+fingerprints tie the repair to this commit. Result bundles are retained under
+`.scratch/teamstats-native-two-checks-20261016/`.
+
+Direct JSON readback confirms unique game/player keys after repeated Save/edit,
+reopened4/7 and explicit0, and unchanged pre-existing isolated games/scores and
+other existing draft stores. All174 original JSON hashes, temporary identities,
+and protected Xcode working/index entries are preserved. The current personal
+UI state differed by2 bytes from the retained older snapshot at task entry; both
+versions were retained without guessed restoration, with no further task drift.
+iPad hardware-keyboard connection restored. No reset, uninstall, original upload,
+provider activation, dependency or paid action.
+
+The final strict signature check diagnosed a stale Assets.car seal from the
+preceding phone build after the incremental destination switch. The generated
+artifact was retained, then re-signed locally with existing metadata. App code,
+assets and other resources stayed identical; both isolated installations passed
+strict signature verification and launch, with all saved JSON bytes unchanged.
+This packaging repair does not relabel unrelated UI checks as passed.
+Independent final reviews: Standards0 remaining findings; Spec0.
+
+### Supported accessibility testing options
+
+Installed Xcode26.4/Simulator26.4 menus have no VoiceOver toggle and installed
+XCTest headers expose no VoiceOver controller. Accessibility Inspector is installed;
+its target menu and navigation/speak controls were inspected. Apple documents
+[Simulator reading-order inspection and spoken descriptions](https://developer.apple.com/documentation/accessibility/inspecting-the-accessibility-of-screens).
+These and XCTest accessibility exposure are useful partial evidence, not actual
+VoiceOver gestures, focus recovery or announcement acceptance. Apple's
+[assistive-technology guide](https://developer.apple.com/documentation/accessibility/performing-accessibility-testing-for-your-app)
+describes physical VoiceOver testing; newer toolchains may add Simulator support,
+so hardware is not asserted as a universal prerequisite. No toolchain download or
+system VoiceOver activation was attempted in this bounded task.
+
 ### Exact remaining manual checks
 
 Use only **TeamStats UI TEST** and clearly labeled TEST ONLY games. Preserve the
 original app/data; do not reset or uninstall anything to recover automation.
 
-1. On each device open a test game → Enter stats → Roster table. Swipe headings
-   through every numeric column to Free throws missed, then Total rebounds and
-   Points check. Expect readable player context and values outside the pinned
-   column, and no horizontal indicator while actively panning. Enter0 for one
-   player's final numeric field, Save, Done/reopen/relaunch: expect0 retained once.
-   On iPad explicitly record what happens with the floating number pad open:
-   one Save tap must not be called successful without a receipt. If it only
-   dismisses the pad, check the next Save tap separately and report that behavior.
-2. Rotate native Settings first and confirm content actually settles in landscape.
-   Then rotate the test app on each device: inspect header, Check scoring/disclosure,
-   both modes, columns and keyboard Save; return to portrait. Sideways portrait
-   screenshots do not pass. Restore responsive Simulator controls without resetting.
-3. With the actual isolated local services and verified synthetic account, open the
-   dedicated current-task TEST ONLY shared scoring game → Player box scores.
-   Enter points4/threes made7, other makes blank: expect at least21. Switch modes,
-   confirm4/7 remain, Save and require server confirmation. Do not complete/publish.
-4. At maximum text, scroll the entry header itself to read the entire Check scoring
-   title and affected-player details with keyboard open/closed. Check current
-   light/dark contrast and reachable controls. The phone receipt passed, but its
-   compact keyboard-visible header capture shows only part of the notice title.
-5. Turn Reduce Motion ON and visibly confirm it; repeat entry navigation, counters,
-   scrolling and Save. Expect usable native controls without decorative motion.
-   Restore the previous setting afterward.
-6. On an authorized unlocked physical device with an isolated build, enable iOS
-   VoiceOver: player/stat/value labels, missing versus zero, plus/minus bounds,
-   reading order and disclosure. Editing must not steal focus or repeatedly
-   announce the notice; discrepancies must remain saveable. Restore prior settings.
+1. Rotate native Settings first and confirm content settles in landscape. Then
+   rotate the test app on each device: inspect header, notice/disclosure, both
+   modes, columns and keyboard Save; return to portrait. Sideways portrait is not
+   a pass. Check the hidden horizontal indicator while actively panning; current
+   captures/source establish the modifier and reachable columns, not every frame.
+2. With actual isolated local services and the verified synthetic account, open
+   the dedicated TEST ONLY shared scoring game → Player box scores. Enter
+   points4/threes made7, other makes blank: expect at least21. Switch modes,
+   confirm4/7 remain and require server Save confirmation. Do not complete/publish.
+3. Turn Reduce Motion ON and visibly confirm it; repeat entry navigation,
+   counters, scrolling and Save. Expect usable native controls. Restore the
+   previous setting afterward.
+4. Use a supported VoiceOver-capable Simulator/toolchain or separately authorized
+   physical test build for actual screen-reader acceptance: player/stat/value
+   labels, missing versus zero, counter bounds, reading order and disclosure.
+   Editing must retain focus without repeated notice announcements; discrepancies
+   stay saveable. Inspector speech alone does not pass this check.
 
-No actual26.0, physical-device, hosted-service or release acceptance is claimed.
+Actual26.0 and physical-device testing remain deferred. No release-readiness claim.
