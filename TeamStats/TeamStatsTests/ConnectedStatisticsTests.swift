@@ -5,6 +5,62 @@ import Supabase
 
 @MainActor
 final class ConnectedStatisticsTests: XCTestCase {
+    func testIncompatibleRequiredSnapshotFailsClosedAndRetryRecovers() async throws {
+        for fault in [StatisticsFixture.Compatibility.unknownStatus, .missingField, .changedType] {
+            let fixture = StatisticsFixture(); fixture.compatibility = fault
+            let model = fixture.model(); await model.loadGames()
+            let game = try XCTUnwrap(model.games.first)
+            await model.loadGame(game)
+            XCTAssertFalse(model.didLoadGame)
+            XCTAssertEqual(model.issue, .invalidResponse)
+            XCTAssertTrue(model.versions.isEmpty)
+            XCTAssertTrue(model.datasets.isEmpty)
+            XCTAssertNil(model.confirmation)
+            fixture.compatibility = nil
+            await model.loadGame(game)
+            XCTAssertTrue(model.didLoadGame)
+            XCTAssertEqual(model.ownVersions.count, 1)
+            XCTAssertNil(model.issue)
+            XCTAssertFalse(fixture.commands.contains { $0.name == "stats_save_drafts" })
+        }
+    }
+    func testMissingMandatoryBackendCapabilityIsUnavailableRatherThanEmptySuccess() async {
+        for fault in [StatisticsFixture.Compatibility.missingFunction, .missingTable] {
+            let fixture = StatisticsFixture(); fixture.compatibility = fault
+            let model = fixture.model(); await model.loadGames()
+            XCTAssertFalse(model.didLoadGames)
+            XCTAssertEqual(model.issue, .server)
+            XCTAssertTrue(model.games.isEmpty)
+            fixture.compatibility = nil
+            await model.loadGames()
+            XCTAssertTrue(model.didLoadGames)
+            XCTAssertEqual(model.games.count, 1)
+        }
+    }
+    func testOptionalBackendFailurePreservesStatsAndAdditiveResponseRemainsCompatible() async throws {
+        for fault in [StatisticsFixture.Compatibility.missingExport, .signingConfiguration, .additive] {
+            let fixture = StatisticsFixture(); fixture.compatibility = fault
+            let model = fixture.model(); await model.loadGames()
+            await model.loadGame(try XCTUnwrap(model.games.first))
+            let ids = model.versions.map(\.id)
+            await model.loadExportStatus()
+            XCTAssertTrue(model.didLoadGame)
+            XCTAssertEqual(model.versions.map(\.id), ids)
+            XCTAssertNil(model.issue)
+            if fault == .additive {
+                XCTAssertTrue(model.didLoadExportStatus)
+                XCTAssertEqual(model.exportStatus.map(\.state), [.queued, .failed, .delivered])
+            } else {
+                XCTAssertFalse(model.didLoadExportStatus)
+                XCTAssertEqual(model.exportIssue, .server)
+            }
+            fixture.compatibility = nil
+            await model.loadExportStatus()
+            XCTAssertTrue(model.didLoadExportStatus)
+            XCTAssertNil(model.exportIssue)
+            XCTAssertFalse(fixture.commands.contains { $0.name == "stats_save_drafts" })
+        }
+    }
     func testBlockedFailingDiagnosticsCannotDelayOrChangeConfirmedDraftSave() async throws {
         let entered = expectation(description: "sink entered")
         let release = DispatchSemaphore(value: 0)
@@ -119,30 +175,32 @@ final class ConnectedStatisticsTests: XCTestCase {
         XCTAssertEqual(model.exportStatus.count, 3)
     }
     func testDeniedCurrentOwnerExportResponseConcealsProtectedStatistics() async throws {
-        let fixture = StatisticsFixture()
-        let model = fixture.model()
-        await model.loadGames()
-        await model.loadGame(try XCTUnwrap(model.games.first))
-        XCTAssertTrue(model.access?.isOwner == true)
-        XCTAssertFalse(model.versions.isEmpty)
-        fixture.denyNextExport()
-        await model.loadExportStatus()
-        XCTAssertEqual(fixture.exportRequestCount, 1)
-        XCTAssertEqual(model.issue, .denied)
-        XCTAssertFalse(model.didLoadGames)
-        XCTAssertTrue(model.games.isEmpty)
-        XCTAssertFalse(model.didLoadGame)
-        XCTAssertNil(model.selectedGame)
-        XCTAssertNil(model.access)
-        XCTAssertTrue(model.roster.isEmpty)
-        XCTAssertTrue(model.versions.isEmpty)
-        XCTAssertTrue(model.datasets.isEmpty)
-        XCTAssertTrue(model.editRequests.isEmpty)
-        XCTAssertTrue(model.exportOutbox.isEmpty)
-        XCTAssertFalse(model.didLoadExportStatus)
-        XCTAssertTrue(model.exportStatus.isEmpty)
-        XCTAssertFalse(model.isLoadingExportStatus)
-        XCTAssertEqual(fixture.commands.filter { $0.name == "stats_export_status" }.count, 1)
+        for code in ["42501", "PGRST301", "PGRST302", "PGRST303"] {
+            let fixture = StatisticsFixture(); fixture.denialCode = code
+            let model = fixture.model()
+            await model.loadGames()
+            await model.loadGame(try XCTUnwrap(model.games.first))
+            XCTAssertTrue(model.access?.isOwner == true)
+            XCTAssertFalse(model.versions.isEmpty)
+            fixture.denyNextExport()
+            await model.loadExportStatus()
+            XCTAssertEqual(fixture.exportRequestCount, 1)
+            XCTAssertEqual(model.issue, .denied)
+            XCTAssertFalse(model.didLoadGames)
+            XCTAssertTrue(model.games.isEmpty)
+            XCTAssertFalse(model.didLoadGame)
+            XCTAssertNil(model.selectedGame)
+            XCTAssertNil(model.access)
+            XCTAssertTrue(model.roster.isEmpty)
+            XCTAssertTrue(model.versions.isEmpty)
+            XCTAssertTrue(model.datasets.isEmpty)
+            XCTAssertTrue(model.editRequests.isEmpty)
+            XCTAssertTrue(model.exportOutbox.isEmpty)
+            XCTAssertFalse(model.didLoadExportStatus)
+            XCTAssertTrue(model.exportStatus.isEmpty)
+            XCTAssertFalse(model.isLoadingExportStatus)
+            XCTAssertEqual(fixture.commands.filter { $0.name == "stats_export_status" }.count, 1)
+        }
     }
     func testGameDiscoveryAndStableIdentityRetryUseServerRows() async throws {
         let fixture = StatisticsFixture()
@@ -158,50 +216,52 @@ final class ConnectedStatisticsTests: XCTestCase {
         XCTAssertEqual(model.games.count, 1)
     }
     func testDeniedMutationKeepsCachedMetadataConcealedAcrossFailedReloadUntilAuthorizedRead() async throws {
-        let fixture = StatisticsFixture()
-        let model = fixture.model()
-        await model.loadGames()
-        let game = try XCTUnwrap(model.games.first)
-        await model.loadGame(game)
-        let version = try XCTUnwrap(model.ownVersions.first)
-        let retainedEntries = try version.boxScores()
-        let save = try ConnectedDraftSave(version: version, boxScores: retainedEntries, coveredRoster: version.coveredRoster)
-        fixture.denyNextSave()
-        let saved = await model.saveDraftBatch([save])
-        XCTAssertFalse(saved)
-        XCTAssertEqual(model.issue, .denied)
-        XCTAssertFalse(model.didLoadGames)
-        XCTAssertTrue(model.games.isEmpty)
-        XCTAssertFalse(model.didLoadGame)
-        XCTAssertNil(model.selectedGame)
-        XCTAssertNil(model.access)
-        XCTAssertTrue(model.versions.isEmpty)
-        XCTAssertTrue(model.roster.isEmpty)
+        for code in ["42501", "PGRST301", "PGRST302", "PGRST303"] {
+            let fixture = StatisticsFixture(); fixture.denialCode = code
+            let model = fixture.model()
+            await model.loadGames()
+            let game = try XCTUnwrap(model.games.first)
+            await model.loadGame(game)
+            let version = try XCTUnwrap(model.ownVersions.first)
+            let retainedEntries = try version.boxScores()
+            let save = try ConnectedDraftSave(version: version, boxScores: retainedEntries, coveredRoster: version.coveredRoster)
+            fixture.denyNextSave()
+            let saved = await model.saveDraftBatch([save])
+            XCTAssertFalse(saved)
+            XCTAssertEqual(model.issue, .denied)
+            XCTAssertFalse(model.didLoadGames)
+            XCTAssertTrue(model.games.isEmpty)
+            XCTAssertFalse(model.didLoadGame)
+            XCTAssertNil(model.selectedGame)
+            XCTAssertNil(model.access)
+            XCTAssertTrue(model.versions.isEmpty)
+            XCTAssertTrue(model.roster.isEmpty)
 
-        fixture.setReadsUnavailable(true)
-        await model.reload()
-        XCTAssertEqual(model.issue, .server)
-        XCTAssertFalse(model.didLoadGames)
-        XCTAssertTrue(model.games.isEmpty)
-        XCTAssertFalse(model.didLoadGame)
-        XCTAssertNil(model.selectedGame)
-        XCTAssertTrue(model.versions.isEmpty)
-        // Editor-owned values are outside the model's concealed server snapshot.
-        XCTAssertNil(retainedEntries.first?.values["points"])
-        XCTAssertEqual(retainedEntries.first?.values["twosMade"], 0)
+            fixture.setReadsUnavailable(true)
+            await model.reload()
+            XCTAssertEqual(model.issue, .server)
+            XCTAssertFalse(model.didLoadGames)
+            XCTAssertTrue(model.games.isEmpty)
+            XCTAssertFalse(model.didLoadGame)
+            XCTAssertNil(model.selectedGame)
+            XCTAssertTrue(model.versions.isEmpty)
+            // Editor-owned values are outside the model's concealed server snapshot.
+            XCTAssertNil(retainedEntries.first?.values["points"])
+            XCTAssertEqual(retainedEntries.first?.values["twosMade"], 0)
 
-        fixture.setReadsUnavailable(false)
-        await model.reload()
-        XCTAssertNil(model.issue)
-        XCTAssertTrue(model.didLoadGame)
-        XCTAssertEqual(model.selectedGame?.id, game.id)
-        XCTAssertEqual(model.ownVersions.first?.id, version.id)
-        XCTAssertFalse(model.didLoadGames)
-        // Discovery has its own explicit recovery; a game read never guesses a team list.
-        await model.loadGames()
-        XCTAssertTrue(model.didLoadGames)
-        XCTAssertEqual(model.games.first?.id, game.id)
-        XCTAssertEqual(fixture.commands.filter { $0.name == "stats_save_drafts" }.count, 1)
+            fixture.setReadsUnavailable(false)
+            await model.reload()
+            XCTAssertNil(model.issue)
+            XCTAssertTrue(model.didLoadGame)
+            XCTAssertEqual(model.selectedGame?.id, game.id)
+            XCTAssertEqual(model.ownVersions.first?.id, version.id)
+            XCTAssertFalse(model.didLoadGames)
+            // Discovery has its own explicit recovery; a game read never guesses a team list.
+            await model.loadGames()
+            XCTAssertTrue(model.didLoadGames)
+            XCTAssertEqual(model.games.first?.id, game.id)
+            XCTAssertEqual(fixture.commands.filter { $0.name == "stats_save_drafts" }.count, 1)
+        }
     }
     func testTransientReloadBeforeAnyDenialDoesNotRevokePreviouslyConfirmedDiscovery() async throws {
         let fixture = StatisticsFixture()
@@ -495,6 +555,11 @@ private let statsSecondVersionID = UUID(uuidString: "AAAAAAAA-AAAA-4AAA-8AAA-AAA
 private let statsPossessionID = UUID(uuidString: "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB")!
 // Synthetic HTTP responses verify the real SDK/model seam, not deployed authorization or delivery.
 private final class StatisticsFixture: @unchecked Sendable {
+    enum Compatibility { case unknownStatus, missingField, changedType, missingFunction, missingTable, missingExport, signingConfiguration, additive }
+    var compatibility: Compatibility?
+
+    var denialCode = "42501"
+    private var denialStatus: Int { denialCode == "42501" ? 403 : 401 }
     enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination, exportStates, exportFailureOnce, delayedExport, supersededRecovery, recoveryLostReply, recoveryReadFailure, seasonRequests }
     private let mode: Mode
     private let gameRequestCount: Int
@@ -553,6 +618,26 @@ private final class StatisticsFixture: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         requests += 1
         let name = request.url!.lastPathComponent
+        if (compatibility == .missingFunction && name == "team_access") || (compatibility == .missingExport && name == "stats_export_status") {
+            return json(["code": "PGRST202", "message": "TEST ONLY unavailable function"], status: 404)
+        }
+        if compatibility == .missingTable && name == "games" {
+            return json(["code": "42P01", "message": "TEST ONLY unavailable table"], status: 404)
+        }
+        if compatibility == .signingConfiguration && name == "stats_export_status" {
+            return json(["code": "PGRST300", "message": "TEST ONLY unavailable signing configuration"], status: 500)
+        }
+        if name == "stat_versions", let compatibility {
+            var row = version(status: versionStatus, revision: revision)
+            switch compatibility {
+            case .unknownStatus: row["status"] = "future_status"
+            case .missingField: row.removeValue(forKey: "id")
+            case .changedType: row["revision"] = "one"
+            case .additive: row["future_field"] = ["unrecognized": true]
+            default: break
+            }
+            return json([row])
+        }
         if request.httpMethod == "GET" && readsUnavailable {
             return json(["code": "XX000", "message": "Synthetic transient read failure"], status: 500)
         }
@@ -564,13 +649,13 @@ private final class StatisticsFixture: @unchecked Sendable {
             commandValues.append(Command(name: name, parameters: parameters))
             if name == "stats_save_drafts" && denySave {
                 denySave = false
-                return json(["code": "42501", "message": "Synthetic denied save"], status: 403)
+                return json(["code": denialCode, "message": "Synthetic denied save"], status: denialStatus)
             }
             if name == "stats_export_status" {
                 exportReads += 1
                 if denyExport {
                     denyExport = false
-                    return json(["code": "42501", "message": "Synthetic revoked export access"], status: 403)
+                    return json(["code": denialCode, "message": "Synthetic revoked export access"], status: denialStatus)
                 }
                 if mode == .delayedExport {
                     return json([statsGameID, statsOtherGameID].map { gameID in
@@ -589,6 +674,7 @@ private final class StatisticsFixture: @unchecked Sendable {
                      "game_id": fixtureGameID.uuidString, "accepted_version_id": statsVersionID.uuidString,
                      "dataset_type": "box_scores", "publication_generation": index + 1,
                      "state": state, "attempts": index,
+                     "next_attempt_at": "2026-10-17T12:00:00Z", "retry_state": "eligible", "cycle_attempts": index,
                      "error_code": state == "failed" ? "budget_disabled" : NSNull(),
                      "delivered_at": state == "delivered" ? "2026-10-11T12:00:00Z" : NSNull()] as [String: Any]
                 })

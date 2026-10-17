@@ -226,16 +226,18 @@ final class AdministrationTests: XCTestCase {
     }
 
     func testConfirmedIdentityDenialConcealsPreviousProtectedSnapshot() async {
-        let fixture = AdministrationFixture()
-        let model = fixture.model()
-        await load(model)
-        XCTAssertFalse(model.administratorIdentities.isEmpty)
-        fixture.denyIdentities()
-        await model.reload()
-        XCTAssertEqual(model.issue, .denied)
-        XCTAssertNil(model.access)
-        XCTAssertTrue(model.memberships.isEmpty)
-        XCTAssertTrue(model.administratorIdentities.isEmpty)
+        for code in ["42501", "PGRST301", "PGRST302", "PGRST303"] {
+            let fixture = AdministrationFixture(); fixture.denialCode = code
+            let model = fixture.model()
+            await load(model)
+            XCTAssertFalse(model.administratorIdentities.isEmpty)
+            fixture.denyIdentities()
+            await model.reload()
+            XCTAssertEqual(model.issue, .denied)
+            XCTAssertNil(model.access)
+            XCTAssertTrue(model.memberships.isEmpty)
+            XCTAssertTrue(model.administratorIdentities.isEmpty)
+        }
     }
 
     func testReloadingTeamContextClearsPreviousPrivateContacts() async {
@@ -264,6 +266,8 @@ private let fixtureEnvelopeID = UUID(uuidString: "55555555-5555-4555-8555-555555
 // Synthetic HTTP responses exercise the real SDK/model seam. They do not prove
 // deployed Supabase authorization, verified owner identity or provider delivery.
 private final class AdministrationFixture: @unchecked Sendable {
+    var denialCode = "42501"
+    private var denialStatus: Int { denialCode == "42501" ? 403 : 401 }
     enum Mode { case standard, empty, staleOnce, denied, reloadFailureOnce, pagination, delegate, ambiguousSave, ordinary, identityFailureOnce }
     struct Command { let name: String; let parameters: [String: Any] }
     private let lock = NSLock()
@@ -304,7 +308,7 @@ private final class AdministrationFixture: @unchecked Sendable {
             }
             if name == "team_administrator_identities" {
                 identityReadCount += 1
-                if deniedIdentities { return json(["code": "42501", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 403) }
+                if deniedIdentities { return json(["code": denialCode, "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: denialStatus) }
                 if mode == .identityFailureOnce && identityReadCount == 1 {
                     return json(["code": "503", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: 503)
                 }

@@ -224,7 +224,7 @@ final class Playbook {
         else if let error = error as? PostgrestError {
             switch error.code {
             case "40001", "PT409": issue = .conflict
-            case "42501": issue = .denied
+            case "42501", "PGRST301", "PGRST302", "PGRST303": issue = .denied
             case "22023", "22P02", "23514": issue = .invalidInput
             default: issue = .unavailable
             }

@@ -160,14 +160,16 @@ final class PrivateFilesTests: XCTestCase {
         }
     }
     func testKnownDenialConcealsContentAndCannotBecomeEmptySuccessOnFailedRetry() async throws {
-        let fixture = NativeFileFixture(), model = try fixture.model()
-        await model.load(); XCTAssertFalse(model.versions.isEmpty)
-        fixture.changeMode(.denied); await model.load()
-        XCTAssertEqual(model.issue, .denied); XCTAssertTrue(model.contentConcealed); XCTAssertFalse(model.didLoad)
-        fixture.changeMode(.unavailable); await model.load()
-        XCTAssertEqual(model.issue, .server); XCTAssertTrue(model.contentConcealed); XCTAssertTrue(model.versions.isEmpty)
-        fixture.changeMode(.standard); await model.load()
-        XCTAssertTrue(model.didLoad); XCTAssertFalse(model.contentConcealed)
+        for code in ["42501", "PGRST301", "PGRST302", "PGRST303"] {
+            let fixture = NativeFileFixture(); fixture.denialCode = code; let model = try fixture.model()
+            await model.load(); XCTAssertFalse(model.versions.isEmpty)
+            fixture.changeMode(.denied); await model.load()
+            XCTAssertEqual(model.issue, .denied); XCTAssertTrue(model.contentConcealed); XCTAssertFalse(model.didLoad)
+            fixture.changeMode(.unavailable); await model.load()
+            XCTAssertEqual(model.issue, .server); XCTAssertTrue(model.contentConcealed); XCTAssertTrue(model.versions.isEmpty)
+            fixture.changeMode(.standard); await model.load()
+            XCTAssertTrue(model.didLoad); XCTAssertFalse(model.contentConcealed)
+        }
     }
 }
 private let privateActor = UUID(uuidString: "b1000000-0000-4000-8000-000000000001")!
@@ -177,6 +179,8 @@ private let privateResource = UUID(uuidString: "b4000000-0000-4000-8000-00000000
 private let privateVersion = UUID(uuidString: "b5000000-0000-4000-8000-000000000001")!
 private let nativeFileBytes = Data("TEST ONLY protocol file bytes".utf8)
 private final class NativeFileFixture: @unchecked Sendable {
+    var denialCode = "42501"
+    private var denialStatus: Int { denialCode == "42501" ? 403 : 401 }
     enum Mode { case standard, conflict, empty, lostReservation, uploadFailure, corruptDownload, oversizedDownload, interruptedDownload, deniedDownload, denied, unavailable }
     let key = UUID().uuidString
     private let lock = NSLock(); private var mode: Mode
@@ -209,7 +213,7 @@ private final class NativeFileFixture: @unchecked Sendable {
         lock.withLock {
             allRequests.append(request)
             let name = request.url!.lastPathComponent
-            if mode == .denied { return (403, json(["code": "42501", "error": "access_denied", "message": "PRIVATE diagnostic"]), "application/json", false) }
+            if mode == .denied { return (denialStatus, json(["code": denialCode, "error": "access_denied", "message": "PRIVATE diagnostic"]), "application/json", false) }
             if mode == .unavailable { return (503, json(["error": "PRIVATE diagnostic"]), "application/json", false) }
             if request.url!.path.contains("/rpc/") {
                 let arguments = (try? JSONSerialization.jsonObject(with: body(request))) as? [String: Any] ?? [:]

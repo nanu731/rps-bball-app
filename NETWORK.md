@@ -117,3 +117,19 @@ Google requests. Shared run admission/request deadlines remain distinct from a
 verified hard process/DNS bound. Disabled preflight consumes no claims; persisted
 provider cooldown prevents restarting around Retry-After. No schedule/Google
 activation or existing unapplied migration deployment occurred.
+
+## Client compatibility checks2026-10-17
+
+Five connected models now treat documented PostgREST JWT rejection codes301/302/303
+as confirmed denial, reusing their concealment and authorized-reload behavior. SQL
+42501 remains denied; PGRST300 (missing signing configuration) remains a server
+failure. No error-message matching, automatic mutation retry or global credential
+reset was introduced. See the [PostgREST error contract](https://docs.postgrest.org/en/v13/references/errors.html#group-3-jwt).
+
+Synthetic SDK responses verify required-field/type/enum failures reject a complete
+statistics snapshot, missing mandatory RPC/table does not become empty success,
+and optional export failures preserve statistics. Additive fields remain compatible;
+explicit Retry recovers. Media publication pointers must identify a version of the
+same parent resource. These are client compatibility checks, not evidence of actual
+hosted token expiry, signing-key rotation or migration activation. The earlier
+immediate Auth reuse-lockout failure and additional-grace rejection remain unchanged.

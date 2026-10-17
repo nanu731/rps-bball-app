@@ -5,6 +5,25 @@ import Supabase
 
 @MainActor
 final class MediaResourcesTests: XCTestCase {
+    func testCrossResourcePublishedPointerRejectsEntireSnapshotAndRecovers() async {
+        let fixture = MediaFixture(mode: .crossResourcePointer)
+        let model = fixture.model()
+        await model.load()
+        XCTAssertFalse(model.didLoad)
+        XCTAssertEqual(model.issue, .invalidResponse)
+        XCTAssertTrue(model.resources.isEmpty)
+        XCTAssertTrue(model.versions.isEmpty)
+        XCTAssertTrue(model.published.isEmpty)
+        XCTAssertFalse(model.canContribute)
+        XCTAssertTrue(fixture.commands.isEmpty)
+        fixture.setValidPointers(true)
+        await model.load()
+        XCTAssertTrue(model.didLoad)
+        XCTAssertNil(model.issue)
+        XCTAssertEqual(Set(model.published.map(\.resourceID)), Set(model.resources.map(\.id)))
+        XCTAssertEqual(model.published.count, 2)
+        XCTAssertTrue(fixture.commands.isEmpty)
+    }
     func testFilmDraftRejectsNonHudlBeforeSave() async throws {
         let fixture = MediaFixture(mode: .filmContributor)
         let model = fixture.model(kind: .film); await model.load()
@@ -60,18 +79,20 @@ final class MediaResourcesTests: XCTestCase {
         XCTAssertEqual(model.versions.first { $0.id == previous.id }?.linkURL, previous.linkURL)
     }
     func testConfirmedDenialConcealsLoadedMediaUntilAuthorizedReload() async throws {
-        let fixture = MediaFixture(); let model = fixture.model(); await model.load()
-        let draft = try mediaRequired(await model.openDraft(resourceID: mediaResourceID))
-        fixture.setDeniedSave(true)
-        assertMediaNil(await model.save(draft, input: MediaLinkInput(draft)))
-        XCTAssertEqual(model.issue, .denied); XCTAssertNil(model.access)
-        XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.resources.isEmpty); XCTAssertTrue(model.contentConcealed)
-        fixture.setDeniedSave(false); fixture.setUnavailableRead(true)
-        await model.load()
-        XCTAssertEqual(model.issue, .server); XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.contentConcealed)
-        fixture.setUnavailableRead(false)
-        await model.load()
-        XCTAssertTrue(model.didLoad); XCTAssertFalse(model.contentConcealed); XCTAssertEqual(model.ownDrafts.first?.id, draft.id)
+        for code in ["42501", "PGRST301", "PGRST302", "PGRST303"] {
+            let fixture = MediaFixture(); fixture.denialCode = code; let model = fixture.model(); await model.load()
+            let draft = try mediaRequired(await model.openDraft(resourceID: mediaResourceID))
+            fixture.setDeniedSave(true)
+            assertMediaNil(await model.save(draft, input: MediaLinkInput(draft)))
+            XCTAssertEqual(model.issue, .denied); XCTAssertNil(model.access)
+            XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.resources.isEmpty); XCTAssertTrue(model.contentConcealed)
+            fixture.setDeniedSave(false); fixture.setUnavailableRead(true)
+            await model.load()
+            XCTAssertEqual(model.issue, .server); XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.contentConcealed)
+            fixture.setUnavailableRead(false)
+            await model.load()
+            XCTAssertTrue(model.didLoad); XCTAssertFalse(model.contentConcealed); XCTAssertEqual(model.ownDrafts.first?.id, draft.id)
+        }
     }
     func testMediaVersionReadsRestrictSelectedTargetBeforeTransfer() async throws {
         for kind in [MediaResourceKind.practice, .film] {
@@ -276,12 +297,16 @@ private let mediaPriorID = UUID(uuidString: "d7000000-0000-4000-8000-00000000000
 private let mediaResumedID = UUID(uuidString: "d8000000-0000-4000-8000-000000000001")!
 private let mediaVersionID = UUID(uuidString: "d5000000-0000-4000-8000-000000000001")!
 private final class MediaFixture: @unchecked Sendable {
-    enum Mode { case filmContributor, standard, conflict, failure, malformed, loadFailureOnce, filmPublishOnly, ownerPending, inspectorPending, staleDraft, lostResumeAck, ambiguousRecovery, staleRecovery, missingRecoveryLineage, chainedRecovery, validRecoveryChain, cyclicRecovery, revokedRecovery }
+    var denialCode = "42501"
+    private var denialStatus: Int { denialCode == "42501" ? 403 : 401 }
+    enum Mode { case crossResourcePointer, filmContributor, standard, conflict, failure, malformed, loadFailureOnce, filmPublishOnly, ownerPending, inspectorPending, staleDraft, lostResumeAck, ambiguousRecovery, staleRecovery, missingRecoveryLineage, chainedRecovery, validRecoveryChain, cyclicRecovery, revokedRecovery }
     struct Command { let name: String; let parameters: [String: Any] }
     let key = UUID().uuidString
     private let mode: Mode
     private let lock = NSLock()
     private var recorded: [Command] = []
+    private var validPointers = false
+    func setValidPointers(_ value: Bool) { lock.withLock { validPointers = value } }
     private var deniedSave = false
     private var unavailableRead = false
     func setDeniedSave(_ value: Bool) { lock.withLock { deniedSave = value } }
@@ -332,7 +357,7 @@ private final class MediaFixture: @unchecked Sendable {
                     return json(["previous": previous, "draft": version()])
                 }
                 if name == "media_save_draft" {
-                    if deniedSave { return json(["code": "42501", "message": "Synthetic denied"], status: 403) }
+                    if deniedSave { return json(["code": denialCode, "message": "Synthetic denied"], status: denialStatus) }
                     if mode == .conflict || mode == .failure { return json(["code": mode == .conflict ? "PT409" : "XX000", "message": "SENSITIVE_FIXTURE_PAYLOAD"], status: mode == .conflict ? 409 : 500) }
                     revision += 1; title = params["p_title"] as? String ?? ""; url = params["p_link_url"] as? String ?? ""; notes = params["p_notes"] as? String ?? ""
                     var value = version()
@@ -343,6 +368,18 @@ private final class MediaFixture: @unchecked Sendable {
                     revision += 1; status = params["p_action"] as? String == "submit" ? "submitted" : "published"
                     return json(version())
                 }
+            }
+            if mode == .crossResourcePointer && (name == "media_resources" || name == "media_resource_versions") {
+                let secondResource = "d4000000-0000-4000-8000-000000000002"
+                let secondVersion = "d5000000-0000-4000-8000-000000000002"
+                if name == "media_resources" {
+                    var first = resource(); first["published_version_id"] = validPointers ? mediaVersionID.uuidString : secondVersion
+                    var second = resource(); second["id"] = secondResource; second["published_version_id"] = secondVersion
+                    return json([first, second])
+                }
+                var first = version(); first["status"] = "published"; first["title"] = "TEST ONLY published link"; first["link_url"] = "https://video.example.invalid/synthetic"
+                var second = first; second["id"] = secondVersion; second["resource_id"] = secondResource
+                return json([first, second])
             }
             if name == "media_resources" { return json(opened ? [resource()] : []) }
             if name == "media_resource_versions" {

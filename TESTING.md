@@ -1041,3 +1041,32 @@ SDK/runtime upgrade. DEPENDENCIES.md records affected cached Storage/Imgproxy
 advisories and a periodic official-source review procedure. Hosted versions, signed
 artifact/linked-component license review and full transitive coverage remain open.
 No provider/external service was activated.
+
+## Defensive compatibility2026-10-17
+
+Exact synthetic cross-resource publication-pointer regression first failed because
+the client accepted a version belonging to another parent; corrected parent checks
+passed19 media tests. An initial invalid fixture was corrected before the exact red
+signal; its failed receipt is retained separately. JWT denial journeys then exposed
+301/302/303 as server errors across statistics, administration, plays, media links
+and private files. Minimal classification repairs passed84 affected native tests;
+a separate final build passed3 finite compatibility-matrix tests. The matrix covers
+malformed required enum/field/type, missing mandatory RPC/table, optional missing
+export RPC, signing configuration failure, additive fields and explicit recovery.
+No mutation replay or guessed success, no source schema/provider change. Independent
+Standards0/Spec0 actionable findings. These are isolated SDK/model fixtures, not
+new hosted Auth/security evidence.
+
+### Additional iPad native observations
+
+Existing TeamStats UI TEST1.0(1), com.narayanlekhi.TeamStats.UIAcceptance, UI source
+6713efe, iPad(A16)/26.4: actual Reduce Motion On verified in Settings. Native
+accessibility-directed scrolling exposed Free throws missed, Total rebounds and
+full Points check while Save remained visible; a private screenshot was inspected.
+Mode switching worked without changing counts. Direct horizontal scroll/drag did
+not move the table through this automation, so manual pan and active-pan hidden
+indicator/transition-timing acceptance remain open. This is not VoiceOver evidence.
+Settings restored Off. Toolbar rotation and explicit system Landscape Right both
+rotated the bezel while Apple Settings stayed sideways/portrait; returned Portrait.
+No speculative app layout repair. Actual landscape and screen-reader interaction
+remain unverified; no repeated closed Save/scoring checks.

@@ -146,7 +146,7 @@ final class MediaResources {
     var canContribute: Bool { didLoad && (kind == .practice || access?.can(.filmUpload) == true) }
     var canPublishOwn: Bool { canContribute && access?.can(kind.publication) == true }
     var published: [MediaResourceVersion] {
-        resources.compactMap { resource in versions.first { $0.id == resource.publishedVersionID && $0.status == .published } }
+        resources.compactMap { resource in versions.first { $0.id == resource.publishedVersionID && $0.resourceID == resource.id && $0.status == .published } }
     }
     var ownDrafts: [MediaResourceVersion] { versions.filter { $0.authorUserID == access?.userID && $0.status == .draft } }
     var unpublished: [MediaResourceVersion] { versions.filter { $0.status != .draft && $0.status != .published } }
@@ -165,7 +165,7 @@ final class MediaResources {
             let ids = Set(parents.map(\.id))
             let rows = all.filter { ids.contains($0.resourceID) }
             guard Set(rows.map(\.id)).count == rows.count, rows.allSatisfy(validResponse),
-                  parents.allSatisfy({ parent in parent.publishedVersionID == nil || rows.contains(where: { $0.id == parent.publishedVersionID && $0.status == .published }) }) else { throw MediaResourceIssue.invalidResponse }
+                  parents.allSatisfy({ parent in parent.publishedVersionID == nil || rows.contains(where: { $0.id == parent.publishedVersionID && $0.resourceID == parent.id && $0.status == .published }) }) else { throw MediaResourceIssue.invalidResponse }
             resources = parents; versions = rows; access = current; didLoad = true; reloadRequired = false
             contentConcealed = false
         } catch { recordFailure(error); resources = []; versions = []; access = nil; reloadRequired = true }
@@ -324,7 +324,7 @@ final class MediaResources {
         if let error = error as? MediaResourceIssue { return error }
         if let error = error as? PostgrestError {
             switch error.code {
-            case "42501": return .denied
+            case "42501", "PGRST301", "PGRST302", "PGRST303": return .denied
             case "40001", "PT409": return .conflict
             case "22023", "23514", "23503": return .invalidInput
             default: return .server

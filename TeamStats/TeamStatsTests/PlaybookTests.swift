@@ -53,20 +53,22 @@ final class PlayGeometryTests: XCTestCase {
 
 @MainActor final class PlaybookTests: XCTestCase {
     func testConfirmedDenialConcealsLoadedPlayUntilAuthorizedReload() async throws {
-        let fixture = PlayFixture(); let model = fixture.model()
-        await model.load()
-        let opened = await model.openDraft(playID: fixture.playID)
-        let draft = try XCTUnwrap(opened)
-        fixture.denySave = true
-        let saved = await model.save(draft, title: "SYNTHETIC RETAINED", diagram: draft.diagram)
-        XCTAssertFalse(saved); XCTAssertEqual(model.issue, .denied)
-        XCTAssertNil(model.access); XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.contentConcealed)
-        fixture.denySave = false; fixture.transientReadFailure = true
-        await model.load()
-        XCTAssertEqual(model.issue, .unavailable); XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.contentConcealed)
-        fixture.transientReadFailure = false
-        await model.load()
-        XCTAssertTrue(model.didLoad); XCTAssertFalse(model.contentConcealed); XCTAssertEqual(model.ownDrafts.first?.id, draft.id)
+        for code in ["42501", "PGRST301", "PGRST302", "PGRST303"] {
+            let fixture = PlayFixture(); fixture.denialCode = code; let model = fixture.model()
+            await model.load()
+            let opened = await model.openDraft(playID: fixture.playID)
+            let draft = try XCTUnwrap(opened)
+            fixture.denySave = true
+            let saved = await model.save(draft, title: "SYNTHETIC RETAINED", diagram: draft.diagram)
+            XCTAssertFalse(saved); XCTAssertEqual(model.issue, .denied)
+            XCTAssertNil(model.access); XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.contentConcealed)
+            fixture.denySave = false; fixture.transientReadFailure = true
+            await model.load()
+            XCTAssertEqual(model.issue, .unavailable); XCTAssertTrue(model.versions.isEmpty); XCTAssertTrue(model.contentConcealed)
+            fixture.transientReadFailure = false
+            await model.load()
+            XCTAssertTrue(model.didLoad); XCTAssertFalse(model.contentConcealed); XCTAssertEqual(model.ownDrafts.first?.id, draft.id)
+        }
     }
     func testTransientPlaySaveFailureRetainsLoadedContentForRecovery() async throws {
         let fixture = PlayFixture(); let model = fixture.model()
@@ -238,6 +240,8 @@ final class PlayGeometryTests: XCTestCase {
 }
 
 private final class PlayFixture: @unchecked Sendable {
+    var denialCode = "42501"
+    private var denialStatus: Int { denialCode == "42501" ? 403 : 401 }
     let fixtureKey = UUID().uuidString
     private let lock = NSRecursiveLock()
     let teamID = UUID(uuidString: "a3000000-0000-4000-8000-000000000001")!
@@ -285,7 +289,7 @@ private final class PlayFixture: @unchecked Sendable {
         }
         if transientReadFailure && request.httpMethod == "GET" { return try respond(["code": "XX000", "message": "Synthetic unavailable"], status: 500) }
         if path.hasSuffix("team_access") { return try respond(["team_id": teamID.uuidString, "user_id": userID.uuidString, "is_owner": canAuthor, "access_revision": 1, "capabilities": [], "grant_envelopes": []]) }
-        if failRead && request.httpMethod == "GET" { return try respond(["code": "42501", "message": "Synthetic denied"], status: 403) }
+        if failRead && request.httpMethod == "GET" { return try respond(["code": denialCode, "message": "Synthetic denied"], status: denialStatus) }
         if path.hasSuffix("/plays") { return try respond(rows.isEmpty ? [] : [["id": playID.uuidString, "team_id": teamID.uuidString, "published_version_id": pointer as Any? ?? NSNull()]]) }
         if path.hasSuffix("/play_versions") {
             var visible = rows
@@ -325,7 +329,7 @@ private final class PlayFixture: @unchecked Sendable {
         if path.hasSuffix("play_save_draft") || path.hasSuffix("play_transition") {
             let saving = path.hasSuffix("play_save_draft")
             if saving { saveRequests += 1 }
-            if saving && denySave { return try respond(["code": "42501", "message": "Synthetic denied"], status: 403) }
+            if saving && denySave { return try respond(["code": denialCode, "message": "Synthetic denied"], status: denialStatus) }
             if saving && transientSaveFailure { return try respond(["code": "XX000", "message": "Synthetic unavailable"], status: 500) }
             if saving && failSave { return try respond(["code": "PT409", "message": "Synthetic conflict"], status: 409) }
             let index = rows.firstIndex { $0["id"] as? String == parameters["p_version_id"] as? String }!
