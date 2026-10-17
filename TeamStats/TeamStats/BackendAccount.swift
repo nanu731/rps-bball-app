@@ -115,6 +115,9 @@ final class BackendAccount {
         self.httpSession = session
     }
 
+    // Fences account-scoped asynchronous receipts across new clients/sign-ins.
+    var authenticationGeneration: UUID { clientGeneration }
+
     var verifiedUserID: UUID? {
         if case .authenticated(let id) = state { return id }
         return nil

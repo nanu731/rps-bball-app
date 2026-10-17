@@ -63,9 +63,9 @@ service has been configured.
   `teamstats_recovery_*` databases from `template0`; it never dumps, resets or drops
   an existing database. A loopback hostname alone is not proof of isolation: the
   operator must verify the owned local service, not a tunnel to a real project.
-- The source gets all14 ordered migrations and synthetic records. An actual custom
+- The source gets all ordered source migrations and synthetic records (see the latest TESTING receipt). An actual custom
   `pg_dump` archive is restored using single-transaction, exit-on-error `pg_restore`
-  into the second new database, **without reseeding it**. All31 fixture tables,
+  into the second new database, **without reseeding it**. All fixture tables,
   policies and effective ACL/RLS/function-security properties are compared. SQL
   assertions test existing rows, relationships, immutable history, live/missing
   synthetic session references, allowed members, denied outsiders and private bytes.
@@ -139,3 +139,10 @@ No defaults were invented. [Supabase's backup guidance](https://supabase.com/doc
 distinguishes database backups from Storage bytes and recommends independent Free
 project exports. Its [CLI recovery procedure](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)
 requires provider-specific handling; this synthetic drill does not verify it.
+
+Account-deletion request receipts are authoritative account metadata in the private
+database schema, linked to Auth UUIDs; they are separate from the four local stores.
+Migration16 adds their schema/permissions to the synthetic archive/restore proof.
+Request integration checks durable receipt readback through new connections, not
+hosted disaster recovery or restored real Auth sessions. Actual deletion/receipt
+retention and handling remain unresolved; no backup cleanup or data reversal occurs.

@@ -43,7 +43,7 @@ struct TeamStatsGuide: View {
             }
             Section("Account recovery and privacy") {
                 Text("Request a fresh sign-in link in Account to recover access. Team permissions still come from the server.")
-                Text("TODO_PRIVACY_POLICY · TODO_REPORTING_CONTACT · TODO_RETENTION_POLICY · TODO_ACCOUNT_DELETION_POLICY — owner-approved policies, reporting channel and deletion/ownership handling are not supplied. Account deletion is not available in this prototype.")
+                Text("TODO_PRIVACY_POLICY · TODO_REPORTING_CONTACT · TODO_RETENTION_POLICY · TODO_ACCOUNT_DELETION_POLICY — owner-approved policies, reporting channel and deletion/ownership handling are not supplied. Account offers request-only deletion intake when its server supports it. Your account remains active; deletion execution is unavailable in this prototype.")
                     .font(.footnote).textSelection(.enabled)
             }
             Section("App information") {

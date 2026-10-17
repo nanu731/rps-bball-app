@@ -37,8 +37,10 @@ versus shared work, recovery, completion and optional retained clips. It offers 
 explicit private JSON copy of saved local drafts; no in-app import/restore or upload
 is provided. [Recovery preparation](RECOVERY.md) adds separately tested synthetic
 offline restoration and a no-deploy CI boundary; hosted disaster recovery remains
-unverified. Account deletion and owner-selected privacy/reporting/retention policies
-remain visibly unfinished. New local saves request complete file protection;
+unverified. Account now prepares request-only deletion intake with explicit confirmation and
+server receipts; existing servers remain unavailable until separately reviewed
+activation. Deletion execution and owner-selected privacy/reporting/retention
+policies remain unfinished. New local saves request complete file protection;
 physical protection behavior remains unverified.
 
 The Account tab implements email-link and code verification, secure session
@@ -178,13 +180,12 @@ Open `TeamStats/TeamStats.xcodeproj` in Xcode. Select an iPhone/iPad simulator
 to run; physical-device signing requires the developer's own Apple account.
 Owner confirmed private hosted sign-in and matching app/Auth Users UUID. Trusted
 SQL account verification and dashboard Free/phone-disabled checks now passed.
-The owner reports successful reviewed activation. Independent hosted readback
-verified nine history entries, protections on20 app tables, active owner membership
-and one bootstrap audit. Signed distinct-user workflow checks remain pending.
+The owner reports successful reviewed activation. Later reviewed hosted follow-ups through migration13 and signed synthetic access
+checks are recorded in TESTING.md; bootstrap is already verified and must not be rerun. Signed synthetic distinct-user checks later passed within TESTING.md’s recorded hosted scope; current Auth/provider gates remain separate.
 Most simulator verification has used 26.4; actual 26.0 and physical devices remain
 untested. The approved official Supabase Swift SDK is pinned to 2.55.3; connected
 account source is implemented and tested with isolated SDK responses; trusted hosted
-SQL activation readback passed; shared workflows have passed isolated local integration, with signed hosted acceptance still pending.
+SQL activation readback passed; shared workflows have passed isolated local integration and the recorded signed synthetic hosted checks. Full hosted delivery/release acceptance remains pending.
 
 - [PRD](PRD.md): product scope, data definitions, design direction, open decisions.
 - [Project context](PROJECT_CONTEXT.md): current state and implementation sequence.

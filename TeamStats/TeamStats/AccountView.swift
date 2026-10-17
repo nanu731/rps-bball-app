@@ -48,6 +48,11 @@ struct AccountView: View {
                         .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                     Button("Check session again") { Task { await account.restore() } }
                         .frame(minHeight: 44)
+                    NavigationLink("Account deletion request") {
+                        AccountDeletionView(model: AccountDeletionRequest(account: account, userID: userID))
+                            .id(account.authenticationGeneration)
+                    }
+                    .frame(minHeight: 44)
                     Button("Sign out", role: .destructive) {
                         focusedField = nil
                         confirmSignOut = true

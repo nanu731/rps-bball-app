@@ -1070,3 +1070,43 @@ Settings restored Off. Toolbar rotation and explicit system Landscape Right both
 rotated the bezel while Apple Settings stayed sideways/portrait; returned Portrait.
 No speculative app layout repair. Actual landscape and screen-reader interaction
 remain unverified; no repeated closed Save/scoring checks.
+
+## Account-deletion request intake2026-10-17
+
+Source-only migration16 adds one immutable, self-readable request receipt per
+verified account. This is intake preparation, not a deletion executor or promised
+processing service. Existing/hosted databases were not migrated. Native entry
+requires explicit confirmation; account changes conceal receipts, failures never
+acknowledge success, and uncertain replies require readback before another request.
+
+Actual isolated PostgreSQL16-migration creation/restore matched rows and policies.
+Eight concurrent requests returned one receipt; reconnect/readback retained its
+identity/time. Other-account, anonymous, expired/missing session, banned/deleted
+account and direct table writes/reads were denied; nonmembers/removed members could
+request their own account. Review exposed a concurrent revocation race: the exact
+red fixture allowed revocation to finish before request commit. Shared account and
+session locks plus rechecks fixed both session/account revocation cases. Unrelated
+Auth/team/grant/history fixtures were unchanged. No deletion executed.
+
+Native integrated197 tests passed with1 expected Simulator complete-file-protection
+skip. Actual Task cancellation after the fixture recorded the request concealed
+late success; explicit Reload recovered the same receipt without replay. Standards
+and Spec findings were repaired and independently re-reviewed with0 remaining.
+These SDK fixtures do not prove hosted JWT verification or hosted intake activation.
+
+Separate rendered TeamStats UI TEST1.0(1), bundle
+com.narayanlekhi.TeamStats.AutonomousRender, uses production request view/model
+with a private synthetic HTTP adapter, not a real account. iPad(A16)/26.4 maximum
+SwiftUI text passed confirmation, Cancel, recorded receipt, unavailable server and
+actual Reload recovery; screenshots inspected privately. iPhone17/26.4 confirmed
+Cancel/record/receipt at maximum SwiftUI/UIKit text. Its full-frame error assertion
+failed because large automation swipes overshot a651-point label in a672-point
+viewport; the recording shows wrapping and reachable Reload, not clipped text.
+A targeted smaller-drag test still could not reposition that label; no further
+unchanged retries were made. iPhone error/readback interaction remains unverified:
+at maximum text, scroll through the complete unavailable message, enable the test
+server and reach Reload, then confirm the same receipt returns. The first test's
+failed assertion and corrected test's failure are retained separately. No app repair was inferred
+from this test failure. Mac lock blocked desktop controls; supported native tests
+continued. Actual VoiceOver, landscape/manual pan/transitions, physical devices and
+actual26.0 remain separate open gates.

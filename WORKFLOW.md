@@ -1969,3 +1969,17 @@ first receipt remains in TESTING.md. Final Standards0/Spec0;3protected working/i
 entries+174originalJSON unchanged. READINESS.md consolidates remaining gates.
 Scheduler activation/real Google delivery and existing-database migrations14/15
 stay disabled; no next scope or native/device acceptance begun.
+
+## Autonomous completion2026-10-17
+
+Completed dependency/license retentionaf59607 and defensive compatibilityd4064d8;
+remote HEAD verified and actual CI39006407251 passed. Account-deletion request-only
+intake implemented in native Account and source-only migration16, with explicit
+confirmation, current-session fencing, server receipt and uncertain-result readback.
+Actual synthetic SQL16-migration restore/concurrency/access checks and integrated
+197 native tests passed (1 Simulator protection skip). Review-exposed revocation
+race and actual Task-cancellation coverage were resolved; Standards0/Spec0.
+No existing/hosted migration, deletion executor, provider or schedule activation.
+Rendered request-flow evidence and remaining device limitations are in TESTING.md.
+Private resumable queue continues to the documented export-only worker boundary;
+remaining owner policies and hosted issuer/renewal configuration remain gates.

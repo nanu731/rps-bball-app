@@ -215,3 +215,16 @@ advisories and affected isolated runtime versions. Patched Storage/Imgproxy and
 actual hosted version evidence are prerequisites before external media delivery;
 RLS is not a mitigation for the documented signed-resumable bypass. Existing
 synthetic loopback services remain isolated; no provider activation or upgrade.
+
+## Account request intake2026-10-17
+
+Source-only migration16 stores immutable account-deletion request receipts in the
+private RLS-enabled schema, with direct access revoked from public/anon/authenticated/
+service_role. Two zero-argument authenticated commands derive current identity from
+verified live Auth, lock/recheck the account/session and require no team membership.
+They create-or-return/read only the caller's receipt; no other-account selector,
+admin inbox, executor or permission change exists. Native replies require matching
+account, valid receipt UUID/time and current client/session context. Cancellation or
+lost response does not imply rollback: explicit readback recovers the receipt, and
+no write automatically retries. This is request intake preparation, not deletion
+execution, retention policy, provider activation or legal compliance.

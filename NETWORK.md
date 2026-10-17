@@ -133,3 +133,10 @@ explicit Retry recovers. Media publication pointers must identify a version of t
 same parent resource. These are client compatibility checks, not evidence of actual
 hosted token expiry, signing-key rotation or migration activation. The earlier
 immediate Auth reuse-lockout failure and additional-grace rejection remain unchanged.
+
+Account-deletion intake uses the existing authenticated SDK transport bounds, one
+read/submit attempt, no automatic write replay and explicit receipt readback after
+uncertainty. Immutable account uniqueness is a server duplicate-safe contract, not
+a universal exactly-once claim. Missing RPC is explicitly unavailable. Current
+client-generation/account context fences late receipts; no local receipt cache or
+authority is created. Source-only migration16 remains an activation prerequisite.

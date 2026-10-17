@@ -1040,3 +1040,15 @@ first receipt remains in TESTING.md. Final Standards0/Spec0;3protected working/i
 entries+174originalJSON unchanged. READINESS.md consolidates remaining gates.
 Scheduler activation/real Google delivery and existing-database migrations14/15
 stay disabled; no next scope or native/device acceptance begun.
+
+## Autonomous completion2026-10-17
+
+Dependency readinessaf59607 and defensive compatibilityd4064d8 are pushed; actual
+CI39006407251 passed on d4064d8. Distribution notice text is retained; affected
+cached native media runtimes stay isolated and unactivated. Parent-pointer and
+JWT-denial fixtures passed; source/model evidence is separate from hosted tests.
+Account-deletion request-only intake is prepared with a source-only migration16,
+explicit confirmation and immutable self receipt. No account deletion, processing
+promise, hosted activation or migration of existing records. See TESTING.md for
+197 native checks and actual isolated SQL recovery/concurrency/revocation evidence.
+READINESS.md remains the consolidated external-policy/device/provider release list.

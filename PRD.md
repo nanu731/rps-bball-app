@@ -707,3 +707,15 @@ TODO lists remain historical context; adopted permission/completion/defaults are
 not reopened. Scheduling source/local tests do not establish activated Google
 delivery, hosted recovery, device acceptance or release readiness. No new collection
 field, metric, live tracking or offline-sync requirement is introduced.
+
+## Account-deletion request boundary2026-10-17
+
+Prepare authenticated self-request intake separately from deletion execution. The
+Account screen requires explicit confirmation and a validated server receipt before
+acknowledging that a request is recorded. Repeated requests/readback retain one
+immutable receipt per account; missing backend capability is unavailable. The
+account remains active. No deletion date, notification/handling route, processing
+status or legal-compliance claim is invented. Retention, shared-history attribution,
+ownership transfer, backup treatment and eventual execution/receipt policy remain
+owner decisions. Source-only migration16 is not activated on existing environments.
+See ADR0005 and TESTING for isolated evidence and remaining deployment acceptance.
