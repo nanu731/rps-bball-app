@@ -20,6 +20,12 @@ model, signed synthetic service and rendered evidence in TESTING.md. Keep indepe
 shot datasets, coverage claims and score reconciliation distinct. Historical acceptance
 below does not establish the new hosted/device/release gates.
 
+Owner coverage decision (2026-10-17): the designated manager confirms every
+field-goal/free-throw attempt was recorded, then the owner or an authorized
+statistics reviewer approves that capture version. Until approval, confirmation
+is awaiting review. Later edits require renewed confirmation/review. This is an
+approved requirement, not evidence that the workflow has been implemented/tested.
+
 Current acceptance snapshot (2026-10-14, native design continuation): PARTIAL.
 The reviewed game-centered SwiftUI pass adds real game context, task rows,
 grouped scoring inputs, compact guidance, readable missing values and a bounded

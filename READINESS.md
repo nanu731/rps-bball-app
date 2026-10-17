@@ -81,7 +81,11 @@ supported schematic basket-relative bands. Team/player comparisons use saved loc
 or loaded accepted shared sources without addition/overwrite. Independently entered
 score references require statistics-review authority, preserve either team's missing
 value and retain correction history. Matching scores never set Coverage complete.
-`TODO_SHOT_COVERAGE_SIGNOFF` remains an owner decision.
+The owner resolved coverage signoff on2026-10-17: designated-manager confirmation
+that every field-goal and free-throw attempt was recorded, followed by owner or
+authorized statistics-reviewer approval for that capture version. Manager-only
+confirmation is awaiting review; later edits require renewed confirmation/review.
+This resolves the policy gate, not implementation or acceptance of the workflow.
 
 Migration18 provides designation/assignment epochs, frozen batches, immutable
 snapshots/receipts, separate review/publication and explicit recovery-branch adoption.

@@ -91,8 +91,10 @@ recorded make/miss results; unanswered attempts remain unfinished.
 **Score reconciled**: Recorded shot points agree with an independently confirmed
 official team score. This does not prove complete attempt coverage.
 
-**Coverage complete**: A distinct claim that the full game's attempts were
-captured; its confirmation and review rules are separate from score agreement.
+**Coverage complete**: A reviewed claim that every field-goal and free-throw
+attempt was captured, requiring designated-manager confirmation followed by
+owner or authorized statistics-reviewer approval for that capture version.
+It is separate from score agreement and is not independent proof of coverage.
 
 **Designated recorder**: The manager assigned to capture a game's shots, with
 an explicit handoff when responsibility changes.

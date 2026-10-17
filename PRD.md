@@ -176,10 +176,15 @@ identities and owner-controlled authority; a standalone second app is not planne
 - The owner wants matching points to inform complete coverage and discrepancies
   shown otherwise. Score agreement alone cannot establish attempted-shot coverage:
   unrecorded misses leave points unchanged. Keep Score reconciled and Coverage
-  complete separate. A conservative implementation proposal is explicit manager
-  full-game confirmation plus available made/attempted-total reconciliation;
-  mark any unverified completeness claim as manager-declared. Final coverage
-  signoff wording/authority is TODO_SHOT_COVERAGE_SIGNOFF, not an invented fact.
+  complete separate. Owner-confirmed policy (2026-10-17): the designated manager
+  explicitly confirms that every field-goal and free-throw attempt was recorded,
+  followed by approval from the owner or an authorized statistics reviewer.
+  Manager confirmation alone is awaiting review, not Coverage complete. Record
+  confirmation and approval against the reviewed capture version; later edits
+  require renewed confirmation and review. Keep available made/attempted-total
+  comparisons visible; approval does not independently prove every attempt or
+  location was recorded. This policy is approved; implementation and acceptance
+  remain separate.
 - Compare player/team 2PT/3PT/FT makes and attempts against available official
   after-game inputs; identify missing, matching and discrepant values. Preserve
   both sources and correction/review history. Partial capture remains useful.

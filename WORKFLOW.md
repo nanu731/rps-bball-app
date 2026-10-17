@@ -2106,3 +2106,11 @@ from product defects. TESTING records final device/model results and open gates.
 Independent Standards/Spec review found no remaining source issues after targeted
 cancellation, dirty-form, optional-score and arithmetic repairs. No existing-server
 migration/provider activation, original-record upload or broader offline sync.
+
+### Owner coverage-signoff decision —2026-10-17
+
+The owner selected designated-manager confirmation of every field-goal/free-throw
+attempt followed by owner or authorized statistics-reviewer approval for that
+capture version. PRD.md is canonical. This supersedes the unresolved policy
+checkpoint above; implementation, server enforcement and acceptance remain work
+to verify. Score agreement and available attempt-count comparisons stay separate.

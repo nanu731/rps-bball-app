@@ -10,7 +10,11 @@ box-score/possession/paint-touch entry remains after-game.
 Keep shot events separate from official after-game datasets. Reconcile points and
 available makes/attempts without merging totals or inferring locations. Score
 agreement cannot establish that missed attempts were recorded; coverage/review
-claims remain distinct, with final signoff policy still open in PRD.md.
+claims remain distinct. On2026-10-17 the owner selected designated-manager
+confirmation of all field-goal/free-throw attempts followed by owner or authorized
+statistics-reviewer approval for the reviewed version. Manager confirmation alone
+does not establish Coverage complete; edits require renewed confirmation/review.
+This resolves the policy decision, not implementation or acceptance.
 
 The alternative standalone app adds another release and data-integration boundary
 for the same users/games. Local durable capture and controlled deferred submission
