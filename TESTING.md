@@ -1409,3 +1409,18 @@ No release readiness is claimed. All3 protected working/index entries and174 ori
 simulator JSON files matched their snapshots at final inspection. Test-owned
 loopback gateways/databases were stopped with all data/diagnostics retained; no
 existing application/provider was stopped or reset.
+
+### Continuation unit07: actual software-keyboard FT Start —2026-10-17
+
+Closed the earlier activation gap using the isolated normal TeamStats UI TEST1.0(1)
+iPad A16 on26.4 (application source e2137bf; current docs2ecc4e3). Supported Simulator
+hardware-keyboard routing plus the software-keyboard toggle exposed both the floating
+number keypad and full software keyboard. Entered custom3 with the visible keypad.
+The first outside tap dismissed its native popover; a subsequent Start tap while
+the full software keyboard remained visible created exactly one three-attempt series.
+Answered Make/Miss/Make; each atomic local save displayed Saved on this device.
+Cold termination/relaunch and saved journal readback confirmed two stable event IDs,
+revision5, the new2/3 series and the prior two unanswered attempts still pending.
+No app defect or source repair demonstrated. This is local iPad evidence, not hosted
+submission, physical hardware or an actual26.0 runtime check. Private readback receipt:
+ft-visible-keyboard-saved.local.json; original apps/records were not selected.

@@ -2116,3 +2116,8 @@ checkpoint above; implementation, server enforcement and acceptance remain work
 to verify. Score agreement and available attempt-count comparisons stay separate.
 
 Continuation unit06: added a planning-only analytics roadmap (<500words) and audited game dates/UUIDs, normalized coordinates/baskets, independent sources and revision provenance. Coverage policy is now approved by4832f1c, with implementation tracked separately. No inputs, models, dependencies or predictive UI added. Current personal UI-state bytes differ from the preceding handoff; captured current bytes/staged entries, retained older snapshots, restored nothing.
+
+Continuation unit07: keyboard-visible custom FT Start, all answers, atomic saves
+and cold reopening passed on isolated iPad26.4 with actual saved-journal readback.
+Native keypad outside-tap dismissal and hardware routing explained automation
+differences; no app source change justified. Historical pending answers preserved.
