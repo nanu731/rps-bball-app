@@ -1,6 +1,6 @@
 import Foundation
 
-// A read-only copy of saved local drafts. It has no upload or restore behavior.
+// A copy of saved local drafts. Recovery tooling has no automatic import or upload.
 struct LocalDraftBackup: Codable {
     let schemaVersion: Int
     let exportedAt: Date
@@ -42,5 +42,39 @@ struct LocalDraftBackup: Codable {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return try encoder.encode(self)
+    }
+
+    // Offline recovery tooling only; no app navigation or automatic import calls this.
+    static func restore(_ data: Data, toNewDirectory destination: URL) throws {
+        let backup = try JSONDecoder().decode(Self.self, from: data)
+        guard backup.schemaVersion == 1 else { throw CocoaError(.coderReadCorrupt) }
+        let gameIDs = Set(backup.games.map(\.id))
+        guard backup.boxScores.allSatisfy({ gameIDs.contains($0.gameID) }),
+              backup.possessions.allSatisfy({ gameIDs.contains($0.gameID) }),
+              backup.playerPaintTouches.allSatisfy({ gameIDs.contains($0.gameID) }) else {
+            throw CocoaError(.coderReadCorrupt)
+        }
+        let files = FileManager.default
+        guard destination.isFileURL else { throw CocoaError(.fileWriteUnsupportedScheme) }
+        guard !files.fileExists(atPath: destination.path),
+              (try? files.destinationOfSymbolicLink(atPath: destination.path)) == nil else {
+            throw CocoaError(.fileWriteFileExists)
+        }
+        // A sibling directory keeps all four stores private until one rename publishes them.
+        let staged = destination.deletingLastPathComponent()
+            .appendingPathComponent(".teamstats-recovery-\(UUID().uuidString).partial", isDirectory: true)
+        try files.createDirectory(at: staged, withIntermediateDirectories: false,
+                                  attributes: [.posixPermissions: 0o700])
+        defer { try? files.removeItem(at: staged) } // Only this invocation's staging directory.
+        try GameStorage.save(backup.games, to: staged.appendingPathComponent("games.json"))
+        try BoxScoreStorage.save(backup.boxScores, to: staged.appendingPathComponent("box-scores.json"))
+        try PossessionStorage.save(backup.possessions, to: staged.appendingPathComponent("possessions.json"))
+        try PlayerPaintTouchStorage.save(backup.playerPaintTouches,
+                                        to: staged.appendingPathComponent("player-paint-touches.json"))
+        for item in try files.contentsOfDirectory(at: staged, includingPropertiesForKeys: nil) {
+            try files.setAttributes([.posixPermissions: 0o600], ofItemAtPath: item.path)
+        }
+        _ = try snapshot(from: staged)
+        try files.moveItem(at: staged, to: destination)
     }
 }

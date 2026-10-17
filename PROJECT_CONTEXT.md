@@ -900,3 +900,26 @@ All174 original JSON files, temporary identities, protected Xcode bytes/index an
 original server permissions/history remain preserved. Pre-session personal UI-state
 drift was retained without restoration. Strict$0; provider activation, physical
 work and actual26.0 testing remain separate/deferred. No next feature started.
+
+## Foundational reliability preparation —2026-10-16
+
+Continuation from c55063b leaves UI acceptance PARTIAL: system-first desktop
+inspection hit stale Simulator menu elements and unavailable screenshots. No
+speculative UI repair or repeat of accepted journeys. Actual landscape, complete
+iPad On-state pan/temporal observation and actual VoiceOver remain open.
+
+Council adopted actual-model offline recovery into new destinations, separate
+database/object/Auth boundaries and minimal public-only no-deploy CI. Native
+restore8 and object/guard5 tests passed;13 migrations and an actual synthetic
+database archive restored30 fixture tables/security properties without reseeding.
+Post-restore pgTAP343 checks passed. No existing database/local records exported,
+no ownership bootstrap rerun and no provider/worker activation. Auth stand-ins and
+filesystem bytes are not hosted recovery proof. RECOVERY.md inventories assets,
+secret references, owner policy TODOs and release rollback/forward-fix constraints.
+
+CI configuration is pinned/read-only, uses verified-free public standard runners,
+and includes portable worker/relay tests and fresh migration/restore verification.
+Actual remote execution is separate and pending reviewed push at this checkpoint.
+Native CI remains deferred. No production/release or broader networking/performance/
+monitoring work is included. Original identities/records and protected Xcode working/
+staged entries remain preserved; the UI test artifact is unchanged from6713efe.

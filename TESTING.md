@@ -771,3 +771,43 @@ local services; hosted UI/provider delivery is not accepted by it. Hosted media
 capacity/worker, Google export and email/SMS prerequisites are unchanged, with no
 activation. Physical-device work remains deferred. Actual iOS/iPadOS26.0 remains
 unverified (installed iOS runtimes are18.6 and26.4). No release-readiness claim.
+
+## UI gates and reliability preparation —2026-10-16, baseline c55063b
+
+**UI acceptance remains PARTIAL.** One operator inspected Simulator's current
+system Settings/Motion and Features menu before TeamStats. Reduce Motion remained
+Off. Features exposes no VoiceOver option. Menu dismissal did not take effect,
+subsequent elements were stale (`-10005`), and a supported screenshot returned
+unavailable. Unchanged control attempts stopped. No new landscape, iPad far-right
+On-state pan or transition-timing pass is claimed. The exact three-item checklist
+above remains open; prior accepted shared/Save/maximum-text checks were not repeated.
+Inspector/AX evidence is separate from actual VoiceOver. Physical and actual26.0
+remain deferred; hosted/provider prerequisites are unchanged.
+
+[RECOVERY.md](RECOVERY.md) inventories all four draft stores, authoritative
+tables/history/permissions, Auth boundaries, separate object bytes and private
+configuration/secret references. It records owner TODOs and nondestructive release
+rollback/forward-fix boundaries. No real records or existing database were exported.
+
+| Evidence | Actual result | Limit |
+| --- | --- | --- |
+| Native recovery build/tests | Red: restore unavailable; green/final:8 tests,0 failures. Hand-authored backup reopened through all four actual loaders, preserving metadata/IDs/relationships, nil/zero and unanswered turnover. Unsupported/corrupt/orphan/duplicate/negative/occupied/symlink cases refused without a published partial directory. | Separate `com.narayanlekhi.TeamStats.RecoveryAcceptance` host on iOS26.4; no in-app importer or original-container installation. UI acceptance app remains the earlier6713efe artifact. |
+| Object-byte recovery tests | Red then green;5 tests passed, including interruption/no complete receipt, wrong/missing bytes, key/path/symlink checks and no overwrite. | Filesystem synthetic bytes, not hosted Storage service or valid PDF/video recovery. |
+| Actual synthetic database round trip | PostgreSQL17;13 migrations applied before backup, custom pg_dump restored to a second new database without reseeding. All30 fixture tables/policies/effective ACLs, RLS and function-security properties matched; allowed/denied access, immutable data, queued outbox and identity/missing-value assertions passed. | Auth/Storage platform stand-ins; no real login/JWT/provider recovery. No outbound worker started. |
+| Post-restore regressions |343 existing pgTAP checks passed: access81, stats136, draft recovery37, administrator identities20, private files69. Rollback-only suites left restored rows/security unchanged. | Actual local PostgreSQL policy behavior; not hosted or signed Auth-service acceptance. |
+| Portable CI commands locally | Export20 passed; gateway25 ran,1 skipped because platform hard resource limits are unavailable; relay8 passed; recovery5 passed. | Full native media tests need their configured validator/renderer/fixtures. An initial broad unconfigured discovery failed; it is not reported green or included in portable CI. |
+| CI configuration | No earlier local/remote workflow. YAML parsed; public-only standard Linux runner, read-only token, pinned official action/image, no secret/cache/artifact/deploy or privileged PR trigger. Public visibility/Actions enablement and current public-runner $0 policy verified. | Configuration validity and local command checks only at this checkpoint; actual remote run pending reviewed push. Native CI deferred until toolchain availability is established. |
+
+The stronger ACL check initially distinguished explicit owner-only ACL arrays from
+equivalent PostgreSQL defaults; it now resolves defaults before comparison and
+retains real permission-denial assertions. pgTAP exposed missing stand-in Auth
+fields/helper-schema usage; only the synthetic platform fixture was corrected.
+No production app permissions or RLS were weakened to pass a test. Failed artifacts
+and newly created drill databases were retained; none was reset or dropped.
+
+Final native builds use the reviewed UI with only the offline backup helper changed;
+UI/navigation source is unchanged. Protected Xcode working/index entries and174
+original JSON hashes are checked separately. Private evidence lives under the
+ignored `.scratch/teamstats-reliability-20261016/`. Synthetic restoration is not an
+operational backup, encrypted destination, hosted disaster-recovery proof or release
+readiness. Owner destination/retention/RPO/RTO/reporting decisions remain open.

@@ -1805,3 +1805,39 @@ intact; current personal UI-state drift predates this task and was retained. No
 provider/production activation, original upload, physical work or spending. Resume
 only the blocked acceptance after renewed Mac unlock/supported accessibility prerequisites;
 physical and actual26.0 checks stay deferred. No next feature started.
+
+##2026-10-16 — bounded UI gates and reliability preparation from c55063b
+
+Stage1 remains PARTIAL. One operator inspected system Settings/Motion and Simulator
+Features. Reduce Motion remained Off; no VoiceOver option was exposed. Menu state
+became stale and screenshots unavailable, so unchanged UI probes stopped. The
+existing actual-landscape/iPad On-state pan/temporal/VoiceOver checklist stays open.
+Accepted Save, shared-entry and maximum-text checks were not unnecessarily repeated.
+
+Stage2 adds a version1 Foundation recovery seam using actual stores, exclusive new
+destinations and staged publication; no app UI or automatic import/upload. Native
+red→green/final8 tests passed. Separate object-byte/guard tests5 passed, including
+corruption, interruption and occupied-destination refusal. An actual PostgreSQL17
+synthetic source→archive→new-destination round trip applied13 migrations, compared30
+tables/policies/effective ACL/RLS/function-security properties and passed denied/
+allowed, identity, missing-value/history/outbox assertions. Additional existing
+post-restore SQL suites passed343 checks without changing restored rows/security.
+Only platform stand-ins were corrected for pgTAP; app grants/RLS were preserved.
+
+Five Council analyses and five peer reviews informed the recovery/CI boundary;
+reused reviewers mean strict anonymity is not claimed. RECOVERY.md separates
+Auth/database/object/configuration assets, $0 operational prerequisites and owner
+destination/retention/RPO/RTO/reporting TODOs. It documents compatible forward fixes
+and rollback verification; Git revert is not data restoration.
+
+No prior workflow existed locally/remotely. A pinned, read-token, public-only
+standard Linux workflow is prepared for portable worker/relay/recovery checks and
+reproducible migration/restore verification. Local export20/gateway25(1skip)/relay8
+and recovery5 checks passed; YAML parsed. Native media tests require their explicit
+tooling and are excluded, not claimed passed by unconfigured discovery. Actual CI
+execution remains separate pending reviewed push; native CI/toolchain deferred.
+
+No external backup destination, real record export, provider/production activation,
+original app reset/uninstall, history rewrite or broader feature work. New isolated
+drill artifacts/databases are retained. Protected Xcode bytes/index,174original JSON
+hashes and temporary identities are preserved. See TESTING.md for current evidence.

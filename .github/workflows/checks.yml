@@ -1,0 +1,56 @@
+name: Synthetic reliability checks
+
+on:
+  push:
+    branches: [main, codex/teamstats-completion]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    # Standard hosted runners are free for PUBLIC repos; skip before allocating
+    # a runner if visibility changes. No larger/self-hosted runner or native job.
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        # Official library image, immutable multi-platform manifest checked2026-10-16.
+        image: postgres:17-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+        env:
+          POSTGRES_PASSWORD: SYNTHETIC_CI_ONLY
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, MIT
+        with:
+          persist-credentials: false
+      - name: Portable worker and recovery tests
+        run: |
+          python3 -m unittest discover -s supabase/tests -p test_sheets_export.py
+          python3 -m unittest discover -s supabase/tests -p test_private_file_gateway.py
+          python3 -m unittest discover -s supabase/tests -p test_recovery_drill.py
+          node --test supabase/tests/test_file_relay.mjs
+      - name: Fresh migrations and synthetic backup restore
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: SYNTHETIC_CI_ONLY
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          python3 supabase/recovery_drill.py --container "$PG_CONTAINER" \
+            --output "$RUNNER_TEMP/teamstats-recovery" \
+            --confirm-isolated-cluster --initialize-test-roles
+      # No deploy, secrets, private fixtures, caches, artifact uploads or provider calls.
+      # Full pgTAP, native media validation, Xcode and actual hosted recovery are separate.

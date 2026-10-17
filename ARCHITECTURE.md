@@ -108,7 +108,12 @@ backup either. `LocalDraftBackup` prepares a read-only, versioned JSON snapshot 
 the four validated saved local stores; `TeamStatsGuide` offers explicit export to a
 user-selected private destination. Preparation preserves missing values/identities
 and fails on corrupt data, with isolated synthetic tests. It excludes unsaved edits,
-credentials, shared records and media. No import or tested restore procedure exists.
+credentials, shared records and media. There is no in-app importer. Offline
+Foundation recovery tooling now validates version/relationships and restores only
+to a new directory, reopening all four real stores in synthetic tests. Separate
+PostgreSQL17 backup/restore and object-byte drills, CI boundaries and the release
+recovery procedure are documented in [RECOVERY.md](RECOVERY.md). They do not prove
+hosted disaster recovery, real Auth recovery or an operational backup policy.
 New saves request complete file protection without rewriting legacy bytes; physical
 protection and backup behavior remain unverified. Provider backup availability/retention and any
 restore mechanism must be verified under the $0 budget before promising recovery.

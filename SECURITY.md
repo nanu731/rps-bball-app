@@ -77,7 +77,11 @@ The revisitable guide can export a user-directed, plaintext JSON copy of the fou
 saved local stores only: games, box scores, possessions and player paint touches.
 Preparation fails closed on any load error. Unsaved edits, account configuration,
 credentials, shared records and retained media are excluded. The user must choose a
-private destination; export does not provide encryption, import or tested recovery.
+private destination; export does not provide encryption or an in-app importer.
+Offline new-directory restoration is tested with synthetic records; it restores
+no credentials or shared authority. [RECOVERY.md](RECOVERY.md) separates database,
+Auth and object-byte recovery, current-revocation checks and still-open owner policy.
+Synthetic proof does not establish encrypted operational backups or hosted recovery.
 
 ## Untrusted input and integrations
 

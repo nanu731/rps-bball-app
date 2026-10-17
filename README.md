@@ -34,8 +34,10 @@ The local entry screens remain local and unreviewed; shared server workflows are
 
 “Using TeamStats” is revisitable from Local games and Account. It explains local
 versus shared work, recovery, completion and optional retained clips. It offers an
-explicit private JSON copy of saved local drafts; no import, restore or upload is
-provided. Account deletion and owner-selected privacy/reporting/retention policies
+explicit private JSON copy of saved local drafts; no in-app import/restore or upload
+is provided. [Recovery preparation](RECOVERY.md) adds separately tested synthetic
+offline restoration and a no-deploy CI boundary; hosted disaster recovery remains
+unverified. Account deletion and owner-selected privacy/reporting/retention policies
 remain visibly unfinished. New local saves request complete file protection;
 physical protection behavior remains unverified.
 
