@@ -988,3 +988,10 @@ local rerun encountered2macOS process-cleanup permission errors (earlier28passed
 Standards0/Spec0; protected3working/index+174originalJSON unchanged. Existing Auth
 reuse, UI/VoiceOver/device26.0, hosted recovery and disabled-service gates remain.
 No crash collection, alerts, hosted monitoring or release readiness is claimed.
+
+Reviewed diagnostics source266ac77 pushed/remote verified. Actual CI38999837943
+passed, including Linux gateway28(1skip), diagnostics6 and existing14-migration
+restore/concurrent checks. Local macOS cleanup-permission limitations remain
+recorded separately in TESTING.md; native83+final17 passed. Installed isolated
+DiagnosticsAcceptance1.0(1) matches266ac77. Final Standards0/Spec0; protected3working/
+index+174originalJSON unchanged. No provider activation or new scope begun.

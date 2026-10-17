@@ -957,3 +957,17 @@ remain open. Final Standards0/Spec0 actionable findings. CI evidence follows.
 Existing local regressions on final source: export21, deadline1, recovery5 and
 relay10 passed. Installed DiagnosticsAcceptance executable matches the final
 tested build; all copied Swift source/test bytes match the checkout.
+
+### Reviewed source and actual CI
+
+Diagnostics source266ac77 was pushed and remote HEAD verified. Actual
+[CI run38999837943](https://github.com/nanu731/rps-bball-app/actions/runs/38999837943)
+passed: Linux export21, gateway28(1skip), deadline1, diagnostics6, recovery5,
+relay10 and fresh14-migration synthetic database/object restore plus concurrent
+admission30of40. The two macOS cleanup permission errors remain recorded above;
+the Linux run passed those existing checks. Native83+final17 and overhead/system-log
+inspection are local evidence, separate from this job. Independent final
+Standards0/Spec0 findings. Installed DiagnosticsAcceptance1.0(1) matches266ac77;
+original UIAcceptance6713efe and all protected3working/index+174JSON unchanged.
+No hosted monitoring, crash reporting, alerts, provider activation or release
+acceptance is inferred. Final documentation checkpoint does not change app source.
