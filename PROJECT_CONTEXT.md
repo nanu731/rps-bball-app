@@ -1150,3 +1150,5 @@ Actual isolated signed SQL/native evidence, rendered iPad shared draft/score act
 and final chart tests are distinguished in TESTING.md. Existing/hosted migrations
 14–19 remain inactive. READINESS.md is the finite remaining external/device/release
 list; source completion does not establish hosted or release readiness.
+
+Analytics planning2026-10-17: PRD’s proposed roadmap starts with coach-confirmed individual shooting-practice priorities, not a model promise. Preserved raw/versioned sources, grouped later-game evaluation, uncertainty and evidence-based withholding are required; no new collection or predictive UI is approved. This planning unit does not block the continuation queue.

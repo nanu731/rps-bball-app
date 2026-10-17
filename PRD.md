@@ -826,3 +826,57 @@ status or legal-compliance claim is invented. Retention, shared-history attribut
 ownership transfer, backup treatment and eventual execution/receipt policy remain
 owner decisions. Source-only migration16 is not activated on existing environments.
 See ADR0005 and TESTING for isolated evidence and remaining deployment acceptance.
+
+## Proposed analytics roadmap — planning only (2026-10-17)
+
+**First coaching decision proposed for owner/coach confirmation:** which individual
+shooting-practice priorities deserve attention next. This is not an approved
+recommendation engine, a diagnosis of technique or a promised delivery date.
+
+**Preservation audit.** Games retain dates and stable UUIDs; capture contexts link
+those games to stable session/player/team identities. Journals retain raw normalized
+coordinates, explicit attacking baskets, shot values, per-attempt FT answers,
+corrections/Undo and capture revisions. Display flips do not rewrite origins.
+Official after-game sources and accepted version IDs remain independent. Review and
+coverage must be bound to exact versions; the approved confirmation workflow has
+its own implementation/acceptance ledger. Entry timestamps establish provenance,
+not game clocks, basketball chronology or shot-to-possession links. Local recovery
+must include game metadata and journals; it must never recreate server authority.
+
+**Descriptive:** show recorded player/team makes, misses, attempts, FT results and
+schematic basket-relative bands, alongside sample counts, pending inputs, source
+revisions and coverage/review status. Compare independent official counts and
+points without combining sources. These outputs already have source/local evidence;
+that does not establish complete real-game data.
+
+**Diagnostic:** propose coach-reviewed comparisons across games, players or bands,
+with partial coverage and changing opportunities disclosed. Differences can identify
+questions to investigate, not causes. Current observations cannot establish defender
+pressure, technique, fatigue, calibrated distance, possession efficiency or why a
+shot succeeded. Those questions need additional authorized observation, calibrated
+court/video evidence or new collection scope; timestamps cannot supply it.
+
+**Predictive:** only after adequate reviewed games exist, consider estimating later
+shooting outcomes against simple training-only historical player/team-rate baselines.
+Evaluate on later whole games using game dates; keep each game's attempts, FT series,
+corrections and capture versions together. Use only information available at the
+prediction decision, avoiding leakage from later corrections or outcomes. Report
+sample sizes, missingness, calibration/error and uncertainty; do not claim reliable
+tail performance from small samples.
+
+**Prescriptive:** practice priorities would be conditional hypotheses for coach
+review, withheld when evidence or comparable coverage is inadequate. Matching
+points alone never qualifies a game as complete. Assess coaching usefulness,
+recording burden and whether decisions changed separately from predictive accuracy;
+neither association nor improved prediction proves causal improvement in play.
+
+**Partial data and changes:** retain partial captures as observed lower bounds;
+exclude unanswered FT from made/missed denominators while reporting pending counts.
+Keep unentered values missing. Version analyses and recompute after corrections,
+retaining prior results/provenance rather than silently replacing evidence.
+
+**Optional future context proposals:** practice-session/drill and target-zone totals
+would add session setup and counting; coarse shot-context/pressure annotations add
+per-attempt attention; calibrated video review adds rights, setup and review labor.
+All require owner/coach approval and a recording-effort trial. No mandatory inputs,
+new dependencies, trained models or predictive UI are added by this roadmap.
