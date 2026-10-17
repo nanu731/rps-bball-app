@@ -2046,3 +2046,14 @@ alone into proof all missed attempts were recorded. Real forms/roster/media,
 provider credentials/free capacity, deletion execution and release approval remain
 owner/external inputs. No code, migration or provider was changed by this planning
 checkpoint; older app/CI evidence is not a shot-recorder pass.
+
+## Manual-pilot reconciliation2026-10-17
+
+Ticket01: native guide reflects shared-manual pilot scope, selected contact and
+separate save/completion/review/publication. The obsolete contact placeholder and
+blanket live-game statement were corrected; original record formats are unchanged.
+README/READINESS distinguish10GB encrypted-backup allocation from plaintext local
+export and retain privacy/retention/provider/device/distribution gates. Isolated
+ShotAcceptance simulator build passed; new guide rendered interaction is not yet
+verified. Standards0; Spec's feature-target wording finding corrected. No provider,
+migration or backup upload activation. Shot models are the next eligible ticket.

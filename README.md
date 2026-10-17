@@ -12,6 +12,27 @@ throws, is now authorized but **not yet implemented**. See
 [shot requirements](PRD.md#in-game-shot-recorder-amendment--2026-10-17).
 The completion target is2026-11-17, not a release-readiness claim.
 
+### Manual-statistics pilot boundary
+
+The owner permits shared manual statistics before automatic Sheets/media delivery.
+This is scope approval, not deployment or release acceptance. The2026-11-17 target
+is a planning target. Follow [READINESS.md](READINESS.md) for current gates.
+
+Pilot acceptance uses a clearly labeled synthetic game and distinct admitted and
+denied accounts: verify admission, real roster identity, shared draft save/reopen,
+independent sheet completion, ordinary submission/review and authorized publication,
+viewer access to accepted versions, correction recovery and revoked access. Keep
+these server-confirmed states distinct. Existing synthetic checks are recorded in
+TESTING.md; they do not authorize a new provider activation or real-record upload.
+Actual hosted signup/access, distribution, privacy/retention, device/accessibility
+and selected pilot participants remain required acceptance inputs.
+
+The selected support/security/deletion contact is in READINESS.md and Using
+TeamStats. It does not establish a response commitment or deletion executor.
+The10GB owner allocation is for encrypted backup generations only, not app/media
+hosting. Local JSON export is plaintext and user-directed; no automatic Google
+backup, expiry, retention, deletion or real-data transfer is configured.
+
 ### Media scope
 
 Owner decision (2026-10-12): approximately 25 regular users plus initial testers.

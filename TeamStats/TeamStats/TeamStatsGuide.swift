@@ -10,12 +10,15 @@ struct TeamStatsGuide: View {
     var body: some View {
         List {
             Section("After the game") {
-                Text("Choose the game, enter observations, and save your draft. TeamStats does not track live games.")
+                Text("Enter box scores, possessions and player paint touches after games. Choose the game, record observations and save your draft.")
             }
             Section("Local drafts") {
                 Label("On this device", systemImage: "iphone").font(.headline).foregroundStyle(Color.accentColor)
                 Text("Local games use the labeled temporary roster. A local save does not publish data or upload it to a team.")
                 Text("Blank means not entered; 0 is an explicit observation. Individual and roster-table box-score modes edit the same values.")
+            }
+            Section("Manual-statistics pilot") {
+                Text("Shared manual statistics are the first pilot scope. Automatic Sheets and hosted media delivery are not enabled. Saving a draft is separate from completion, review and publication.")
             }
             Section("Shared team records") {
                 Label("Server-confirmed access", systemImage: "person.2").font(.headline).foregroundStyle(Color.accentColor)
@@ -43,7 +46,9 @@ struct TeamStatsGuide: View {
             }
             Section("Account recovery and privacy") {
                 Text("Request a fresh sign-in link in Account to recover access. Team permissions still come from the server.")
-                Text("TODO_PRIVACY_POLICY · TODO_REPORTING_CONTACT · TODO_RETENTION_POLICY · TODO_ACCOUNT_DELETION_POLICY — owner-approved policies, reporting channel and deletion/ownership handling are not supplied. Account offers request-only deletion intake when its server supports it. Your account remains active; deletion execution is unavailable in this prototype.")
+                Link("Contact TeamStats for support, security or deletion requests", destination: URL(string: "mailto:happybuddha1008@gmail.com" )!)
+                    .frame(minHeight: 44)
+                Text("TODO_PRIVACY_POLICY · TODO_RETENTION_POLICY · TODO_ACCOUNT_DELETION_POLICY — retention, response commitments and deletion/ownership handling are not supplied. Account offers request-only deletion intake when its server supports it. Your account remains active; deletion execution is unavailable in this prototype.")
                     .font(.footnote).textSelection(.enabled)
             }
             Section("App information") {

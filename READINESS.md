@@ -20,7 +20,7 @@ No release-readiness claim is made.
 - New authorized engineering: in-app iPad-first field-goal/free-throw capture for
   both teams by one manager, with Undo, durable local drafts, separate current
   authority and independent reconciliation/coverage. PRD.md/ADR0007 are canonical.
-  Not implemented; existing stats/UI tests do not establish shot-recorder acceptance.
+  Implementation is tracked separately; existing stats/UI tests do not establish shot-recorder acceptance.
 
 | Category | Remaining work and evidence required |
 | --- | --- |
@@ -39,3 +39,15 @@ export or original-app replacement is part of this preparation.
 Detailed evidence: [TESTING.md](TESTING.md), [exports.md](supabase/exports.md),
 [NETWORK.md](NETWORK.md), [OPERATIONS.md](OPERATIONS.md),
 [RECOVERY.md](RECOVERY.md), [PRD.md](PRD.md).
+
+## Manual-pilot preparation2026-10-17
+
+The revisitable native guide now reflects shared-manual scope and the selected
+contact rather than an unresolved contact placeholder. Admission, draft saving,
+completion, review, publication and accepted-only viewing retain existing server
+contracts; no demonstrated new manual-statistics defect justified repeating those
+accepted suites. README defines the bounded synthetic pilot journey and gates.
+The contact route and10GB encrypted-backup budget do not establish privacy/retention,
+operational handling, a real encrypted destination or provider capacity. The shot
+recorder remains a separate implementation/acceptance queue. The target for remaining agreed features
+is2026-11-17; unresolved hosted/device/privacy/distribution gates prevent a promise.

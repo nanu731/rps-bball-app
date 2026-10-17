@@ -1089,3 +1089,14 @@ Google remain unverified/disabled. Native test host source d253216 was fingerpri
 against35 committed Swift files; private rendered request harness remains separate.
 Final reviews Standards0/Spec0; original174 JSON and3protected working/index
 entries preserved. READINESS.md is the remaining owner/provider/device/release list.
+
+## Manual-pilot reconciliation2026-10-17
+
+Ticket01: native guide reflects shared-manual pilot scope, selected contact and
+separate save/completion/review/publication. The obsolete contact placeholder and
+blanket live-game statement were corrected; original record formats are unchanged.
+README/READINESS distinguish10GB encrypted-backup allocation from plaintext local
+export and retain privacy/retention/provider/device/distribution gates. Isolated
+ShotAcceptance simulator build passed; new guide rendered interaction is not yet
+verified. Standards0; Spec's feature-target wording finding corrected. No provider,
+migration or backup upload activation. Shot models are the next eligible ticket.
