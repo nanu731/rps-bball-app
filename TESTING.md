@@ -1030,3 +1030,14 @@ retained files and temporary identities preserved. Native source/app unchanged;
 no device/UI gate was retested or passed. Migration14/15, scheduler activation and
 real Google delivery remain disabled on existing application/hosted environments.
 READINESS.md is the five-category remaining-work reconciliation; no release claim.
+
+## Dependency readiness2026-10-17
+
+All seven cached native package revisions match Package.resolved with clean tracked
+checkout contents. Ten root LICENSE/NOTICE texts are retained verbatim in the app;
+actual isolated Simulator build contains the exact resource bytes. Independent
+Standards review's archive-qualification finding corrected; Spec0 findings. No
+SDK/runtime upgrade. DEPENDENCIES.md records affected cached Storage/Imgproxy
+advisories and a periodic official-source review procedure. Hosted versions, signed
+artifact/linked-component license review and full transitive coverage remain open.
+No provider/external service was activated.

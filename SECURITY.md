@@ -207,3 +207,11 @@ old spans, but already emitted OS logs have platform-managed retention. Worker
 status is passive/loopback and exposes fixed labels only; it grants no authority.
 These signals do not replace security audits, current server authorization or
 verified crash/alert/hosted-monitoring services.
+
+## Dependency review boundary2026-10-17
+
+[DEPENDENCIES.md](DEPENDENCIES.md) records pinned native licenses, reviewed upstream
+advisories and affected isolated runtime versions. Patched Storage/Imgproxy and
+actual hosted version evidence are prerequisites before external media delivery;
+RLS is not a mitigation for the documented signed-resumable bypass. Existing
+synthetic loopback services remain isolated; no provider activation or upgrade.
