@@ -68,6 +68,27 @@ class DiagnosticTests(unittest.TestCase):
         self.assertNotIn('secret',json.dumps(d.snapshot()))
 
 class WorkerStatusTests(unittest.TestCase):
+    def test_default_sink_does_not_hold_python_stderr_lock_at_shutdown(self):
+        import subprocess
+        script = r"""
+import io,sys,threading,time,resource
+resource.setrlimit(resource.RLIMIT_CORE,(0,0))
+from operation_diagnostics import Diagnostics,Category,Outcome
+class Blocked(io.RawIOBase):
+    def writable(self):return True
+    def write(self,data):time.sleep(5);return len(data)
+sys.stderr=io.TextIOWrapper(io.BufferedWriter(Blocked(),buffer_size=16),line_buffering=True)
+d=Diagnostics();d.record(Category.EXPORT,Outcome.SUCCEEDED)
+until=time.monotonic()+1
+while not d.flush() and time.monotonic()<until: pass
+"""
+        result=subprocess.run([sys.executable,'-c',script],cwd=Path(__file__).resolve().parents[1],
+            capture_output=True,text=True,timeout=4)
+        self.assertEqual(result.returncode,0,result.stderr)
+        emitted=json.loads(result.stderr)
+        self.assertEqual(emitted['category'],'export_run')
+        self.assertEqual(set(emitted),{'category','outcome','failure','duration_ms','attempts'})
+
     def test_actual_cli_outputs_are_passive_and_do_not_echo_paths_or_unknown_arguments(self):
         import subprocess,os,tempfile,datetime
         root=Path(__file__).resolve().parents[1]

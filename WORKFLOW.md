@@ -1955,3 +1955,9 @@ UI landscape/iPad Reduce Motion/VoiceOver, physical/actual26.0, hosted recovery,
 provider/budget and owner policy/content/release gates remain open. Native source
 unchanged; no native build or Simulator probe repeated. Final preservation and
 actual remote CI receipts are recorded after the scoped push.
+
+First remote sourcebacb567 CI39004159248 failed on Python buffered-stderr daemon
+shutdown after worker21/scheduler7 passed. Deterministic isolated reproduction
+confirmed the abort; direct descriptor output fixes it without changing diagnostic
+bounds/privacy. Final local diagnostics7/worker28 pass; repaired CI pending.
+TESTING.md retains the failed receipt. No activation or unrelated scope added.

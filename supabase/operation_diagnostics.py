@@ -3,6 +3,7 @@ import argparse
 from collections import deque
 from enum import Enum
 import json
+import os
 import queue
 import sys
 import threading
@@ -35,7 +36,8 @@ class Diagnostics:
     never escape into application work; a blocked sink cannot grow the queue.
     """
     def __init__(self, sink=None, clock=time.monotonic):
-        self.sink = sink if sink is not None else lambda line: print(line, file=sys.stderr)
+        # Daemon output must not hold Python's buffered stderr lock during shutdown.
+        self.sink = sink if sink is not None else lambda line: os.write(2,(line+'\n').encode('utf-8'))
         self.clock = clock
         self.lock = threading.Lock()
         self.events = deque(maxlen=64)

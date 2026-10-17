@@ -1002,3 +1002,15 @@ UI landscape/iPad Reduce Motion/VoiceOver, physical/actual26.0, hosted recovery,
 provider/budget and owner policy/content/release gates remain open. Native source
 unchanged; no native build or Simulator probe repeated. Final preservation and
 actual remote CI receipts are recorded after the scoped push.
+
+### CI-exposed shutdown repair
+
+Sourcebacb567's first actual [CI run39004159248](https://github.com/nanu731/rps-bball-app/actions/runs/39004159248)
+failed after export21/scheduler7 had passed: a diagnostic daemon held Python's
+buffered stderr lock at interpreter shutdown (exit134). An isolated local subprocess
+reproduced the same abort(-6) with a blocked buffered output. The default sink now
+writes its closed JSON envelope directly to descriptor2; it retains the existing
+queue/emission bounds and fail-open behavior. Final diagnostics7 and worker28 local
+tests pass, including actual emitted-output inspection and bounded shutdown-fixture
+synchronization. This repairs a demonstrated termination defect, not a monitoring
+activation. The failed receipt remains recorded; repaired remote CI follows.

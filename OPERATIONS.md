@@ -58,7 +58,9 @@ envelopes instead of raw exception/argument dumps. These boundaries do not sanit
 arbitrary output from external tools or uninstrumented code.
 
 The process-local deque is64 events/15minutes, lazily expired, with32emissions/minute,
-one active sink and one queued output. A daemon emits stderr; sink failure/queue
+one active sink and one queued output. A daemon emits stderr through a direct descriptor write, avoiding Python buffered
+stderr locks during interpreter shutdown. A blocked descriptor can still lose
+evidence at exit; sink failure/queue
 saturation cannot break processing. CLI exit waits at most50ms for output; a killed
 process can lose evidence. Capturing stderr requires operator-selected private
 retention; no file rotation, external collector or retention policy is activated.
