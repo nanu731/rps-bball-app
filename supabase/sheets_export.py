@@ -20,6 +20,8 @@ from dataclasses import dataclass
 # padded literal generations avoids rounding bigint generations through VALUE().
 LATEST_FORMULA = """=IFERROR(LET(entries,FILTER('TeamStats Ledger'!A2:H100001,'TeamStats Ledger'!A2:A100001<>""),ordered,SORT(entries,1,TRUE,2,TRUE,3,FALSE),keys,ARRAYFORMULA(INDEX(ordered,0,1)&"|"&INDEX(ordered,0,2)),FILTER(ordered,ARRAYFORMULA(MATCH(keys,keys,0))=SEQUENCE(ROWS(ordered)))),"")"""
 
+from http_deadline import DeadlineHTTPHandler, DeadlineHTTPSHandler
+
 class ExportError(Exception):
     """A safe, fixed error code. Provider response bodies are never logged."""
 
@@ -41,7 +43,7 @@ class GoogleSheets:
     def __init__(self, config):
         self.config = config
         self.remaining = config.request_limit
-        self.opener = urllib.request.build_opener(_NoRedirect())
+        self.opener = urllib.request.build_opener(_NoRedirect(), DeadlineHTTPHandler(), DeadlineHTTPSHandler())
 
     def _guard(self):
         c = self.config
@@ -82,6 +84,7 @@ class GoogleSheets:
             return value
         except urllib.error.HTTPError as error:
             # Duplicate ID and partial/invalid batches are verified by the same read seam.
+            error.close()
             raise ExportError('provider_http_' + str(error.code)) from None
         except (TimeoutError, socket.timeout):
             raise ExportError('provider_timeout') from None
@@ -296,7 +299,7 @@ class Backend:
         if url.username or url.password or url.query or url.fragment or not 0 < timeout <= 30:
             raise ExportError('configuration_invalid')
         self.endpoint, self.token, self.timeout = endpoint.rstrip('/'), service_token, timeout
-        self.opener = urllib.request.build_opener(_NoRedirect())
+        self.opener = urllib.request.build_opener(_NoRedirect(), DeadlineHTTPHandler(), DeadlineHTTPSHandler())
 
     def rpc(self, name, arguments):
         names = ('stats_export_jobs', 'stats_export_reserve', 'stats_export_finish', 'stats_export_fail')

@@ -132,3 +132,12 @@ or external integrations change. Keep detailed RPC contracts in `supabase/` and
 material decisions in ADRs. Put dated acceptance evidence in existing records,
 with public-safe status in [TESTING.md](TESTING.md). No provider identifiers,
 tokens, real roster examples or private setup paths belong here.
+
+## Network/session preparation —2026-10-16
+
+[NETWORK.md](NETWORK.md) inventories request bounds/retry/cancellation and uncertain
+write recovery. One official Auth coordinator supplies current tokens; its bounded
+fetch prevents SDK Auth POST replay. Database operations explicitly disable retries.
+Private file admission is a separate durable actor-derived SQL command, not ingress
+protection or capacity assurance. Migration14 is tested only in new synthetic
+databases; existing/hosted schemas and disabled delivery remain untouched.

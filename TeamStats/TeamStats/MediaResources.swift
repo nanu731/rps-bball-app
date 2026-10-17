@@ -310,7 +310,7 @@ final class MediaResources {
                 _ = query.eq("media_resources.kind", value: kind.rawValue)
                     .eq(kind == .practice ? "media_resources.play_id" : "media_resources.game_id", value: targetID.uuidString)
             }
-            let values: [T] = try await query.order("created_at").order("id").range(from: page * 100, to: page * 100 + 99).execute().value
+            let values: [T] = try await query.order("created_at").order("id").range(from: page * 100, to: page * 100 + 99).retry(enabled: false).execute().value
             rows.append(contentsOf: values)
             if values.count < 100 { return rows }
         }

@@ -71,3 +71,30 @@ test('documented capacity and validator failures retain their public recovery co
     assert.deepEqual(await result.json(),{error:code});
   }
 });
+test('cancellation stops worker dispatch and active body processing', async () => {
+  const controller = new AbortController(); controller.abort();
+  let sends=0;
+  const result = await handle(new Request(base + '/files/' + id + '?operation=' + id,
+    {headers, signal:controller.signal}), worker, () => { sends++; throw new Error('synthetic'); });
+  assert.equal(sends,0);
+  assert.equal(result.status,503);
+  const active = new AbortController();
+  const pending = handle(new Request(base + '/files/' + id + '?operation=' + id,
+    {headers,signal:active.signal}), worker, async (_url,init) => {
+      return new Response(new ReadableStream({start(stream) {
+        init.signal.addEventListener('abort',() => stream.error(new Error('synthetic cancellation')));
+        active.abort();
+      }}));
+    });
+  assert.equal((await pending).status,503);
+});
+test('rate denial keeps bounded retry guidance without transfer replay', async () => {
+  let sends=0;
+  const result=await handle(new Request(base+'/uploads/'+id,{method:'POST',headers,body:'abc'}),worker,async()=>{
+    sends++; return Response.json({error:'rate_limited'},{status:429,headers:{'Retry-After':'17'}});
+  });
+  assert.equal(result.status,429);
+  assert.equal(result.headers.get('Retry-After'),'17');
+  assert.equal((await result.json()).error,'rate_limited');
+  assert.equal(sends,1);
+});

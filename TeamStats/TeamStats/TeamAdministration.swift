@@ -224,7 +224,7 @@ final class TeamAdministration {
         defer { isBusy = false }
         do {
             let client = try await authenticatedClient()
-            let status: String = try await client.rpc("team_request_membership", params: ["p_team_id": id.uuidString]).execute().value
+            let status: String = try await client.rpc("team_request_membership", params: ["p_team_id": id.uuidString]).retry(enabled: false).execute().value
             guard let result = TeamMembershipStatus(rawValue: status) else { throw AdministrationIssue.invalidResponse }
             admissionStatus = result
             switch result {
@@ -297,9 +297,9 @@ final class TeamAdministration {
     }
 
     private func readTeam(teamID: UUID, client: SupabaseClient) async throws {
-        let rows: [ServerTeam] = try await client.from("teams").select("id,name,owner_auth_uuid,access_revision").eq("id", value: teamID.uuidString).limit(1).execute().value
+        let rows: [ServerTeam] = try await client.from("teams").select("id,name,owner_auth_uuid,access_revision").eq("id", value: teamID.uuidString).limit(1).retry(enabled: false).execute().value
         guard let team = rows.first else { throw AdministrationIssue.denied }
-        let snapshot: TeamAccess = try await client.rpc("team_access", params: ["p_team_id": teamID.uuidString]).execute().value
+        let snapshot: TeamAccess = try await client.rpc("team_access", params: ["p_team_id": teamID.uuidString]).retry(enabled: false).execute().value
         guard snapshot.teamID == teamID, snapshot.accessRevision >= 0 else { throw AdministrationIssue.invalidResponse }
         let loadedRoster: [ServerRosterEntry] = try await readPages(client: client, table: "roster_entries", columns: "id,team_id,display_name,jersey_number,version,archived_at", order: "id", teamID: teamID)
         var loadedMemberships: [ServerMembership] = []
@@ -338,7 +338,7 @@ final class TeamAdministration {
         var rows: [ServerAdministratorIdentity] = []
         for page in 0..<50 {
             let values: [ServerAdministratorIdentity] = try await client.rpc("team_administrator_identities", params: ["p_team_id": teamID.uuidString])
-                .order("user_id").range(from: page * 100, to: (page + 1) * 100 - 1).execute().value
+                .order("user_id").range(from: page * 100, to: (page + 1) * 100 - 1).retry(enabled: false).execute().value
             rows.append(contentsOf: values)
             if values.count < 100 { return rows }
         }
@@ -351,7 +351,7 @@ final class TeamAdministration {
         for page in 0..<50 {
             let query = client.from(table).select(columns)
             if let teamID { _ = query.eq("team_id", value: teamID.uuidString) }
-            let values: [T] = try await query.order(order).range(from: page * pageSize, to: (page + 1) * pageSize - 1).execute().value
+            let values: [T] = try await query.order(order).range(from: page * pageSize, to: (page + 1) * pageSize - 1).retry(enabled: false).execute().value
             rows.append(contentsOf: values)
             if values.count < pageSize { return rows }
         }

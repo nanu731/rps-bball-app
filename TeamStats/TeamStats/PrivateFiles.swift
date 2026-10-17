@@ -76,6 +76,7 @@ final class PrivateFiles {
     private(set) var uploadNeedsReconciliation = false
     @ObservationIgnored private let configuration: () -> AccountConfiguration?
     @ObservationIgnored private let authenticatedClient: () async throws -> SupabaseClient
+    @ObservationIgnored private let accessToken: () async throws -> String
     @ObservationIgnored private let offlineActor: () -> UUID?
     @ObservationIgnored private let session: URLSession
     @ObservationIgnored let retention: ClipRetention
@@ -86,13 +87,17 @@ final class PrivateFiles {
     init(teamID: UUID, kind: PrivateFileKind, targetID: UUID, account: BackendAccount, retention: ClipRetention = ClipRetention()) {
         self.teamID = teamID; self.kind = kind; self.targetID = targetID
         configuration = { account.configuration }; authenticatedClient = { try await account.authenticatedClient() }
-        offlineActor = { account.offlineClipActorID }; session = .shared; self.retention = retention
+        accessToken = { try await account.accessToken() }
+        offlineActor = { account.offlineClipActorID }; session = AccountHTTP.session(resourceTimeout: 90); self.retention = retention
     }
     init(teamID: UUID, kind: PrivateFileKind, targetID: UUID, configuration: AccountConfiguration,
          authenticatedClient: @escaping () async throws -> SupabaseClient, offlineActor: @escaping () -> UUID?,
-         session: URLSession = .shared, retention: ClipRetention = ClipRetention()) {
+         session: URLSession = AccountHTTP.session(resourceTimeout: 90), retention: ClipRetention = ClipRetention(),
+         accessToken: (() async throws -> String)? = nil) {
         self.teamID = teamID; self.kind = kind; self.targetID = targetID
         self.configuration = { configuration }; self.authenticatedClient = authenticatedClient
+        // Existing integration fixtures may supply a standalone SDK client; the app supplies its single Auth source.
+        self.accessToken = accessToken ?? { try await authenticatedClient().auth.session.accessToken }
         self.offlineActor = offlineActor; self.session = session; self.retention = retention
     }
     var hasPendingReservation: Bool { proposal != nil && pendingVersion == nil }
@@ -271,7 +276,7 @@ final class PrivateFiles {
     private func gatewayRequest(_ client: SupabaseClient, route: String, method: String, body: Data? = nil) async throws -> URLRequest {
         guard let configuration = configuration() else { throw PrivateFileIssue.server }
         guard configuration.environment == .localTest else { throw PrivateFileIssue.hostedUnavailable }
-        let token = try await client.auth.session.accessToken
+        let token = try await accessToken()
         guard let url = URL(string: configuration.url.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/")) + "/functions/v1/teamstats-files/" + route) else { throw PrivateFileIssue.invalidInput }
         var request = URLRequest(url: url); request.httpMethod = method; request.httpBody = body; request.timeoutInterval = 90
         request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization"); request.setValue(configuration.publicKey, forHTTPHeaderField: "apikey")
@@ -310,7 +315,7 @@ final class PrivateFiles {
             _ = query.eq(parent ? "kind" : "file_resources.kind", value: kind.rawValue)
             _ = query.eq((parent ? "" : "file_resources.") + (kind == .practice ? "play_id" : "game_id"), value: targetID.uuidString)
             if let id { _ = query.eq("id", value: id.uuidString) }
-            let values: [T] = try await query.order("id").range(from: page * 100, to: (page + 1) * 100 - 1).execute().value
+            let values: [T] = try await query.order("id").range(from: page * 100, to: (page + 1) * 100 - 1).retry(enabled: false).execute().value
             rows.append(contentsOf: values)
             if values.count < 100 { return rows }
         }
@@ -341,6 +346,7 @@ nonisolated private struct FileDelivery: Decodable {
 nonisolated private enum PrivateFileTransfer {
     static func read(_ request: URLRequest, session: URLSession, maximum: Int, expectedType: String? = nil) async throws -> Data {
         let (stream, response) = try await session.bytes(for: request, delegate: FileRedirectBlocker())
+        defer { stream.task.cancel() }
         guard let response = response as? HTTPURLResponse else { throw PrivateFileIssue.invalidResponse }
         if !(200..<300).contains(response.statusCode) {
             var body = Data()

@@ -12,6 +12,7 @@ import importlib.util
 import io
 import json
 import os
+import sys
 import subprocess
 import tomllib
 import urllib.error
@@ -45,6 +46,7 @@ pg=args.runtime_home/'cache/stack/slim-services/postgres/17.11.0.004-r1/darwin-a
 pgenv=dict(env,PGHOST=db.hostname,PGPORT=str(db.port),PGUSER=urllib.parse.unquote(db.username),PGPASSWORD=urllib.parse.unquote(db.password),PGDATABASE=db.path.lstrip('/'))
 validator=json.loads(args.validator_config.read_text())
 assert validator.get('mode')=='isolated_local' and validator.get('hosted_enabled') is False
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 spec=importlib.util.spec_from_file_location('private_file_gateway',Path(__file__).parents[1]/'private_file_gateway.py')
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 gateway=module.FileGateway(module.Providers(validator),module.TrustedValidator(validator))

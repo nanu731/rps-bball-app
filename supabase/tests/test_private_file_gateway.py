@@ -23,6 +23,7 @@ import unittest
 from unittest.mock import patch
 import uuid
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 SPEC = importlib.util.spec_from_file_location('private_file_gateway', Path(__file__).parents[1] / 'private_file_gateway.py')
 MODULE = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(MODULE)
 TEAM = 'f1000000-0000-4000-8000-000000000001'
@@ -35,6 +36,7 @@ DATA = b'TEST ONLY synthetic readable file bytes'
 class GatewayTests(unittest.TestCase):
     def setUp(self):
         self.objects = {}; self.receipt = None; self.transfer_started = False
+        self.rate_denied = False; self.admission_unavailable = False; self.admissions = 0
         self.revoked = False; self.uncertain_put = False; self.missing_get = False
         self.missing_http400 = False; self.corrupt_get = False; self.claimed = False; self.finish_count = 0; self.missing = False
         case = self
@@ -44,6 +46,12 @@ class GatewayTests(unittest.TestCase):
                 body = value if isinstance(value, bytes) else json.dumps(value).encode()
                 self.send_response(status); self.send_header('Content-Length', str(len(body)));self.end_headers();self.wfile.write(body)
             def do_GET(self):
+                if self.path=='/slow':
+                    self.send_response(200); self.send_header('Content-Length','10'); self.end_headers()
+                    try:
+                        for _ in range(10): self.wfile.write(b'x'); self.wfile.flush(); time.sleep(.02)
+                    except (BrokenPipeError,ConnectionResetError): pass
+                    return
                 if self.path.startswith('/rest/file_resource_versions?'):
                     self.send([] if case.revoked else [{'team_id':TEAM}]);return
                 if self.path.startswith('/storage/object/'):
@@ -60,6 +68,11 @@ class GatewayTests(unittest.TestCase):
                     if case.uncertain_put:self.send({'error':'lost reply'},500);return
                     self.send({'Key':'synthetic'});return
                 args=json.loads(body); name=self.path.rsplit('/',1)[-1]
+                if name=='file_request_admission':
+                    case.admissions += 1
+                    if case.admission_unavailable: self.send({},503);return
+                    if case.revoked: self.send({'code':'42501'},403);return
+                    self.send({'allowed':not case.rate_denied,'retry_after':17 if case.rate_denied else 0});return
                 if name=='file_upload_access':
                     if case.revoked:self.send({'code':'42501','message':'PRIVATE diagnostic must not escape'},403);return
                     self.send({'id':VERSION,'status':'uploading'});return
@@ -106,6 +119,30 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
         with self.assertRaises(MODULE.FileFailure) as caught:function()
         self.assertEqual(caught.exception.code,expected)
     def upload(self):return self.gateway.upload('SYNTHETIC USER',OPERATION,io.BytesIO(DATA),len(DATA))
+    def test_provider_deadline_bounds_slow_continuous_reply(self):
+        providers=MODULE.Providers(self.config)
+        providers.timeout=.04  # Synthetic clock budget; regular requests use30 seconds.
+        with self.assertRaises(MODULE.FileFailure) as caught:
+            providers.request(self.config['rest_url'].replace('/rest','/slow'),'GET',None,{},100)
+        self.assertEqual(caught.exception.code,'provider_operation_unconfirmed')
+
+    def test_rate_denial_stops_before_body_or_provider_mutation(self):
+        self.rate_denied = True
+        class Unreadable:
+            def read(self, *args): raise AssertionError('body must remain unread')
+        with self.assertRaises(MODULE.FileFailure) as caught:
+            self.gateway.upload('SYNTHETIC USER',OPERATION,Unreadable(),len(DATA))
+        self.assertEqual((caught.exception.status,caught.exception.code,caught.exception.retry_after),(429,'rate_limited',17))
+        self.assertEqual(self.objects,{})
+        self.assertEqual(self.admissions,1)
+        self.assertFalse(self.claimed)
+    def test_lost_admission_reply_is_not_replayed_or_treated_as_transfer(self):
+        self.admission_unavailable = True
+        self.failure(self.upload,'provider_operation_unconfirmed')
+        self.assertEqual(self.admissions,1)
+        self.assertEqual(self.objects,{})
+        self.assertFalse(self.claimed)
+
     def test_actual_http_put_and_readback_are_required_before_receipt(self):
         reply=self.upload();self.assertEqual(reply['status'],'ready');self.assertEqual(self.objects[PATH],DATA)
         self.assertEqual(reply['sha256'],hashlib.sha256(DATA).hexdigest())

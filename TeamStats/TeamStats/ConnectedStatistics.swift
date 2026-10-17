@@ -585,7 +585,7 @@ final class ConnectedStatistics {
         enum CodingKeys: String, CodingKey { case suppressNumericWarning = "suppress_numeric_warning" }
     }
     private func readGame(_ game: ConnectedGame, client: SupabaseClient) async throws {
-        let gameRows: [ConnectedGame] = try await client.from("games").select().eq("team_id", value: teamID.uuidString).eq("id", value: game.id.uuidString).limit(1).execute().value
+        let gameRows: [ConnectedGame] = try await client.from("games").select().eq("team_id", value: teamID.uuidString).eq("id", value: game.id.uuidString).limit(1).retry(enabled: false).execute().value
         guard let currentGame = gameRows.first, currentGame.teamID == teamID, currentGame.date != nil else { throw ConnectedStatisticsIssue.denied }
         let snapshot: TeamAccess = try await command(client, "team_access", [:])
         guard snapshot.teamID == teamID else { throw ConnectedStatisticsIssue.invalidResponse }
@@ -634,7 +634,7 @@ final class ConnectedStatistics {
             if let gameID { _ = query.eq("game_id", value: gameID.uuidString) }
             let ordered = query.order(order)
             if table == "roster_entry_revisions" { _ = ordered.order("version") }
-            let values: [T] = try await ordered.range(from: page * pageSize, to: (page + 1) * pageSize - 1).execute().value
+            let values: [T] = try await ordered.range(from: page * pageSize, to: (page + 1) * pageSize - 1).retry(enabled: false).execute().value
             rows.append(contentsOf: values)
             if values.count < pageSize { return rows }
         }

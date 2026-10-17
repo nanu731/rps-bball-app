@@ -105,10 +105,12 @@ final class BackendAccount {
     @ObservationIgnored private let storage: any AuthLocalStorage
     @ObservationIgnored private let httpSession: URLSession
     @ObservationIgnored private var client: SupabaseClient?
+    @ObservationIgnored private var auth: AuthClient?
+    @ObservationIgnored private var clientGeneration = UUID()
     @ObservationIgnored private var didRestore = false
     @ObservationIgnored private let configurationKey = "configuration.v1"
 
-    init(storage: any AuthLocalStorage = SecureSessionStorage(), session: URLSession = .shared) {
+    init(storage: any AuthLocalStorage = SecureSessionStorage(), session: URLSession = AccountHTTP.session()) {
         self.storage = storage
         self.httpSession = session
     }
@@ -120,7 +122,7 @@ final class BackendAccount {
 
     func configure(url: String, publicKey: String, environment: AccountConfiguration.Environment) async {
         guard !isBusy else { return }
-        guard verifiedUserID == nil, client?.auth.currentSession == nil else { fail(.configurationWhileSignedIn); return }
+        guard verifiedUserID == nil, auth?.currentSession == nil else { fail(.configurationWhileSignedIn); return }
         isBusy = true
         defer { isBusy = false }
         do {
@@ -140,7 +142,7 @@ final class BackendAccount {
 
     func requestCode(method: AccountMethod, identifier: String) async {
         guard !isBusy else { return }
-        guard let configuration, let client else { fail(.invalidConfiguration); return }
+        guard let configuration, let auth else { fail(.invalidConfiguration); return }
         guard verifiedUserID == nil else { return }
         isBusy = true
         defer { isBusy = false }
@@ -165,7 +167,7 @@ final class BackendAccount {
                 let verifierKey = sessionKey(configuration) + "-code-verifier"
                 let previousVerifier = try read(key: verifierKey)
                 do {
-                    try await client.auth.signInWithOTP(email: contact, redirectTo: Self.emailRedirectURL)
+                    try await auth.signInWithOTP(email: contact, redirectTo: Self.emailRedirectURL)
                 } catch {
                     // A failed resend must not invalidate a previously delivered link.
                     if let previousVerifier {
@@ -178,7 +180,7 @@ final class BackendAccount {
                 do { try storage.store(key: emailLinkKey(configuration), value: Data(contact.utf8)) }
                 catch { throw AccountIssue.storage }
             } else {
-                try await client.auth.signInWithOTP(phone: contact, channel: .sms)
+                try await auth.signInWithOTP(phone: contact, channel: .sms)
             }
             pendingIdentifier = contact
             pendingMethod = method
@@ -237,7 +239,7 @@ final class BackendAccount {
             }
             let restoredClient = makeClient(validated)
             client = restoredClient
-            try await acceptSession(from: restoredClient)
+            try await acceptSession()
         } catch {
             var failure = error as? AccountIssue ?? .provider
             if knownSessionDenial(error) {
@@ -250,7 +252,7 @@ final class BackendAccount {
 
     func verifyCode(_ code: String) async {
         guard !isBusy else { return }
-        guard let client, let method = pendingMethod, let contact = pendingIdentifier else { fail(.noPendingCode); return }
+        guard let auth, let method = pendingMethod, let contact = pendingIdentifier else { fail(.noPendingCode); return }
         let token = code.trimmingCharacters(in: .whitespacesAndNewlines)
         guard (4...12).contains(token.count), token.allSatisfy({ $0.isASCII && $0.isNumber }) else { fail(.invalidCode); return }
         isBusy = true
@@ -258,15 +260,15 @@ final class BackendAccount {
         do {
             let response: AuthResponse
             if method == .email {
-                response = try await client.auth.verifyOTP(email: contact, token: token, type: .email)
+                response = try await auth.verifyOTP(email: contact, token: token, type: .email)
             } else {
                 guard configuration?.phoneDeliveryAllowed == true else { throw AccountIssue.phoneDeliveryDisabled }
-                response = try await client.auth.verifyOTP(phone: contact, token: token, type: .sms)
+                response = try await auth.verifyOTP(phone: contact, token: token, type: .sms)
             }
             guard let session = response.session, let configuration else { throw AccountIssue.noVerifiedSession }
             do { try storage.store(key: sessionKey(configuration), value: JSONEncoder().encode(session)) }
             catch { throw AccountIssue.storage }
-            try await acceptSession(from: client)
+            try await acceptSession()
             try clearEmailLink(configuration)
             pendingMethod = nil
             pendingIdentifier = nil
@@ -283,7 +285,7 @@ final class BackendAccount {
         defer { isBusy = false }
         var receivedSession = false
         do {
-            guard let configuration, let client,
+            guard let configuration, let auth,
                   let route = URLComponents(url: url, resolvingAgainstBaseURL: false),
                   route.scheme == Self.emailRedirectURL.scheme,
                   route.host == "auth", route.path == "/callback",
@@ -297,18 +299,18 @@ final class BackendAccount {
                   try read(key: sessionKey(configuration) + "-code-verifier") != nil else {
                 throw AccountIssue.invalidEmailLink
             }
-            let session = try await client.auth.session(from: url)
+            let session = try await auth.session(from: url)
             receivedSession = true
             do { try storage.store(key: sessionKey(configuration), value: JSONEncoder().encode(session)) }
             catch { throw AccountIssue.storage }
-            try await acceptSession(from: client, expectedEmail: email)
+            try await acceptSession(expectedEmail: email)
             try clearEmailLink(configuration)
             pendingMethod = nil
             pendingIdentifier = nil
         } catch {
             let issue = error as? AccountIssue ?? .provider
             if receivedSession, let configuration {
-                try? await client?.auth.signOut(scope: .local)
+                try? await auth?.signOut(scope: .local)
                 do {
                     try storage.remove(key: sessionKey(configuration))
                     try clearEmailLink(configuration)
@@ -335,7 +337,7 @@ final class BackendAccount {
         isBusy = true
         defer { isBusy = false }
         do {
-            try await acceptSession(from: client)
+            try await acceptSession()
             return client
         } catch {
             var failure = error as? AccountIssue ?? .provider
@@ -356,11 +358,11 @@ final class BackendAccount {
         offlineClipActorID = nil
         do { try invalidateOfflineActor() }
         catch { fail(.storage); return }
-        let oldClient = client
+        let oldAuth = auth
         // The SDK captures the token, removes its local session, then requests
         // server revocation. Explicit deletion below also checks suppressed failures.
         var remoteFailure = false
-        do { try await oldClient?.auth.signOut(scope: .local) }
+        do { try await oldAuth?.signOut(scope: .local) }
         catch { remoteFailure = true }
         do {
             try storage.remove(key: sessionKey(configuration))
@@ -375,11 +377,14 @@ final class BackendAccount {
         client = makeClient(configuration)
     }
 
-    private func acceptSession(from client: SupabaseClient, expectedEmail: String? = nil) async throws {
-        guard let configuration else { throw AccountIssue.invalidConfiguration }
+    private func acceptSession(expectedEmail: String? = nil) async throws {
+        guard let configuration, let auth else { throw AccountIssue.invalidConfiguration }
+        try Task.checkCancellation()
         _ = try read(key: sessionKey(configuration))
-        let session = try await client.auth.session
-        let verifiedUser = try await client.auth.user(jwt: session.accessToken)
+        let session = try await auth.session
+        try Task.checkCancellation()
+        let verifiedUser = try await auth.user(jwt: session.accessToken)
+        try Task.checkCancellation()
         guard !verifiedUser.isAnonymous, verifiedUser.id == session.user.id,
               !session.accessToken.isEmpty, !session.refreshToken.isEmpty else { throw AccountIssue.noVerifiedSession }
         if let expectedEmail {
@@ -430,11 +435,56 @@ final class BackendAccount {
         catch { throw AccountIssue.storage }
     }
 
+    /// File transfers use the same refresh coordinator as Auth and database requests.
+    func accessToken() async throws -> String {
+        guard let auth, let actor = sessionContextID else { throw AccountIssue.noVerifiedSession }
+        let generation = clientGeneration
+        do {
+            let session = try await auth.session
+            try Task.checkCancellation()
+            guard generation == clientGeneration, session.user.id == actor, sessionContextID == actor else { throw AccountIssue.noVerifiedSession }
+            return session.accessToken
+        } catch {
+            if Task.isCancelled { throw CancellationError() }
+            var failure = error as? AccountIssue ?? .provider
+            // A late failure from an old client must never conceal the new account.
+            if generation == clientGeneration, sessionContextID == actor {
+                if knownSessionDenial(error) {
+                    sessionContextID = nil
+                    do { try invalidateOfflineActor() } catch { failure = .storage }
+                }
+                fail(failure)
+            }
+            throw failure
+        }
+    }
+
     private func makeClient(_ value: AccountConfiguration) -> SupabaseClient {
-        SupabaseClient(supabaseURL: value.url, supabaseKey: value.publicKey, options: .init(
-            auth: .init(storage: storage, storageKey: sessionKey(value), autoRefreshToken: false, emitLocalSessionAsInitialSession: true),
+        let generation = UUID()
+        clientGeneration = generation
+        let auth = AuthClient(url: value.url.appendingPathComponent("auth/v1"),
+            headers: ["apikey": value.publicKey, "Authorization": "Bearer " + value.publicKey],
+            storageKey: sessionKey(value), localStorage: storage,
+            fetch: { [httpSession] request in try await AccountHTTP.send(request, session: httpSession) },
+            autoRefreshToken: false, emitLocalSessionAsInitialSession: true)
+        self.auth = auth
+        // The official SDK owns rotation/coalescing. Its Auth retry interceptor cannot
+        // replay failures hidden by our single-owner transport; Supabase never owns a second session.
+        return SupabaseClient(supabaseURL: value.url, supabaseKey: value.publicKey, options: .init(
+            auth: .init(storage: storage, storageKey: sessionKey(value), autoRefreshToken: false,
+                accessToken: { [weak self] in
+                    guard let self else { throw AccountIssue.noVerifiedSession }
+                    return try await self.currentToken(generation: generation)
+                }),
             global: .init(session: httpSession, logger: nil)
         ))
+    }
+
+    private func currentToken(generation: UUID) async throws -> String {
+        guard generation == clientGeneration else { throw AccountIssue.noVerifiedSession }
+        let token = try await accessToken()
+        guard generation == clientGeneration else { throw AccountIssue.noVerifiedSession }
+        return token
     }
 
     private func emailLinkKey(_ value: AccountConfiguration) -> String { sessionKey(value) + ".email-link" }

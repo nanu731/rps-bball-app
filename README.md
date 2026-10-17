@@ -208,3 +208,7 @@ already staged personal files must still be excluded explicitly from commits.
 The operating budget is strictly $0: paid delivery, AI calls and services with
 possible overages remain disabled unless separately authorized. Private local
 completion tickets/configuration are excluded from the public repository.
+
+Network deadlines, session/refresh semantics, durable file-admission controls and
+remaining hosted activation gates are documented in [NETWORK.md](NETWORK.md).
+Synthetic/native CI does not certify hosted Auth, provider billing or release readiness.

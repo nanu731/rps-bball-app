@@ -5,6 +5,7 @@ const identifier = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-
 const upload = new RegExp(`^/uploads/${identifier}(/reconcile)?$`);
 const delivery = new RegExp(`^/files/${identifier}$`);
 const publicErrors = new Set([
+  "rate_limited", "admission_unavailable",
   "access_denied", "verified_session_required", "route_not_found", "invalid_identity",
   "upload_interrupted_reconcile", "upload_size_mismatch_reconcile", "upload_not_stored_start_new_operation",
   "durable_bytes_unconfirmed_reconcile", "upload_size_limit", "bounded_content_length_required",
@@ -17,8 +18,12 @@ const publicErrors = new Set([
   "invalid_video", "dimensions_limit", "file_validation_failed",
 ]);
 
-function error(status: number, code: string): Response {
-  return Response.json({ error: code }, { status, headers: { "Cache-Control": "no-store" } });
+function error(status: number, code: string, retryAfter?: string): Response {
+  const headers = new Headers({ "Cache-Control": "no-store" });
+  if (retryAfter && /^[0-9]{1,4}$/.test(retryAfter) && Number(retryAfter) >= 1 && Number(retryAfter) <= 3600) {
+    headers.set("Retry-After", retryAfter);
+  }
+  return Response.json({ error: code }, { status, headers });
 }
 
 async function boundedBody(stream: ReadableStream<Uint8Array> | null, maximum: number, signal: AbortSignal): Promise<Uint8Array> {
@@ -65,8 +70,12 @@ export async function handle(request: Request, configuredWorker: string | undefi
     return error(401, "verified_session_required");
   }
   const controller = new AbortController();
+  const cancel = () => controller.abort();
+  request.signal.addEventListener("abort", cancel, { once: true });
   const deadline = setTimeout(() => controller.abort(), 90000);
   try {
+    if (request.signal.aborted) controller.abort();
+    controller.signal.throwIfAborted();
     let body: Uint8Array | undefined;
     if (isUpload) {
       const declared = request.headers.get("Content-Length");
@@ -99,7 +108,7 @@ export async function handle(request: Request, configuredWorker: string | undefi
         if (failure !== null && typeof failure === "object" && Object.keys(failure).length === 1 &&
             typeof failure.error === "string" && publicErrors.has(failure.error)) code = failure.error;
       } catch { /* Unexpected provider bodies stay private. */ }
-      return error(reply.status, code);
+      return error(reply.status, code, reply.status === 429 ? reply.headers.get("Retry-After") ?? undefined : undefined);
     }
     const responseHeaders = new Headers({ "Cache-Control": "no-store", "Content-Length": String(bytes.byteLength) });
     for (const name of ["Content-Type", "X-TeamStats-SHA256"]) {
@@ -111,6 +120,7 @@ export async function handle(request: Request, configuredWorker: string | undefi
     return error(503, "operation_unconfirmed_reconcile");
   } finally {
     clearTimeout(deadline);
+    request.signal.removeEventListener("abort", cancel);
   }
 }
 

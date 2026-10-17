@@ -1849,3 +1849,33 @@ container13-migration synthetic database/object recovery drill. No real provider
 credentials, private artifacts, deploy or provider activation were involved. Local native8 and
 post-restore pgTAP343 remain separate evidence. UI acceptance and real hosted
 recovery remain open; the four owner policy decisions are consolidated in RECOVERY.md.
+
+##2026-10-16 — bounded network/session/abuse pass fromb5a0d6c
+
+Preservation snapshot taken before edits; original3working/index and174JSON hashes
+match the prior checkpoint. No original app reset/uninstall or UI probes. Private
+spec/tickets/evidence: .scratch/teamstats-network-20261016. Existing recovery/CI
+reused; no dependencies installed or Xcode project edits.
+
+Five Council perspectives/five peer reviews chose one official Auth coordinator,
+single-attempt writes, only safe identity-read backoff and durable SQL admission.
+Reused agents mean strict anonymity is not claimed. Red signals reproduced SDK
+OTP replay, token-provider denial without concealment, early HTTP-date retry and
+slow-drip deadline gaps. Fixes retain unsaved/context state on transient failure,
+known denial concealment, current-generation tokens and explicit write readback.
+
+Final native build and117 affected tests passed, including all pinned SDK retry statuses. Gateway28
+(1skip), export21, relay10, TLS1, recovery5 passed locally. New14migration/31table
+synthetic restore plus343 SQL regressions passed; isolated parallel admission
+allowed30of40, isolated another actor and preserved unrelated data/security.
+Native/App provider fixtures and actual local Auth checks remain separate.
+
+Actual Authv2.197.0 with running rotation=true/reuse10 passed rotation/concurrency/
+old-token rejection/sign-out; strict immediate family lockout failed, while an
+additional11s wait produced denial. No provider settings/key rotation/real authority
+changed. Hosted Auth/ingress/$0 enforcement stays gated; no speculative provider fix.
+NETWORK.md documents exact bounds, relay-buffer and whole-worker-cancellation limits.
+
+Existing CI extended with TLS/concurrent-admission checks; final remote result is
+pending reviewed push. Independent final Standards/Spec review follows. Broader
+performance/monitoring/export scheduling and all prior UI/recovery policies deferred.

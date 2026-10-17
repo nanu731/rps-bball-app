@@ -927,3 +927,25 @@ hosted disaster recovery or UI acceptance.
 Native CI remains deferred. No production/release or broader networking/performance/
 monitoring work is included. Original identities/records and protected Xcode working/
 staged entries remain preserved; the UI test artifact is unchanged from6713efe.
+
+## Bounded network/session/abuse preparation —2026-10-16
+
+Fromb5a0d6c, NETWORK.md inventories operations and gaps. One official AuthClient
+uses bounded Auth fetch and current-token closures. Auth POSTs and database/file
+operations do not automatically replay; only Auth identity GET has capped jitter/
+Retry-After backoff. Known token-provider denial clears context/offline authority;
+old generations cannot supply the next account's token. Original local data stays
+separate; draft/uncertain-write recovery remains explicit and server-authorized.
+
+A private RLS counter/admission command coordinates file attempts using actual
+server identity/time and a separately committed RPC. SQL30of40 concurrency, actor
+isolation and persistence passed only in new synthetic DBs. It is not Auth/direct
+RPC/invalid-token/relay-ingress protection. Migration14 is not activated in existing
+or hosted projects. Existing pipeline is extended, not rebuilt; exact evidence is
+in TESTING.md. No provider, Google/SMS, production or automatic scheduler activation.
+
+Actual isolated Auth revealed a reuse grace: rejected old refresh followed by an
+immediate child refresh200; after another11s, child rejection passed. Immediate
+family lockout remains unestablished; hosted refresh/rates/key rotation unverified.
+Existing UI/recovery-owner-policy/release gates remain open. No performance or
+broader monitoring work. Protected working/index and original records preserved.

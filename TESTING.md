@@ -824,3 +824,29 @@ assertions and separate object-byte recovery passed in the pinned container.
 This is actual CI execution, not YAML-only evidence. The343-check post-restore
 pgTAP suite and native8 checks were local, not this job. No deployment, provider
 activation, managed Auth/Storage recovery or completed UI acceptance is implied.
+
+## Bounded network/session/abuse pass —2026-10-16, baseline b5a0d6c
+
+No unchanged Simulator UI probes repeated. Actual landscape, iPad motion traversal/
+transitions and actual VoiceOver stay open. Recovery/CI infrastructure was reused.
+
+| Evidence | Result and scope | Limit |
+| --- | --- | --- |
+| Native build/regressions | Isolated NetworkAcceptance host on26.4:117 tests passed across AccountHTTP, Account, administration, connected statistics, plays, media and private files. | Synthetic URLProtocol/provider replies, not hosted Auth/device acceptance. Final117-test run also covers every pinned SDK retry status through the account seam. |
+| Red→green signals | Lost OTP reply and HTTP503/520 each reproduced2sends; fixed to1. Token-provider refresh denial initially retained authority; now clears it. Server-Date Retry-After case reproduced early retry; fixed. Slow continuous provider/export bodies exceeded intended budget; now stop. | Tests distinguish typed unavailable/denial from false success; no claim that cancelled writes rolled back. |
+| Native session cases | Expired credentials rotate; concurrent requests share1refresh; rotated credential persists. Reused refresh/403 conceal context/offline authority. Prior account client gets denied anonymous fallback; cancelled verification publishes no late sign-in. Existing lost-write/draft recovery tests passed. | SDK shared refresh cancellation can await its bounded flight. No immediate waiter-return or exhaustive racing-device guarantee. |
+| Worker/relay/TLS | Gateway28 tests passed(1platform resource-limit skip); export21 passed; relay10 passed; actual synthetic trusted-localhost TLS1 passed. Existing recovery5 passed. | Loopback/external-provider fixtures. TLS fixture uses existing OpenSSL only; actual Google/hosted transport remains disabled. |
+| SQL |14migrations applied only to new synthetic source/restored DBs;31table/security snapshot equality and new rollback-only admission assertions passed. Existing343 post-restore checks passed. New isolated clone admitted exactly30of40 parallel calls, persisted denial across connections, isolated another actor and preserved unrelated rows/security. | SQL synthetic claims, not signed hosted enforcement. No existing Auth database/schema or hosted migration activation. |
+| Actual isolated Authv2.197.0 | Fresh synthetic confirmed accounts, no email/SMS: sign-in, credential rotation, concurrent reuse, old-grandparent rejection after10s, explicit recovery and sign-out/refresh rejection passed. Additional11s after rejected reuse produced child denial. | Strict immediate family-lockout assertion failed: child refresh initially returned200. Both receipts retained; running rotation=true/reuse10 verified. No signing-key rotation; actual access-token expiry unverified because no signing secret exported. |
+| CI | Same public-only/read-token/pinned no-deploy workflow extended with TLS and concurrent admission checks. Local commands pass; no deployment or provider credentials. | Actual final remote execution pending reviewed push; local/native/actual Auth evidence is separate from CI. |
+
+NETWORK.md owns exact request/deadline/retry/uncertainty contracts and remaining
+Auth/ingress/direct-RPC/cost activation gates. Admission precedes worker body reads,
+not relay buffering. Accepted-socket90s is not whole-worker cancellation; work may
+commit after a client/relay disconnect. Historical failed probes/receipts remain in
+ignored .scratch/teamstats-network-20261016; they are not reported as green.
+
+App test host: `com.narayanlekhi.TeamStats.NetworkAcceptance`,1.0(1). The existing
+UIAcceptance artifact remains UI source6713efe and was not replaced. Physical
+devices/actual26.0/hosted recovery/release remain unaccepted. Protected Xcode working/
+index entries, original JSON/temporary identities and retained files are preserved.

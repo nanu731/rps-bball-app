@@ -12,6 +12,7 @@ import unittest
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 spec = importlib.util.spec_from_file_location('sheets_export', Path(__file__).parents[1] / 'sheets_export.py')
 worker = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = worker
@@ -58,6 +59,12 @@ class Fixture:
                 except (BrokenPipeError, ConnectionResetError):
                     pass
             def do_GET(self):
+                if fixture.mode == 'slow_read':
+                    self.send_response(200); self.send_header('Content-Length','10'); self.end_headers()
+                    try:
+                        for _ in range(10): self.wfile.write(b' '); self.wfile.flush(); time.sleep(.02)
+                    except (BrokenPipeError,ConnectionResetError): pass
+                    return
                 args = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
                 if 'ranges' not in args:
                     with fixture.lock:
@@ -139,6 +146,12 @@ class WorkerTests(unittest.TestCase):
     def setUp(self):
         self.fixture = Fixture()
         self.addCleanup(self.fixture.close)
+    def test_slow_continuous_read_has_a_total_deadline_without_writes(self):
+        self.fixture.mode='slow_read'
+        with self.assertRaisesRegex(worker.ExportError,'provider_timeout'):
+            worker.GoogleSheets(self.fixture.config(timeout=.04)).deliver(job())
+        self.assertEqual(self.fixture.batches,[])
+
     def test_google_delivery_defaults_to_disabled(self):
         with self.assertRaisesRegex(worker.ExportError, 'budget_disabled'):
             worker.GoogleSheets(worker.GoogleConfig(token='SYNTHETIC')).deliver({})

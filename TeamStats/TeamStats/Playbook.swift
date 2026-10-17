@@ -207,7 +207,7 @@ final class Playbook {
         var result: [T] = []
         for page in 0..<100 {
             let batch: [T] = try await client.from(table).select().eq("team_id", value: teamID.uuidString)
-                .order("id").range(from: page * 100, to: page * 100 + 99).execute().value
+                .order("id").range(from: page * 100, to: page * 100 + 99).retry(enabled: false).execute().value
             result += batch
             if batch.count < 100 { return result }
         }

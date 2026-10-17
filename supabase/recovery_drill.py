@@ -173,6 +173,7 @@ def database_drill(pg: IsolatedPostgres, root: Path, initialize_roles: bool) -> 
     if before != after:
         raise RuntimeError("Restored rows/relationships/policies differ from the synthetic source")
     pg.sql(restored, (root / "supabase/tests/recovery_assertions.sql").read_text())
+    pg.sql(restored, (root / "supabase/tests/file_request_admission.sql").read_text())
     # New datasets/sessions/grants are never manufactured after restore to make checks pass.
     if after != pg.snapshot(restored) or before != pg.snapshot(source):
         raise RuntimeError("Recovery assertions unexpectedly changed a saved dataset")

@@ -5,6 +5,118 @@ import Supabase
 
 @MainActor
 final class AccountTests: XCTestCase {
+    func testLostOTPReplyIsNotAutomaticallyReplayed() async throws {
+        let session = fixtureHTTPSession(mode: "lostOTP")
+        let trace = session.configuration.httpAdditionalHeaders?["X-Fixture-Trace"] as! String
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: session)
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        XCTAssertEqual(FixtureAccountURLProtocol.otpSends(trace), 1)
+        XCTAssertEqual(account.state, .error)
+        XCTAssertNil(account.verifiedUserID)
+    }
+    func testTransientOTPServerFailureIsNotAutomaticallyReplayed() async throws {
+        // The pinned SDK adds every one of these statuses to Auth POST retries.
+        for status in [408, 500, 502, 503, 504, 520, 521, 522, 523, 524, 530] {
+            let session = fixtureHTTPSession(mode: "lostOTP" + String(status))
+            let trace = session.configuration.httpAdditionalHeaders?["X-Fixture-Trace"] as! String
+            let account = BackendAccount(storage: FixtureAccountStorage(), session: session)
+            await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+            await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+            XCTAssertEqual(FixtureAccountURLProtocol.otpSends(trace), 1, "HTTP" + String(status))
+            XCTAssertEqual(account.state, .error)
+        }
+    }
+
+    func testRotatedRefreshIsPersistedAndConcurrentRequestsShareOneRefresh() async throws {
+        let storage = FixtureAccountStorage()
+        let session = fixtureHTTPSession(mode: "rotatingRefresh")
+        let trace = session.configuration.httpAdditionalHeaders?["X-Fixture-Trace"] as! String
+        let account = BackendAccount(storage: storage, session: session)
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await account.verifyCode("123456")
+        let client = try await account.authenticatedClient()
+        var expired = fixtureSession(); expired.expiresAt = 1; expired.expiresIn = 0
+        try storage.replaceStoredSession(expired)
+        async let first: [String] = client.from("teams").select("id").retry(enabled: false).execute().value
+        async let second: [String] = client.from("teams").select("id").retry(enabled: false).execute().value
+        let result = try await (first, second)
+        XCTAssertTrue(result.0.isEmpty && result.1.isEmpty)
+        XCTAssertEqual(FixtureAccountURLProtocol.sends(trace, path: "/auth/v1/token"), 1)
+        XCTAssertEqual(try storage.storedSession()?.refreshToken, "synthetic-rotated-refresh")
+    }
+
+    func testReusedRefreshAndForbiddenSessionConcealAuthority() async throws {
+        for mode in ["reusedRefresh", "forbidden"] {
+            let storage = FixtureAccountStorage()
+            let first = BackendAccount(storage: storage, session: fixtureHTTPSession())
+            await first.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+            await first.requestCode(method: .email, identifier: "synthetic@example.invalid")
+            await first.verifyCode("123456")
+            if mode == "reusedRefresh" {
+                var expired = fixtureSession(); expired.expiresAt = 1; expired.expiresIn = 0
+                try storage.replaceStoredSession(expired)
+            }
+            let restored = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: mode))
+            await restored.restore()
+            XCTAssertEqual(restored.state, .error)
+            XCTAssertNil(restored.verifiedUserID)
+            XCTAssertNil(restored.sessionContextID)
+            XCTAssertNil(restored.offlineClipActorID)
+        }
+    }
+
+    func testTokenProviderRefreshDenialClearsContextAndOfflineAuthority() async throws {
+        let storage = FixtureAccountStorage()
+        let account = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "reusedRefresh"))
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await account.verifyCode("123456")
+        let client = try await account.authenticatedClient()
+        var expired = fixtureSession(); expired.expiresAt = 1; expired.expiresIn = 0
+        try storage.replaceStoredSession(expired)
+        do {
+            let _: [String] = try await client.from("teams").select("id").retry(enabled: false).execute().value
+            XCTFail("Confirmed refresh denial must not become an empty success")
+        } catch { }
+        XCTAssertEqual(account.state, .error)
+        XCTAssertNil(account.sessionContextID)
+        XCTAssertNil(account.offlineClipActorID)
+    }
+
+    func testPriorClientCannotUseEitherAccountAfterSignOutAndNewSignIn() async throws {
+        let session = fixtureHTTPSession(mode: "accountSwitch")
+        let trace = session.configuration.httpAdditionalHeaders?["X-Fixture-Trace"] as! String
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: session)
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await account.verifyCode("123456")
+        let old = try await account.authenticatedClient()
+        await account.signOut()
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        await account.verifyCode("123456")
+        do {
+            let _: [String] = try await old.from("teams").select("id").retry(enabled: false).execute().value
+            XCTFail("Old client must remain fenced")
+        } catch { }
+        XCTAssertEqual(FixtureAccountURLProtocol.sends(trace, path: "/rest/v1/teams"), 1)
+        XCTAssertEqual(account.verifiedUserID, UUID(uuidString: "d7000000-0000-4000-8000-000000000002"))
+    }
+
+    func testCancelledIdentityCheckDoesNotPublishLateAuthentication() async throws {
+        let storage = FixtureAccountStorage()
+        let account = BackendAccount(storage: storage, session: fixtureHTTPSession(mode: "delayedUser"))
+        await account.configure(url: "https://success.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        let task = Task { await account.verifyCode("123456") }
+        for _ in 0..<100 where !account.isBusy { try await Task.sleep(for: .milliseconds(5)) }
+        task.cancel()
+        await task.value
+        XCTAssertNil(account.verifiedUserID)
+        XCTAssertFalse(account.isBusy)
+    }
+
     func testConfigurationRejectsPrivilegedKeysAndInsecureRemoteURLs() throws {
         XCTAssertThrowsError(try AccountConfiguration(url: "http://example.invalid", publicKey: fixtureKey, environment: .nonproduction))
         XCTAssertThrowsError(try AccountConfiguration(url: "https://example.invalid", publicKey: "sb_secret_synthetic_fixture", environment: .nonproduction))
@@ -367,6 +479,10 @@ private final class FixtureAccountStorage: AuthLocalStorage, @unchecked Sendable
     private let failSessionWrites: Bool
     private var failReads = false
     private var failStampWrites = false
+    func storedSession() throws -> Session? {
+        lock.lock(); defer { lock.unlock() }
+        return try values.first(where: { $0.key.hasPrefix("session.v1.") && !$0.key.hasSuffix("-code-verifier") && !$0.key.hasSuffix(".email-link") }).map { try JSONDecoder().decode(Session.self, from: $0.value) }
+    }
     func replaceStoredSession(_ session: Session) throws {
         lock.lock(); defer { lock.unlock() }
         let key = values.keys.first { $0.hasPrefix("session.v1.") && !$0.hasSuffix("-code-verifier") && !$0.hasSuffix(".email-link") }!
@@ -402,6 +518,14 @@ private func fixtureHTTPSession(mode: String? = nil) -> URLSession {
 
 private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable {
     private static let counterLock = NSLock()
+    nonisolated(unsafe) private static var otpCounts: [String: Int] = [:]
+    nonisolated(unsafe) private static var requestCounts: [String: [String: Int]] = [:]
+    static func sends(_ trace: String, path: String) -> Int {
+        counterLock.lock(); defer { counterLock.unlock() }; return requestCounts[trace]?[path] ?? 0
+    }
+    static func otpSends(_ trace: String) -> Int {
+        counterLock.lock(); defer { counterLock.unlock() }; return otpCounts[trace] ?? 0
+    }
     nonisolated(unsafe) private static var userChecks: [String: Int] = [:]
     private static func nextUserCheck(_ trace: String) -> Int {
         counterLock.lock(); defer { counterLock.unlock() }
@@ -412,8 +536,31 @@ private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
+        let trace = request.value(forHTTPHeaderField: "X-Fixture-Trace") ?? "untraced"
+        Self.counterLock.lock()
+        Self.requestCounts[trace, default: [:]][request.url!.path, default: 0] += 1
+        Self.counterLock.unlock()
         let mode = request.value(forHTTPHeaderField: "X-Fixture-Mode")
-        let denied = mode == "revoked" && request.url?.path.hasSuffix("/user") == true
+        if mode?.hasPrefix("lostOTP") == true, request.url?.path.hasSuffix("/otp") == true {
+            Self.counterLock.lock()
+            let trace = request.value(forHTTPHeaderField: "X-Fixture-Trace")!
+            Self.otpCounts[trace, default: 0] += 1
+            Self.counterLock.unlock()
+            if let status = Int(mode!.dropFirst("lostOTP".count)) {
+                client?.urlProtocol(self, didReceive: HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!, cacheStoragePolicy: .notAllowed)
+                client?.urlProtocol(self, didLoad: Data("{}".utf8))
+                client?.urlProtocolDidFinishLoading(self)
+            } else { client?.urlProtocol(self, didFailWithError: URLError(.networkConnectionLost)) }
+            return
+        }
+        if ["accountSwitch", "reusedRefresh"].contains(mode ?? ""), request.url?.path == "/rest/v1/teams",
+           request.value(forHTTPHeaderField: "Authorization") != (mode == "accountSwitch" ? "Bearer synthetic-second-user-token" : "Bearer synthetic-access-token-not-a-real-credential") {
+            let response = HTTPURLResponse(url: request.url!, statusCode: 401, httpVersion: nil, headerFields: ["Content-Type":"application/json"])!
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: Data("{\"code\":\"42501\",\"message\":\"Synthetic anonymous denial\"}".utf8))
+            client?.urlProtocolDidFinishLoading(self); return
+        }
+        let denied = ["revoked", "forbidden"].contains(mode ?? "") && request.url?.path.hasSuffix("/user") == true
         let logoutFailure = mode == "logoutFailure" && request.url?.path.hasSuffix("/logout") == true
         let refreshFailure = mode == "refreshFailure" && request.url?.path.hasSuffix("/token") == true
         let missingEmailRedirect = mode == "requireEmailRedirect" && request.url?.path.hasSuffix("/otp") == true
@@ -421,24 +568,34 @@ private final class FixtureAccountURLProtocol: URLProtocol, @unchecked Sendable 
         let transientFailure = mode == "transientAfterVerification" && request.url?.path.hasSuffix("/user") == true
             && (2...4).contains(Self.nextUserCheck(request.value(forHTTPHeaderField: "X-Fixture-Trace") ?? "synthetic"))
         let failed = (mode == "offlineUser" && request.url?.path.hasSuffix("/user") == true) || request.url?.host == "failure.invalid" || denied || logoutFailure || refreshFailure || missingEmailRedirect || transientFailure
-        let status = denied ? 401 : (failed ? 503 : 200)
+        if mode == "reusedRefresh", request.url?.path.hasSuffix("/token") == true {
+            let response = HTTPURLResponse(url: request.url!, statusCode: 400, httpVersion: nil, headerFields: ["Content-Type":"application/json","X-Supabase-Api-Version":"2024-01-01"])!
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: Data("{\"error_code\":\"refresh_token_already_used\",\"code\":\"refresh_token_already_used\",\"msg\":\"Synthetic reused credential\"}".utf8))
+            client?.urlProtocolDidFinishLoading(self); return
+        }
+        let status = denied ? (mode == "forbidden" ? 403 : 401) : (failed ? 503 : 200)
         let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!
         let body: Data
         if failed {
             body = Data("{\"msg\":\"Synthetic denied response\"}".utf8)
         } else if request.url?.path.hasSuffix("/token") == true {
-            body = try! AuthClient.Configuration.jsonEncoder.encode(fixtureSession())
+            var session = fixtureSession()
+            if mode == "rotatingRefresh" { session.refreshToken = "synthetic-rotated-refresh" }
+            body = try! AuthClient.Configuration.jsonEncoder.encode(session)
         } else if request.url?.host == "confirmation.invalid", request.url?.path.hasSuffix("/verify") == true {
             body = try! AuthClient.Configuration.jsonEncoder.encode(fixtureUser())
         } else if request.url?.path.hasSuffix("/verify") == true {
             var session = fixtureSession()
+            if mode == "accountSwitch", Self.sends(trace, path: "/auth/v1/verify") > 1 { session.user.id = UUID(uuidString: "d7000000-0000-4000-8000-000000000002")!; session.accessToken = "synthetic-second-user-token"; session.refreshToken = "synthetic-second-refresh-token" }
             if request.url?.host == "expired.invalid" { session.expiresAt = 1_700_000_000; session.expiresIn = 0 }
             body = try! AuthClient.Configuration.jsonEncoder.encode(session)
         } else if request.url?.path.hasSuffix("/user") == true {
             var user = fixtureUser()
-            if mode == "differentUser" { user.id = UUID(uuidString: "d7000000-0000-4000-8000-000000000002")! }
+            if mode == "differentUser" || (mode == "accountSwitch" && Self.sends(trace, path: "/auth/v1/verify") > 1) { user.id = UUID(uuidString: "d7000000-0000-4000-8000-000000000002")! }
             body = try! AuthClient.Configuration.jsonEncoder.encode(user)
-        } else { body = Data("{}".utf8) }
+        } else if request.url?.path.hasPrefix("/rest/v1/") == true { body = Data("[]".utf8) }
+        else { body = Data("{}".utf8) }
         let deliver = { [self] in
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             client?.urlProtocol(self, didLoad: body)

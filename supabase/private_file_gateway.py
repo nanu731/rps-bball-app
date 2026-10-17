@@ -25,17 +25,20 @@ import urllib.parse
 import urllib.request
 import uuid
 
+from http_deadline import DeadlineSocket, DeadlineHTTPHandler
+
 MAX_BYTES = 10 * 1024 * 1024
 BUCKET = 'teamstats-private'
 
 class FileFailure(Exception):
-    def __init__(self, code: str, status: int = 409):
-        self.code, self.status = code, status
+    def __init__(self, code: str, status: int = 409, retry_after: int | None = None):
+        self.code, self.status, self.retry_after = code, status, retry_after
         super().__init__(code)
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         raise FileFailure('provider_redirect_denied', 502)
+
 
 def identifier(value: str) -> str:
     try:
@@ -59,12 +62,13 @@ class Providers:
         self.storage = loopback_url(config['storage_url'])
         self.public_key = config['publishable_key']
         self.service_key = config['service_role_key']
-        self.opener = urllib.request.build_opener(NoRedirect())
+        self.timeout = 30
+        self.opener = urllib.request.build_opener(NoRedirect(), DeadlineHTTPHandler())
 
     def request(self, url: str, method: str, data: bytes | None, headers: dict, maximum: int) -> bytes:
         request = urllib.request.Request(url, data=data, headers=headers, method=method)
         try:
-            with self.opener.open(request, timeout=30) as response:
+            with self.opener.open(request, timeout=self.timeout) as response:
                 length = response.headers.get('Content-Length')
                 if length and int(length) > maximum:
                     raise FileFailure('provider_response_too_large', 502)
@@ -73,21 +77,30 @@ class Providers:
                     raise FileFailure('provider_response_too_large', 502)
                 return body
         except urllib.error.HTTPError as error:
-            # Only stable SQLSTATE is retained; raw SQL/provider details stay private.
             try:
-                error_body = json.loads(error.read(8192))
-                code = error_body.get('code')
-                missing_storage_key = code == 'NoSuchKey' and error_body.get('statusCode') in ('404', 404)
-            except (ValueError, AttributeError):
-                code = None
-                missing_storage_key = False
-            mapping = {'42501': ('access_denied', 403), '40001': ('reload_or_reconcile', 409), 'PT409': ('reload_or_reconcile', 409),
-                       '22023': ('invalid_file_input', 422), 'P0001': ('capacity_unavailable', 503)}
-            if error.code == 404 or missing_storage_key:
-                raise FileFailure('object_not_found', 404) from None
-            if code in mapping:
-                raise FileFailure(*mapping[code]) from None
-            raise FileFailure('provider_operation_unconfirmed', 502) from None
+                if error.code in (401, 403):
+                    raise FileFailure('access_denied', error.code) from None
+                if error.code == 429:
+                    wait = error.headers.get('Retry-After', '')
+                    retry = int(wait) if re.fullmatch(r'[0-9]{1,4}', wait) and 1 <= int(wait) <= 3600 else None
+                    raise FileFailure('rate_limited', 429, retry) from None
+                # Only stable SQLSTATE is retained; raw SQL/provider details stay private.
+                try:
+                    error_body = json.loads(error.read(8192))
+                    code = error_body.get('code')
+                    missing_storage_key = code == 'NoSuchKey' and error_body.get('statusCode') in ('404', 404)
+                except (ValueError, AttributeError):
+                    code = None
+                    missing_storage_key = False
+                mapping = {'42501': ('access_denied', 403), '40001': ('reload_or_reconcile', 409), 'PT409': ('reload_or_reconcile', 409),
+                           '22023': ('invalid_file_input', 422), 'P0001': ('capacity_unavailable', 503)}
+                if error.code == 404 or missing_storage_key:
+                    raise FileFailure('object_not_found', 404) from None
+                if code in mapping:
+                    raise FileFailure(*mapping[code]) from None
+                raise FileFailure('provider_operation_unconfirmed', 502) from None
+            finally:
+                error.close()
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
             raise FileFailure('provider_operation_unconfirmed', 502) from None
 
@@ -263,8 +276,23 @@ class FileGateway:
     def __init__(self, providers: Providers, validator: TrustedValidator):
         self.providers, self.validator = providers, validator
 
+    def admit(self, token: str):
+        # Separate committed RPC: transfer failure/disconnect cannot refund admission.
+        # Never replay this write after a missing reply, and never trust a client actor ID.
+        reply = self.providers.rpc('file_request_admission', {}, token)
+        if (set(reply) != {'allowed', 'retry_after'} or type(reply['allowed']) is not bool
+                or type(reply['retry_after']) is not int):
+            raise FileFailure('admission_unavailable', 503)
+        if not reply['allowed']:
+            if not 1 <= reply['retry_after'] <= 60:
+                raise FileFailure('admission_unavailable', 503)
+            raise FileFailure('rate_limited', 429, reply['retry_after'])
+        if reply['retry_after'] != 0:
+            raise FileFailure('admission_unavailable', 503)
+
     def upload(self, token: str, operation: str, stream, length: int, reconcile: bool = False) -> dict:
         operation = identifier(operation)
+        self.admit(token)
         self.providers.rpc('file_upload_access', {'p_operation_id': operation, 'p_reconcile': reconcile}, token)
         ticket = self.providers.rpc('file_worker_claim_upload', {'p_operation_id': operation, 'p_reconcile': reconcile})
         declared = ticket.get('declared_bytes')
@@ -303,6 +331,7 @@ class FileGateway:
                                   p_content_type=receipt['content_type'], p_validation_details=receipt['validation_details']))
 
     def download(self, token: str, version: str, operation: str) -> tuple[bytes, dict]:
+        self.admit(token)
         version, operation = identifier(version), identifier(operation)
         ticket = self.providers.rpc('file_delivery', {'p_team_id': self.team_for_version(token, version),
                                    'p_version_id': version, 'p_operation_id': operation}, token)
@@ -332,13 +361,17 @@ class FileGateway:
 def serve(gateway: FileGateway, port: int):
     class Handler(http.server.BaseHTTPRequestHandler):
         protocol_version = 'HTTP/1.1'
+        def setup(self):
+            super().setup()
+            self.connection.settimeout(30)  # Includes request-line/header parsing.
         def log_message(self, *args):
             pass  # Never log tokens, user identities, storage paths or provider diagnostics.
-        def respond(self, status: int, body: bytes, content_type: str = 'application/json', digest: str | None = None):
+        def respond(self, status: int, body: bytes, content_type: str = 'application/json', digest: str | None = None, retry_after: int | None = None):
             self.send_response(status); self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(body))); self.send_header('Cache-Control', 'no-store')
             self.send_header('Connection', 'close')
             if digest: self.send_header('X-TeamStats-SHA256', digest)
+            if retry_after is not None: self.send_header('Retry-After', str(retry_after))
             self.end_headers(); self.wfile.write(body); self.close_connection = True
         def perform(self):
             try:
@@ -366,14 +399,16 @@ def serve(gateway: FileGateway, port: int):
                     self.respond(200, data, receipt['content_type'], receipt['sha256'])
                 else: raise FileFailure('route_not_found', 404)
             except FileFailure as failure:
-                self.respond(failure.status, json.dumps({'error': failure.code}).encode())
+                self.respond(failure.status, json.dumps({'error': failure.code}).encode(), retry_after=failure.retry_after)
             except (KeyError, TypeError, ValueError, OSError, TimeoutError):
                 self.respond(503, b'{"error":"operation_unconfirmed_reconcile"}')
         do_POST = perform
         do_GET = perform
     # Bound parallel request bodies/thread count; parser concurrency is separately one.
     class Server(http.server.HTTPServer):
-        pass
+        def get_request(self):
+            connection, address = super().get_request()
+            return DeadlineSocket.wrap(connection, time.monotonic() + 90), address
     Server(('127.0.0.1', port), Handler).serve_forever()
 
 def main():

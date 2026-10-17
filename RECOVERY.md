@@ -15,7 +15,8 @@ UI acceptance remains separately PARTIAL in [TESTING.md](TESTING.md).
 | Export state | `stat_export_outbox`, `stat_export_snapshots`, `stat_export_destinations`, `stat_export_deliveries` in `public` | Preserve accepted-version binding, queued/uncertain/delivered facts and attempts. Restoring does not authorize redispatch. Sheets is not a backup. |
 | Plays/media metadata | `plays`, `play_versions`, `media_resources`, `media_resource_versions`, `file_resources`, `file_resource_versions` in `public` | Preserve game/play/version relationships, immutable review targets and accepted pointers. Hudl films remain external. |
 | Private file operations | `team_private.file_budget`, `file_uploads`, `file_deliveries` | Preserve reservations, uncertain transfers and charged capacity; do not release allowance merely because an operation expired. Unknown hosted capacity stays disabled. |
-| Database enforcement | Schemas, functions/owners/search paths, triggers, constraints, RLS/policies, grants, extensions and `supabase_migrations.schema_migrations` | All22 public tables and3 private tables are covered by the drill. Migration history stays inaccessible to clients and outside the exposed Data API schemas. |
+| File request admission | `team_private.file_request_windows` | Preserve current actor/window/count; restoration does not authorize manual allowance refunds. Normal window expiry is distinct from historical file/storage charges. |
+| Database enforcement | Schemas, functions/owners/search paths, triggers, constraints, RLS/policies, grants, extensions and `supabase_migrations.schema_migrations` | All22 public tables and4 private tables are covered by the drill. Migration history stays inaccessible to clients and outside the exposed Data API schemas. |
 | Auth | Verified user UUIDs and linked provider identities/verification/MFA state needed for account continuity; current authorization and revocation boundary | Real managed Auth recovery is not implemented/tested here. Device sessions, refresh tokens, PKCE and offline actor stamps are not portable authority. Require fresh sign-in and trusted UUID reconciliation; do not silently remap owners. |
 | Uploaded object bytes | Every retained `teamstats-private` object key with version binding, byte count, SHA256, content type and corresponding file metadata; include pending/rejected/uncertain bytes that still occupy capacity | Database dumps contain metadata, **not object bytes**. Inventory and recover objects separately; missing bytes are a failure, not an empty bucket. |
 | Explicit retained device clips | Account/team/version manifest and complete verified bytes, if owner policy elects to preserve them | Not an authoritative media backup. Copied sessions/stamps must not revive access. Remote originals and known revocation must be reconciled. |
@@ -62,9 +63,9 @@ service has been configured.
   `teamstats_recovery_*` databases from `template0`; it never dumps, resets or drops
   an existing database. A loopback hostname alone is not proof of isolation: the
   operator must verify the owned local service, not a tunnel to a real project.
-- The source gets all13 ordered migrations and synthetic records. An actual custom
+- The source gets all14 ordered migrations and synthetic records. An actual custom
   `pg_dump` archive is restored using single-transaction, exit-on-error `pg_restore`
-  into the second new database, **without reseeding it**. All30 fixture tables,
+  into the second new database, **without reseeding it**. All31 fixture tables,
   policies and effective ACL/RLS/function-security properties are compared. SQL
   assertions test existing rows, relationships, immutable history, live/missing
   synthetic session references, allowed members, denied outsiders and private bytes.

@@ -178,3 +178,21 @@ device secure-storage recovery is required. Files are preserved, not remotely
 recalled. Offline rights may be unknown and are explicitly disclosed. Current
 remote access always requires server authorization. Full app/device acceptance
 of these states remains pending separately from model tests.
+
+## Bounded network and abuse pass —2026-10-16
+
+[NETWORK.md](NETWORK.md) specifies one Auth credential owner, bounded identity-read
+backoff, no automatic Auth/database/file mutation replay, generation-scoped denial
+cleanup and uncertain-write readback. Redirects and unbounded Auth bodies are refused.
+Durable file rate admission is server-derived and atomic, separate from byte/budget
+limits. It protects worker work, not relay buffering, Auth, invalid-token ingress or
+direct Data API traffic. Hosted enforcement/limits and$0 activation remain gated.
+
+Actual isolated Authv2.197.0 rejected a reused grandparent but allowed an immediate
+child refresh; strict immediate family lockout is not established. Rotation=true/
+reuse10 were read from the running local process without disclosing other values.
+A separate additional11-second wait produced child denial, consistent with the
+local reuse grace; the immediate-lockout assertion remains failed. This is separate
+from passing native denial tests; no provider
+setting, signing key or real-user authority changed. Hosted Auth/key rotation,
+recovery policy and existing UI/device/release gates remain unaccepted.
