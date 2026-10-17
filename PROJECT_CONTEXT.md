@@ -955,3 +955,19 @@ CI run38994907823 passed export21/gateway28(1skip)/TLS1/recovery5/relay10 plus
 14migration restoration and concurrent admission. Independent Standards/Spec0
 findings. Final local native117 passed; actual local Auth grace/strict-immediate
 results remain distinct. No original record/protected-entry changes.
+
+## Bounded local performance pass —2026-10-16
+
+From1f3b7f3, private synthetic season measurements established two scoped repairs:
+game-filter correction requests through their source version (same RLS/validated
+snapshot/pagination), and run private-file byte iteration on the concurrent
+executor instead of inheriting UI execution. No cache/index/migration/dependency.
+PERFORMANCE.md records measured bytes, actual SQL/API plans, before/after samples,
+local storage/entry/OCR/media evidence and large Simulator timing variability.
+Native34 affected regressions and private diagnostic suites passed; isolated
+five-launch check passed but2.573–18.019s/64.3%deviation is not a stable startup
+baseline. Original records/temporary identities and protected working/index state
+remain unchanged. UI6713efe not replaced. No provider/production activation or
+upload; strict$0. Prior Auth reuse observations, source-only migration14, recovery
+policy, hosted/device/UI/VoiceOver gates remain open. Monitoring/export scheduling
+are separate work. Actual reviewed push/CI receipt follows in TESTING.md.

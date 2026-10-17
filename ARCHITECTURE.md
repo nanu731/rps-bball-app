@@ -141,3 +141,13 @@ fetch prevents SDK Auth POST replay. Database operations explicitly disable retr
 Private file admission is a separate durable actor-derived SQL command, not ingress
 protection or capacity assurance. Migration14 is tested only in new synthetic
 databases; existing/hosted schemas and disabled delivery remain untouched.
+
+## Measured local performance boundary —2026-10-16
+
+[PERFORMANCE.md](PERFORMANCE.md) separates synthetic native load/save/media timings
+from actual isolated SQL/Data API plans. Game corrections now filter through the
+source version's game under existing RLS, rather than downloading the team's whole
+request history. Complete snapshot validation and bounded pagination remain.
+Private-file byte iteration explicitly uses the concurrent executor; body limits,
+structured cancellation, integrity checks and no-replay delivery stay unchanged.
+No cache, index, migration, offline-sync expansion or provider activation was added.

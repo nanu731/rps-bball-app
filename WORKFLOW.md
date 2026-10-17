@@ -1881,3 +1881,22 @@ remote HEAD verified; actual run38994907823 passed worker/TLS/recovery/relay and
 14-migration/concurrent-admission checks. Independent final Standards/Spec reviews
 found0 actionable issues. Native117 and actual Auth timing remain separate evidence. Broader
 performance/monitoring/export scheduling and all prior UI/recovery policies deferred.
+
+##2026-10-16 — bounded performance investigation from1f3b7f3
+
+Preservation snapshot matched3protected working/index entries and174original JSON
+files. Synthetic30-game/15-player season stayed private and isolated. Actual SQL
+plans and local Data API plus native request/body traces demonstrated unnecessary
+team-wide corrections. Named source-version game filtering preserves RLS and
+validated paginated snapshots; actual eight-record equivalence/anonymous denial
+passed. Separate executor-only experiment isolated per-byte UI-actor overhead;
+@concurrent fixes it without replay/cancellation/body/integrity policy changes.
+
+Native34 affected regressions and private measurement suites passed. Cold-process
+launch observations are highly variable, not a startup SLO. PERFORMANCE.md retains
+first/warm sample counts, actual/simulated distinctions, memory sampling caveats
+and unchanged-path results. Independent source Standards/Spec0 findings. No Council
+rerun for routine filters/executor choice; no new material boundary. No shared
+cache/dependency/index/migration/provider activation or original-record upload.
+Existing UI/recovery/Auth/hosted/release gates remain separate; no rotation/VoiceOver
+probe repeated. Explicit reviewed push/remote CI evidence is recorded after completion.

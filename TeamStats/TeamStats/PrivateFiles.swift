@@ -344,7 +344,8 @@ nonisolated private struct FileDelivery: Decodable {
     enum CodingKeys: String, CodingKey { case operationID = "operation_id", versionID = "version_id", byteCount = "byte_count", sha256, contentType = "content_type" }
 }
 nonisolated private enum PrivateFileTransfer {
-    static func read(_ request: URLRequest, session: URLSession, maximum: Int, expectedType: String? = nil) async throws -> Data {
+    // Byte iteration must not inherit the UI actor under approachable concurrency.
+    @concurrent static func read(_ request: URLRequest, session: URLSession, maximum: Int, expectedType: String? = nil) async throws -> Data {
         let (stream, response) = try await session.bytes(for: request, delegate: FileRedirectBlocker())
         defer { stream.task.cancel() }
         guard let response = response as? HTTPURLResponse else { throw PrivateFileIssue.invalidResponse }

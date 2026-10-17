@@ -593,7 +593,7 @@ final class ConnectedStatistics {
         let loadedHistory: [ConnectedRosterLabel] = try await pages(client, table: "roster_entry_revisions", order: "roster_id")
         let loadedVersions: [ConnectedVersion] = try await pages(client, table: "stat_versions", order: "id", gameID: game.id)
         let loadedDatasets: [ConnectedDatasetPointer] = try await pages(client, table: "stat_datasets", order: "id", gameID: game.id)
-        let requests: [ConnectedEditRequest] = try await pages(client, table: "stat_edit_requests", order: "id")
+        let requests: [ConnectedEditRequest] = try await pages(client, table: "stat_edit_requests", order: "id", gameID: game.id)
         let preferences: Preferences = try await command(client, "stats_preferences", [:])
         let outbox: [ConnectedExportOutbox] = snapshot.isOwner ? try await pages(client, table: "stat_export_outbox", order: "id", gameID: game.id) : []
         guard loadedRoster.allSatisfy({ $0.teamID == teamID }), loadedHistory.allSatisfy({ $0.teamID == teamID }),
@@ -630,8 +630,12 @@ final class ConnectedStatistics {
         var rows: [T] = []
         let pageSize = 100
         for page in 0..<50 {
-            let query = client.from(table).select().eq("team_id", value: teamID.uuidString)
-            if let gameID { _ = query.eq("game_id", value: gameID.uuidString) }
+            // Filter correction requests through their source version; the table has no game_id.
+            // The named relationship disambiguates it from the working-version foreign key.
+            let sourceGame = table == "stat_edit_requests" && gameID != nil
+            let columns = sourceGame ? "*,source:stat_versions!stat_edit_requests_source_version_id_fkey!inner(game_id)" : "*"
+            let query = client.from(table).select(columns).eq("team_id", value: teamID.uuidString)
+            if let gameID { _ = query.eq(sourceGame ? "source.game_id" : "game_id", value: gameID.uuidString) }
             let ordered = query.order(order)
             if table == "roster_entry_revisions" { _ = ordered.order("version") }
             let values: [T] = try await ordered.range(from: page * pageSize, to: (page + 1) * pageSize - 1).retry(enabled: false).execute().value

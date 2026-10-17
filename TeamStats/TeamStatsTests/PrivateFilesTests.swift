@@ -6,6 +6,22 @@ import Supabase
 // Synthetic SDK/HTTP responses establish transport/state behavior, not Storage/decode rights.
 @MainActor
 final class PrivateFilesTests: XCTestCase {
+    func testRepresentativeFileBodiesRetainExactBytesWithoutDuplicateDelivery() async throws {
+        // Synthetic byte-pipeline coverage, not proof of video decoding or hosted throughput.
+        for size in [1, 10] {
+            let bytes = Data(repeating: 37, count: size * 1024 * 1024)
+            let fixture = NativeFileFixture(bytes: bytes), model = try fixture.model()
+            await model.load()
+            let version = try XCTUnwrap(model.published.first)
+            let first = await model.retrieve(version, keepOnDevice: true)
+            let url = try XCTUnwrap(first)
+            XCTAssertEqual(try Data(contentsOf: url), bytes)
+            let reopened = await model.retrieve(version, keepOnDevice: true)
+            XCTAssertEqual(reopened, url)
+            XCTAssertEqual(fixture.commands.filter { $0.0 == "file_delivery" }.count, 1)
+            XCTAssertEqual(fixture.requests.filter { $0.url?.path.contains("/files/") == true }.count, 1)
+        }
+    }
     func testEmptyTargetFilteredFileListIsConfirmedByServer() async throws {
         let fixture = NativeFileFixture(mode: .empty), model = try fixture.model()
         await model.load()
@@ -132,10 +148,11 @@ private final class NativeFileFixture: @unchecked Sendable {
     enum Mode { case standard, conflict, empty, lostReservation, uploadFailure, corruptDownload, oversizedDownload, interruptedDownload, denied, unavailable }
     let key = UUID().uuidString
     private let lock = NSLock(); private var mode: Mode
+    private let bytes: Data
     private var allRequests: [URLRequest] = [], allCommands: [(String, [String: Any])] = []
     private var operation = UUID(); private var resource = privateResource
     private var uploadError: String?
-    init(mode: Mode = .standard) { self.mode = mode }
+    init(mode: Mode = .standard, bytes: Data = nativeFileBytes) { self.mode = mode; self.bytes = bytes }
     var requests: [URLRequest] { lock.withLock { allRequests } }
     var commands: [(String, [String: Any])] { lock.withLock { allCommands } }
     func rejectUpload(_ code: String) { lock.withLock { uploadError = code } }
@@ -172,7 +189,7 @@ private final class NativeFileFixture: @unchecked Sendable {
                     if mode == .lostReservation && allCommands.filter({ $0.0 == name }).count == 1 { return (503, json(["error": "PRIVATE uncertain reservation"]), "application/json", false) }
                     return ok(version(status: "uploading", receipt: false))
                 }
-                if name == "file_delivery" { return ok(["operation_id": arguments["p_operation_id"]!, "version_id": privateVersion.uuidString, "byte_count": nativeFileBytes.count, "sha256": clipDigest(nativeFileBytes), "content_type": "video/mp4"]) }
+                if name == "file_delivery" { return ok(["operation_id": arguments["p_operation_id"]!, "version_id": privateVersion.uuidString, "byte_count": bytes.count, "sha256": clipDigest(bytes), "content_type": "video/mp4"]) }
             }
             if request.url!.path.contains("/uploads/") {
                 if let uploadError { return (422, json(["error": uploadError]), "application/json", false) }
@@ -180,9 +197,9 @@ private final class NativeFileFixture: @unchecked Sendable {
                 return ok(version(status: "ready", receipt: true))
             }
             if request.url!.path.contains("/files/") {
-                if mode == .corruptDownload { return (200, Data(repeating: 33, count: nativeFileBytes.count), "video/mp4", false) }
-                if mode == .oversizedDownload { return (200, nativeFileBytes + Data([1]), "video/mp4", false) }
-                return (200, nativeFileBytes, "video/mp4", mode == .interruptedDownload)
+                if mode == .corruptDownload { return (200, Data(repeating: 33, count: bytes.count), "video/mp4", false) }
+                if mode == .oversizedDownload { return (200, bytes + Data([1]), "video/mp4", false) }
+                return (200, bytes, "video/mp4", mode == .interruptedDownload)
             }
             if mode == .empty { return ok([]) }
             if name == "file_resources" { return ok([["id": resource.uuidString, "team_id": privateTeam.uuidString, "kind": "practice", "play_id": privateTarget.uuidString, "game_id": NSNull(), "published_version_id": privateVersion.uuidString, "archived_at": NSNull()]]) }
@@ -191,8 +208,8 @@ private final class NativeFileFixture: @unchecked Sendable {
     }
     private func version(status: String, receipt: Bool) -> [String: Any] {
         ["id": privateVersion.uuidString, "team_id": privateTeam.uuidString, "resource_id": resource.uuidString, "author_user_id": privateActor.uuidString,
-         "operation_id": operation.uuidString, "revision": 1, "status": status, "title": "TEST ONLY CLIP", "notes": "", "declared_bytes": nativeFileBytes.count,
-         "byte_count": receipt ? nativeFileBytes.count as Any : NSNull(), "sha256": receipt ? clipDigest(nativeFileBytes) as Any : NSNull(),
+         "operation_id": operation.uuidString, "revision": 1, "status": status, "title": "TEST ONLY CLIP", "notes": "", "declared_bytes": bytes.count,
+         "byte_count": receipt ? bytes.count as Any : NSNull(), "sha256": receipt ? clipDigest(bytes) as Any : NSNull(),
          "content_type": receipt ? "video/mp4" as Any : NSNull(), "base_published_version_id": NSNull(), "review_reason": ""]
     }
     private func body(_ request: URLRequest) -> Data {

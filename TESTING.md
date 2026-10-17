@@ -865,3 +865,39 @@ private fixtures/artifacts or provider credentials were published. The343 SQL an
 Final preservation checks retain3protected Xcode working/index entries and174
 original JSON hashes unchanged; no retained media or original app container was
 changed. NetworkAcceptance1.0(1) uses7bc8811 source; UIAcceptance remains6713efe.
+
+## Bounded performance pass —2026-10-16, baseline1f3b7f3
+
+See PERFORMANCE.md for fixture sizes, individual query evidence, sample counts,
+first/warm separation and timing variability. Private diagnostics remain ignored.
+
+- Final affected native build/regressions:24ConnectedStatistics +10PrivateFiles
+  passed. Game-scoped request regression first failed against the old broad query;
+  fixed tests cover eight relevant records and101 across two pages. File tests
+  preserve exact1/10MiB bytes and retained reuse without a second delivery.
+- Private measurement suite38 total executions passed (34 regressions/four
+  measurement cases); a separate completed original-loop baseline and final memory/
+  storage observations passed. An earlier deliberately interrupted slow baseline
+  remains archived, not a passing suite. No flaky time threshold was added to CI.
+- Actual new isolated Postgres/PostgREST:30-game season plus synthetic recovery
+  baseline;60SQL plans and actual API plans retained. Scoped corrections return the
+  same eight records/deny anonymous reads, reducing three response bodies99,114B
+  to one3,790B. No real Auth proof is inferred from stand-in claims.
+- Structured executor-only file repair: comparable sampled1MiB warm median17.818s
+  before/0.330s after (three/four samples); uninstrumented repaired warm0.102s.
+  Size, cancellation, integrity, denial and no automatic retry contracts unchanged.
+- Actual isolated process launch/readiness check passed, five measured responsive
+  frame values2.573–18.019s,64.3%relative deviation. It is an unstable Debug Simulator
+  observation, not an accepted startup baseline or a source-defect diagnosis.
+
+App: isolated `com.narayanlekhi.TeamStats.PerformanceAcceptance`,1.0(1), iPhone17/
+26.4. Only this new app receives labeled synthetic local season records. Original
+UIAcceptance remains6713efe. Original records/temporary identities, retained files
+and all three protected working/index entries are preserved. No reset/uninstall.
+
+No hosted performance, release-build/physical-device/actual26.0 or real-form memory
+acceptance. Actual landscape, iPad Reduce Motion traversal/transitions and actual
+VoiceOver stay open without repeated probes. Auth's failed immediate family-lockout
+assertion and passed extra-grace rejection remain distinct. Migration14, hosted file/
+Google delivery and dependent services remain disabled. Recovery owner policy and
+hosted disaster recovery remain TODOs. No monitoring/scheduler/release work included.

@@ -5,6 +5,26 @@ import Supabase
 
 @MainActor
 final class ConnectedStatisticsTests: XCTestCase {
+    func testGameLoadReadsOnlyItsCorrectionRequestsAndKeepsPagination() async throws {
+        for relevantCount in [8, 101] {
+            let fixture = StatisticsFixture(mode: .seasonRequests, gameRequestCount: relevantCount)
+            let model = fixture.model()
+            await model.loadGames()
+            let game = try XCTUnwrap(model.games.first)
+            await model.loadGame(game)
+            XCTAssertTrue(model.didLoadGame)
+            XCTAssertEqual(model.editRequests.count, relevantCount)
+            XCTAssertEqual(Set(model.editRequests.map(\.id)).count, relevantCount)
+            XCTAssertEqual(fixture.editRequestURLs.count, relevantCount == 8 ? 1 : 2)
+            for url in fixture.editRequestURLs {
+                let items = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+                XCTAssertEqual(items.first { $0.name == "team_id" }?.value, "eq." + statsTeamID.uuidString)
+                XCTAssertEqual(items.first { $0.name == "source.game_id" }?.value, "eq." + game.id.uuidString)
+                XCTAssertEqual(items.first { $0.name == "select" }?.value,
+                               "*,source:stat_versions!stat_edit_requests_source_version_id_fkey!inner(game_id)")
+            }
+        }
+    }
     func testPendingExportReadDoesNotBlockNextGameOrReplaceReopenedSnapshot() async throws {
         for deniedResponse in [false, true] {
             for sameGame in [false, true] {
@@ -441,10 +461,14 @@ private let statsSecondVersionID = UUID(uuidString: "AAAAAAAA-AAAA-4AAA-8AAA-AAA
 private let statsPossessionID = UUID(uuidString: "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB")!
 // Synthetic HTTP responses verify the real SDK/model seam, not deployed authorization or delivery.
 private final class StatisticsFixture: @unchecked Sendable {
-    enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination, exportStates, exportFailureOnce, delayedExport, supersededRecovery, recoveryLostReply, recoveryReadFailure }
+    enum Mode { case standard, lowercaseIdentity, negativeCount, conflictOnce, serverFailure, denied, paired, possession, pagination, exportStates, exportFailureOnce, delayedExport, supersededRecovery, recoveryLostReply, recoveryReadFailure, seasonRequests }
     private let mode: Mode
-    init(mode: Mode = .standard) {
+    private let gameRequestCount: Int
+    private var requestURLs: [URL] = []
+    var editRequestURLs: [URL] { lock.withLock { requestURLs } }
+    init(mode: Mode = .standard, gameRequestCount: Int = 8) {
         self.mode = mode
+        self.gameRequestCount = gameRequestCount
         if mode == .supersededRecovery { versionStatus = "superseded"; revision = 2; editStatus = "approved"; workingVersion = recoveryWorking() }
         if mode == .recoveryLostReply || mode == .recoveryReadFailure { editStatus = "pending" }
     }
@@ -608,6 +632,19 @@ private final class StatisticsFixture: @unchecked Sendable {
         }
         if name == "stat_versions" { return json([version(status: versionStatus, revision: revision)] + (workingVersion.map { [$0] } ?? []) + (mode == .paired ? [secondVersion()] : [])) }
         if name == "stat_edit_requests" {
+            if mode == .seasonRequests {
+                requestURLs.append(request.url!)
+                let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+                let scoped = items.contains { $0.name == "source.game_id" && $0.value == "eq." + statsGameID.uuidString }
+                let offset = Int(items.first { $0.name == "offset" }?.value ?? "0") ?? 0
+                let rows = (0..<(gameRequestCount + (scoped ? 0 : 232))).map { index in
+                    var row = editRequest()
+                    row["id"] = String(format: "77777777-7777-4777-8777-%012d", index)
+                    row["source_version_id"] = index < gameRequestCount ? statsVersionID.uuidString : statsSecondVersionID.uuidString
+                    return row
+                }
+                return json(Array(rows.dropFirst(offset).prefix(100)))
+            }
             var request = editRequest()
             if lineageFault == .unapproved { request["status"] = "pending" }
             return json(editStatus == nil ? [] : [request])
