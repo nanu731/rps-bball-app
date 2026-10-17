@@ -1100,3 +1100,16 @@ export and retain privacy/retention/provider/device/distribution gates. Isolated
 ShotAcceptance simulator build passed; new guide rendered interaction is not yet
 verified. Standards0; Spec's feature-target wording finding corrected. No provider,
 migration or backup upload activation. Shot models are the next eligible ticket.
+
+### Shot-capture local foundation —2026-10-17
+
+New ShotCapture/ShotCaptureRecorder isolate a versioned append-only correction
+journal from existing game/box/possession/paint stores. Stable event/change IDs,
+sparse pending FT outcomes, explicit2/3, reversible full-court coordinates with
+per-event attacking basket and checked totals are local draft facts only. Atomic
+saves retain failed pending input and retry the same revision; stale competing
+writes cannot replace history. Context loss conceals late results. ADR0008 records
+the reviewed local/shared boundaries. Current file limits (10MiB,20,000 changes,
+1,000 players, signed32-bit attempt count) are technical limits, not basketball
+frequency rules; exceeding them fails explicitly without truncation. No new
+migration/provider activation or official-stat overwrite is authorized.

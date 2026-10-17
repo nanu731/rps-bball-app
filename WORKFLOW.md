@@ -2057,3 +2057,14 @@ export and retain privacy/retention/provider/device/distribution gates. Isolated
 ShotAcceptance simulator build passed; new guide rendered interaction is not yet
 verified. Standards0; Spec's feature-target wording finding corrected. No provider,
 migration or backup upload activation. Shot models are the next eligible ticket.
+
+### Shot ticket02: local domain/storage foundation —2026-10-17
+
+Implemented isolated Codable shot journal, sparse per-attempt FT answers, pending
+FG/FT states, player/team attribution, corrections/Undo and atomic revision-safe
+persistence. Dedicated ShotAcceptance simulator tests found and fixed ISO timestamp
+round-trip loss, repeated-answer handling, history replacement and unsupported
+compound-edit trapping before UI integration. Standards/Spec reviews run separately;
+rendered capture, actual local signed authority, reconciliation and hosted gates
+remain separate. Existing four-store backup explicitly excludes new shot files;
+no existing schema or temporary identity is migrated.

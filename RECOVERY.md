@@ -165,3 +165,13 @@ The synthetic drill uses one fresh cluster for source/restored databases; it doe
 not prove cross-host role recovery, hosted secrets/Auth recovery or operational
 revocation. Preserve trusted issuer/configuration references separately; never
 include bearer/signing secrets in a public backup or diagnostic export.
+
+## Shot captures (local preparation)
+
+Shot-capture journals are separate version1 JSON documents. They preserve session,
+event and correction identities plus pending outcomes. Copy/reload tests validate
+an isolated destination against its expected context; failed validation leaves
+source bytes intact. This is synthetic local recovery evidence, not hosted DR.
+Existing four-store user backup does not yet include shot captures: preserve their
+files separately until a reviewed export/restore workflow exists. Do not imply the
+selected encrypted Google10GB budget configures a destination or retention policy.

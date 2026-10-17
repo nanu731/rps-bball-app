@@ -1193,3 +1193,17 @@ used UIAcceptance source6713efe. Native source has not changed since d253216; wo
 and documentation commits do not constitute new rendered full-app acceptance.
 All3 protected working/index entries and174 original simulator JSON hashes were
 unchanged at final inspection; no guessed restoration or original-app reset.
+
+## Shot-capture foundation —2026-10-17
+
+Isolated ShotAcceptance simulator tests exercise the new versioned journal through
+its public storage/recorder interfaces: mixed FT1/2 and pending answers, explicit
+2/3 results, corrections/Undo, stable identities after atomic save/reload, repeated
+answers, sparse large attempt counts, invalid/overflow bounds, rejected malformed
+or unsupported documents, symlinks, bounded reads, preserved history, stale writes,
+concurrent editors, failed-save Retry, actual task cancellation after a committed
+write and account-context concealment. New captures do not change the four legacy
+stores. Whole-second provenance timestamps survive ISO8601 round trips; journal
+revision establishes edit order, never game time. Court flip/normalization tests
+establish coordinate math only, not actual device rotation. Rendered courtside,
+shared authority, charts and hosted acceptance are separate pending gates.

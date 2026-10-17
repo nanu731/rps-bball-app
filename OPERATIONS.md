@@ -99,8 +99,9 @@ not a hosted endpoint or scheduler. Startup errors may prevent a CLI report at a
    regression in isolation before resuming. Never turn missing evidence into success.
 6. Record cause, scope, recovery evidence and remaining gaps without private content.
 
-`TODO_INCIDENT_REPORTING_ROUTE`, `TODO_INCIDENT_NOTIFICATION_OWNER` and
-`TODO_INCIDENT_RESPONSE_COMMITMENTS` require owner decisions. Backup destination,
+The owner-selected support/security contact is recorded in READINESS.md.
+`TODO_INCIDENT_NOTIFICATION_OWNER` and `TODO_INCIDENT_RESPONSE_COMMITMENTS`
+remain owner decisions; selecting a contact does not activate notification delivery. Backup destination,
 access holder, retention and recovery objectives remain TODOs in RECOVERY.md.
 
 ## Unavailable capabilities

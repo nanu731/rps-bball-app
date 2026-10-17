@@ -31,7 +31,7 @@ struct TeamStatsGuide: View {
                 Text("Keep on this device explicitly retains a practice clip. Previously authorized saved clips can play offline when current rights cannot be checked. Sign-out, account switching and known access loss hide them in the app; delivered copies cannot reliably be recalled.")
             }
             Section("Copy saved local drafts") {
-                Text("Export a private JSON copy of saved local games and observations. Unsaved entries, account credentials, shared records and clips are excluded. No import or automatic restore is provided.")
+                Text("Export a private JSON copy of saved local games and observations. Unsaved entries, account credentials, shared records, clips and separate shot captures are excluded. No import or automatic restore is provided.")
                 Text("The copy contains your draft data. Choose a private destination you control.").font(.footnote)
                 Button("Export saved local drafts", systemImage: "square.and.arrow.up") {
                     do {
