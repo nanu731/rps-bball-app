@@ -1,5 +1,24 @@
 # TeamStats — Project Context and Development Sequence
 
+## Latest owner scope — 2026-10-17
+
+The owner authorizes a shared-manual-statistics first pilot with Sheets/media
+delivery deferred, not removed. Remaining agreed features target2026-11-17;
+provider/device gates and release approval still apply. The chosen support,
+security and deletion-request contact is happybuddha1008@gmail.com. Existing
+Google backup storage is capped at10GB; encryption/access/retention and real
+upload/recovery remain unconfigured or unapproved where documented.
+
+New authorized development: optional in-app iPad-first shot capture by one
+manager for both teams, including our player-attributed field goals, team-level
+opponent shots and side-button free throws with per-attempt results/Undo.
+[PRD.md](PRD.md#in-game-shot-recorder-amendment--2026-10-17) is canonical;
+[ADR0007](docs/adr/0007-integrated-shot-capture-and-independent-reconciliation.md)
+records the boundary. This supersedes older blanket live-tracking exclusions only
+for shot capture. It is not implemented yet; keep independent shot datasets,
+coverage claims and score reconciliation distinct. Existing acceptance below is
+historical evidence, not proof of this new feature.
+
 Current acceptance snapshot (2026-10-14, native design continuation): PARTIAL.
 The reviewed game-centered SwiftUI pass adds real game context, task rows,
 grouped scoring inputs, compact guidance, readable missing values and a bounded

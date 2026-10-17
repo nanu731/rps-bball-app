@@ -2003,3 +2003,46 @@ Standards0/Spec0. Native installed test host remains d253216, source/binary matc
 request-render harness and prior UI6713efe observations remain separate evidence.
 Finite independently actionable queue completed; exact owner/provider/device gates
 remain in READINESS.md and private resumable checklist. No release-readiness claim.
+
+## Owner-authorized pilot and shot-capture continuation — 2026-10-17
+
+Canonical scope: PRD.md's2026-10-17 amendments and ADR0007. The owner permits the
+shared-manual-statistics pilot before automatic Sheets/media delivery. The new
+in-app shot recorder is authorized development, not implemented/accepted scope.
+Existing no-live statements are historical except for exclusions retained in PRD.
+
+Sequence (continue automatically between eligible units; checkpoint privately):
+
+1. Reconcile current readiness and preserve protected state. Incorporate the
+   selected email and10GB encrypted-backup cap; keep unchosen retention/deletion,
+   actual backup access and provider activation as explicit gates.
+2. Close independently testable manual-pilot defects and prepare honest pilot
+   onboarding/checklists. Preserve accepted checks unless relevant source changes.
+   Actual hosted/device limitations remain visible rather than blocking all work.
+3. Build shot/FT models, durable isolated local capture, per-attempt outcomes,
+   identity, Undo/correction, validation and interrupted-write recovery.
+4. Build/inspect the native iPad courtside workflow using the approved maroon
+   direction: both teams, our-player selection, court2/3 make/miss, separate FT
+   button/attempt outcomes, feedback and reachable Undo.
+5. Add separate server-authorized shot drafts/review, one-recorder handoff,
+   duplicate-safe deferred submission, expiry/revocation and conflict recovery.
+   Verify fresh synthetic migrations/RLS without activating existing environments.
+6. Add iPhone/iPad reviewed charts and per-team/player reconciliation. Never sum
+   official after-game totals with captured shots. Keep point agreement, attempt
+   coverage, review state and unknown values distinct.
+7. Run focused native/SQL/CI and cross-feature acceptance. Report native rendering,
+   synthetic and actual provider evidence separately. Reconcile READINESS.md and
+   the2026-11-17 delivery target against actual progress and blockers.
+
+Private execution spec/tickets: `.scratch/teamstats-shot-capture/`. ECC supports
+small evidence-driven units/checkpoints, Matt Pocock handles engineering/review,
+and llm-council advises material unresolved tradeoffs. One integrator owns Xcode;
+one operator controls shared runtime/Simulator/browser. Keep the queue finite;
+do not rerun unchanged failed UI probes or create enterprise infrastructure.
+
+Final coverage-signoff policy/wording remains open. Agents may implement a clearly
+labeled conservative proposal with synthetic tests; do not turn matching points
+alone into proof all missed attempts were recorded. Real forms/roster/media,
+provider credentials/free capacity, deletion execution and release approval remain
+owner/external inputs. No code, migration or provider was changed by this planning
+checkpoint; older app/CI evidence is not a shot-recorder pass.

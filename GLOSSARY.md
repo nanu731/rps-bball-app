@@ -78,3 +78,21 @@ remote authority and does not establish current team rights while offline.
 
 **Entered-data subtotal**: A sum of known inputs, identified as incomplete when
 required values are missing; it is not a final statistical conclusion.
+
+**Shot capture**: The designated manager's in-game recording of field-goal
+locations/results and free-throw results for both teams.
+
+**Recorded attempt**: A captured field goal or free throw, not evidence that every
+attempt in the game was captured.
+
+**Free-throw series**: A chosen number of free-throw attempts with individually
+recorded make/miss results; unanswered attempts remain unfinished.
+
+**Score reconciled**: Recorded shot points agree with an independently confirmed
+official team score. This does not prove complete attempt coverage.
+
+**Coverage complete**: A distinct claim that the full game's attempts were
+captured; its confirmation and review rules are separate from score agreement.
+
+**Designated recorder**: The manager assigned to capture a game's shots, with
+an explicit handoff when responsibility changes.

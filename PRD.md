@@ -9,6 +9,8 @@ Last updated: 2026-10-17.
 
 Create an app for a high school basketball team so managers can enter collected
 data after games and players can easily view their box scores and advanced stats.
+An optional iPad-first shot recorder also collects in-game field goals and free
+throws under the narrow owner scope amendment below.
 Also provide a shared playbook where coaches draw and save plays, team members
 view plays in motion, and practice videos are linked to the relevant plays under
 owner-controlled upload permissions.
@@ -37,8 +39,9 @@ additional initial testers whose number and media usage remain unspecified.
 - Game metadata: date, opponent, our team's home/away status, and game type
   (regular season or playoff). Scrimmages are outside the requested scope.
 - Use Supabase as the shared backend.
-- All statistical entry happens after games; playbook authoring is independent
-  of the after-game entry schedule.
+- Box-score, possession-sheet and player paint-touch entry remain after games.
+  The shot-recorder amendment below is the only authorized in-game exception;
+  playbook authoring is independent of the after-game entry schedule.
 - Phase 1: manual entry.
 - Phase 2: photo extraction that autofills an editable entry form.
 - Supabase holds the official stats; automatically export published data and
@@ -49,7 +52,8 @@ additional initial testers whose number and media usage remain unspecified.
   offline synchronization for the initial pilot unless a demonstrated need arises.
 - Collected fields are specified below; definitions and input examples still
   require owner clarification. Do not add collection fields without agreement.
-- Live tracking is excluded entirely, including from future phases.
+- In-game collection is limited to the optional shot recorder below. Live game
+  clocks, possession tracking, substitutions and lineup tracking remain excluded.
 - A dynamic playbook and permission-controlled practice videos are required components;
   their position relative to the statistics phases remains to be decided.
 - Account signup supports both email and phone number as available methods.
@@ -93,8 +97,103 @@ admins cannot expand their own authority or remove/replace the owner. Choose
 the detailed capability model through Council and record the decision before coding.
 Archive roster entries without erasing historical statistics. Actual destructive
 deletion remains subject to the owner's existing approval preference.
-No live tracking, extra statistical collection fields, or automatic expansion
-into web/Android is authorized. Council decisions cannot override those exclusions.
+Additional collection fields outside the owner-approved shot-recorder amendment,
+or expansion into web/Android, remain unauthorized. Council cannot broaden scope.
+
+### Pilot, delivery target and contact amendment — 2026-10-17
+
+The owner approves a shared-manual-statistics first pilot while automatic Google
+Sheets and media integrations remain unfinished. This is scope approval, not
+deployment/distribution or release acceptance. Later agreed features remain
+required; the owner targets 2026-11-17, subject to verified provider/device gates.
+The new shot recorder must be planned explicitly against that target, without
+silently delaying or redefining the pilot. Pilot participants, distribution and
+final acceptance criteria remain open.
+
+Owner-selected support/security/deletion-request contact:
+happybuddha1008@gmail.com. This authorizes the contact route, not automatic email
+transmission, a response-time promise, deletion execution or retention policy.
+
+The owner allocates at most 10 GB of existing Google storage to private encrypted
+backups, leaving personal headroom. The cap covers retained backup generations,
+not app/media hosting or additional purchased storage. Backup encryption, access
+holder, retention, transfer feasibility and actual hosted recovery remain to be
+verified. No real-data upload or automatic old-backup deletion is authorized here.
+
+### In-game shot recorder amendment — 2026-10-17
+
+Status: owner-authorized product scope; not implemented or accepted yet. Keep this
+inside TeamStats, with iPad-first capture and charts accessible to authorized team
+viewers on iPhone/iPad. This supersedes blanket historical no-live-tracking rules
+only for the following field-goal/free-throw workflow. Reuse existing game/roster
+identities and owner-controlled authority; a standalone second app is not planned.
+
+**Collection workflow**
+
+- One designated manager records both teams for a game. Make the active team,
+  our selected player, court orientation and pending action unmistakable.
+- Our field goal: select an existing player, tap the court location, explicitly
+  distinguish two versus three points and record Make or Miss. Keep the flow fast;
+  any geometry suggestion remains correctable, especially near the arc.
+- Opponent field goal: choose Opposing team, tap location, distinguish two/three
+  points and record Make/Miss. Opponent player attribution/roster is not required.
+- Free throws use a separate button beside the court. Choose our player or the
+  opposing team, enter attempts (quick 1/2/3 and another positive count), then mark
+  each attempt Make/Miss. Mixed outcomes must work; two attempts Make then Miss
+  are FT1/2. Pending unanswered attempts remain pending, not silently missed.
+- A made field goal contributes its confirmed 2/3 value; a made free throw adds 1.
+  Free throws appear in a separate tally, not fabricated court-location dots.
+- Provide immediate confirmation, Undo and correction of wrong player/team,
+  location, shot value, result or free-throw entry. Retain correction provenance
+  for shared records; do not silently erase accepted history.
+- Court coordinates/orientation must survive resizing and rotation. Locations
+  are manager observations, not precise camera measurements. Do not infer a game
+  clock, possession ID or official chronology from an entry timestamp.
+
+**Reliability and authority**
+
+- Persist captured/pending events through app interruptions without requiring
+  game-venue connectivity. This narrowly authorizes local shot capture and
+  controlled later submission, not general offline shared-stat synchronization.
+- Use stable event/session identities, explicit pending/confirmed/error states,
+  replay-safe submission and current server authorization. Local capture is not
+  proof of permission to upload/publish after a grant/session changes.
+- One designated recorder and an explicit handoff prevent overlapping work.
+  Stable IDs prevent retransmission duplicates, not two people independently
+  recording the same attempt; overlapping sessions need visible review.
+- Model permissions and review using existing server-enforced patterns. Ordinary
+  players do not gain recording, approval or permission-administration rights.
+  Authorized recording does not imply unrestricted publication or delegation.
+
+**Reconciliation, coverage and charts**
+
+- Store shots separately from after-game box scores, possession tallies and paint
+  totals. Link by team/game/player identities. Compare totals, never add separate
+  datasets together or manufacture shots/locations to force agreement.
+- Independently per team, recorded points = 2 × made twos + 3 × made threes + made free
+  throws. Compare against an independently confirmed official score; absent
+  official data is Unavailable, not zero or a passed check.
+- The owner wants matching points to inform complete coverage and discrepancies
+  shown otherwise. Score agreement alone cannot establish attempted-shot coverage:
+  unrecorded misses leave points unchanged. Keep Score reconciled and Coverage
+  complete separate. A conservative implementation proposal is explicit manager
+  full-game confirmation plus available made/attempted-total reconciliation;
+  mark any unverified completeness claim as manager-declared. Final coverage
+  signoff wording/authority is TODO_SHOT_COVERAGE_SIGNOFF, not an invented fact.
+- Compare player/team 2PT/3PT/FT makes and attempts against available official
+  after-game inputs; identify missing, matching and discrepant values. Preserve
+  both sources and correction/review history. Partial capture remains useful.
+- Show team/player recorded-shot maps, attempts, makes/misses and conversion by
+  supported zones, with sample counts and coverage/review status. Opponent charts
+  show shot origin, attempts and points allowed without invented player identities.
+  Matching totals do not prove every location correct. Do not infer defender
+  distance, shot quality, possession efficiency or missing attempts.
+
+Build synthetic courtside workflow/model/permission/recovery checks first, then
+inspect the native prototype and test interruption/Undo/FT1/2/multiple teams.
+Record actual iPad interaction/rotation/accessibility separately from model proof.
+Unknown free hosting or unavailable real-game examples remain gates; synthetic
+success is not real-game accuracy or release approval.
 
 ## Visual direction
 
@@ -293,7 +392,8 @@ to each submission. These details require confirmation before implementation.
 
 The first pilot exercises manual box-score/possession entry, account access,
 owner review and permission grants, and published-stat viewing on iPhone/iPad.
-The exact pilot metric list and Google Sheets inclusion remain to be finalized.
+The exact pilot metric list remains open. The owner permits automatic Google
+Sheets and media delivery to follow the first pilot; both remain later requirements.
 Do not include photo extraction, play animation, or video upload in that pilot.
 Online submission is the starting approach; show failures clearly without
 claiming that unsent changes have reached the shared database. Local draft
@@ -378,7 +478,8 @@ Possession-sheet completion confirmation:
   - Separate made/missed tallies for two-pointers, three-pointers, and free throws.
   - Whether the possession resulted in a turnover.
 
-Possession records are entered after games. They do not authorize live tracking.
+Possession records are entered after games. They do not authorize live possession
+tracking; the separate shot-recorder amendment does not change these boundaries.
 Shot data uses tallies by type and outcome, not ordered individual attempts.
 The owner has not specified player attribution within possessions or whether
 points per possession are recorded explicitly.
@@ -667,19 +768,20 @@ Custom encryption and bot protection need assessment against the final scope.
 
 ## Explicit exclusions
 
-- No live game tracking, live scoring, real-time event entry, game clocks,
-  substitutions, or live lineup tracking.
+- In-game entry is restricted to the shot-recorder amendment. No game-clock,
+  possession, substitution or lineup tracking or public live-score broadcast.
 - No fabricated actual team roster, school branding, additional data fields, or
   statistical claims. The owner authorizes labeled temporary roster names/numbers.
-- No implementation or dependency installation until the owner authorizes it.
+- Implementation and necessary free tooling are authorized within current owner scope;
+  paid/uncertain-cost actions and actual tool confirmations remain separately gated.
 
 ## Release decisions
 
 - Budget is strictly$0; provider feasibility/capacity and distribution still need verification.
 - TODO_DISTRIBUTION: pilot group and long-term app distribution method.
 - TODO_RELEASE_CRITERIA: agreed device coverage and end-to-end checks.
-- TODO_PILOT_DETAIL: metrics included, pilot participants, and whether Google
-  Sheets export is required in the first pilot or the next iteration.
+- TODO_PILOT_DETAIL: metrics, participants, distribution and acceptance criteria.
+  Automatic Google Sheets/media delivery may follow the first manual-stat pilot.
 
 Backend choice does not determine which advanced stats are possible: collected
 inputs and documented calculations do. Do not expand collection scope merely

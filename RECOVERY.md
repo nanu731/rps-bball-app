@@ -134,9 +134,16 @@ development-tool dependency was installed on the owner's Mac.
 ## Owner decisions still open
 
 - `TODO_BACKUP_DESTINATION`: private encrypted location, access holder and verified $0 arrangement.
+- Owner storage amendment2026-10-17: existing Google storage may allocate at most
+  10GB to private encrypted backup generations, leaving room for personal files.
+  This is a budget cap, not configured uploads, media hosting or tested hosted
+  recovery. Measure encrypted versions/capacity and preserve headroom; no automatic
+  old-copy deletion is authorized while retention remains unresolved.
 - `TODO_BACKUP_RETENTION`: frequency, retained versions and expiration/deletion policy.
 - `TODO_RECOVERY_RPO_RTO`: acceptable data loss and downtime, including authorization changes.
-- `TODO_SECURITY_REPORTING_CHANNEL`: private incident/reporting route and responsible recovery contact.
+- Contact route selected: happybuddha1008@gmail.com. Backup access holder,
+  additional handlers, response commitments and recovery authority remain as
+  separately documented; choosing an email does not grant database restore access.
 
 No defaults were invented. [Supabase's backup guidance](https://supabase.com/docs/guides/platform/backups)
 distinguishes database backups from Storage bytes and recommends independent Free

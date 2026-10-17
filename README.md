@@ -5,6 +5,13 @@ on iPhone and iPad (minimum iOS/iPadOS 26.0). Managers enter box scores,
 team possessions, and individual paint-touch totals; players view accepted shared
 statistics. Device-local saved drafts are separate, incomplete and unreviewed.
 
+Owner scope update2026-10-17: the first pilot may use shared manual statistics
+while automatic Sheets/media delivery remains unfinished. An optional iPad-first
+shot recorder for both teams, with per-player our-team shots and side-panel free
+throws, is now authorized but **not yet implemented**. See
+[shot requirements](PRD.md#in-game-shot-recorder-amendment--2026-10-17).
+The completion target is2026-11-17, not a release-readiness claim.
+
 ### Media scope
 
 Owner decision (2026-10-12): approximately 25 regular users plus initial testers.
@@ -72,7 +79,9 @@ On-device recognition can misread zero as O; representative marked-form accuracy
 and device interactions remain unverified. No app photo/text persistence or upload occurs; Photos may create temporary
 provider files. Possession turnover answers require explicit Unanswered/Yes/No
 review; they are never inferred from recognized text.
-There is no live tracking in any phase.
+The currently implemented statistics workflow is after-game. The planned shot
+recorder is the only authorized in-game exception; clocks, possession tracking,
+substitutions, lineups and public live-score broadcasts remain outside scope.
 
 ### Where to find connected features
 

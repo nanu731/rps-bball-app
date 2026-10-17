@@ -115,13 +115,18 @@ requires separate owner approval.
 
 ## Private security reporting and recovery responsibility
 
-`TODO_SECURITY_REPORTING_CHANNEL`: the owner must choose a private reporting
-route before external pilot use. No contact is invented here, and GitHub private
-vulnerability reporting is not claimed enabled. Until a route is published, do
-not post credentials, student records, private provider identifiers or exploit
-details in public issues. Provide a minimal sanitized description through an
-owner-approved private channel once available; share sensitive evidence only by
-an explicitly agreed secure method. No response-time promise is established.
+Owner-selected route2026-10-17: happybuddha1008@gmail.com for support, private
+security reports and account-deletion requests. Send minimal sanitized descriptions;
+credentials, student records and sensitive exploit evidence require a separately
+agreed secure handling method. No automatic email delivery, response-time promise,
+deletion executor or GitHub private-reporting enablement is implied. Additional
+request handlers and retention/notification commitments remain owner decisions.
+
+Planned shot capture uses separate current recording/review authority, designated
+recorder/handoff and account/team-scoped durable local drafts. Local possession of
+events is not permission to upload after revocation. Recheck server rights and
+revision/idempotency boundaries before sharing; preserve input on denial without
+exposing it to another account. PRD/ADR0007 define the authorized feature scope.
 
 The owner coordinates incident response and approved restoration with trusted
 provider administrators. Ordinary membership, review or delegated grant authority

@@ -98,6 +98,16 @@ shot categories without inventing player attribution to possessions.
   recalled. Offline clip retention is not full shared-data synchronization.
 - Four local draft stores remain unchanged and are never automatically uploaded.
 
+## Planned shot capture boundary
+
+Owner-authorized, not implemented: ADR0007 adds an in-app iPad-first recorder for
+both teams. A durable account/team/game-scoped shot draft and controlled deferred
+submission feed a separate reviewed shot dataset. Official after-game records are
+comparison sources, not overwritten or added to these totals. Free throws have
+per-attempt outcomes without court coordinates. Score reconciliation and coverage
+claims are separate. No new service, database schema or hosted activation is
+established by this design record; implementation/evidence must update this section.
+
 ## Backup and recovery boundary
 
 Application recovery handles retained drafts, stale versions and uncertain replies.
