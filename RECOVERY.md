@@ -9,7 +9,8 @@ UI acceptance remains separately PARTIAL in [TESTING.md](TESTING.md).
 
 | Domain | Required state | Boundary |
 | --- | --- | --- |
-| Saved local drafts | Application Support `games.json`, `box-scores.json`, `possessions.json`, `player-paint-touches.json`; game UUIDs, temporary-player strings, possession UUID/team/number, optional counts and unanswered turnovers | Version1 `LocalDraftBackup`; excludes unsaved input, shared caches, credentials and media. No automatic upload or conversion to real players. |
+| Saved local drafts | Application Support `games.json`, `box-scores.json`, `possessions.json`, `player-paint-touches.json`; game UUIDs, temporary-player strings, possession UUID/team/number, optional counts and unanswered turnovers | Version2 `LocalDraftBackup` also includes saved local shot journals; version1 remains readable. Excludes unsaved input, shared caches, credentials and media. No automatic upload or conversion to real players. |
+| Saved local shot journals | Application Support `shot-local-GAME_UUID.json`; game/session/event/change IDs, temporary roster snapshot, normalized FG coordinates/baskets, pending outcomes, sparse FT answers and correction/Undo history | Version2 local export only. Excludes shared preparations, outboxes and separate failed-save recovery copies; no authority import. |
 | Team identity/authority | `teams`, `team_memberships`, `delegation_envelopes`, `capability_grants`, `roster_entries`, `roster_entry_revisions`, `team_audit_events` in `public` | Preserve UUIDs, revisions, expiry/revocation and history; never infer owner authority from email/phone. |
 | Games/statistics | `games`, `stat_datasets`, `stat_versions`, `stat_edit_requests`, `stat_user_preferences` in `public` | Preserve draft/completed/published distinctions, accepted pointers, optional values and covered historical roster. |
 | Export state | `stat_export_outbox`, `stat_export_snapshots`, `stat_export_destinations`, `stat_export_deliveries` in `public` | Preserve accepted-version binding, queued/uncertain/delivered facts and attempts. Restoring does not authorize redispatch. Sheets is not a backup. |
@@ -30,11 +31,11 @@ existing database and has no hosted mode.
 
 ## Minimal $0 approach
 
-Use an explicit, quiescent four-store export for device drafts. Validate it before
+Use an explicit, quiescent saved-store export for device drafts. Validate it before
 recovery; four independently valid files do not establish a cross-store snapshot.
 The Foundation recovery seam reuses the actual models/loaders, rejects unsupported
 versions, broken game relationships and occupied destinations, stages privately,
-then publishes all four stores with one sibling-directory move. It is offline
+then publishes all validated stores with one sibling-directory move. It is offline
 tooling, not an in-app import screen; app startup never calls it. A process death
 may leave a clearly named `.partial` staging directory, not a completed destination.
 
@@ -172,9 +173,24 @@ Shot-capture journals are separate version1 JSON documents. They preserve sessio
 event and correction identities plus pending outcomes. Copy/reload tests validate
 an isolated destination against its expected context; failed validation leaves
 source bytes intact. This is synthetic local recovery evidence, not hosted DR.
-Existing four-store user backup does not yet include shot captures: preserve their
-files separately until a reviewed export/restore workflow exists. Do not imply the
-selected encrypted Google10GB budget configures a destination or retention policy.
+The explicit Using TeamStats → Export saved local drafts action now writes version2
+with saved `shot-local-GAME_UUID.json` journals and the original four stores. Recovery
+also accepts original version1 backups (which contain no shot journals). Validation
+preserves session/event/change IDs, temporary roster identities, coordinates/baskets,
+sparse pending FT answers, interrupted FG values/outcomes and all correction/Undo history.
+Only validated local contexts whose game exists in the backup are eligible. Duplicate
+game/session captures, shared contexts, malformed/truncated journals and occupied or
+symlink destinations fail without replacing existing files. Restoring twice to the
+same directory fails; it never merges journals or grants server authority.
+
+Recovery tooling publishes to a new isolated folder only after staged actual loaders
+validate every store; no in-app import or automatic upload is added. Quiesce editing
+before exporting: individually atomic files are not a multi-file transaction. In-memory
+unsaved input, separately preserved failed-save recovery copies, shared preparations,
+outboxes, server attestations and credentials are excluded. Preserve those recovery
+copies separately using their existing explicit action; never promote one silently.
+The JSON export is not encrypted. Choose a private destination deliberately; the selected
+encrypted Google10GB budget does not configure a destination, retention or cloud backup.
 
 A local shot save failure offers explicit preservation of the pending document in
 a separate atomic recovery file before reopening the newer saved capture. The copy

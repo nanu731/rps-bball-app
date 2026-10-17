@@ -1152,3 +1152,8 @@ and final chart tests are distinguished in TESTING.md. Existing/hosted migration
 list; source completion does not establish hosted or release readiness.
 
 Analytics planning2026-10-17: PRD’s proposed roadmap starts with coach-confirmed individual shooting-practice priorities, not a model promise. Preserved raw/versioned sources, grouped later-game evaluation, uncertainty and evidence-based withholding are required; no new collection or predictive UI is approved. This planning unit does not block the continuation queue.
+
+2026-10-17 continuation: explicit local backup format2 includes saved local shot
+journals; old format1 remains restorable/re-exportable. Isolated recovery only;
+no shared authority/credentials, automatic import/upload or cloud destination.
+26affected native tests passed; RECOVERY.md/TESTING.md contain exact boundaries.

@@ -1424,3 +1424,17 @@ revision5, the new2/3 series and the prior two unanswered attempts still pending
 No app defect or source repair demonstrated. This is local iPad evidence, not hosted
 submission, physical hardware or an actual26.0 runtime check. Private readback receipt:
 ft-visible-keyboard-saved.local.json; original apps/records were not selected.
+
+### Continuation unit08: local shot-journal recovery
+
+The new actual-loader tracer failed before implementation because the restored shot
+file was absent, then passed with version2 export/restoration. Independent Standards
+and Spec reviews identified a v1 decode/re-export incompatibility; its regression
+failed before version-aware encoding and passed after repair. Final native build and
+26tests passed (11backup +15journal;10.99seconds) on isolated iPhone17 Simulator26.4.
+Evidence covers v1 restoration/re-export, pending FT/interrupted FG, exact session/event/
+change identities and correction history, missing versus zero, duplicate/shared/orphan/
+malformed/truncated rejection, occupied/symlink destination refusal, unchanged source
+bytes and absence of partial destinations. Both independent re-reviews:0findings.
+Actual hosted DR, encryption/destination/retention policy and automatic restore are
+not established. No original app records or shared preparations were imported.

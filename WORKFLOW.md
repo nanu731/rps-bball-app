@@ -2121,3 +2121,9 @@ Continuation unit07: keyboard-visible custom FT Start, all answers, atomic saves
 and cold reopening passed on isolated iPad26.4 with actual saved-journal readback.
 Native keypad outside-tap dismissal and hardware routing explained automation
 differences; no app source change justified. Historical pending answers preserved.
+
+Continuation unit08: version2 explicit saved-local export/restoration includes local
+shot journals while accepting/re-exporting version1 backups. New-directory-only
+restoration preserves pending attempts/corrections/IDs and refuses malformed, duplicate
+or shared journals. Build/26native tests passed; Standards0/Spec0 after legacy encoding
+repair. RECOVERY.md records plaintext/quiescence and separate recovery-copy exclusions.

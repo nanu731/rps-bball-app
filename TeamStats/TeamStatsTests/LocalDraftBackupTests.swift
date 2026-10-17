@@ -35,6 +35,95 @@ final class LocalDraftBackupTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: sentinel), Data("TEST ONLY preserved".utf8))
     }
 
+    @MainActor
+    func testShotJournalExportRestoresPendingCorrectionsAndStableIdentities() throws {
+        let folder = try fixtureFolder()
+        let game = Game(id: UUID(), date: Date(timeIntervalSinceReferenceDate: 0),
+                        opponent: "TEST ONLY shot recovery", venue: .home, kind: .regularSeason)
+        try GameStorage.save([game], to: folder.appendingPathComponent("games.json"))
+        let player = ShotCapturePlayer(id: "temporary-roster-v1-a", name: "TEST ONLY player", number: "1", temporary: true)
+        var document = try ShotCaptureDocument.local(gameID: game.id, players: [player])
+        let series = try document.startFreeThrows(team: .our, playerID: player.id, attempts: 3)
+        try document.answerFreeThrow(seriesID: series, index: 1, outcome: .made)
+        try document.answerFreeThrow(seriesID: series, index: 1, outcome: .missed)
+        _ = try document.startFieldGoal(team: .opponent, playerID: nil, location: ShotLocation(x: 0.2, y: 0.7), basket: .bottom)
+        let name = "shot-local-\(game.id.uuidString).json"
+        let source = folder.appendingPathComponent(name)
+        try ShotCaptureStorage.create(document, at: source)
+        let original = try Data(contentsOf: source)
+        let exported = try LocalDraftBackup.snapshot(from: folder).encodedData()
+        let destination = try fixtureFolder().appendingPathComponent("restored")
+        try LocalDraftBackup.restore(exported, toNewDirectory: destination)
+        let restored = try ShotCaptureStorage.load(from: destination.appendingPathComponent(name), context: document.context)
+        XCTAssertEqual(restored, document) // Includes stable event/change IDs and correction history.
+        XCTAssertEqual(try restored.totals(team: .our).pending, 2)
+        XCTAssertEqual(try restored.events().first?.answers, [ShotFreeThrowAnswer(index: 1, outcome: .missed)])
+        XCTAssertNil(try restored.events().last?.value) // Interrupted FG is still unentered.
+        XCTAssertNil(try restored.events().last?.outcome)
+        XCTAssertEqual(try Data(contentsOf: source), original)
+        XCTAssertThrowsError(try LocalDraftBackup.restore(exported, toNewDirectory: destination))
+        XCTAssertEqual(try ShotCaptureStorage.load(from: destination.appendingPathComponent(name), context: document.context), document)
+    }
+
+    @MainActor
+    func testVersionOneCanBeDecodedReexportedAndRestored() throws {
+        let legacy = try JSONDecoder().decode(LocalDraftBackup.self, from: recoveryFixture())
+        let destination = try fixtureFolder().appendingPathComponent("legacy")
+        try LocalDraftBackup.restore(legacy.encodedData(), toNewDirectory: destination)
+        let reopened = try LocalDraftBackup.snapshot(from: destination)
+        XCTAssertEqual(reopened.games.first?.opponent, "TEST ONLY recovery")
+        XCTAssertEqual(reopened.boxScores.first?.values["points"], 0)
+        XCTAssertNil(reopened.boxScores.first?.values["twosMade"])
+        XCTAssertTrue(reopened.shotCaptures.isEmpty)
+    }
+
+    @MainActor
+    func testInvalidOrDuplicateShotBackupsNeverPublishOrRestoreSharedAuthority() throws {
+        let folder = try fixtureFolder()
+        let game = Game(id: UUID(), date: Date(timeIntervalSinceReferenceDate: 0),
+                        opponent: "TEST ONLY invalid recovery", venue: .home, kind: .regularSeason)
+        try GameStorage.save([game], to: folder.appendingPathComponent("games.json"))
+        let document = try ShotCaptureDocument.local(gameID: game.id, players: [])
+        let file = folder.appendingPathComponent("shot-local-\(game.id.uuidString).json")
+        try ShotCaptureStorage.create(document, at: file)
+        let original = try Data(contentsOf: file)
+        let data = try LocalDraftBackup.snapshot(from: folder).encodedData()
+        let backup = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let shot = try XCTUnwrap((backup["shotCaptures"] as? [[String: Any]])?.first)
+        var cases: [[String: Any]] = []
+        var changed = backup
+        changed["shotCaptures"] = [shot, shot]; cases.append(changed)
+        var orphan = shot
+        orphan["context"] = ["gameID": UUID().uuidString]
+        changed = backup; changed["shotCaptures"] = [orphan]; cases.append(changed)
+        var shared = shot
+        shared["context"] = ["gameID": game.id.uuidString, "teamID": UUID().uuidString,
+                             "actorID": UUID().uuidString, "assignmentRevision": 1] as [String: Any]
+        changed = backup; changed["shotCaptures"] = [shared]; cases.append(changed)
+        var malformed = shot
+        malformed["journal"] = [["revision": 2]]
+        changed = backup; changed["shotCaptures"] = [malformed]; cases.append(changed)
+        changed = backup; changed["schemaVersion"] = 1; cases.append(changed)
+        changed = backup; changed.removeValue(forKey: "shotCaptures"); cases.append(changed)
+        let inputs = try cases.map { try JSONSerialization.data(withJSONObject: $0) } + [Data(data.dropLast(10))]
+        for input in inputs {
+            let parent = try fixtureFolder(), destination = parent.appendingPathComponent("restored")
+            XCTAssertThrowsError(try LocalDraftBackup.restore(input, toNewDirectory: destination))
+            XCTAssertFalse(FileManager.default.fileExists(atPath: destination.path))
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: parent.path), [])
+        }
+        XCTAssertEqual(try Data(contentsOf: file), original)
+        let corrupt = Data("TEST ONLY interrupted JSON {".utf8)
+        try corrupt.write(to: file)
+        XCTAssertThrowsError(try LocalDraftBackup.snapshot(from: folder))
+        XCTAssertEqual(try Data(contentsOf: file), corrupt)
+        try original.write(to: file)
+        let orphanFile = folder.appendingPathComponent("shot-local-\(UUID().uuidString).json")
+        try original.write(to: orphanFile)
+        XCTAssertThrowsError(try LocalDraftBackup.snapshot(from: folder))
+        XCTAssertEqual(try Data(contentsOf: orphanFile), original)
+    }
+
     private func recoveryFixture() -> Data {
         Data("""
         {"schemaVersion":1,"exportedAt":0,
@@ -56,7 +145,7 @@ final class LocalDraftBackupTests: XCTestCase {
         let original = try XCTUnwrap(JSONSerialization.jsonObject(with: recoveryFixture()) as? [String: Any])
         var cases: [[String: Any]] = []
         var changed = original
-        changed["schemaVersion"] = 2
+        changed["schemaVersion"] = 3
         cases.append(changed)
         changed = original
         changed["games"] = (original["games"] as! [[String: Any]]) + (original["games"] as! [[String: Any]])
@@ -124,7 +213,7 @@ final class LocalDraftBackupTests: XCTestCase {
 
         let backup = try LocalDraftBackup.snapshot(from: folder)
         let decoded = try JSONDecoder().decode(LocalDraftBackup.self, from: backup.encodedData())
-        XCTAssertEqual(decoded.schemaVersion, 1)
+        XCTAssertEqual(decoded.schemaVersion, 2)
         XCTAssertEqual(decoded.games.first?.id, gameID)
         XCTAssertEqual(decoded.games.first?.date, Date(timeIntervalSince1970: 1_700_000_000))
         XCTAssertEqual(decoded.games.first?.opponent, "Synthetic opponent")
@@ -163,7 +252,7 @@ final class LocalDraftBackupTests: XCTestCase {
         let data = try LocalDraftBackup.snapshot(from: folder).encodedData()
         let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(Set(object.keys), ["schemaVersion", "exportedAt", "games", "boxScores",
-                                          "possessions", "playerPaintTouches"])
+                                          "possessions", "playerPaintTouches", "shotCaptures"])
         XCTAssertFalse(String(decoding: data, as: UTF8.self).contains("SYNTHETIC_EXCLUDED_BYTES"))
         XCTAssertEqual(try Data(contentsOf: gamesURL), gamesBytes)
         for filename in excluded {
