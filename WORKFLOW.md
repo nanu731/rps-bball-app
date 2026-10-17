@@ -1784,16 +1784,24 @@ installed signatures pass. iPad shared local-service entry/Save/readback and pho
 Reduce Motion On-state functionality passed individually; mixed test commands also
 contain documented failures/skips. Source/design/scoring/storage/authority unchanged.
 
-Both devices' Settings retained portrait after landscape requests. Phone shared
-editing lost a native field snapshot; iPad motion hit event/query timeouts. Awake
-assertions and native alternatives did not fully recover control; no further
-unchanged retries. Motion settings restored Off. Recorder error2 prevented temporal
-inspection. Installed26.4 has no exposed VoiceOver control; Inspector is not actual
-screen-reader acceptance. TESTING.md is the current acceptance ledger and checklist.
+Both devices' Settings retained portrait after landscape requests. After owner
+unlock, desktop AX/keyboard alternatives closed phone shared editing/Save/reopening;
+direct readback confirms one draft record at revision3, no publication. iPad motion
+counters/Saves in both modes and saved-details disclosure also passed. Native
+snapshot failures and full desktop horizontal traversal remain unresolved; unchanged
+probes stopped. A fresh system capture still showed sideways Settings in the
+rotated iPad bezel, so no app landscape pass is claimed.
+
+Motion settings were restored Off and independently read back. Absolute-path
+recordings succeeded on both devices, correcting the earlier relative-path error.
+Sampled transitions were inspected; temporal timing/comparison acceptance remains
+open. Mac lock recurred before further desktop diagnosis. Installed26.4 has no
+exposed VoiceOver control; Inspector is not actual screen-reader acceptance.
+TESTING.md is the current acceptance ledger and exact remaining checklist.
 
 Status remains PARTIAL, including Simulator scope. Original records/identities,
 three protected Xcode byte/index entries and original server grants/history remain
 intact; current personal UI-state drift predates this task and was retained. No
 provider/production activation, original upload, physical work or spending. Resume
-only the blocked acceptance after Mac unlock/supported accessibility prerequisites;
+only the blocked acceptance after renewed Mac unlock/supported accessibility prerequisites;
 physical and actual26.0 checks stay deferred. No next feature started.

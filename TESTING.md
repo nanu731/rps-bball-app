@@ -702,10 +702,10 @@ confirm application source matches6713efe, including the earlier saved-receipt r
 | --- | --- | --- |
 | Actual rotation, both devices | Settings retained portrait402×874 on phone and820×1180 on iPad after landscape requests; native request reported orientation3. Desktop menu/toolbar rotated the iPad bezel while content stayed sideways. An additional awake iPad preflight still refused landscape. | BLOCKED; app landscape checks skipped, underlying system cause unknown |
 | Shared entry, iPad | Actual signed local-service account/membership, individual4/7 lower-bound notice, shared unsaved mode switch and server-confirmed draft Save passed. Stored draft has one unique game/player record, revision2, points4/threesMade7, no published version. Captures inspected. | PASS, local integration only |
-| Shared entry, iPhone | Initial navigation raced successful game loading. Explicitly waiting for the link reached the editor; a later native query lost the virtualized threes-made field snapshot. | BLOCKED; no final phone shared Save pass |
+| Shared entry, iPhone | Native queries lost a virtualized field snapshot. After unlock, desktop AX controls and keyboard mode switching reached the actual signed local editor. Points4→5 updated the lower-bound notice immediately; roster mode retained5, decrement restored4, and Save received server confirmation. Reopening retained4/7; direct readback confirms one draft record, revision3, no publication. | PASS, local integration only |
 | Reduce Motion, iPhone | Real Settings On captured; counters, vertical scrolling, both entry modes, far-right field, keyboard Save and saved-ledger expansion passed. Original Off restored in teardown and independently read back. Captures inspected. | PASS for functional On-state usability |
-| Reduce Motion, iPad | Initial On-state counters, vertical scrolling, single-player Save and mode switch passed before event-synthesis timeout. Changed awake replay hit a query timeout before finishing. Corrected teardown restored Off even after that abort; actual preference readback agrees. | PARTIAL; full On-state journey remains open |
-| Transition-motion observation | A supported Simulator recording attempt returned SimRenderServer error2. No unchanged recording retry. Stills and successful interactions do not establish temporal animation behavior. | BLOCKED; no measured/visual motion-reduction claim |
+| Reduce Motion, iPad | Native On-state counters, vertical scrolling and first Save passed before event/query failures. After unlock, desktop individual/table counters0→1→0, both Saves, reopening and saved-details disclosure passed on the existing synthetic draft. Full rightward traversal did not respond to desktop scroll/drag; no unchanged retries. Original Off restored and independently read back. | PARTIAL; functional checks passed, full On-state pan remains open |
+| Transition-motion observation | Absolute output paths fixed capture: private movies from both devices were decoded and sampled at100ms. Settings On, editor presentation, mode changes and disclosure endpoints were inspected. Captures include intermediate transitions and do not establish acceptable timing or a clean comparison with Off; Mac locked again before further capability inspection. | PARTIAL; capture works, temporal acceptance remains open |
 | Actual screen reader | Installed Simulator Accessibility settings omit VoiceOver; installed XCTest headers expose no VoiceOver controller. Earlier menu/Inspector capability inspection remains applicable to this unchanged toolchain. | BLOCKED; no actual VoiceOver interaction performed |
 
 The two demonstrated test defects were corrected: shared navigation now waits for
@@ -716,11 +716,16 @@ No product defect was established, so no persistence, layout, authority or
 completion behavior was changed. Draft discrepancies remain saveable; the shared
 game stayed draft-only, without completion, submission or publication.
 
-The Mac locked during desktop control; an unlock request remains pending. Native
-alternatives recovered some interactions, but subsequent lost-snapshot/query/event
-failures stopped further unchanged probes. Retained power logs show sleep/wake
-cycles; temporary process-scoped wake assertions did not establish full recovery
-and have ended. Durations affected by this environment are not performance evidence.
+The owner unlocked the Mac and desktop controls recovered, closing the phone shared
+journey and extending iPad motion evidence. The native bridge still lost system
+snapshots; its interrupted post-unlock replay is not a pass. Exposed AX Scroll Down
+and standard keyboard mode switching provided supported alternatives to unreliable
+coordinate actions. Desktop horizontal scroll/drag did not establish full traversal.
+The Mac subsequently locked again; further desktop attempts stopped. Retained
+power logs show sleep/wake cycles; temporary process-scoped wake assertions did not
+establish full recovery and have ended. Durations affected by this environment are
+not performance evidence. The earlier relative-path recording errors are superseded
+by successful absolute-path captures, not an ongoing recorder outage.
 Selected phone motion and iPad shared tests passed individually; mixed commands
 also contain failures/skips and are **not** reported as a green overall suite.
 
@@ -733,29 +738,28 @@ The personal UI-state file already differed from the previous task at entry;
 current bytes and older snapshots were retained, with no further task drift.
 Known older isolated rows and independent possession/paint stores remain unchanged.
 Full available local-server readback shows only the dedicated synthetic draft
-update and an appended audit event; original grants, memberships and audit rows
+updates and appended audit events; original grants, memberships and audit rows
 remain intact. Three export tables correctly denied direct reads rather than being
 reported empty. No original app reset/uninstall, automatic upload, provider
 activation, physical-device work, dependency or paid action occurred.
 
 ### Exact remaining prerequisites and checks
 
-1. Unlock the Mac and keep it awake for desktop Simulator control. Diagnose system
+1. Unlock the Mac again and keep it awake for desktop Simulator control. Diagnose system
    rotation first: confirm the existing Simulator's rotation-lock control and that
    Settings itself settles into landscape. Preserve apps/containers; do not reset
    anything. Only then inspect actual app geometry, game header/viewer, both entry
    modes, vertical/horizontal scrolling and keyboard Save on each device; return
    to portrait. The active-pan hidden-indicator observation remains unverified.
-2. On the isolated phone, confirm the configured synthetic account and TEST ONLY
-   team/game. Open Player box scores, retain points4/threesMade7 with other makes
-   blank, switch modes and require “Server confirmed all draft changes.” Verify
-   actual saved records remain unique and draft-only. Do not complete/publish.
-3. On the isolated iPad, record Reduce Motion's current setting, enable it, and
-   finish the local synthetic ledger's individual/table counters, scrolling, Save
-   and viewer expansion. Observe actual transitions on both device families;
-   functional On-state acceptance alone does not certify temporal motion behavior.
+2. On the isolated iPad, record Reduce Motion's current setting and enable it. In
+   the existing TEST ONLY motion ledger's roster table, pan to Free throws missed,
+   Total rebounds and Points check, then back. Confirm labels/controls and Save stay
+   reachable without a visible horizontal indicator. Counters, Save and viewer
+   disclosure already passed; do not repeat them without new evidence. Inspect the
+   actual navigation/presentation/mode/disclosure transitions on both device families,
+   checking Simulator animation options before attributing timing to the app.
    Restore the recorded setting. Both settings are currently restored to Off.
-4. Actual VoiceOver needs a supported screen-reader-capable Simulator/toolchain,
+3. Actual VoiceOver needs a supported screen-reader-capable Simulator/toolchain,
    or separately authorized device work outside this task. Test real focus/order,
    labels/values, missing versus zero, editing/disclosure and Save announcements.
    [Inspector reading order and spoken descriptions](https://developer.apple.com/documentation/accessibility/inspecting-the-accessibility-of-screens)

@@ -880,13 +880,21 @@ functional navigation/counters/scrolling/Save/viewer passed and restored Off.
 Both original settings are restored, including cleanup after an aborted iPad test.
 Test fixes wait for successful game loading and move setting restoration to teardown.
 
-Acceptance remains PARTIAL even within Simulator scope: Settings itself refused
-landscape geometry on both devices, phone shared entry lost a field snapshot, and
-full iPad motion/temporal animation observation and actual VoiceOver remain open.
-Mac lock blocked desktop control; native alternatives were attempted and unchanged
-failures stopped. Installed26.4 lacks exposed VoiceOver controls; Inspector evidence
+After the owner unlocked the Mac, supported desktop AX/keyboard controls closed the
+phone shared journey: immediate notice updates, shared unsaved mode switching,
+server-confirmed Save and reopening passed. Direct readback confirms one draft
+record at revision3, points4/threesMade7, no publication. iPad On-state counters in
+both modes, Saves and reopened details also passed; complete horizontal traversal
+remains unverified. Both original motion settings were restored Off and read back.
+
+Acceptance remains PARTIAL even within Simulator scope. Settings itself still
+rendered sideways inside the rotated iPad bezel; native system geometry checks on
+both devices failed. Successful absolute-path recordings supersede the earlier
+relative-path capture errors. Sampled transitions were inspected, but timing and a
+clean On/Off comparison remain unaccepted. Mac lock recurred; unchanged failing
+probes stopped. Installed26.4 lacks exposed VoiceOver controls; Inspector evidence
 is separate. TESTING.md records exact prerequisites, final-build evidence and
-installed TeamStats UI TEST1.0(1), app source6713efe.
+installed TeamStats UI TEST1.0(1), app source6713efe (acceptance adapters4790aaa).
 
 All174 original JSON files, temporary identities, protected Xcode bytes/index and
 original server permissions/history remain preserved. Pre-session personal UI-state
