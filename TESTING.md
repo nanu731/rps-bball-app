@@ -901,3 +901,15 @@ VoiceOver stay open without repeated probes. Auth's failed immediate family-lock
 assertion and passed extra-grace rejection remain distinct. Migration14, hosted file/
 Google delivery and dependent services remain disabled. Recovery owner policy and
 hosted disaster recovery remain TODOs. No monitoring/scheduler/release work included.
+
+### Reviewed source and actual CI
+
+Performance source12a5bc6 was pushed and remote HEAD verified. Actual
+[CI run38997258805](https://github.com/nanu731/rps-bball-app/actions/runs/38997258805)
+passed the existing pinned, public-only no-deploy worker/relay/recovery and
+14-migration synthetic restore/concurrent-admission checks. Native34 and private
+performance measurements were local, not that Linux job. Independent final
+Standards0/Spec0 actionable findings. Canonical PerformanceAcceptance1.0(1)
+source matches12a5bc6; original UIAcceptance remains6713efe. Protected3working/
+index entries and174original JSON hashes remain unchanged. No hosted activation
+or release acceptance is implied.

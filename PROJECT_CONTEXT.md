@@ -971,3 +971,5 @@ remain unchanged. UI6713efe not replaced. No provider/production activation or
 upload; strict$0. Prior Auth reuse observations, source-only migration14, recovery
 policy, hosted/device/UI/VoiceOver gates remain open. Monitoring/export scheduling
 are separate work. Actual reviewed push/CI receipt follows in TESTING.md.
+
+Reviewed performance source12a5bc6 was pushed and remote HEAD verified; actual CI38997258805 passed. Native34/private benchmarks remain separate. Standards0/Spec0; three protected working/index entries and174original JSON files are preserved. Installed canonical PerformanceAcceptance1.0(1) uses source12a5bc6; original UI6713efe is unchanged.
