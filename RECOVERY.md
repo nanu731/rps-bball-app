@@ -175,3 +175,10 @@ source bytes intact. This is synthetic local recovery evidence, not hosted DR.
 Existing four-store user backup does not yet include shot captures: preserve their
 files separately until a reviewed export/restore workflow exists. Do not imply the
 selected encrypted Google10GB budget configures a destination or retention policy.
+
+A local shot save failure offers explicit preservation of the pending document in
+a separate atomic recovery file before reopening the newer saved capture. The copy
+is not merged automatically and can be exported deliberately to a private location.
+An oversized successor is rejected before becoming pending, because the ordinary
+copy mechanism cannot preserve an over-limit document. Tests retain original bytes
+and event IDs in both the reopened capture and isolated recovery copy.

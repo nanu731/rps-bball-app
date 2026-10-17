@@ -17,6 +17,11 @@ struct TeamStatsGuide: View {
                 Text("Local games use the labeled temporary roster. A local save does not publish data or upload it to a team.")
                 Text("Blank means not entered; 0 is an explicit observation. Individual and roster-table box-score modes edit the same values.")
             }
+            Section("Optional shot recorder") {
+                Text("Open Shot recorder from a game's details. Choose the next team, our player and attacking basket, then tap the schematic court and choose2PT/3PT Make or Miss. Selections do not reattribute a pending observation.")
+                Text("Free throws are entered separately, with one answer per attempt. Unanswered means pending. Undo and corrections retain history. These captures do not replace or add to after-game official statistics.")
+                Text("A saved-on-device receipt is local only. If saving fails, retry the same change or preserve a separate recovery copy before reopening. Original records are not uploaded automatically.")
+            }
             Section("Manual-statistics pilot") {
                 Text("Shared manual statistics are the first pilot scope. Automatic Sheets and hosted media delivery are not enabled. Saving a draft is separate from completion, review and publication.")
             }

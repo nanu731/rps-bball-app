@@ -1113,3 +1113,11 @@ the reviewed local/shared boundaries. Current file limits (10MiB,20,000 changes,
 1,000 players, signed32-bit attempt count) are technical limits, not basketball
 frequency rules; exceeding them fails explicitly without truncation. No new
 migration/provider activation or official-stat overwrite is authorized.
+
+Local game details expose optional Shot recorder, using the same temporary IDs in
+an explicitly labeled roster snapshot. Native UI adapts court/results horizontally
+or vertically, keeps FT separate and preserves pending answers. Failed writes offer
+same-change Retry or preservation of a separate recovery copy before reopening;
+explicit export of that copy is user-directed and contains capture data. Existing
+local backup still excludes shot journals. Source/actual native checks do not grant
+shared authority or establish full-game coverage.

@@ -369,6 +369,9 @@ private struct GameDetailsView: View {
                 Text("Game details").font(.title2.bold()).accessibilityAddTraits(.isHeader)
                 Button("View box score") { showingBoxScore = true }
                     .buttonStyle(.borderedProminent).tint(TeamStatsStyle.filledAccent).frame(minHeight: 44)
+                NavigationLink { LocalShotCaptureView(game: game) } label: {
+                    TeamTaskLabel(title: "Shot recorder", detail: "Optional in-game capture · separate local draft", symbol: "basketball")
+                }.accessibilityIdentifier("Shot recorder")
                 task("Single-player entry", "One player's box score at a time", "person") { entryMode = .player }
                 task("Whole-roster table entry", "The same draft, with native table scrolling", "tablecells") { entryMode = .table }
                 task("Player paint-touch drafts", "Independently recorded game totals", "person.crop.rectangle") { showingPlayerPaintTouches = true }

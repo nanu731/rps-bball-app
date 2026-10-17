@@ -337,4 +337,52 @@ import XCTest
         XCTAssertEqual(recorder.savedRevision, 1)
     }
 
+    func testStalePendingChangeCanBePreservedBeforeReopeningNewerCapture() async throws {
+        let document = try ShotCaptureDocument.local(gameID: UUID(), players: [])
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("TEST-shot-recovery-\(UUID())")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        let url = folder.appendingPathComponent("capture.json"), copy = folder.appendingPathComponent("recovery.json")
+        try ShotCaptureStorage.create(document, at: url)
+        let first = try ShotCaptureRecorder(document: document, url: url)
+        let stale = try ShotCaptureRecorder(document: document, url: url)
+        await first.change { _ = try $0.startFreeThrows(team: .opponent, playerID: nil, attempts: 1) }
+        await stale.change { _ = try $0.startFreeThrows(team: .opponent, playerID: nil, attempts: 2) }
+        let pending = try XCTUnwrap(stale.visibleDocument)
+        XCTAssertTrue(stale.needsSave)
+        await stale.reopenPreservingPending(at: copy)
+        XCTAssertFalse(stale.needsSave); XCTAssertTrue(stale.canChange)
+        XCTAssertEqual(stale.visibleDocument, first.visibleDocument)
+        XCTAssertEqual(try ShotCaptureStorage.load(from: copy, context: document.context), pending)
+        XCTAssertEqual(try ShotCaptureStorage.load(from: url, context: document.context), first.visibleDocument)
+        XCTAssertEqual(stale.recoveryURL, copy)
+    }
+
+    func testByteLimitRejectionDoesNotInstallAnUnrecoverablePendingChange() async throws {
+        var document = try ShotCaptureDocument.local(gameID: UUID(), players: [])
+        let id = try document.startFreeThrows(team: .opponent, playerID: nil, attempts: 10_000)
+        var event = try XCTUnwrap(document.events().first)
+        event.answers = (1...10_000).map { ShotFreeThrowAnswer(index: $0, outcome: .made) }
+        try document.correct(event)
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        var rejected: ShotCaptureEvent
+        while true {
+            var next = document
+            event.answers[0].outcome = event.answers[0].outcome == .made ? .missed : .made
+            try next.correct(event)
+            if try encoder.encode(next).count > ShotCaptureStorage.maximumBytes { rejected = event; break }
+            document = next
+        }
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("TEST-shot-byte-limit-\(UUID())")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        let url = folder.appendingPathComponent("capture.json")
+        try ShotCaptureStorage.create(document, at: url)
+        let original = try Data(contentsOf: url)
+        let recorder = try ShotCaptureRecorder(document: document, url: url)
+        await recorder.change { try $0.correct(rejected) }
+        XCTAssertFalse(recorder.needsSave); XCTAssertTrue(recorder.canChange)
+        XCTAssertNotNil(recorder.issue); XCTAssertTrue(recorder.visibleDocument == document)
+        XCTAssertTrue(try Data(contentsOf: url) == original)
+        XCTAssertEqual(try recorder.visibleDocument?.events().first?.id, id)
+    }
+
 }

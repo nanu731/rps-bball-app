@@ -51,3 +51,15 @@ The contact route and10GB encrypted-backup budget do not establish privacy/reten
 operational handling, a real encrypted destination or provider capacity. The shot
 recorder remains a separate implementation/acceptance queue. The target for remaining agreed features
 is2026-11-17; unresolved hosted/device/privacy/distribution gates prevent a promise.
+
+## Shot recorder: local slice evidence
+
+The local journal and native game-detail recorder are implemented separately from
+legacy statistics.15shot/8backup tests pass; actual isolated iPad default and
+maximum-text journeys cover2/3results, both teams, FT1/2, pending/Undo, count
+correction, typed FT start/count correction and cold relaunch. Review-driven recovery
+copies preserve stale pending work; encoded-size rejection occurs before pending
+installation. Native screenshots are private. Coordinate math is tested; actual
+landscape/VoiceOver/physical/iOS26.0 remain open. Shared designation/submission,
+review and charts/reconciliation are still the next eligible implementation units.
+No original records or existing-server migrations are changed.

@@ -263,12 +263,15 @@ nonisolated enum ShotCaptureStorage {
         try document.validateSuccessor(of: current)
         try write(document, to: url)
     }
-    private static func write(_ document: ShotCaptureDocument, to url: URL) throws {
+    static func encoded(_ document: ShotCaptureDocument) throws -> Data {
         try document.validate()
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601; encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(document)
         guard data.count <= maximumBytes else { throw ShotCaptureIssue.limit }
-        try data.write(to: url, options: [.atomic, .completeFileProtection])
+        return data
+    }
+    private static func write(_ document: ShotCaptureDocument, to url: URL) throws {
+        try encoded(document).write(to: url, options: [.atomic, .completeFileProtection])
     }
 }
 

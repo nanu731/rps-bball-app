@@ -2068,3 +2068,15 @@ compound-edit trapping before UI integration. Standards/Spec reviews run separat
 rendered capture, actual local signed authority, reconciliation and hosted gates
 remain separate. Existing four-store backup explicitly excludes new shot files;
 no existing schema or temporary identity is migrated.
+
+### Shot ticket03: native courtside entry
+
+Local game details now open the separate shot recorder. Native adaptive court and
+result controls preserve team/player/orientation, explicit2/3, mixed per-attempt FT,
+pending answers, corrections and Undo. Accessible alternative schematic locations
+avoid requiring precise taps. All historical observations remain reachable via
+incremental history disclosure; no FT court dots or inferred values. Review-driven
+recovery preserves a distinct pending copy rather than overwriting a competing
+save. TESTING distinguishes actual iPad/max-text/relaunch evidence from coordinate
+math and open hosted/rotation/screen-reader gates. Shared commands/charts follow
+as separate authorized tickets; no provider activation.

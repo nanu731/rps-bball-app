@@ -1207,3 +1207,46 @@ stores. Whole-second provenance timestamps survive ISO8601 round trips; journal
 revision establishes edit order, never game time. Court flip/normalization tests
 establish coordinate math only, not actual device rotation. Rendered courtside,
 shared authority, charts and hosted acceptance are separate pending gates.
+
+### Native courtside local capture
+
+The isolated ShotAcceptance iPad26.4 app passed actual court/result/FT/Undo actions.
+Saved-file inspection confirmed a made three-pointer and FT1 made/FT2 pending
+following Undo. Independent review identified ambiguous flipped-basket labels,
+location-correction targeting after Undo, missing FT count correction and stale-save
+recovery. Targeted repairs retain canonical/displayed basket labels, bind movement
+to one event, validate count corrections without dropping answers, and preserve a
+separate recovery copy before reopening newer disk data.
+
+A rendered regression reproduced FT1 becoming unreachable after reducing an
+11-attempt series on page2 to2; resetting pagination fixed it. Two subsequent iPad
+interaction tests passed, including invalid-count feedback. The stronger maximum
+accessibility-text flow passed our3PTMake/opponent2PTMiss, mixed FT, Undo and cold
+relaunch. Its first attempt had the test pan away from a button above the viewport;
+the corrected direction passed without a product repair. Private screenshots were
+inspected; accessibility-tree evidence is not actual VoiceOver. Source preflight
+and final-device receipts are recorded below when complete. Actual landscape,
+physical devices, iOS26.0 and hosted shot authority remain separate unverified gates.
+
+Storage-limit review subsequently reproduced an unsaveable pending candidate at
+the10MiB boundary. The same encoder now preflights eligibility off the UI actor
+before pending installation, freezing concurrent edits during validation. The
+rejection leaves durable data/navigation/editing available. Final local foundation
+run passed15shot tests plus8legacy-backup tests (23total); the boundary fixture
+accounted for approximately11seconds of that synthetic suite. This is not a normal
+entry latency measurement. Standards0 remaining; Spec findings repaired and
+re-reviewed. Actual no-deploy CI39065829407 passed foundation2374ac2 separately.
+
+Final-source iPad maximum-text capture/relaunch rerun passed79seconds after
+preflight and visible-label changes. Both teams, frozen pending attribution,
+3PTMake/2PTMiss, FTMake/Miss→UndoPending and reopened values were asserted through
+actual native interactions. This does not accept iPhone charts or shared submission.
+Protected3Xcode working/index entries and174original simulator JSON files remain
+unchanged. Installed test identity: com.narayanlekhi.TeamStats.ShotAcceptance,
+TeamStats UI TEST1.0(1); its build uses this local recorder source slice.
+
+Final Standards review also found preflight errors could remain behind the FT setup
+sheet. The sheet now displays the same wrapping error/progress inline and retains
+the attempt text. This source fix is built; the rare byte-limit error was exercised
+at the recorder seam, not claimed as a rendered near-capacity-sheet test. Final
+Standards0/Spec0 remaining source findings are separate from the open UI gates.
