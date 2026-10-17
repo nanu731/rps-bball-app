@@ -20,7 +20,7 @@ def verify(pg, output):
         raise ValueError('Synthetic team required')
     target='teamstats_export_'+uuid.uuid4().hex
     pg.run('createdb',['--template',source,target])
-    def sql(text): return pg.sql(target,text)
+    def sql(text): return pg.sql(target,"set time zone 'America/New_York';"+text)
     def rpc(name,args=''):
         raw=sql('begin; set local role service_role; select public.'+name+'('+args+'); commit;')
         return json.loads(raw) if raw and raw != 'null' else None
@@ -31,7 +31,7 @@ def verify(pg, output):
     pg.sql(upgrade,(root/'supabase/tests/recovery_platform.sql').read_text())
     migration=root/'supabase/migrations/202610170001_export_scheduling.sql'
     for path in sorted((root/'supabase/migrations').glob('*.sql')):
-        if path!=migration:pg.sql(upgrade,path.read_text())
+        if path.name < migration.name:pg.sql(upgrade,path.read_text())
     pg.sql(upgrade,(root/'supabase/tests/recovery_records.sql').read_text())
     pg.sql(upgrade,"begin;set local role service_role;select public.stats_export_configure('f3000000-0000-4000-8000-000000000001','SYNTHETIC_UPGRADE',0,100,1000,1000);select public.stats_export_reserve('f8000000-0000-4000-8000-000000000001');select public.stats_export_fail('f8000000-0000-4000-8000-000000000001','destination_conflict');commit;")
     old_rows=json.loads(pg.sql(upgrade,'select jsonb_agg(to_jsonb(d)) from public.stat_export_deliveries d'))
@@ -118,6 +118,10 @@ def verify(pg, output):
     advance(8*86400);assert rpc('stats_export_claim') is None
     assert all(x['queue_state']=='manual_review' for x in status())
     call('stats_export_resume',p_job_id=claim['job_id'])
+    # Fixed elapsed-time example crosses the2026 DST fallback. Civil '7 days'
+    # in this session is169hours; the documented retry cap is168elapsed hours.
+    now[0]=dt.datetime(2026,10,26,6,tzinfo=dt.timezone.utc);advance(0)
+    sql("update public.stat_export_deliveries set cycle_started_at=team_private.export_now(),next_attempt_at=team_private.export_now() where job_id="+quote(claim['job_id']))
     advance(7*86400-1);boundary=rpc('stats_export_claim');assert boundary is not None
     advance(2);refused('stats_export_claimed_reserve',args(boundary))
     assert rpc('stats_export_claim') is None

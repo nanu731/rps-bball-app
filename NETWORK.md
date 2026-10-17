@@ -140,3 +140,17 @@ uncertainty. Immutable account uniqueness is a server duplicate-safe contract, n
 a universal exactly-once claim. Missing RPC is explicitly unavailable. Current
 client-generation/account context fences late receipts; no local receipt cache or
 authority is created. Source-only migration16 remains an activation prerequisite.
+
+
+## Export credential boundary2026-10-17
+
+Worker-mode PostgREST requests use a distinct publishable apikey and trusted
+short-lived bearer. Configuration is explicit; no missing/denied narrow credential
+falls back to service_role. Confirmed backend401/403/42501 stops the invocation
+without a subsequent failure RPC. Uncertain applied provider writes retain their
+reservation and recover through fenced claim expiry/backoff plus authorized
+readback. Provider401/403 can be recorded through a still-authorized backend, then
+halt the batch. Local synthetic SQL/HTTP evidence is separate from signed hosted
+JWT mapping, refresh/renewal, signing-key rotation and real Google authorization.
+The existing immediate Auth-reuse lockout failure and extra-grace rejection pass
+are unchanged. No existing provider/service/transport or automatic retry activation.

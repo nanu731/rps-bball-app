@@ -33,7 +33,7 @@ begin
  delay:=greatest(delay,coalesce(p_retry_after,0));
  terminal:=p_code not in ('provider_timeout','provider_transport','provider_response','provider_http_408','provider_http_429',
    'provider_http_500','provider_http_502','provider_http_503','provider_http_504','backend_transport','claim_expired','run_deadline','request_limit')
-   or d.retry_attempts>=5 or t+make_interval(secs=>delay)>d.cycle_started_at+interval '7 days'
+   or d.retry_attempts>=5 or t+make_interval(secs=>delay)>d.cycle_started_at+interval '168 hours'
    or coalesce(p_retry_after>86400,false);
  update public.stat_export_deliveries set state='failed',error_code=p_code,last_failure_code=p_code,
    queue_state=case when terminal then 'manual_review' else 'ready' end,
@@ -60,17 +60,17 @@ begin
  if team_private.export_provider_paused() then return null; end if;
  -- Bound stale cycles too; no unbounded scan/update before selecting work.
  for d in select * from public.stat_export_deliveries where queue_state='ready' and state<>'delivered'
-   and (cycle_started_at+interval '7 days'<=t or retry_attempts>=5 or claim_total=9223372036854775807)
+   and (cycle_started_at+interval '168 hours'<=t or retry_attempts>=5 or claim_total=9223372036854775807)
    order by next_attempt_at,job_id for update skip locked limit 3 loop
    perform team_private.export_retry(d.job_id,'retry_exhausted');
  end loop;
  select * into d from public.stat_export_deliveries where queue_state='ready' and state<>'delivered'
    and next_attempt_at<=t and retry_attempts<5 and claim_total<9223372036854775807
-   and cycle_started_at+interval '7 days'>t order by next_attempt_at,job_id for update skip locked limit 1;
+   and cycle_started_at+interval '168 hours'>t order by next_attempt_at,job_id for update skip locked limit 1;
  if not found then return null; end if;
  token:=gen_random_uuid();
  update public.stat_export_deliveries set queue_state='claimed',next_attempt_at=null,claim_token=token,
-   claim_until=least(t+interval '5 minutes',d.cycle_started_at+interval '7 days'),retry_attempts=retry_attempts+1,claim_total=claim_total+1,updated_at=t where job_id=d.job_id;
+   claim_until=least(t+interval '5 minutes',d.cycle_started_at+interval '168 hours'),retry_attempts=retry_attempts+1,claim_total=claim_total+1,updated_at=t where job_id=d.job_id;
  return jsonb_build_object('job_id',d.job_id,'claim_token',token);
 end $$;
 create function team_private.export_assert_claim(p_job_id uuid,p_claim_token uuid) returns void
@@ -135,7 +135,7 @@ begin
  return (select coalesce(jsonb_agg(jsonb_build_object('job_id',q.job_id)),'[]') from
    (select job_id from public.stat_export_deliveries where state<>'delivered' and queue_state='ready'
     and next_attempt_at<=team_private.export_now() and retry_attempts<5
-    and cycle_started_at+interval '7 days'>team_private.export_now() order by next_attempt_at,job_id limit p_limit) q);
+    and cycle_started_at+interval '168 hours'>team_private.export_now() order by next_attempt_at,job_id limit p_limit) q);
 end $$;
 -- Extend the explicit owner-only projection; never expose tokens or destination bindings.
 create or replace function public.stats_export_status(p_team_id uuid) returns jsonb

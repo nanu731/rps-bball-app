@@ -331,14 +331,18 @@ def snapshot_grid(job):
         raise ExportError('payload_identity_mismatch') from None
 
 class Backend:
-    """Real PostgREST transport. Broad service authority stays in trusted runtime."""
-    def __init__(self, endpoint, service_token, timeout=15):
+    """PostgREST execution transport; credential acquisition belongs to trusted runtime."""
+    def __init__(self, endpoint, service_token, timeout=15, *, api_key=None):
         url = urllib.parse.urlparse(endpoint)
         if not ((url.scheme == 'https' and url.hostname and url.hostname.endswith('.supabase.co')) or
                 (url.scheme == 'http' and url.hostname in ('127.0.0.1', 'localhost', '::1'))):
             raise ExportError('configuration_invalid')
         if url.username or url.password or url.query or url.fragment or not 0 < timeout <= 30:
             raise ExportError('configuration_invalid')
+        if not isinstance(service_token,str) or not service_token or (api_key is not None and
+                (not isinstance(api_key,str) or not api_key)):
+            raise ExportError('configuration_invalid')
+        self.api_key = service_token if api_key is None else api_key  # Legacy constructor compatibility only.
         self.budget = None
         self.endpoint, self.token, self.timeout = endpoint.rstrip('/'), service_token, timeout
         self.opener = urllib.request.build_opener(_NoRedirect(), DeadlineHTTPHandler(), DeadlineHTTPSHandler())
@@ -349,7 +353,7 @@ class Backend:
             raise ExportError('configuration_invalid')
         req = urllib.request.Request(self.endpoint + '/rpc/' + name, method='POST',
             data=json.dumps(arguments).encode(), headers={'Content-Type': 'application/json',
-            'apikey': self.token, 'Authorization': 'Bearer ' + self.token})
+            'apikey': self.api_key, 'Authorization': 'Bearer ' + self.token})
         try:
             with self.opener.open(req, timeout=self.budget.remaining(self.timeout) if self.budget else self.timeout) as response:
                 data = response.read(5_000_001)
@@ -358,8 +362,9 @@ class Backend:
             return json.loads(data)
         except urllib.error.HTTPError as error:
             try:
+                if error.code in (401,403): raise ExportError('backend_denied')
                 code=json.loads(error.read(8192)).get('code')
-                mapped={'55000':'destination_unavailable','54000':'destination_capacity','PT409':'claim_lost','42501':'configuration_invalid'}
+                mapped={'55000':'destination_unavailable','54000':'destination_capacity','PT409':'claim_lost','42501':'backend_denied'}
                 reason=mapped.get(code,'configuration_invalid' if error.code in (401,403) else 'backend_transport')
             except (ValueError,AttributeError): reason='backend_transport'
             finally: error.close()
@@ -375,7 +380,7 @@ def run_once(backend, google, max_jobs=3, *, seconds=120, clock=time.monotonic):
         cancelled = isinstance(error, (KeyboardInterrupt, SystemExit))
         invalid = isinstance(error, ExportError) and str(error) in ('configuration_invalid','budget_disabled')
         DIAGNOSTICS.record(Category.EXPORT, Outcome.FAILED if invalid else Outcome.UNCONFIRMED,
-                           Failure.DISABLED if str(error)=='budget_disabled' else Failure.INVALID if invalid else Failure.CANCELLED if cancelled else Failure.UNAVAILABLE,
+                           Failure.DISABLED if str(error)=='budget_disabled' else Failure.DENIED if str(error)=='backend_denied' else Failure.INVALID if invalid else Failure.CANCELLED if cancelled else Failure.UNAVAILABLE,
                            seconds=time.monotonic()-started)
         raise
     failures = [x for x in outcomes if x['state'] != 'delivered']
@@ -410,7 +415,7 @@ def _run_once(backend, google, max_jobs, budget):
             backend.rpc('stats_export_acknowledge',dict(arguments,p_receipt=receipt))
             outcomes.append({'job_id':job_id,'state':'delivered'})
         except ExportError as error:
-            if str(error)=='claim_lost': raise  # A stale worker cannot update a successor.
+            if str(error) in ('claim_lost','backend_denied'): raise  # A stale worker cannot update a successor.
             safe={'budget_disabled','configuration_invalid','request_limit','payload_too_large',
                 'payload_hash_mismatch','payload_identity_mismatch','destination_conflict','destination_capacity',
                 'destination_unavailable','provider_response','provider_timeout','provider_transport',
@@ -433,6 +438,18 @@ def scheduler_once(config, backend, google, **bounds):
     if config.get('scheduler_enabled') is not True: return {'state':'disabled'}
     return {'state':'processed','outcomes':run_once(backend,google,**bounds)}
 
+def backend_from_config(config, environment):
+    """Explicit credential selection; a missing worker credential never falls back."""
+    mode=config.get('backend_credential_mode')
+    if mode=='worker':
+        bearer=environment.get('TEAMSTATS_EXPORT_WORKER_TOKEN','')
+        key=environment.get('TEAMSTATS_SUPABASE_PUBLISHABLE_KEY','')
+    elif mode=='legacy_service_role':
+        bearer=key=environment.get('TEAMSTATS_EXPORT_SERVICE_TOKEN','')
+    else: raise ExportError('configuration_invalid')
+    return Backend(config.get('backend_rest_url',''),bearer,api_key=key)
+
+
 def main():
     parser = SafeArgumentParser(description=__doc__)
     parser.add_argument('--config', help='private trusted runtime JSON configuration')
@@ -451,7 +468,10 @@ def main():
             try: google._guard(); permitted = True
             except ExportError: pass
             enabled = config.get('google_enabled') is True
-            configured = permitted and bool(config.get('backend_rest_url')) and bool(os.environ.get('TEAMSTATS_EXPORT_SERVICE_TOKEN'))
+            configured = False
+            if permitted:
+                try: backend_from_config(config,os.environ); configured = True
+                except ExportError: pass
             print(json.dumps(DIAGNOSTICS.availability(enabled=enabled, configured=configured)))
             return 3
         with open(args.config, encoding='utf-8') as handle:
@@ -460,7 +480,7 @@ def main():
         if args.scheduled_once and config.get('scheduler_enabled') is not True:
             print(json.dumps({'state':'disabled'})); return 3
         # Credentials are supplied by trusted environment injection, not JSON or CLI.
-        backend = Backend(config['backend_rest_url'], os.environ['TEAMSTATS_EXPORT_SERVICE_TOKEN'])
+        backend = backend_from_config(config,os.environ)
         google = GoogleSheets(GoogleConfig(token=os.environ.get('TEAMSTATS_GOOGLE_ACCESS_TOKEN', ''),
             enabled=config.get('google_enabled', False),
             billing_disabled_verified_at=config.get('billing_disabled_verified_at', '')))

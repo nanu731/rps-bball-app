@@ -1052,3 +1052,13 @@ explicit confirmation and immutable self receipt. No account deletion, processin
 promise, hosted activation or migration of existing records. See TESTING.md for
 197 native checks and actual isolated SQL recovery/concurrency/revocation evidence.
 READINESS.md remains the consolidated external-policy/device/provider release list.
+
+Export-only execution preparation: migration17 restricts the new worker role to4
+RPCs and requires bounded claims; explicit API-key/bearer configuration never falls
+back. Confirmed backend denial stops commands; renewed-authority readback preserves
+uncertain writes. Fresh17-migration synthetic restore/ACL/concurrency/recovery and
+existing queue/account/file checks passed. Review-exposed column-grant and recovery
+cluster-isolation gaps were repaired. A reproduced DST expiry gap uses168elapsed
+hours in the still-unactivated migration15. Actual request-intake CI39008209659
+passed. No migrations14–17, hosted role/issuer, provider, scheduler or delivery
+activation. READINESS.md distinguishes local preparation from external acceptance.

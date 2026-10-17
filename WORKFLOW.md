@@ -1983,3 +1983,14 @@ No existing/hosted migration, deletion executor, provider or schedule activation
 Rendered request-flow evidence and remaining device limitations are in TESTING.md.
 Private resumable queue continues to the documented export-only worker boundary;
 remaining owner policies and hosted issuer/renewal configuration remain gates.
+
+Request-only intaked253216 pushed and remote verified; actual CI39008209659 passed.
+The remaining actionable export-authority unit prepares migration17 in fresh
+synthetic clusters only. Narrow4-command role, explicit separate credentials and
+no fallback; confirmed backend denial stops subsequent commands. Proven uncertain
+write recovered through lease/backoff/readback with1 provider batch. Review findings
+on PUBLIC column grants and cluster-wide recovery mutations fixed and regressed.
+DST-crossing retry cap corrected to168elapsed hours in unactivated source15.
+Final local configured portable/relay and actual17-migration restore/queue/account/
+file regressions passed. Hosted credentials/mapping/renewal, providers, recovery,
+owner policies and deferred device/VoiceOver checks remain gates; no activation.

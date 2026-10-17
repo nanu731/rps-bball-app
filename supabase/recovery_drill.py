@@ -138,15 +138,28 @@ def database_drill(pg: IsolatedPostgres, root: Path, initialize_roles: bool) -> 
     client = pg.run("pg_dump", ["--version"]).decode().strip()
     if not 170000 <= version < 180000 or " 17." not in client:
         raise ValueError("This drill requires PostgreSQL 17 server and dump tools")
+    # Source migrations can create cluster-wide roles. New databases are insufficient.
+    # Refuse any nonfresh inventory before creating roles, memberships or databases.
+    inventory=json.loads(pg.sql("postgres", """select jsonb_build_object(
+      'databases',(select jsonb_agg(datname order by datname) from pg_database),
+      'roles',(select jsonb_agg(rolname order by rolname) from pg_roles where rolname !~ '^pg_'),
+      'memberships',(select count(*) from pg_auth_members m join pg_roles r on r.oid=m.member where r.rolname !~ '^pg_'),
+      'objects',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname !~ '^pg_' and n.nspname<>'information_schema')
+       +(select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname !~ '^pg_' and n.nspname<>'information_schema'))"""))
+    expected_roles={'postgres'} if initialize_roles else {'postgres','anon','authenticated','authenticator','service_role'}
+    if (set(inventory.get('databases',[])) != {'postgres','template0','template1'}
+            or set(inventory.get('roles',[])) != expected_roles
+            or inventory.get('objects') != 0 or inventory.get('memberships') != 0):
+        raise ValueError("Recovery migrations require a fresh synthetic cluster; no authority or data was changed")
     # This optional role creation is ONLY for the brand-new disposable CI cluster.
-    roles = pg.sql("postgres", "select rolname from pg_roles where rolname in ('anon','authenticated','service_role') order by 1")
+    roles = pg.sql("postgres", "select rolname from pg_roles where rolname in ('anon','authenticated','authenticator','service_role') order by 1")
     if initialize_roles:
         if not pg.container:
             raise ValueError("Role initialization is restricted to the disposable CI container")
         if roles:
             raise ValueError("Role initialization requires a fresh disposable test cluster")
-        pg.sql("postgres", "create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;")
-    elif roles.splitlines() != ["anon", "authenticated", "service_role"]:
+        pg.sql("postgres", "create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls; create role authenticator nologin noinherit;")
+    elif roles.splitlines() != ["anon", "authenticated", "authenticator", "service_role"]:
         raise ValueError("Expected existing isolated test roles; no roles were changed")
     suffix = uuid.uuid4().hex
     source, restored = "teamstats_recovery_source_" + suffix, "teamstats_recovery_restored_" + suffix

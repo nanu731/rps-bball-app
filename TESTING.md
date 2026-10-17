@@ -1110,3 +1110,56 @@ failed assertion and corrected test's failure are retained separately. No app re
 from this test failure. Mac lock blocked desktop controls; supported native tests
 continued. Actual VoiceOver, landscape/manual pan/transitions, physical devices and
 actual26.0 remain separate open gates.
+
+## Export-only authority and recovery isolation2026-10-17
+
+Source-only migration17 and explicit worker credential mode prepare the existing
+four-command export boundary. Native source remains d253216. Separate API-key/
+bearer transport first failed, then passed; backend denial after an applied write
+first continued another RPC, then passed with immediate stop and renewed-authority
+readback without a second provider batch. Explicit configuration, no broad-token
+fallback, unexpected401/403 bodies and separate Google401/403 handling passed5
+synthetic HTTP tests. Actual sanitized diagnostics showed only export category,
+unconfirmed/denied or succeeded outcomes, duration and attempt count.
+
+Actual fresh isolated PostgreSQL17.11 creation and17-migration archive/restore
+matched rows, policies and security properties. A new clone verified exactly4
+application RPCs, denied configure/resume/legacy/other app commands and direct
+SELECT/INSERT/UPDATE/DELETE, absent schema CREATE/inherited authority, authenticator
+SET without privilege inheritance, ordinary-user role denial, bounded malformed/
+expired claim denial, concurrent1of8 claim and legacy service compatibility.
+An expired acknowledgement after a loopback provider applied its write remained
+uncertain; lease/backoff and renewed authority recovered the same reservation via
+readback with1 batch total. Stale claims and exact role-name collision were denied.
+SQL claim fixtures do not verify signed JWT ingress, hosted mapping or Google.
+
+Independent Standards review found two gaps, both corrected: column-only PUBLIC
+grants could bypass the guard; the pre-review synthetic candidate accepted them,
+while the final migration refused atomically without retaining a role/membership.
+The repeatable regression uses a unique synthetic role name and transaction
+rollback, with a clean control before injected column access. Recovery migrations
+can now alter cluster-wide roles, so the tool refuses nonfresh database/role/object/
+membership inventories before mutation. Six recovery tests and an actual occupied
+synthetic-cluster refusal verified preservation. Prior synthetic clusters/bytes
+were retained; existing application services/grants were never changed.
+
+A local queue regression exposed a DST boundary: civil7days in New York could be
+169elapsed hours. The still-unactivated source migration15 now uses168hours. A
+fixed DST-fallback fixture passed the expiry fence. Final actual queue/worker,
+account-request/revocation and file admission regressions passed; admission30of40,
+concurrent queue1of8, retry/restart/late-worker/manual-review/readback included.
+Existing source snapshots stayed unchanged. No existing/hosted migration activated.
+
+Final local no-deploy commands passed export21, scheduler7, credential5, gateway28
+(1 opt-in skip), deadline1, diagnostics7, recovery6 and relay10. An earlier overly
+broad test discovery included an unconfigured native-media-validator suite and
+failed21 cases because its binary environment was absent; this was not a product
+failure or a passed media check. The intended configured CI commands above passed.
+Actual remote CI for request-intaked253216 passed
+[39008209659](https://github.com/nanu731/rps-bball-app/actions/runs/39008209659).
+Final scoped worker source review and remote CI receipts follow separately.
+
+Migrations14–17, scheduler activation and real Google delivery remain disabled on
+existing/hosted systems. Signing/issuer/renewal/revocation, patched media deployment,
+hosted recovery, owner policy/content, actual VoiceOver/landscape/manual traversal,
+physical devices and actual26.0 remain separate gates in READINESS.md.

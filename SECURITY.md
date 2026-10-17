@@ -228,3 +228,18 @@ account, valid receipt UUID/time and current client/session context. Cancellatio
 lost response does not imply rollback: explicit readback recovers the receipt, and
 no write automatically retries. This is request intake preparation, not deletion
 execution, retention policy, provider activation or legal compliance.
+
+
+## Prepared export execution identity2026-10-17
+
+Migration17 is source/local only. A dedicated no-login/no-inheritance/no-RLS-bypass
+role has only four application execution RPCs. Destination configuration, manual
+resume, other app functions and direct tables/columns remain denied, including
+unexpected effective PUBLIC privileges. Role-name collision aborts; it never adopts
+an unknown role. Existing broad service-role administration is not revoked.
+Separate API key/bearer values and explicit modes prevent narrow-token fallback.
+SQL bounds role/audience/issue/expiry claims; trusted gateway signature/issuer,
+restricted issuance, renewal/revocation and custody are external activation gates.
+The role can process all approved project export jobs and attest receipts; it is
+not per-team isolation or protection against a malicious trusted worker. Signed
+hosted tests remain unperformed. No existing grants/migrations were activated.

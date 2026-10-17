@@ -46,6 +46,10 @@ class Fixture:
         self.backend_states = {}
         self.claimed = set()
         self.retry_after = None
+        self.backend_headers = []
+        self.backend_denial = None
+        self.backend_denial_status = 401
+        self.backend_denial_payload = {'code':'PGRST301','message':'SYNTHETIC private error'}
         fixture = self
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args):
@@ -62,6 +66,9 @@ class Fixture:
                 except (BrokenPipeError, ConnectionResetError):
                     pass
             def do_GET(self):
+                if fixture.mode in ('provider_401','provider_403'):
+                    self.respond(int(fixture.mode[-3:]), {'error':{'message':'SYNTHETIC provider denied'}})
+                    return
                 if fixture.mode == 'slow_read':
                     self.send_response(200); self.send_header('Content-Length','10'); self.end_headers()
                     try:
@@ -90,6 +97,10 @@ class Fixture:
                 body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
                 if '/rpc/' in self.path:
                     name = self.path.rsplit('/', 1)[1]
+                    fixture.backend_headers.append((name,self.headers.get('apikey'),self.headers.get('Authorization')))
+                    if fixture.backend_denial == name:
+                        self.respond(fixture.backend_denial_status, fixture.backend_denial_payload)
+                        return
                     if name == 'stats_export_claim':
                         pending=next((j for j in fixture.backend_jobs if j['job_id'] not in fixture.claimed),None)
                         if pending: fixture.claimed.add(pending['job_id'])

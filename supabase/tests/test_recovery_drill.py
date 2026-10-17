@@ -89,6 +89,27 @@ class ObjectRecoveryTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 recovery.IsolatedPostgres(Path("unused"), None, "--privileged")
 
+    def test_database_drill_refuses_nonfresh_cluster_before_any_mutation(self):
+        class ExistingCluster:
+            container=None
+            def __init__(self,inventory):self.inventory=inventory;self.mutations=[]
+            def sql(self,database,text):
+                if 'server_version_num' in text:return '170011'
+                if 'jsonb_build_object' in text:return __import__('json').dumps(self.inventory)
+                self.mutations.append(text);raise AssertionError('Mutation before fresh-cluster validation')
+            def run(self,tool,args):
+                if tool=='pg_dump' and args==['--version']:return b'pg_dump (PostgreSQL) 17.11'
+                self.mutations.append((tool,args));raise AssertionError('Unexpected mutation')
+        for extra in ('existing application database','original role membership','existing postgres tables'):
+            inventory=dict(databases=['postgres','template0','template1'],roles=['postgres','anon','authenticated','authenticator','service_role'],objects=0,memberships=0)
+            if extra=='existing application database':inventory['databases'].append('teamstats_existing')
+            elif extra=='original role membership':inventory['roles'].append('supabase_auth_admin')
+            else:inventory['objects']=1
+            cluster=ExistingCluster(inventory)
+            with self.subTest(extra=extra),self.assertRaisesRegex(ValueError,'fresh synthetic cluster'):
+                recovery.database_drill(cluster,Path('unused'),False)
+            self.assertEqual(cluster.mutations,[])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -108,14 +108,16 @@ are never logged. Quota/timeouts use the durable bounded policy below. No schedu
 The disabled one-shot scheduling entry reuses current credentials and persisted
 reservations; it does not register a recurring invocation.
 
-Private runtime JSON requires `backend_rest_url`; `google_enabled` defaults to
+Private runtime JSON requires `backend_rest_url` and explicit `backend_credential_mode`; `google_enabled` defaults to
 false. To explicitly enable Google, the operator must verify billing is absent or
 disabled, current API policy/quotas and the strict zero-charge condition, then
 supply `google_enabled: true` (literal Boolean only; other types are refused) and a timezone-aware
 `billing_disabled_verified_at` timestamp no more than 24 hours old. This is an
-operator attestation, not automatic proof of account billing state. Credentials
-are injected into `TEAMSTATS_EXPORT_SERVICE_TOKEN` and
-`TEAMSTATS_GOOGLE_ACCESS_TOKEN` by the trusted runtime; the worker does not obtain,
+operator attestation, not automatic proof of account billing state. In `worker` mode, inject `TEAMSTATS_SUPABASE_PUBLISHABLE_KEY` and a separate
+`TEAMSTATS_EXPORT_WORKER_TOKEN`. Explicit `legacy_service_role` mode retains the
+broad `TEAMSTATS_EXPORT_SERVICE_TOKEN` path for compatibility; it is not a narrow
+worker identity. A missing/rejected worker token never falls back to that token.
+`TEAMSTATS_GOOGLE_ACCESS_TOKEN` is injected separately by the trusted runtime; the worker does not obtain,
 refresh or log OAuth credentials. Expired tokens fail truthfully. The initial
 private Sheet exists separately, but is not configured/edited by this slice.
 No quota increase, billing account, paid plan, cloud runtime or Google write is
@@ -188,7 +190,7 @@ was not stored. Their original status, reason, reservation and attempts are pres
 | stats_export_record_failure | job/token/fixed code/numeric Retry-After; persists due time or manual review; cannot reverse confirmed delivery |
 | stats_export_resume | service-only explicit operator review (and explicit provider-pause resolution when required); only stopped jobs; starts a new bounded cycle on the same job, preserving binding, lifetime count, failure/review evidence |
 
-All worker commands are service-role only. Legacy unclaimed reserve/finish/fail
+Existing activation remains service-role only; source migration17 prepares the restricted worker role described below. Legacy unclaimed reserve/finish/fail
 execution is revoked, so old worker versions fail closed. Private timing functions
 are inaccessible to clients; deterministic tests replace them only in a newly
 created synthetic database. Existing table RLS/column grants remain unchanged.
@@ -265,3 +267,40 @@ bindings/receipts; resolve authorization, quota/capacity or destination conflict
 verify whether Google already applied the reservation; then a trusted operator may
 explicitly resume that same stopped job. Resume is not permission to overwrite an
 existing conflicting sheet, reset lifetime history or skip current budget checks.
+
+
+## Export-only identity preparation2026-10-17
+
+Source-only migration17 creates `teamstats_export_worker`, without login, role
+inheritance, RLS bypass or administration attributes. Its only application RPCs:
+claim, claimed reserve, acknowledge and record failure. No direct tables/columns,
+configure, resume, legacy execution or ordinary app access. Effective PUBLIC grants
+are audited; unexpected table/column/function/schema authority or a role-name
+collision aborts atomically. Existing service-role administration remains compatible.
+The role is project-wide approved-outbox authority, not per-team isolation; a trusted
+worker can attest a receipt. Preserve the existing destination/readback protocol.
+
+PostgREST's trusted authenticator can SET this role without inheriting/administering
+it. SQL requires matching role, authenticated audience, integer issue/expiry times,
+a lifetime at most900seconds and future issuance at most30seconds. These are
+technical defaults, not verified hosted issuance or signature/revocation controls.
+Actual issuer/audience/signature trust, role mapping, restricted signing authority,
+short-lived renewal/revocation and private credential custody require separate
+nonproduction verification before activation. No token signer or renewal service
+is implemented. Every invocation receives credentials from the trusted runtime.
+
+Confirmed backend401/403/42501 stops further commands, including attempts to record
+a failure with the rejected credential. A provider write may already have applied:
+leave its lease/reservation uncertain, then recover through existing expiry/backoff
+and fresh authorized claim/readback. Google401/403 is different: a still-authorized
+backend can record a fixed failure before stopping; trusted review controls resume.
+No mutation replay, fallback, automatic credential refresh or universal exactly-once
+claim. Retry windows use168elapsed hours so daylight-saving changes cannot extend
+the seven-day cap. The prepared migration15 is still unactivated on existing systems.
+
+Roles are cluster-wide. Recovery verification now requires a genuinely fresh,
+operator-confirmed isolated synthetic cluster: only template0/template1/postgres,
+expected synthetic roles, no non-system objects or role memberships. It refuses
+occupied clusters before mutation. SQL role fixtures are not signed JWT ingress,
+actual Google delivery or hosted permission evidence. Migrations14–17, provider
+activation, scheduler registration and real Google delivery remain disabled.

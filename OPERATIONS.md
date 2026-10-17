@@ -129,3 +129,19 @@ export status is distinct from private processing diagnostics and statistical
 acceptance. No raw provider delay/header/body is logged; only bounded timing or
 fixed categories enter diagnostics. [READINESS.md](READINESS.md) consolidates the
 remaining PRD/audit gates. Real Google delivery and scheduler activation stay off.
+
+
+## Export-only credential preparation2026-10-17
+
+Use explicit worker mode with separate publishable API key and bounded worker bearer
+for the prepared role; legacy service-role mode must be explicitly selected and
+retains broad authority. Credentials are injected privately for each invocation;
+no signer or automatic refresh service is installed. Passive status checks presence
+only, never authenticates or claims readiness. Confirmed backend denial is a fixed
+`denied` diagnostic with uncertain outcome, not delivery success. It stops further
+commands. Preserve the reservation; verify a fresh authorized invocation reconciles
+readback after existing lease/backoff. Provider denial is distinct and may require
+trusted manual review/resume. Never blindly resubmit a potentially applied write.
+Migrations14–17 and actual scheduling/delivery remain unactivated. Before activation,
+verify hosted mapping, signature/issuer/audience, least-privilege issuance/renewal/
+revocation, custody, Google destination rights and the current strict$0 arrangement.

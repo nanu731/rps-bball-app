@@ -59,9 +59,12 @@ service has been configured.
   metadata/relationships, missing/zero, historical unanswered turnover and refusal
   without publishing partial data or changing an occupied/symlink destination.
 - `supabase/recovery_drill.py` requires PostgreSQL17 tools, an explicitly confirmed
-  isolated loopback cluster, and a new private output folder. It creates two new
-  `teamstats_recovery_*` databases from `template0`; it never dumps, resets or drops
-  an existing database. A loopback hostname alone is not proof of isolation: the
+  isolated loopback cluster, and a new private output folder. Source migrations now include cluster-wide role preparation. It first refuses
+  any occupied cluster: only template0/template1/postgres, expected synthetic roles,
+  no non-system objects or role memberships are allowed. Operator confirmation of
+  a newly created synthetic cluster is still required; loopback alone is insufficient.
+  It then creates two new `teamstats_recovery_*` databases from `template0`; it never
+  dumps, resets or drops an existing database. A loopback hostname alone is not proof of isolation: the
   operator must verify the owned local service, not a tunnel to a real project.
 - The source gets all ordered source migrations and synthetic records (see the latest TESTING receipt). An actual custom
   `pg_dump` archive is restored using single-transaction, exit-on-error `pg_restore`
@@ -146,3 +149,12 @@ Migration16 adds their schema/permissions to the synthetic archive/restore proof
 Request integration checks durable receipt readback through new connections, not
 hosted disaster recovery or restored real Auth sessions. Actual deletion/receipt
 retention and handling remain unresolved; no backup cleanup or data reversal occurs.
+
+Worker-role preparation adds a cluster-wide recovery boundary. Database archives
+retain object ACL references, not global role definitions/credential issuance.
+Source role definitions and authenticator membership must be separately reviewed
+and provisioned in a genuinely isolated destination before relevant archive restore.
+The synthetic drill uses one fresh cluster for source/restored databases; it does
+not prove cross-host role recovery, hosted secrets/Auth recovery or operational
+revocation. Preserve trusted issuer/configuration references separately; never
+include bearer/signing secrets in a public backup or diagnostic export.
