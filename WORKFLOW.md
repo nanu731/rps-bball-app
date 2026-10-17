@@ -1961,3 +1961,11 @@ shutdown after worker21/scheduler7 passed. Deterministic isolated reproduction
 confirmed the abort; direct descriptor output fixes it without changing diagnostic
 bounds/privacy. Final local diagnostics7/worker28 pass; repaired CI pending.
 TESTING.md retains the failed receipt. No activation or unrelated scope added.
+
+Reviewed export preparationbacb567 + shutdown repair6b2d778 pushed/remote verified.
+Actual repaired CI39004381040 passed worker/scheduler/diagnostics,15-migration
+restore and new actual synthetic upgrade/concurrent queue/worker checks. Failed
+first receipt remains in TESTING.md. Final Standards0/Spec0;3protected working/index
+entries+174originalJSON unchanged. READINESS.md consolidates remaining gates.
+Scheduler activation/real Google delivery and existing-database migrations14/15
+stay disabled; no next scope or native/device acceptance begun.
