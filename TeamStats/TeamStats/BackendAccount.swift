@@ -95,7 +95,8 @@ final class BackendAccount {
     // Editing context survives a failed network check. It grants no authority;
     // commands still reverify Auth and server permissions before proceeding.
     private(set) var sessionContextID: UUID?
-    // Keychain-backed prior Auth confirmation permits only scoped device clip viewing.
+    // Keychain-backed prior Auth confirmation permits scoped retained-clip viewing and prepared shot-journal continuation.
+    // Shot continuation additionally requires its own protected preparation record.
     // It never restores authenticated state or supplies a remote command client.
     private(set) var offlineClipActorID: UUID?
     private(set) var isBusy = false

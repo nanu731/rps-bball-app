@@ -10,6 +10,7 @@ enum TeamCapability: String, Codable, CaseIterable, Identifiable, Sendable {
     case practiceUpload = "practice.upload", practiceReview = "practice.review", practicePublish = "practice.publish"
     case filmUpload = "film.upload", filmReview = "film.review", filmPublish = "film.publish"
     case scoutingUpload = "scouting.upload", scoutingRead = "scouting.read"
+    case shotsRecord = "shots.record", shotsReview = "shots.review", shotsPublish = "shots.publish"
     var id: String { rawValue }
     var label: String {
         switch self {
@@ -29,6 +30,9 @@ enum TeamCapability: String, Codable, CaseIterable, Identifiable, Sendable {
         case .filmPublish: "Publish own Hudl shortcuts without review"
         case .scoutingUpload: "Upload scouting reports for owner review"
         case .scoutingRead: "Read approved scouting reports"
+        case .shotsRecord: "Record designated game shots"
+        case .shotsReview: "Assign recorders and review shot captures"
+        case .shotsPublish: "Publish own resolved shot capture without review"
         }
     }
 }

@@ -185,6 +185,10 @@ private struct ConnectedGameDetailView: View {
                     Text("Only the current accepted version of each dataset contributes to this summary. A published dataset does not mean every dataset is complete.")
                         .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
+                Section("Shot capture") {
+                    NavigationLink("Shot recorder, handoff and review") { SharedShotCaptureView(account: account, game: game, roster: model.roster) }
+                    Text("Separate from official statistics. One designated recorder; explicit deferred submission.").font(.footnote)
+                }
                 Section("Game Film") {
                     NavigationLink("Hudl shortcuts and owner review") {
                         MediaResourcesView(teamID: game.teamID, kind: .film, targetID: game.id,

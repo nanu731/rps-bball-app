@@ -2080,3 +2080,13 @@ recovery preserves a distinct pending copy rather than overwriting a competing
 save. TESTING distinguishes actual iPad/max-text/relaunch evidence from coordinate
 math and open hosted/rotation/screen-reader gates. Shared commands/charts follow
 as separate authorized tickets; no provider activation.
+
+2026-10-17 shared shot source: migration18/client/control surfaces implement
+recorder handoff, immutable deferred batches and receipts, independent review,
+resolved-outcome publication and explicit branch recovery/adoption. New local
+synthetic SQL and signed gateway checks passed, including revocation and overlap.
+Prepared continuation uses a protected pre-lock protocol; stale replies cannot
+unlock newer checks, and a fresh game does not revive a prior denied preparation.
+Independent source reviews caught and resolved response bounds, receipt authority,
+outbox races and concealment gaps. No existing/hosted migration or service activated.
+Charts/independent comparison and rendered shared acceptance remain next.

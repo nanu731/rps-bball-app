@@ -71,3 +71,16 @@ source revisions change without altering either source.
 Five independent perspectives and five peer reviews informed these defaults;
 three advisers were reused, so the process was not strictly anonymous. No provider,
 existing migration, scheduler or delivery activation is authorized by this ADR.
+
+## Prepared offline continuation
+
+Five additional current-model perspectives and five peer reviews converged on a narrow prepared-capture permit, not general shared offline synchronization. The current viewer is separate from the immutable capture creator. An environment/account/team-scoped protected permit permits only continuation of a previously registered device journal; unknown remote revocation cannot be learned while disconnected. Missing, corrupt, known-denied or expired preparation conceals content without removing bytes. Generic login never clears a shot-specific denial.
+
+Before explicit online checks or commands, persist and verify a locked permit with a unique operation token. Only the matching current-account response can restore eligibility; stale completions cannot undo a later denial. Interrupted checks remain locked until online recovery. Offline continuation itself sends no request. This deliberately trades availability after an interrupted authorization check for durable denial concealment. Server submission always rechecks current designation, assignment revision and capabilities. Prior Auth binding establishes device identity only, never upload authority.
+
+Implementation conservatively invalidates offline eligibility for other preparations
+when checking a team; only the freshly verified game is re-enabled. Entries and
+journals are retained. A SQL-confirmed rejection or denied receipt can be explicitly
+archived with its frozen bytes before a newly authorized recovery proposal. This
+is not proof of non-commit and never triggers automatic resubmission. Recording
+deadlines do not block a fresh server-authorized published/reviewer view.

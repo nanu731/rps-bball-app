@@ -154,3 +154,25 @@ halt the batch. Local synthetic SQL/HTTP evidence is separate from signed hosted
 JWT mapping, refresh/renewal, signing-key rotation and real Google authorization.
 The existing immediate Auth-reuse lockout failure and extra-grace rejection pass
 are unchanged. No existing provider/service/transport or automatic retry activation.
+
+## Prepared shared shot capture
+
+Migration18 is source-only for existing/hosted environments. New `shots_*` commands
+use current verified Auth, active team membership, separate record/review/publish
+capabilities, the designated recorder and assignment/state revisions. No command
+retries automatically. Each explicit mutation first reserves one frozen local
+batch/payload; overlapping reservations cannot replace it. Recover a matching
+current-authority receipt before an explicit retry. A confirmed stale/denied
+command or inaccessible receipt may be retained separately through an explicit
+recovery action; that never proves the original write failed. Recovery proposals
+and pinned adoption retain both branches and do not infer duplicate attempts.
+
+Only already registered, protected device preparations can continue offline.
+Environment, account, team, game and session remain scoped; no new team discovery
+or remote authority is restored. Explicit online checks pre-lock preparation;
+interruption or denial leaves it locked. Only the freshly checked game becomes
+eligible again, conservatively leaving other preparations locked until checked.
+Known expiry, account loss and a newer team check conceal mounted content. Unknown
+remote revocation cannot be detected offline. Device journal bytes remain intact.
+Recovery discovery pages at50 metadata rows; one selected document is fetched
+separately. Captures remain separate from official stats and the export outbox.

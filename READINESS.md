@@ -63,3 +63,10 @@ installation. Native screenshots are private. Coordinate math is tested; actual
 landscape/VoiceOver/physical/iOS26.0 remain open. Shared designation/submission,
 review and charts/reconciliation are still the next eligible implementation units.
 No original records or existing-server migrations are changed.
+
+Shared shot authority and prepared continuation are implemented and tested at
+native model and actual signed isolated gateway seams; this does not activate the
+feature on hosted services. Migration18, current grants/designation and hosted
+acceptance require separate reviewed activation. Local iPhone large-text recorder
+and relaunch passed; visual keyboard evidence, actual landscape and VoiceOver stay
+separate. Charts and final rendered shared integration are still in progress.

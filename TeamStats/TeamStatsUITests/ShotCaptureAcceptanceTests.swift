@@ -39,12 +39,25 @@ final class ShotCaptureAcceptanceTests: XCTestCase {
         }
         XCTAssertTrue(element.isHittable)
     }
+    private func tapCourt(_ court: XCUIElement, x: CGFloat, y: CGFloat) {
+        // A court can exist in the tree while its requested point is offscreen.
+        let top = app.navigationBars.firstMatch.frame.maxY + 20
+        let bottom = app.tabBars.firstMatch.exists ? app.tabBars.firstMatch.frame.minY - 20 : app.frame.maxY - 20
+        for _ in 0..<12 {
+            let pointY = court.frame.minY + court.frame.height * y
+            if pointY >= top && pointY <= bottom {
+                court.coordinate(withNormalizedOffset: CGVector(dx: x, dy: y)).tap(); return
+            }
+            if pointY > bottom { app.swipeUp() } else { app.swipeDown() }
+        }
+        XCTFail("The requested court point could not be brought into the visible window")
+    }
     private func runFlow() {
         openCapture()
         XCTAssertTrue(app.staticTexts["Local shot draft"].waitForExistence(timeout: 5))
         let court = app.otherElements["shot.court"]
         XCTAssertTrue(court.waitForExistence(timeout: 5))
-        court.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.3)).tap()
+        tapCourt(court, x: 0.4, y: 0.3)
         XCTAssertTrue(app.staticTexts["Pending field goal"].waitForExistence(timeout: 5))
         let opponent = app.segmentedControls["shot.team"].buttons["Opponent"]
         reveal(opponent, upward: false); opponent.tap()
@@ -52,13 +65,19 @@ final class ShotCaptureAcceptanceTests: XCTestCase {
         app.buttons["shot.result.3.made"].tap()
         XCTAssertTrue(app.staticTexts["3 points · Make"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Saved on this device"].waitForExistence(timeout: 5))
-        reveal(court, upward: false)
-        court.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.65)).tap()
+        tapCourt(court, x: 0.7, y: 0.65)
         app.buttons["shot.result.2.missed"].tap()
         XCTAssertTrue(app.staticTexts["2 points · Miss"].firstMatch.waitForExistence(timeout: 5))
         let freeThrows = app.buttons["Free throws"]
         reveal(freeThrows, upward: false); freeThrows.tap()
-        app.buttons["2 attempts"].tap()
+        let twoAttempts = app.buttons["2 attempts"]
+        for _ in 0..<8 {
+            if twoAttempts.exists && twoAttempts.isHittable { break }
+            let form = app.collectionViews.firstMatch
+            form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)).press(forDuration: 0.05,
+                thenDragTo: form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)))
+        }
+        XCTAssertTrue(twoAttempts.isHittable); twoAttempts.tap()
         app.buttons["Start free throws"].tap()
         app.buttons["shot.ft.1.made"].tap()
         XCTAssertTrue(app.staticTexts["FT1/2 · Make"].waitForExistence(timeout: 5))

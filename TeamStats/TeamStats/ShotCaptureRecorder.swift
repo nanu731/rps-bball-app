@@ -29,6 +29,12 @@ actor ShotCaptureDisk {
         } else { try ShotCaptureStorage.create(pending, at: copy) }
         return try ShotCaptureStorage.load(from: url, context: pending.context)
     }
+    func preserveAndUseServer(_ local: ShotCaptureDocument, server: ShotCaptureDocument, at url: URL, copy: URL) throws {
+        guard local.id == server.id, local.context == server.context,
+              try ShotCaptureStorage.load(from: url, context: local.context) == local else { throw ShotCaptureIssue.stale }
+        try ShotCaptureStorage.create(local, at: copy)
+        try ShotCaptureStorage.encoded(server).write(to: url, options: [.atomic, .completeFileProtection])
+    }
     func save(_ document: ShotCaptureDocument, to url: URL, expectedRevision: Int) throws {
         try ShotCaptureStorage.save(document, to: url, expectedRevision: expectedRevision)
     }

@@ -1250,3 +1250,38 @@ sheet. The sheet now displays the same wrapping error/progress inline and retain
 the attempt text. This source fix is built; the rare byte-limit error was exercised
 at the recorder seam, not claimed as a rendered near-capacity-sheet test. Final
 Standards0/Spec0 remaining source findings are separate from the open UI gates.
+
+## Shared shot preparation2026-10-17
+
+The final local recorder iPhone maximum-text journey passed both-team attribution,
+3PTMake/2PTMiss, mixed FT answers, Undo to pending and cold relaunch. The prior
+failures were test assumptions about an offscreen court point and lazy native Form
+rows; corrected visibility/scroll helpers passed. Private screenshots were inspected.
+The iPad keyboard test found a keyboard accessibility element and reached Start,
+but its screenshot does not visibly show the keyboard; visual keyboard acceptance
+is therefore not inferred from that assertion. Actual landscape and VoiceOver gates
+remain open.
+
+Shared source includes separate current designation/review/publication, immutable
+snapshots/receipts, retained recovery/adoption, prepared cold-offline continuation
+and frozen deferred commands. Synthetic native tests cover preparation restart,
+expiry/corruption, environment/account isolation, stale unlock, lost reply/readback,
+forged receipt, exclusive reservation, cross-game denial, mounted concealment and
+retained rejection. SQL lifecycle checks use new guarded clones only. Actual signed
+PostgREST16.4/local PG17 requests verify outsider denial, overlapping same-batch
+one-receipt, lost-reply readback, stale409, grant/session revocation and unchanged
+source fixtures. Auth tables in this gateway test are synthetic platform stand-ins;
+this is not hosted Auth/PKCE or production evidence. Fresh18-migration synthetic
+backup/restore passed. Hosted migration18 remains inactive. Shared rendered
+interaction, final integration and charts are tracked separately until performed.
+
+Shared native final review regression: a fresh authorized published viewer clears
+an expired recording-only deadline; it still cannot record. Recovery also preserves
+the entire divergent device branch before an explicit switch to the selected server
+head. Final source review findings are resolved; test receipts below distinguish
+this from rendered shared-device acceptance. Portable existing CI commands pass
+locally with required loopback permission; actual remote CI passed for d200762.
+Final shared native suite:11tests passed on the isolated iPhone26.4 Simulator;
+15local-journal tests passed in the preceding affected regression run. Independent
+Standards/Spec rereviews report zero remaining source findings. This is not a claim
+of hosted activation or rendered shared acceptance.

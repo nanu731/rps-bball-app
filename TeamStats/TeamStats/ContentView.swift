@@ -58,6 +58,9 @@ struct ContentView: View {
                             Label("Using TeamStats", systemImage: "questionmark.circle")
                         }
                     }
+                    ToolbarItem(placement: .topBarLeading) {
+                        NavigationLink { PreparedShotCapturesView(account: account) } label: { Label("Device shot captures", systemImage: "basketball.fill") }
+                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Add game", systemImage: "plus") {
                             showingNewGame = true

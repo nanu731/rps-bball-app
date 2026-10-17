@@ -1121,3 +1121,12 @@ same-change Retry or preservation of a separate recovery copy before reopening;
 explicit export of that copy is user-directed and contains capture data. Existing
 local backup still excludes shot journals. Source/actual native checks do not grant
 shared authority or establish full-game coverage.
+
+Shared shot source now prepares separate protected journals for already registered
+actual-roster sessions. Current server designation and distinct capabilities govern
+all submission/receipt/review/publication. Explicit recovery retains branches; no
+automatic merge or retry. Prepared offline continuation is narrow, scoped and
+concealed on known loss/expiry; unknown revocation requires reconnection. No local
+statistics or temporary players are uploaded. Migration18 is tested only in new
+synthetic databases, not activated on existing/hosted services. TESTING distinguishes
+signed local stand-ins, native seam tests and remaining rendered/hosted gates.
