@@ -11,6 +11,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from operation_diagnostics import Diagnostics, Category, Outcome, Failure
 import sheets_export
 
+def guarded_google():
+    import datetime as dt
+    return sheets_export.GoogleSheets(sheets_export.GoogleConfig(token='SYNTHETIC',enabled=True,
+        billing_disabled_verified_at=dt.datetime.now(dt.timezone.utc).isoformat(),endpoint='http://127.0.0.1:1'))
+
 class DiagnosticTests(unittest.TestCase):
     def test_actual_output_closed_fields_and_bounded_growth(self):
         out = io.StringIO(); now = [1000.0]
@@ -58,7 +63,7 @@ class DiagnosticTests(unittest.TestCase):
         class Backend:
             def rpc(self,*args): raise sheets_export.ExportError('TEST ONLY secret token raw response')
         with unittest.mock.patch.object(sheets_export,'DIAGNOSTICS',d,create=True):
-            with self.assertRaises(sheets_export.ExportError): sheets_export.run_once(Backend(),None)
+            with self.assertRaises(sheets_export.ExportError): sheets_export.run_once(Backend(),guarded_google())
         self.assertTrue(any(e['category']=='export_run' and e['outcome']=='unconfirmed' for e in d.snapshot()['events']))
         self.assertNotIn('secret',json.dumps(d.snapshot()))
 
@@ -88,10 +93,10 @@ class WorkerStatusTests(unittest.TestCase):
         class Cancelled:
             def rpc(self,*args): raise KeyboardInterrupt()
         class Empty:
-            def rpc(self,*args): return []
+            def rpc(self,*args): return None
         with patch.object(sheets_export,'DIAGNOSTICS',d):
-            with self.assertRaises(KeyboardInterrupt): sheets_export.run_once(Cancelled(),None)
-            self.assertEqual(sheets_export.run_once(Empty(),None),[])
+            with self.assertRaises(KeyboardInterrupt): sheets_export.run_once(Cancelled(),guarded_google())
+            self.assertEqual(sheets_export.run_once(Empty(),guarded_google()),[])
         d.output.join()
         snapshot=d.snapshot()
         self.assertGreater(snapshot['sink_failures'],0)

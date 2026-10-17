@@ -158,3 +158,12 @@ No cache, index, migration, offline-sync expansion or provider activation was ad
 and worker stderr/status seams. They observe typed outcomes without changing
 records, command authority, retry policy or offline-sync scope. Diagnostics are
 lossy and fail open; passive liveness is separate from authorized readiness.
+
+## Durable export preparation —2026-10-17
+
+Scheduling state stays on each existing accepted-version delivery, with service-only
+claims, persisted eligibility/backoff, bounded cycles and explicit manual recovery.
+Immutable snapshots/reservations remain the external write fence. SQL claim tokens
+fence acknowledgments only. See [exports.md](supabase/exports.md) and the consolidated
+[READINESS.md](READINESS.md); neither prepared source nor local evidence activates
+Google, a recurring worker, or a hosted migration.

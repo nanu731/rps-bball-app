@@ -107,3 +107,13 @@ in [OPERATIONS.md](OPERATIONS.md). Confirmed denial, cancellation and uncertain
 writes remain distinct. Output does not trigger retries, prove commitment or
 change deadlines/current authority. No provider probe, activation or scheduler
 is introduced; all activation and Auth reuse findings above remain open.
+
+## Export retry boundary —2026-10-17
+
+The export worker's durable scheduling policy is in [exports.md](supabase/exports.md).
+This is a specific duplicate-safe immutable-reservation/readback protocol, not a
+blanket transport retry policy. Token-fenced database replies do not cancel issued
+Google requests. Shared run admission/request deadlines remain distinct from a
+verified hard process/DNS bound. Disabled preflight consumes no claims; persisted
+provider cooldown prevents restarting around Retry-After. No schedule/Google
+activation or existing unapplied migration deployment occurred.

@@ -44,6 +44,8 @@ class Fixture:
         self.batches = []
         self.backend_jobs = []
         self.backend_states = {}
+        self.claimed = set()
+        self.retry_after = None
         fixture = self
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args):
@@ -53,6 +55,7 @@ class Fixture:
                 try:
                     self.send_response(code)
                     self.send_header('Content-Type', 'application/json')
+                    if code==429 and fixture.retry_after is not None: self.send_header('Retry-After',fixture.retry_after)
                     self.send_header('Content-Length', str(len(data)))
                     self.end_headers()
                     self.wfile.write(data)
@@ -87,14 +90,16 @@ class Fixture:
                 body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
                 if '/rpc/' in self.path:
                     name = self.path.rsplit('/', 1)[1]
-                    if name == 'stats_export_jobs':
-                        self.respond(200, [{'job_id': j['job_id']} for j in fixture.backend_jobs[:body['p_limit']]])
-                    elif name == 'stats_export_reserve':
+                    if name == 'stats_export_claim':
+                        pending=next((j for j in fixture.backend_jobs if j['job_id'] not in fixture.claimed),None)
+                        if pending: fixture.claimed.add(pending['job_id'])
+                        self.respond(200,dict(job_id=pending['job_id'],claim_token='a9000000-0000-4000-8000-000000000001') if pending else None)
+                    elif name == 'stats_export_claimed_reserve':
                         self.respond(200, next(j for j in fixture.backend_jobs if j['job_id'] == body['p_job_id']))
-                    elif name == 'stats_export_finish':
+                    elif name == 'stats_export_acknowledge':
                         fixture.backend_states[body['p_job_id']] = 'delivered'
                         self.respond(200, None)
-                    elif name == 'stats_export_fail':
+                    elif name == 'stats_export_record_failure':
                         fixture.backend_states[body['p_job_id']] = body['p_error_code']
                         self.respond(200, None)
                     return
@@ -289,9 +294,10 @@ class WorkerTests(unittest.TestCase):
         j = job()
         self.fixture.backend_jobs = [j]
         backend = worker.Backend('http://127.0.0.1:' + str(self.fixture.server.server_port) + '/rest/v1', 'SYNTHETIC')
-        outcomes = worker.run_once(backend, worker.GoogleSheets(worker.GoogleConfig()))
-        self.assertEqual(outcomes, [{'job_id': j['job_id'], 'state': 'failed', 'error_code': 'budget_disabled'}])
-        self.assertEqual(self.fixture.backend_states[j['job_id']], 'budget_disabled')
+        with self.assertRaisesRegex(worker.ExportError,'budget_disabled'):
+            worker.run_once(backend, worker.GoogleSheets(worker.GoogleConfig()))
+        self.assertEqual(self.fixture.backend_states,{})
+        self.assertEqual(self.fixture.claimed,set())
         self.assertEqual(self.fixture.batches, [])
     def test_worker_acknowledges_only_full_provider_receipt(self):
         j = job()

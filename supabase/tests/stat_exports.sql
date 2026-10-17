@@ -1,3 +1,6 @@
+-- Historical migration3/13 RPC contract; run before migration202610170001.
+-- That migration intentionally revokes unclaimed worker mutations. Current queue,
+-- fencing and receipt integration is export_queue_integration.py (including CI).
 -- Synthetic public-command/RLS fixtures; every record is rolled back.
 begin;
 create extension if not exists pgtap with schema extensions;

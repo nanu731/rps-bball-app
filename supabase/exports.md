@@ -1,7 +1,7 @@
 # Accepted-version Sheets export
 
 Source implementation and synthetic checks are available. Google delivery is
-**disabled by default**. No Google credentials, hosted worker, schedule, billing
+**disabled by default**. Durable scheduling preparation is described below; no schedule is registered. No Google credentials, hosted worker, schedule, billing
 verification or live Sheet write has been established by this slice. Supabase is
 the authoritative source; spreadsheet edits never update the app. Local records
 and temporary player identities are never imported by this worker.
@@ -27,10 +27,10 @@ Formula-like labels cannot become formulas.
 | Command | Trusted parameters and behavior |
 | --- | --- |
 | `stats_export_configure` | `p_team_id`, `p_spreadsheet_id`, `p_ledger_sheet_id`, `p_snapshot_min`, `p_snapshot_max`, `p_ledger_rows`; immutable trusted team-to-Sheet mapping and bounded disjoint reservations; exact configuration retries are safe; rebinding fails |
-| `stats_export_jobs` | `p_limit` (1–10; default 3); pending/reserved/failed job IDs, no delivered jobs |
-| `stats_export_reserve` | `p_job_id`; returns full accepted UUID, canonical payload/hash, immutable destination, distinct nonnegative `sheet_id`, reserved zero-based ledger row and state; retries return the same binding |
-| `stats_export_finish` | `p_job_id`, `p_receipt`; receipt must exactly contain the accepted UUID/hash/destination/sheet ID/ledger row returned by reserve; only the trusted worker may attest verified readback |
-| `stats_export_fail` | `p_job_id`, `p_error_code`; fixed sanitized code, same job stays retryable; late failures do not undo delivered state |
+| `stats_export_jobs` | bounded due-job inspection only; grants no claim and excludes delivered/review/leased/backoff work |
+| Legacy `stats_export_reserve` (worker execution revoked by migration15) | `p_job_id`; returns full accepted UUID, canonical payload/hash, immutable destination, distinct nonnegative `sheet_id`, reserved zero-based ledger row and state; retries return the same binding |
+| Legacy `stats_export_finish` (worker execution revoked by migration15) | `p_job_id`, `p_receipt`; receipt must exactly contain the accepted UUID/hash/destination/sheet ID/ledger row returned by reserve; only the trusted worker may attest verified readback |
+| Legacy `stats_export_fail` (worker execution revoked by migration15) | `p_job_id`, `p_error_code`; fixed sanitized code, same job stays retryable; late failures do not undo delivered state |
 | `stats_export_status` | `p_team_id`; live authenticated owner session only; versions, generation, queued/reserved/failed/delivered, attempts, safe error code and delivery time |
 | `stats_export_latest` | `p_team_id`; live owner only; greatest accepted publication generation independently per game/dataset, including truthful pending state |
 
@@ -104,9 +104,9 @@ run handles at most three jobs, one atomic batch/job, and at most 20 Google
 requests (default 16). Requests time out within 30 seconds (default 15); payloads
 are bounded to 1.9 MB and reads to 2.1 MB. Oversized accepted datasets fail visibly
 instead of being truncated. Redirects are refused. Backend/provider error bodies
-are never logged. Quota/timeouts remain failed/retryable; no unbounded retries or
-scheduler is installed. A later trusted scheduler may invoke bounded runs with
-backoff, using current credentials and the same persisted reservations.
+are never logged. Quota/timeouts use the durable bounded policy below. No scheduler is installed.
+The disabled one-shot scheduling entry reuses current credentials and persisted
+reservations; it does not register a recurring invocation.
 
 Private runtime JSON requires `backend_rest_url`; `google_enabled` defaults to
 false. To explicitly enable Google, the operator must verify billing is absent or
@@ -139,7 +139,8 @@ formula-like content, latest-view preflight, bounded requests, disabled/expired
 budget evidence and backend success/failure recording. These are contract fixtures,
 not Google integration evidence. The later isolated calculation check below is
 actual Google evidence. Worker credentials, billing proof, worker batch/readback,
-hosted service setup and scheduler/backoff remain open. Native status presentation
+hosted service setup and scheduler activation remain open. Durable backoff is now
+prepared/tested separately below. Native status presentation
 is implemented; rendered acceptance and production deployment are separate gates.
 
 Protocol references: [atomic batches](https://developers.google.com/workspace/sheets/api/reference/rest/v4/spreadsheets/batchUpdate),
@@ -160,3 +161,107 @@ formula and six synthetic history rows are retained privately; the operational
 destination, permissions and automated delivery remain unchanged. All20 affected
 worker protocol tests passed; those HTTP fixtures do not execute Google's formula
 engine. This is destination calculation evidence, not automated export acceptance.
+
+## Durable scheduling preparation —2026-10-17
+
+Migration202610170001 is source/new-synthetic-database preparation only. Neither
+it nor the prior unactivated migration14 was applied to an existing local Auth
+application database or hosted project. No bootstrap, destination binding, Google
+write, recurring task or provider activation was performed.
+
+Scheduling columns live on the existing delivery row. Accepted publication and
+its snapshot/outbox/delivery insert remain transactional. Local drafts and
+placeholder identities never enter this path. Existing queued/reserved/failed/
+delivered status values remain compatible; the owner-only status RPC additionally
+returns queue_state, next_attempt_at, retry_attempts, cumulative claim_total,
+review_cycles, last_review_reason, last_failure_code and provider cooldown/pause. It exposes no claim token
+or destination. Historical attempts still count reservation calls; they are not
+reinterpreted as automatic claims. Existing delivered rows stay settled; existing
+failed rows stop for explicit legacy-failure review because old Retry-After evidence
+was not stored. Their original status, reason, reservation and attempts are preserved.
+
+| Current command | Contract |
+| --- | --- |
+| stats_export_claim | one due job, atomic row lock/SKIP LOCKED, fresh token; consumes one bounded cycle attempt and cumulative claim; null when nothing eligible |
+| stats_export_claimed_reserve | job/token required; retains exact immutable payload/destination reservation |
+| stats_export_acknowledge | job/token/exact receipt; only a current lease can confirm; same confirmed token/receipt is idempotent |
+| stats_export_record_failure | job/token/fixed code/numeric Retry-After; persists due time or manual review; cannot reverse confirmed delivery |
+| stats_export_resume | service-only explicit operator review (and explicit provider-pause resolution when required); only stopped jobs; starts a new bounded cycle on the same job, preserving binding, lifetime count, failure/review evidence |
+
+All worker commands are service-role only. Legacy unclaimed reserve/finish/fail
+execution is revoked, so old worker versions fail closed. Private timing functions
+are inaccessible to clients; deterministic tests replace them only in a newly
+created synthetic database. Existing table RLS/column grants remain unchanged.
+Trusted recovery requires current owner authorization and runtime administration;
+ordinary owner app access does not confer a service key or requeue privilege.
+
+Each cycle permits five claims within seven days. Lease length is at most five
+minutes and ends no later than the cycle deadline. Claim expiry consumes its
+attempt; at most three expired claims and three stopped cycles are recovered per invocation,
+with persisted backoff or manual review. Expiry never means external work was
+cancelled. Due ordering and SKIP LOCKED avoid busy workers/failing jobs monopolizing
+eligible work. A waiting job does not block unrelated due jobs, apart from a
+shared provider throttle as described below.
+
+The server uses its own time and equal jitter: half to full of a30second base,
+doubling per attempt with a one-hour cap. Retry-After is a minimum, not shortened
+by this cap; HTTP seconds and dates are supported, using a valid provider Date
+conservatively against local clock skew. Missing/malformed guidance uses backoff.
+A delay beyond one day or the remaining cycle goes to manual review. Transient
+transport/timeouts,408/429 and selected500/502/503/504 responses retry; authorization,
+configuration, payload/hash/identity, destination conflicts/capacity and other
+permanent responses stop for review. Unknown errors get only a sanitized code.
+No missing/stale budget evidence or missing Google credential may consume a claim:
+preflight occurs before selection. Destination-specific missing setup becomes
+visible manual review after a claim rather than rolling back its attempt forever.
+
+429/503 failures pause new claims across this worker's database during their
+persisted wait, including exhausted jobs. Ordinary exhaustion does not pause
+healthy jobs forever: the shared cooldown expires independently of job state.
+A provider delay beyond the accepted one-day bound also sets an explicit pause;
+trusted review must affirm provider-pause resolution before resuming that job.
+Finite provider_not_before remains in force even after manual resume. This is conservative provider-wide admission, not quota knowledge
+or cancellation of already-running requests. The worker also ends an invocation
+on shared authorization/throttle/transport failures rather than burning the rest
+of its batch. Provider availability cannot cause an internal busy loop.
+
+A run admits at most three jobs, one claim immediately before each attempt, with
+a shared120second monotonic budget. HTTP deadlines shrink to remaining time;
+Google work reserves five seconds for backend acknowledgment/failure recording.
+Requests/body/request-count limits remain. No new work starts near budget expiry.
+Platform DNS, process startup and shutdown are not proven hard wall-time bounds;
+a future runtime needs a reviewed supervisor deadline. Process termination/lost
+failure replies leave a lease to expire; no mutation is blindly replayed.
+
+Provider timeout after a write requires full readback of the same immutable
+reservation before acknowledgment or another batch. A successor always runs that
+same preflight/readback path. Token fencing rejects late database writes but
+cannot stop an expired worker's already dispatched Google request. AddSheet's
+explicit-ID atomic fence and exact content/ledger comparison protect convergence;
+there is no universal exactly-once delivery, external-editor lock or guarantee
+against collaborators deleting/modifying exported sheets. Conflicts require review.
+A lost backend acknowledgment can reconcile through confirmed delivered state on
+that same claim; a lost claim/failure response is not treated as success.
+
+## Disabled entry and activation contract
+
+`--scheduled-once` checks literal `scheduler_enabled: true`; otherwise it returns
+an explicit disabled result without backend access. It invokes one bounded run and
+exits. `run_once` remains an explicit manual one-shot worker with the same Google
+budget/credential preflight. Neither API installs a timer, loop, OS job, GitHub
+schedule, hosted task, credential refresh or Google service configuration.
+
+Activation requires separate owner approval: stop old invocations and let in-flight work settle, review/apply missing migrations,
+verify least-privilege runtime identity and renewable Google authorization, prepare
+and protect the existing immutable destination ranges/latest formula, reverify
+current strict$0 API/quota/billing and free hosting eligibility, choose invocation
+cadence and a supervisor deadline, and perform signed nonproduction end-to-end
+acceptance. Cadence must be bounded and honor the persisted provider cooldown;
+claims alone do not establish a billing guarantee. Missing prerequisites keep
+scheduler activation and real Google delivery disabled.
+
+Manual recovery: inspect owner status and the sanitized reason; preserve immutable
+bindings/receipts; resolve authorization, quota/capacity or destination conflict;
+verify whether Google already applied the reservation; then a trusted operator may
+explicitly resume that same stopped job. Resume is not permission to overwrite an
+existing conflicting sheet, reset lifetime history or skip current budget checks.

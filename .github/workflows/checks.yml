@@ -38,6 +38,7 @@ jobs:
       - name: Portable worker and recovery tests
         run: |
           python3 -m unittest discover -s supabase/tests -p test_sheets_export.py
+          python3 -m unittest discover -s supabase/tests -p test_sheets_scheduler.py
           python3 -m unittest discover -s supabase/tests -p test_private_file_gateway.py
           python3 -m unittest discover -s supabase/tests -p test_http_deadline.py
           python3 -m unittest discover -s supabase/tests -p test_operation_diagnostics.py
@@ -55,6 +56,8 @@ jobs:
             --output "$RUNNER_TEMP/teamstats-recovery" \
             --confirm-isolated-cluster --initialize-test-roles
           python3 supabase/tests/file_admission_concurrency.py --container "$PG_CONTAINER" \
+            --recovery-output "$RUNNER_TEMP/teamstats-recovery"
+          python3 supabase/tests/export_queue_integration.py --container "$PG_CONTAINER" \
             --recovery-output "$RUNNER_TEMP/teamstats-recovery"
       # No deploy, secrets, private fixtures, caches, artifact uploads or provider calls.
       # Full pgTAP, native media validation, Xcode and actual hosted recovery are separate.

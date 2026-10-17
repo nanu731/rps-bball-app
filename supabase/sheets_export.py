@@ -10,6 +10,9 @@ import json
 import os
 import re
 import socket
+import math
+import uuid
+from email.utils import parsedate_to_datetime
 import sys
 import urllib.error
 import urllib.parse
@@ -25,7 +28,39 @@ from operation_diagnostics import DIAGNOSTICS, Category, Outcome, Failure, SafeA
 import time
 
 class ExportError(Exception):
-    """A safe, fixed error code. Provider response bodies are never logged."""
+    """A fixed code and numeric delay only; never retain a provider body/header."""
+    def __init__(self, code, retry_after=None):
+        super().__init__(code)
+        self.retry_after = retry_after
+
+
+def retry_after_seconds(value, now=None, server_date=None):
+    if not isinstance(value,str) or len(value)>128: return None
+    now = now or dt.datetime.now(dt.timezone.utc)
+    try:
+        if re.fullmatch(r'[0-9]+',value): seconds=int(value)
+        else:
+            date=parsedate_to_datetime(value)
+            if date.tzinfo is None: return None
+            seconds=math.ceil((date-now).total_seconds())
+            if server_date:
+                try:
+                    server=parsedate_to_datetime(server_date)
+                    if server.tzinfo is not None: seconds=max(seconds,math.ceil((date-server).total_seconds()))
+                except (ValueError,TypeError,OverflowError): pass
+        return min(86401,max(0,seconds))  # Beyond one day requires review, never early retry.
+    except (ValueError,TypeError,OverflowError): return None
+
+
+class RunBudget:
+    def __init__(self, seconds=120, clock=time.monotonic):
+        if not 0 < seconds <= 120: raise ExportError('configuration_invalid')
+        self.clock=clock; self.until=clock()+seconds
+    def remaining(self, maximum=30, reserve=0):
+        left=self.until-self.clock()-reserve
+        if left<=0: raise ExportError('run_deadline')
+        return min(maximum,left)
+
 
 @dataclass(frozen=True)
 class GoogleConfig:
@@ -45,6 +80,7 @@ class GoogleSheets:
     def __init__(self, config):
         self.config = config
         self.remaining = config.request_limit
+        self.budget = None
         self.opener = urllib.request.build_opener(_NoRedirect(), DeadlineHTTPHandler(), DeadlineHTTPSHandler())
 
     def _guard(self):
@@ -76,7 +112,7 @@ class GoogleSheets:
         request = urllib.request.Request(self.config.endpoint + path, data=raw, method=method,
             headers={'Authorization': 'Bearer ' + self.config.token, 'Content-Type': 'application/json'})
         try:
-            with self.opener.open(request, timeout=self.config.timeout) as response:
+            with self.opener.open(request, timeout=self.budget.remaining(self.config.timeout,reserve=5) if self.budget else self.config.timeout) as response:
                 data = response.read(2_100_001)
             if len(data) > 2_100_000:
                 raise ExportError('response_too_large')
@@ -86,8 +122,9 @@ class GoogleSheets:
             return value
         except urllib.error.HTTPError as error:
             # Duplicate ID and partial/invalid batches are verified by the same read seam.
+            wait=retry_after_seconds(error.headers.get('Retry-After'),server_date=error.headers.get('Date'))
             error.close()
-            raise ExportError('provider_http_' + str(error.code)) from None
+            raise ExportError('provider_http_' + str(error.code),wait) from None
         except (TimeoutError, socket.timeout):
             raise ExportError('provider_timeout') from None
         except urllib.error.URLError:
@@ -148,6 +185,7 @@ class GoogleSheets:
         if present and present.get('title') != title:
             raise ExportError('destination_conflict')
         write_error = None
+        write_retry_after = None
         if not present:
             ledger_preflight = self._request('GET', prefix + '?' + urllib.parse.urlencode({
                 'ranges': "'TeamStats Ledger'!A" + str(row + 1) + ':' + _column(len(ledger)) + str(row + 1),
@@ -176,6 +214,7 @@ class GoogleSheets:
                         write_error = 'provider_response'
                 except ExportError as error:
                     write_error = str(error)
+                    write_retry_after = error.retry_after
         # A successful HTTP write, timeout, concurrent duplicate, or preexisting ID
         # all need the same complete receipt. Never acknowledge the HTTP status alone.
         ranges = ["'" + title + "'!A1:" + _column(width) + str(len(grid)),
@@ -189,7 +228,7 @@ class GoogleSheets:
                 raise ExportError('destination_conflict')
         except ExportError:
             if write_error and write_error not in ('provider_http_400', 'provider_response'):
-                raise ExportError(write_error) from None
+                raise ExportError(write_error,write_retry_after) from None
             raise
         return {k: job[k] for k in ('accepted_version_id', 'payload_sha256', 'spreadsheet_id', 'sheet_id', 'ledger_row')}
 
@@ -300,71 +339,104 @@ class Backend:
             raise ExportError('configuration_invalid')
         if url.username or url.password or url.query or url.fragment or not 0 < timeout <= 30:
             raise ExportError('configuration_invalid')
+        self.budget = None
         self.endpoint, self.token, self.timeout = endpoint.rstrip('/'), service_token, timeout
         self.opener = urllib.request.build_opener(_NoRedirect(), DeadlineHTTPHandler(), DeadlineHTTPSHandler())
 
     def rpc(self, name, arguments):
-        names = ('stats_export_jobs', 'stats_export_reserve', 'stats_export_finish', 'stats_export_fail')
+        names = ('stats_export_claim', 'stats_export_claimed_reserve', 'stats_export_acknowledge', 'stats_export_record_failure')
         if name not in names:
             raise ExportError('configuration_invalid')
         req = urllib.request.Request(self.endpoint + '/rpc/' + name, method='POST',
             data=json.dumps(arguments).encode(), headers={'Content-Type': 'application/json',
             'apikey': self.token, 'Authorization': 'Bearer ' + self.token})
         try:
-            with self.opener.open(req, timeout=self.timeout) as response:
+            with self.opener.open(req, timeout=self.budget.remaining(self.timeout) if self.budget else self.timeout) as response:
                 data = response.read(5_000_001)
             if len(data) > 5_000_000:
                 raise ExportError('backend_response')
             return json.loads(data)
+        except urllib.error.HTTPError as error:
+            try:
+                code=json.loads(error.read(8192)).get('code')
+                mapped={'55000':'destination_unavailable','54000':'destination_capacity','PT409':'claim_lost','42501':'configuration_invalid'}
+                reason=mapped.get(code,'configuration_invalid' if error.code in (401,403) else 'backend_transport')
+            except (ValueError,AttributeError): reason='backend_transport'
+            finally: error.close()
+            raise ExportError(reason) from None
         except (urllib.error.URLError, TimeoutError, ValueError):
             raise ExportError('backend_transport') from None
 
-def run_once(backend, google, max_jobs=3):
+def run_once(backend, google, max_jobs=3, *, seconds=120, clock=time.monotonic):
     started = time.monotonic()
     try:
-        outcomes = _run_once(backend, google, max_jobs)
+        outcomes = _run_once(backend, google, max_jobs, RunBudget(seconds,clock))
     except BaseException as error:
         cancelled = isinstance(error, (KeyboardInterrupt, SystemExit))
-        invalid = isinstance(error, ExportError) and str(error) == 'configuration_invalid'
+        invalid = isinstance(error, ExportError) and str(error) in ('configuration_invalid','budget_disabled')
         DIAGNOSTICS.record(Category.EXPORT, Outcome.FAILED if invalid else Outcome.UNCONFIRMED,
-                           Failure.INVALID if invalid else Failure.CANCELLED if cancelled else Failure.UNAVAILABLE,
+                           Failure.DISABLED if str(error)=='budget_disabled' else Failure.INVALID if invalid else Failure.CANCELLED if cancelled else Failure.UNAVAILABLE,
                            seconds=time.monotonic()-started)
         raise
     failures = [x for x in outcomes if x['state'] != 'delivered']
-    disabled = any(x.get('error_code') == 'budget_disabled' for x in failures)
+    codes={x.get('error_code') for x in failures}
+    failure = (Failure.DISABLED if 'budget_disabled' in codes else Failure.DENIED if codes & {'provider_http_401','provider_http_403'}
+        else Failure.INVALID if codes & {'configuration_invalid','payload_too_large','payload_hash_mismatch','payload_identity_mismatch','destination_conflict'}
+        else Failure.CAPACITY if 'destination_capacity' in codes else Failure.UNAVAILABLE if failures else Failure.NONE)
     DIAGNOSTICS.record(Category.EXPORT, Outcome.FAILED if failures else Outcome.SUCCEEDED,
-                       Failure.DISABLED if disabled else Failure.UNAVAILABLE if failures else Failure.NONE,
-                       seconds=time.monotonic()-started)
+                       failure, seconds=time.monotonic()-started)
     return outcomes
 
 
-def _run_once(backend, google, max_jobs=3):
-    """One bounded run. Every failure stays visible on the same persistent job."""
+def _run_once(backend, google, max_jobs, budget):
+    """One job at a time; database claims and due times survive process exit."""
     if type(max_jobs) is not int or not 1 <= max_jobs <= 3:
         raise ExportError('configuration_invalid')
-    jobs = backend.rpc('stats_export_jobs', {'p_limit': max_jobs})
-    outcomes = []
-    for item in jobs:
-        job_id = item['job_id']
+    google._guard()  # Disabled/stale budget or missing credentials never consume a claim.
+    backend.budget=google.budget=budget
+    google.remaining=google.config.request_limit
+    outcomes=[]
+    for _ in range(max_jobs):
+        if budget.until-budget.clock()<5: break
+        claim=backend.rpc('stats_export_claim',{})
+        if claim is None: break
         try:
-            job = backend.rpc('stats_export_reserve', {'p_job_id': job_id})
-            receipt = google.deliver(job)
-            backend.rpc('stats_export_finish', {'p_job_id': job_id, 'p_receipt': receipt})
-            outcomes.append({'job_id': job_id, 'state': 'delivered'})
+            job_id=str(uuid.UUID(claim['job_id'])); token=str(uuid.UUID(claim['claim_token']))
+        except (KeyError,TypeError,ValueError): raise ExportError('backend_transport') from None
+        arguments={'p_job_id':job_id,'p_claim_token':token}
+        try:
+            job=backend.rpc('stats_export_claimed_reserve',arguments)
+            receipt=google.deliver(job)  # Preflight + complete readback before any resubmission.
+            backend.rpc('stats_export_acknowledge',dict(arguments,p_receipt=receipt))
+            outcomes.append({'job_id':job_id,'state':'delivered'})
         except ExportError as error:
-            code = str(error)
-            safe_codes = {'budget_disabled', 'configuration_invalid', 'request_limit', 'payload_too_large',
-                'payload_hash_mismatch', 'payload_identity_mismatch', 'destination_conflict', 'destination_capacity',
-                'provider_response', 'provider_timeout', 'provider_transport', 'response_too_large', 'redirect_denied'}
-            if code not in safe_codes and not re.fullmatch(r'provider_http_[1-5][0-9]{2}', code):
-                code = 'backend_transport'
-            backend.rpc('stats_export_fail', {'p_job_id': job_id, 'p_error_code': code})
-            outcomes.append({'job_id': job_id, 'state': 'failed', 'error_code': code})
+            if str(error)=='claim_lost': raise  # A stale worker cannot update a successor.
+            safe={'budget_disabled','configuration_invalid','request_limit','payload_too_large',
+                'payload_hash_mismatch','payload_identity_mismatch','destination_conflict','destination_capacity',
+                'destination_unavailable','provider_response','provider_timeout','provider_transport',
+                'response_too_large','redirect_denied','backend_transport','run_deadline'}
+            code=str(error)
+            if code not in safe and not re.fullmatch(r'provider_http_[1-5][0-9]{2}',code): code='backend_transport'
+            result=backend.rpc('stats_export_record_failure',dict(arguments,p_error_code=code,p_retry_after=error.retry_after))
+            if result and result.get('state')=='delivered':
+                outcomes.append({'job_id':job_id,'state':'delivered'})  # Lost acknowledgement, server-confirmed receipt.
+            else: outcomes.append({'job_id':job_id,'state':'failed','error_code':code})
+            if code in ('budget_disabled','configuration_invalid','provider_http_401','provider_http_403',
+                        'provider_http_429','provider_timeout','provider_transport','backend_transport','run_deadline'):
+                break  # A shared outage/throttle must not consume the rest of this invocation.
     return outcomes
+
+
+def scheduler_once(config, backend, google, **bounds):
+    """Disabled by default. One invocation only; installs no timer or recurring job."""
+    if not isinstance(config,dict): raise ExportError('configuration_invalid')
+    if config.get('scheduler_enabled') is not True: return {'state':'disabled'}
+    return {'state':'processed','outcomes':run_once(backend,google,**bounds)}
 
 def main():
     parser = SafeArgumentParser(description=__doc__)
     parser.add_argument('--config', help='private trusted runtime JSON configuration')
+    parser.add_argument('--scheduled-once', action='store_true', help='disabled-by-default bounded scheduling entry; registers nothing')
     parser.add_argument('--status', action='store_true', help='passive readiness; no backend or Google requests')
     args = parser.parse_args()
     try:
@@ -385,12 +457,14 @@ def main():
         with open(args.config, encoding='utf-8') as handle:
             config = json.load(handle)
         if not isinstance(config, dict): raise ValueError()
+        if args.scheduled_once and config.get('scheduler_enabled') is not True:
+            print(json.dumps({'state':'disabled'})); return 3
         # Credentials are supplied by trusted environment injection, not JSON or CLI.
         backend = Backend(config['backend_rest_url'], os.environ['TEAMSTATS_EXPORT_SERVICE_TOKEN'])
         google = GoogleSheets(GoogleConfig(token=os.environ.get('TEAMSTATS_GOOGLE_ACCESS_TOKEN', ''),
             enabled=config.get('google_enabled', False),
             billing_disabled_verified_at=config.get('billing_disabled_verified_at', '')))
-        outcomes = run_once(backend, google)
+        outcomes = scheduler_once(config,backend,google)['outcomes'] if args.scheduled_once else run_once(backend,google)
         # Only totals/fixed error codes; no records, destinations, IDs or secrets.
         print(json.dumps({'delivered': sum(x['state'] == 'delivered' for x in outcomes),
                           'failed': sum(x['state'] == 'failed' for x in outcomes),

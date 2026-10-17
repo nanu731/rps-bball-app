@@ -3,7 +3,7 @@
 Status: working requirements; current implementation and verification evidence
 are recorded in PROJECT_CONTEXT.md and WORKFLOW.md. End-to-end authorization
 below supersedes older bounded-step stopping rules; open provider gates remain.
-Last updated: 2026-10-12.
+Last updated: 2026-10-17.
 
 ## Purpose and users
 
@@ -697,3 +697,13 @@ or independent source review does not pass light/dark/rotation/Dynamic Type/Voic
 keyboard Save, delayed/failed writes, unsaved navigation or known-access-loss checks.
 Hosted Free capacity is unknown and denies delivery by default. No local records
 are auto-uploaded, approval is not optimistic, and release is not authorized.
+
+## Current remaining-work reconciliation —2026-10-17
+
+[READINESS.md](READINESS.md) consolidates the remaining product/engineering work,
+provider/configuration gates, owner policy/content, device/accessibility acceptance
+and release-only prerequisites against the111-item reliability audit. Earlier
+TODO lists remain historical context; adopted permission/completion/defaults are
+not reopened. Scheduling source/local tests do not establish activated Google
+delivery, hosted recovery, device acceptance or release readiness. No new collection
+field, metric, live tracking or offline-sync requirement is introduced.

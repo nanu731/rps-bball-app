@@ -971,3 +971,34 @@ Standards0/Spec0 findings. Installed DiagnosticsAcceptance1.0(1) matches266ac77;
 original UIAcceptance6713efe and all protected3working/index+174JSON unchanged.
 No hosted monitoring, crash reporting, alerts, provider activation or release
 acceptance is inferred. Final documentation checkpoint does not change app source.
+
+## Disabled export scheduling preparation —2026-10-17
+
+Source-only migration15 adds durable eligibility, five-attempt/seven-day retry
+cycles, bounded exponential jitter, Retry-After/provider cooldown, one-job claims
+and stale-token fencing. Historical reservation counts stay intact; pre-existing
+failed jobs require explicit legacy review. Service-only recovery preserves the
+immutable destination/history. The disabled scheduled-once entry installs no job.
+Google budget/credential preflight precedes claims; no real provider request or
+existing database/migration activation occurred. NETWORK.md and exports.md define
+elapsed/DNS and external-write limitations; there is no universal exactly-once claim.
+
+Local standard-library suites: export21+scheduler7 passed; diagnostics6 passed.
+Actual new Postgres17 database/restore across15migrations and a separate synthetic
+old-schema upgrade passed. Queue checks include fresh-process due timing,1of8
+concurrent claims, expiry/backoff, cycle boundary, exhausted/manual recovery,
+provider cooldown across jobs, starvation prevention and legacy command denial.
+Actual worker/SQL plus loopback fake Google confirmed timeout-after-applied write
+and lost backend acknowledgment recovery with one batch. These are not real
+Google or actual Supabase Auth integration results. Red/green evidence retained
+privately for deadline, clock skew, extra throttle claims, cross-job cooldown and
+legacy-failure backfill. Independent final Standards0/Spec0 findings.
+
+[READINESS.md](READINESS.md) is the consolidated remaining-work list. Scheduler
+activation and real Google delivery remain disabled. Migration14/15 were not
+applied to existing application/hosted databases; bootstrap untouched. Auth's
+immediate reuse-lockout failure and extra-grace rejection pass remain distinct.
+UI landscape/iPad Reduce Motion/VoiceOver, physical/actual26.0, hosted recovery,
+provider/budget and owner policy/content/release gates remain open. Native source
+unchanged; no native build or Simulator probe repeated. Final preservation and
+actual remote CI receipts are recorded after the scoped push.

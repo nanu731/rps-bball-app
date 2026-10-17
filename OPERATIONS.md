@@ -115,3 +115,15 @@ passed. Hosted Auth/refresh/signing-key behavior remains an activation gate.
 TESTING.md keeps actual landscape, iPad Reduce Motion traversal/transitions, actual
 VoiceOver, physical-device and actual26.0 checks open. Hosted disaster recovery is
 unverified; synthetic evidence does not establish production monitoring or readiness.
+
+## Export scheduling preparation —2026-10-17
+
+[exports.md](supabase/exports.md) now defines durable eligibility, bounded retries,
+provider cooldown, fenced claims and explicit trusted manual recovery. The
+scheduled-once entry is disabled by default and registers no recurring job.
+Preflight budget/credentials precede claims. Provider throttles stop the invocation
+and persist across processes; no diagnostic signal activates a worker. Owner-only
+export status is distinct from private processing diagnostics and statistical
+acceptance. No raw provider delay/header/body is logged; only bounded timing or
+fixed categories enter diagnostics. [READINESS.md](READINESS.md) consolidates the
+remaining PRD/audit gates. Real Google delivery and scheduler activation stay off.
