@@ -354,6 +354,7 @@ final class BackendAccount {
         guard !isBusy, let configuration else { return }
         isBusy = true
         defer { isBusy = false }
+        OperationDiagnostics.shared.reset()
         sessionContextID = nil
         offlineClipActorID = nil
         do { try invalidateOfflineActor() }
@@ -375,6 +376,7 @@ final class BackendAccount {
         issue = remoteFailure ? .signOutRemoteFailure : nil
         state = .signedOut
         client = makeClient(configuration)
+        if remoteFailure { OperationDiagnostics.shared.note(.session, outcome: .unconfirmed, failure: .unavailable) }
     }
 
     private func acceptSession(expectedEmail: String? = nil) async throws {
@@ -461,6 +463,7 @@ final class BackendAccount {
 
     private func makeClient(_ value: AccountConfiguration) -> SupabaseClient {
         let generation = UUID()
+        OperationDiagnostics.shared.reset()
         clientGeneration = generation
         let auth = AuthClient(url: value.url.appendingPathComponent("auth/v1"),
             headers: ["apikey": value.publicKey, "Authorization": "Bearer " + value.publicKey],
@@ -521,6 +524,14 @@ final class BackendAccount {
     }
 
     private func fail(_ issue: AccountIssue) {
+        let failure: DiagnosticFailure
+        switch issue {
+        case .storage: failure = .storage
+        case .noVerifiedSession: failure = .denied
+        case .provider, .signOutRemoteFailure, .phoneDeliveryDisabled: failure = .unavailable
+        default: failure = .invalid
+        }
+        OperationDiagnostics.shared.note(.session, outcome: .failed, failure: failure)
         self.issue = issue
         state = .error
     }

@@ -6,6 +6,38 @@ import Supabase
 // Synthetic SDK/HTTP responses establish transport/state behavior, not Storage/decode rights.
 @MainActor
 final class PrivateFilesTests: XCTestCase {
+    func testDiagnosticsReportFileDenialWithoutPrivateMetadata() async throws {
+        OperationDiagnostics.shared.reset()
+        let fixture = NativeFileFixture(mode: .denied), model = try fixture.model()
+        await model.load()
+        XCTAssertEqual(model.issue, .denied); XCTAssertTrue(model.versions.isEmpty)
+        let events = OperationDiagnostics.shared.snapshot().events
+        XCTAssertTrue(events.contains { $0.category == .fileOperation && $0.failure == .denied })
+        let output = String(decoding: try JSONEncoder().encode(events), as: UTF8.self)
+        for forbidden in ["PRIVATE diagnostic", "TEST ONLY CLIP", privateVersion.uuidString, privateActor.uuidString, "Bearer", "SYNTHETIC"] { XCTAssertFalse(output.contains(forbidden)) }
+        print("TEST ONLY DIAGNOSTIC " + output)
+    }
+    func testTransportDiagnosticsDistinguishConfirmedDenialFromLostUploadReply() async throws {
+        OperationDiagnostics.shared.reset()
+        let denied = NativeFileFixture(mode: .deniedDownload), model = try denied.model()
+        await model.load()
+        let version = try XCTUnwrap(model.published.first)
+        let result = await model.retrieve(version, keepOnDevice: true)
+        XCTAssertNil(result); XCTAssertEqual(model.issue, .denied)
+        XCTAssertTrue(OperationDiagnostics.shared.snapshot().events.contains {
+            $0.category == .fileTransport && $0.outcome == .failed && $0.failure == .denied
+        })
+        OperationDiagnostics.shared.reset()
+        let lost = NativeFileFixture(mode: .uploadFailure), upload = try lost.model()
+        await upload.load()
+        var input = PrivateFileInput(); input.title = "TEST ONLY CLIP"
+        _ = await upload.reserve(data: nativeFileBytes, input: input)
+        let receipt = await upload.upload()
+        XCTAssertNil(receipt); XCTAssertTrue(upload.uploadNeedsReconciliation)
+        XCTAssertTrue(OperationDiagnostics.shared.snapshot().events.contains {
+            $0.category == .fileTransport && $0.outcome == .unconfirmed && $0.failure == .unavailable
+        })
+    }
     func testRepresentativeFileBodiesRetainExactBytesWithoutDuplicateDelivery() async throws {
         // Synthetic byte-pipeline coverage, not proof of video decoding or hosted throughput.
         for size in [1, 10] {
@@ -145,7 +177,7 @@ private let privateResource = UUID(uuidString: "b4000000-0000-4000-8000-00000000
 private let privateVersion = UUID(uuidString: "b5000000-0000-4000-8000-000000000001")!
 private let nativeFileBytes = Data("TEST ONLY protocol file bytes".utf8)
 private final class NativeFileFixture: @unchecked Sendable {
-    enum Mode { case standard, conflict, empty, lostReservation, uploadFailure, corruptDownload, oversizedDownload, interruptedDownload, denied, unavailable }
+    enum Mode { case standard, conflict, empty, lostReservation, uploadFailure, corruptDownload, oversizedDownload, interruptedDownload, deniedDownload, denied, unavailable }
     let key = UUID().uuidString
     private let lock = NSLock(); private var mode: Mode
     private let bytes: Data
@@ -197,6 +229,7 @@ private final class NativeFileFixture: @unchecked Sendable {
                 return ok(version(status: "ready", receipt: true))
             }
             if request.url!.path.contains("/files/") {
+                if mode == .deniedDownload { return (403, json(["error": "PRIVATE diagnostic"]), "application/json", false) }
                 if mode == .corruptDownload { return (200, Data(repeating: 33, count: bytes.count), "video/mp4", false) }
                 if mode == .oversizedDownload { return (200, bytes + Data([1]), "video/mp4", false) }
                 return (200, bytes, "video/mp4", mode == .interruptedDownload)

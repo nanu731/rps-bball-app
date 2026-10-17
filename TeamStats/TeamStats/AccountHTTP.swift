@@ -16,15 +16,17 @@ nonisolated enum AccountHTTP {
     static func send(_ request: URLRequest, session: URLSession,
                      budget: Duration = .seconds(30), maximum: Int = 1024 * 1024,
                      jitter: @escaping @Sendable () -> Double = { Double.random(in: 0...1) }) async throws -> (Data, URLResponse) {
+        let diagnostic = OperationDiagnostics.shared.begin(.authentication, attempts: 0)
         let clock = ContinuousClock()
         let deadline = clock.now.advanced(by: budget)
         // Only this identity read is replay-safe. File GETs reserve transfer allowance.
         let safeRead = request.httpMethod == "GET" && request.url?.path == "/auth/v1/user"
         do {
-            return try await withThrowingTaskGroup(of: (Data, URLResponse).self) { group in
+            let result = try await withThrowingTaskGroup(of: (Data, URLResponse).self) { group in
                 group.addTask {
                     for attempt in 0..<(safeRead ? 3 : 1) {
                         try Task.checkCancellation()
+                        diagnostic.attempt()
                         var delay: Double?
                         do {
                             let result = try await read(request, session: session, maximum: maximum)
@@ -60,9 +62,21 @@ nonisolated enum AccountHTTP {
                 try Task.checkCancellation()
                 return result
             }
-        } catch is CancellationError { throw CancellationError() }
+            let status = (result.1 as? HTTPURLResponse)?.statusCode ?? 0
+            let failure: DiagnosticFailure = [401, 403, 404].contains(status) ? .denied : status >= 500 ? .unavailable : .invalid
+            diagnostic.finish((200..<300).contains(status) ? .succeeded : .failed,
+                              failure: (200..<300).contains(status) ? .none : failure)
+            return result
+        } catch is CancellationError {
+            diagnostic.finish(safeRead ? .cancelled : .unconfirmed, failure: .cancelled)
+            throw CancellationError()
+        }
         catch {
-            if Task.isCancelled { throw CancellationError() }
+            if Task.isCancelled {
+                diagnostic.finish(safeRead ? .cancelled : .unconfirmed, failure: .cancelled)
+                throw CancellationError()
+            }
+            diagnostic.finish(safeRead ? .failed : .unconfirmed, failure: .unavailable)
             // Do not let the SDK retry POSTs or multiply this transport's read budget.
             // Confirmed HTTP denials were returned intact above for Auth's own cleanup.
             throw error as? Failure ?? Failure.unavailable

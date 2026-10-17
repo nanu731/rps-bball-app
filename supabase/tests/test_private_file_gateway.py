@@ -137,8 +137,15 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
         self.assertEqual(self.admissions,1)
         self.assertFalse(self.claimed)
     def test_lost_admission_reply_is_not_replayed_or_treated_as_transfer(self):
+        from operation_diagnostics import Diagnostics
+        diagnostics=Diagnostics(sink=lambda _:None)
         self.admission_unavailable = True
-        self.failure(self.upload,'provider_operation_unconfirmed')
+        with patch.object(MODULE,'DIAGNOSTICS',diagnostics):
+            self.failure(self.upload,'provider_operation_unconfirmed')
+        self.assertEqual(diagnostics.availability(enabled=True,configured=True)['readiness'],'downstream_unavailable')
+        output=json.dumps(diagnostics.snapshot())
+        self.assertIn('unconfirmed',output)
+        for forbidden in ['SYNTHETIC USER',OPERATION,PATH]: self.assertNotIn(forbidden,output)
         self.assertEqual(self.admissions,1)
         self.assertEqual(self.objects,{})
         self.assertFalse(self.claimed)
@@ -251,7 +258,7 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
             probe.bind(('127.0.0.1',0));port=probe.getsockname()[1]
         config=dict(self.config,mode='isolated_local',hosted_enabled=False,listen_port=port)
         path=Path(self.temp.name)/'gateway.local.json';path.write_text(json.dumps(config));path.chmod(0o600)
-        process=subprocess.Popen([sys.executable,str(Path(__file__).parents[1]/'private_file_gateway.py'),'--config',str(path)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        process=subprocess.Popen([sys.executable,str(Path(__file__).parents[1]/'private_file_gateway.py'),'--config',str(path)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         try:
             deadline=time.monotonic()+3
             while True:
@@ -260,14 +267,34 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
                 except OSError:
                     if time.monotonic()>deadline:self.fail('gateway did not start')
                     time.sleep(.03)
+            root='http://127.0.0.1:'+str(port)
+            with urllib.request.urlopen(root+'/health/live',timeout=2) as response:
+                self.assertEqual(json.load(response),{'liveness':'alive'})
+                self.assertEqual(response.headers['Cache-Control'],'no-store')
+            with self.assertRaises(urllib.error.HTTPError) as status:
+                urllib.request.urlopen(root+'/health/ready',timeout=2)
+            self.assertEqual(status.exception.code,503)
+            readiness=json.load(status.exception)
+            self.assertEqual(readiness['readiness'],'not_verified')
+            self.assertEqual(readiness['hosted_delivery'],'disabled')
+            self.assertEqual(self.objects,{}); self.assertEqual(self.admissions,0)
             request=urllib.request.Request('http://127.0.0.1:'+str(port)+'/uploads/'+OPERATION,data=DATA,
                                            headers={'Authorization':'Bearer SYNTHETIC USER'},method='POST')
             with urllib.request.urlopen(request,timeout=5) as response:
                 self.assertEqual(response.status,200);self.assertEqual(json.load(response)['status'],'ready')
                 self.assertEqual(response.headers['Cache-Control'],'no-store')
             self.assertEqual(self.objects[PATH],DATA)
+            import select
+            self.assertTrue(select.select([process.stderr],[],[],2)[0])
+            output=process.stderr.readline().decode()
+            event=json.loads(output)
+            self.assertEqual(event['category'],'file_processing')
+            self.assertEqual(event['outcome'],'succeeded')
+            for forbidden in [PATH, OPERATION, 'SYNTHETIC USER', DATA.decode(), 'Authorization']:
+                self.assertNotIn(forbidden,output)
+            print('TEST ONLY WORKER DIAGNOSTIC '+output.strip())
         finally:
-            process.terminate();process.wait(timeout=3)
+            process.terminate();process.communicate(timeout=3)
 
     @unittest.skipUnless(os.environ.get('TEAMSTATS_MEDIA_VALIDATOR') and os.environ.get('TEAMSTATS_MEDIA_FIXTURES'), 'Actual pinned native validator/fixtures must be configured')
     def test_actual_portrait_clip_has_consistent_native_and_gateway_bounds(self):

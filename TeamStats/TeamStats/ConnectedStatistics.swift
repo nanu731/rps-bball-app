@@ -321,18 +321,27 @@ final class ConnectedStatistics {
     private(set) var confirmation: String?
     @ObservationIgnored private let authenticatedClient: () async throws -> SupabaseClient
     init(account: BackendAccount, teamID: UUID) {
+        self.diagnostics = .shared
         self.teamID = teamID
         authenticatedClient = { try await account.authenticatedClient() }
     }
     /// Real SDK HTTP transport injection for synthetic public-seam tests.
-    init(teamID: UUID, authenticatedClient: @escaping () async throws -> SupabaseClient) {
+    @ObservationIgnored private let diagnostics: OperationDiagnostics
+    init(teamID: UUID, authenticatedClient: @escaping () async throws -> SupabaseClient,
+         diagnostics: OperationDiagnostics = .shared) {
+        self.diagnostics = diagnostics
         self.teamID = teamID; self.authenticatedClient = authenticatedClient
     }
     func loadGames() async {
         guard !isBusy else { return }
         isBusy = true; issue = nil; confirmation = nil; didLoadGames = false
         retryGame = nil; clearGame()
-        defer { isBusy = false }
+        let diagnostic = diagnostics.begin(.sharedLoad)
+        defer {
+            diagnostic.finish(Task.isCancelled ? .cancelled : didLoadGames ? .succeeded : .failed,
+                              failure: Task.isCancelled ? .cancelled : diagnosticFailure)
+            isBusy = false
+        }
         do {
             let client = try await authenticatedClient()
             let snapshot: TeamAccess = try await command(client, "team_access", [:])
@@ -410,7 +419,14 @@ final class ConnectedStatistics {
             issue = .reloadRequired; reloadRequired = true; return false
         }
         guard beginMutation(), let game = selectedGame else { return false }
-        defer { isBusy = false }
+        let diagnostic = diagnostics.begin(.sharedSave)
+        var confirmed = false
+        defer {
+            let uncertain = Task.isCancelled || issue == .server || issue == .invalidResponse
+            diagnostic.finish(confirmed ? .succeeded : uncertain ? .unconfirmed : .failed,
+                              failure: Task.isCancelled ? .cancelled : diagnosticFailure)
+            isBusy = false
+        }
         do {
             let client = try await authenticatedClient()
             let rawItems = try JSONDecoder().decode(AnyJSON.self, from: JSONEncoder().encode(items))
@@ -422,6 +438,7 @@ final class ConnectedStatistics {
             }) else { throw ConnectedStatisticsIssue.invalidResponse }
             try await readGame(game, client: client)
             confirmation = "Server confirmed all draft changes."
+            confirmed = true
             return true
         } catch { mutationFailed(error); return false }
     }
@@ -572,7 +589,12 @@ final class ConnectedStatistics {
         guard game.teamID == teamID else { issue = .invalidInput; return }
         retryGame = game; isBusy = true; issue = nil; confirmation = nil
         clearGame()
-        defer { isBusy = false }
+        let diagnostic = diagnostics.begin(.sharedLoad)
+        defer {
+            diagnostic.finish(Task.isCancelled ? .cancelled : didLoadGame ? .succeeded : .failed,
+                              failure: Task.isCancelled ? .cancelled : diagnosticFailure)
+            isBusy = false
+        }
         do { try await readGame(game, client: authenticatedClient()) }
         catch { clearGame(); fail(error) }
     }
@@ -648,6 +670,15 @@ final class ConnectedStatistics {
         var parameters = values; parameters["p_team_id"] = .string(teamID.uuidString)
         // A lost POST response cannot safely be replayed using an old revision.
         return try await client.rpc(name, params: parameters).retry(enabled: false).execute().value
+    }
+    private var diagnosticFailure: DiagnosticFailure {
+        switch issue {
+        case nil: .none
+        case .denied: .denied
+        case .conflict, .reloadRequired, .recoveryUnavailable: .conflict
+        case .invalidInput, .invalidResponse, .tooManyRecords: .invalid
+        case .server: .unavailable
+        }
     }
     private func fail(_ error: Error) {
         confirmation = nil

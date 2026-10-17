@@ -913,3 +913,47 @@ Standards0/Spec0 actionable findings. Canonical PerformanceAcceptance1.0(1)
 source matches12a5bc6; original UIAcceptance remains6713efe. Protected3working/
 index entries and174original JSON hashes remain unchanged. No hosted activation
 or release acceptance is implied.
+
+## Bounded operational diagnostics —2026-10-16, baseline623d2ca
+
+OPERATIONS.md defines safe envelopes, inspection, volatile/output bounds, passive
+worker availability and incident handling. No provider, support export/interface,
+crash service, alerts, scheduler or security-audit changes were added.
+
+- Integrated isolated native build/83tests passed. After review caught a transport
+  classification gap, a new real retrieve403/lost-upload503 test first failed;
+  typed classification was corrected and the final affected build/17tests passed
+  (12PrivateFiles,5Diagnostics). The unchanged Auth/account/shared suites passed
+  in the integrated run. No original application/container was installed over.
+- Actual native unified log inspection found62 closed JSON envelopes in this
+  task's captured window. Formatter, hostile-content exclusion, account-generation
+  reset, cancellation, buffer/TTL/emission caps, concurrency, sink/storage failures
+  and an actual successful draft save with a blocked/failing diagnostic sink passed.
+  OS metadata and platform retention are separate from the safe message envelope.
+- Five synthetic Debug Simulator samples of10,000 validation events: baseline
+  6.66–6.84ms, instrumented88.49–99.16ms (roughly8–9microseconds added/event).
+  A1000-event concurrent burst with a blocked sink took12.72ms. These are local
+  samples, not production percentiles or proof of every device's performance.
+- Python diagnostics6tests passed: actual stderr/CLI envelopes, bounded growth,
+  cancellation/fail-open export, blocked sink, disabled/missing prerequisites,
+  recent failure versus stale observations. The readiness invalid-request masking
+  regression failed before the correction and passed afterward. A1000-event
+  blocked-sink burst took12.9ms in one local sample.
+- Actual synthetic loopback HTTP health/output and lost-admission downstream status
+  passed. The earlier full gateway run28tests passed(1opt-in validator skip); a
+  final local rerun retained2process-cleanup errors: macOS returned PermissionError
+  for killpg(group,0) in existing monitor-failure tests. This is a local execution
+  limitation, not a passing final full suite or evidence to change parser policy.
+  Remote Linux execution is recorded separately after push.
+
+Isolated installed test app: com.narayanlekhi.TeamStats.DiagnosticsAcceptance,
+1.0(1), iPhone17/iOS26.4/Xcode26.4. Original UIAcceptance remains source6713efe.
+No UI acceptance gate was retested or closed. Protected3working/index entries and
+174original JSON hashes are unchanged; retained files/temporary identities preserved.
+Both local Auth reuse findings, source-only migration14, disabled hosted delivery,
+backup-policy/hosted-recovery, physical/actual26.0 and remaining UI/VoiceOver gates
+remain open. Final Standards0/Spec0 actionable findings. CI evidence follows.
+
+Existing local regressions on final source: export21, deadline1, recovery5 and
+relay10 passed. Installed DiagnosticsAcceptance executable matches the final
+tested build; all copied Swift source/test bytes match the checkout.

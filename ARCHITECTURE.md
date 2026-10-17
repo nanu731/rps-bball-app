@@ -151,3 +151,10 @@ request history. Complete snapshot validation and bounded pagination remain.
 Private-file byte iteration explicitly uses the concurrent executor; body limits,
 structured cancellation, integrity checks and no-replay delivery stay unchanged.
 No cache, index, migration, offline-sync expansion or provider activation was added.
+
+## Operational evidence boundary —2026-10-16
+
+[OPERATIONS.md](OPERATIONS.md) defines the content-free native OS/volatile-buffer
+and worker stderr/status seams. They observe typed outcomes without changing
+records, command authority, retry policy or offline-sync scope. Diagnostics are
+lossy and fail open; passive liveness is separate from authorized readiness.

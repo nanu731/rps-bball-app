@@ -40,6 +40,7 @@ jobs:
           python3 -m unittest discover -s supabase/tests -p test_sheets_export.py
           python3 -m unittest discover -s supabase/tests -p test_private_file_gateway.py
           python3 -m unittest discover -s supabase/tests -p test_http_deadline.py
+          python3 -m unittest discover -s supabase/tests -p test_operation_diagnostics.py
           python3 -m unittest discover -s supabase/tests -p test_recovery_drill.py
           node --test supabase/tests/test_file_relay.mjs
       - name: Fresh migrations and synthetic backup restore

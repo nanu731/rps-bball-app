@@ -5,6 +5,40 @@ import Supabase
 
 @MainActor
 final class ConnectedStatisticsTests: XCTestCase {
+    func testBlockedFailingDiagnosticsCannotDelayOrChangeConfirmedDraftSave() async throws {
+        let entered = expectation(description: "sink entered")
+        let release = DispatchSemaphore(value: 0)
+        defer { release.signal() }
+        let diagnostics = OperationDiagnostics { _ in
+            entered.fulfill(); release.wait()
+            throw CocoaError(.fileWriteOutOfSpace)
+        }
+        let fixture = StatisticsFixture(), model = fixture.model(diagnostics: diagnostics)
+        await model.loadGames()
+        await fulfillment(of: [entered], timeout: 2)
+        await model.loadGame(try XCTUnwrap(model.games.first))
+        let version = try XCTUnwrap(model.ownVersions.first)
+        let saved = await model.saveDraftBatch([ConnectedDraftSave(version: version, records: version.records, coveredRoster: version.coveredRoster)])
+        XCTAssertTrue(saved); XCTAssertNotNil(model.confirmation); XCTAssertFalse(model.reloadRequired)
+        XCTAssertEqual(fixture.commands.filter { $0.name == "stats_save_drafts" }.count, 1)
+        XCTAssertTrue(diagnostics.snapshot().events.contains { $0.category == .sharedSave && $0.outcome == .succeeded })
+    }
+    func testDiagnosticsExposeUnconfirmedSaveWithoutSensitiveProviderContent() async throws {
+        OperationDiagnostics.shared.reset()
+        let fixture = StatisticsFixture(mode: .serverFailure), model = fixture.model()
+        await model.loadGames(); await model.loadGame(try XCTUnwrap(model.games.first))
+        let version = try XCTUnwrap(model.ownVersions.first)
+        let saved = await model.saveDraftBatch([ConnectedDraftSave(version: version, records: version.records, coveredRoster: version.coveredRoster)])
+        XCTAssertFalse(saved); XCTAssertNil(model.confirmation); XCTAssertTrue(model.reloadRequired)
+        let events = OperationDiagnostics.shared.snapshot().events
+        XCTAssertTrue(events.contains { $0.category == .sharedLoad && $0.outcome == .succeeded })
+        XCTAssertTrue(events.contains { $0.category == .sharedSave && $0.outcome == .unconfirmed })
+        let output = String(decoding: try JSONEncoder().encode(events), as: UTF8.self)
+        for forbidden in ["SENSITIVE_FIXTURE_PAYLOAD", statsTeamID.uuidString, statsPlayerID.uuidString, "Synthetic opponent", "points"] {
+            XCTAssertFalse(output.contains(forbidden))
+        }
+        print("TEST ONLY DIAGNOSTIC " + output)
+    }
     func testGameLoadReadsOnlyItsCorrectionRequestsAndKeepsPagination() async throws {
         for relevantCount in [8, 101] {
             let fixture = StatisticsFixture(mode: .seasonRequests, gameRequestCount: relevantCount)
@@ -507,13 +541,13 @@ private final class StatisticsFixture: @unchecked Sendable {
     var commands: [Command] { lock.withLock { commandValues } }
     var requestCount: Int { lock.withLock { requests } }
     var gameOffsets: [Int] { lock.withLock { offsets } }
-    @MainActor func model() -> ConnectedStatistics {
+    @MainActor func model(diagnostics: OperationDiagnostics = .shared) -> ConnectedStatistics {
         StatisticsProtocol.registry.insert(self)
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StatisticsProtocol.self]
         configuration.httpAdditionalHeaders = ["X-Statistics-Fixture": key]
         let client = SupabaseClient(supabaseURL: URL(string: "https://statistics.invalid")!, supabaseKey: "sb_publishable_synthetic_fixture", options: .init(auth: .init(autoRefreshToken: false), global: .init(session: URLSession(configuration: configuration), logger: nil)))
-        return ConnectedStatistics(teamID: statsTeamID, authenticatedClient: { client })
+        return ConnectedStatistics(teamID: statsTeamID, authenticatedClient: { client }, diagnostics: diagnostics)
     }
     func response(_ request: URLRequest) -> (Int, Data) {
         lock.lock(); defer { lock.unlock() }

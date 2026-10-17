@@ -99,3 +99,11 @@ route remain owner TODOs in RECOVERY.md. Hosted disaster recovery, actual landsc
 iPad Reduce Motion traversal/transitions, actual VoiceOver, physical devices and
 actual26.0 remain open in TESTING.md. Performance, broader monitoring and automatic
 export scheduling are outside this pass.
+
+## Diagnostic observation —2026-10-16
+
+Content-free Auth/shared/file outcomes and passive worker availability are defined
+in [OPERATIONS.md](OPERATIONS.md). Confirmed denial, cancellation and uncertain
+writes remain distinct. Output does not trigger retries, prove commitment or
+change deadlines/current authority. No provider probe, activation or scheduler
+is introduced; all activation and Auth reuse findings above remain open.

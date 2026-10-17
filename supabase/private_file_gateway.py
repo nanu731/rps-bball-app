@@ -6,6 +6,8 @@ Actual Storage objects and an independently pinned validator establish receipts.
 """
 from __future__ import annotations
 import argparse
+import functools
+from operation_diagnostics import DIAGNOSTICS, Category, Outcome, Failure, SafeArgumentParser
 import hashlib
 import http.server
 import json
@@ -16,6 +18,7 @@ import re
 import resource
 import signal
 import stat
+import sys
 import subprocess
 import tempfile
 import threading
@@ -271,6 +274,28 @@ def verified_validation(kind: str, data: bytes, reply: dict) -> dict:
         details = {'duration': duration, 'width': width, 'height': height, 'videoCodec': 'h264', 'audioCodec': details.get('audioCodec')}
     return {'byte_count': len(data), 'sha256': digest, 'content_type': media_type, 'validation_details': details}
 
+def observed_file(function):
+    @functools.wraps(function)
+    def call(*args, **kwargs):
+        started = time.monotonic()
+        try:
+            result = function(*args, **kwargs)
+        except BaseException as error:
+            failure = Failure.UNAVAILABLE
+            if isinstance(error, (KeyboardInterrupt, SystemExit)): failure = Failure.CANCELLED
+            elif isinstance(error, FileFailure):
+                if error.status in (401, 403): failure = Failure.DENIED
+                elif error.status == 429 or error.code in {'private_file_capacity_unknown', 'capacity_unavailable'}: failure = Failure.CAPACITY
+                elif 400 <= error.status < 500: failure = Failure.INVALID
+            DIAGNOSTICS.record(Category.FILE,
+                Outcome.UNCONFIRMED if failure in (Failure.UNAVAILABLE, Failure.CANCELLED) else Outcome.FAILED,
+                failure, seconds=time.monotonic()-started)
+            raise
+        DIAGNOSTICS.record(Category.FILE, Outcome.SUCCEEDED, seconds=time.monotonic()-started)
+        return result
+    return call
+
+
 class FileGateway:
     """Public byte seam used by HTTP and synthetic external-provider fixtures."""
     def __init__(self, providers: Providers, validator: TrustedValidator):
@@ -290,6 +315,7 @@ class FileGateway:
         if reply['retry_after'] != 0:
             raise FileFailure('admission_unavailable', 503)
 
+    @observed_file
     def upload(self, token: str, operation: str, stream, length: int, reconcile: bool = False) -> dict:
         operation = identifier(operation)
         self.admit(token)
@@ -330,6 +356,7 @@ class FileGateway:
                                   p_byte_count=receipt['byte_count'], p_sha256=receipt['sha256'],
                                   p_content_type=receipt['content_type'], p_validation_details=receipt['validation_details']))
 
+    @observed_file
     def download(self, token: str, version: str, operation: str) -> tuple[bytes, dict]:
         self.admit(token)
         version, operation = identifier(version), identifier(operation)
@@ -376,6 +403,12 @@ def serve(gateway: FileGateway, port: int):
         def perform(self):
             try:
                 self.connection.settimeout(30)
+                if self.command == 'GET' and self.path == '/health/live':
+                    self.respond(200, b'{"liveness":"alive"}'); return
+                if self.command == 'GET' and self.path == '/health/ready':
+                    status = DIAGNOSTICS.availability(enabled=True, configured=True)
+                    status['hosted_delivery'] = 'disabled'
+                    self.respond(503, json.dumps(status).encode()); return
                 authorization = self.headers.get('Authorization', '')
                 if not authorization.startswith('Bearer ') or len(authorization) > 16384:
                     raise FileFailure('verified_session_required', 401)
@@ -406,25 +439,52 @@ def serve(gateway: FileGateway, port: int):
         do_GET = perform
     # Bound parallel request bodies/thread count; parser concurrency is separately one.
     class Server(http.server.HTTPServer):
+        def handle_error(self, request, client_address):
+            # HTTPServer's default traceback can include arbitrary exception text.
+            DIAGNOSTICS.record(Category.FILE, Outcome.UNCONFIRMED, Failure.UNAVAILABLE)
         def get_request(self):
             connection, address = super().get_request()
             return DeadlineSocket.wrap(connection, time.monotonic() + 90), address
     Server(('127.0.0.1', port), Handler).serve_forever()
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', type=Path, required=True)
+    parser = SafeArgumentParser(description=__doc__)
+    parser.add_argument('--config', type=Path)
+    parser.add_argument('--status', action='store_true', help='passive local prerequisites; no provider probes')
     args = parser.parse_args()
-    permissions = args.config.stat()
-    if not stat.S_ISREG(permissions.st_mode) or permissions.st_mode & 0o077:
-        raise SystemExit('Use a private regular configuration with mode0600; no raw diagnostics are printed.')
-    config = json.loads(args.config.read_text())
-    if config.get('mode') != 'isolated_local' or config.get('hosted_enabled') is not False:
-        raise SystemExit('Only explicitly isolated loopback delivery is supported; hosted capacity is unverified.')
-    port = config.get('listen_port')
-    if type(port) is not int or not 1024 <= port <= 65535:
-        raise SystemExit('Invalid local gateway port.')
-    serve(FileGateway(Providers(config), TrustedValidator(config)), port)
+    try:
+        if args.config is None:
+            if args.status:
+                print(json.dumps(DIAGNOSTICS.availability(enabled=True, configured=False)))
+                return 3
+            raise ValueError()
+        permissions = args.config.stat()
+        if not stat.S_ISREG(permissions.st_mode) or permissions.st_mode & 0o077:
+            raise ValueError()
+        config = json.loads(args.config.read_text())
+        if not isinstance(config, dict): raise ValueError()
+        if config.get('mode') != 'isolated_local' or config.get('hosted_enabled') is not False:
+            raise ValueError()
+        if args.status:
+            configured = all(bool(config.get(key)) for key in
+                ('rest_url', 'storage_url', 'publishable_key', 'service_role_key', 'validator_path', 'validator_sha256', 'temporary_directory'))
+            report = DIAGNOSTICS.availability(enabled=True, configured=configured)
+            report['hosted_delivery'] = 'disabled'
+            print(json.dumps(report))
+            return 3  # Presence alone never establishes delivery readiness.
+        port = config.get('listen_port')
+        if type(port) is not int or not 1024 <= port <= 65535:
+            raise ValueError()
+        serve(FileGateway(Providers(config), TrustedValidator(config)), port)
+    except KeyboardInterrupt:
+        DIAGNOSTICS.record(Category.HEALTH, Outcome.CANCELLED, Failure.CANCELLED)
+        return 130
+    except Exception:
+        DIAGNOSTICS.record(Category.HEALTH, Outcome.FAILED, Failure.UNAVAILABLE, attempts=0)
+        print('Worker unavailable: check private local prerequisites.', file=sys.stderr)
+        return 1
 
 if __name__ == '__main__':
-    main()
+    result = main()
+    DIAGNOSTICS.flush()
+    raise SystemExit(result)

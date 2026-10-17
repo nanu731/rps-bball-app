@@ -80,6 +80,7 @@ final class PrivateFiles {
     @ObservationIgnored private let offlineActor: () -> UUID?
     @ObservationIgnored private let session: URLSession
     @ObservationIgnored let retention: ClipRetention
+    @ObservationIgnored private let diagnosticGeneration = OperationDiagnostics.shared.generation()
     @ObservationIgnored private var proposal: FileProposal?
     private struct FileProposal {
         let resourceID: UUID; let operationID: UUID; let baseID: UUID?; let bytes: Data; let input: PrivateFileInput
@@ -332,6 +333,19 @@ final class PrivateFiles {
         } else if let error = error as? ClipRetentionIssue {
             switch error { case .insufficientSpace: issue = .insufficientSpace; case .integrity: issue = .integrity; case .locked: issue = .denied; case .storage: issue = .storage }
         } else { issue = .server }
+        let diagnosticFailure: DiagnosticFailure
+        switch issue {
+        case .denied: diagnosticFailure = .denied
+        case .storage, .insufficientSpace: diagnosticFailure = .storage
+        case .integrity: diagnosticFailure = .integrity
+        case .capacity, .hostedUnavailable: diagnosticFailure = .capacity
+        case .conflict, .reloadRequired: diagnosticFailure = .conflict
+        case .server, .reconcileRequired: diagnosticFailure = .unavailable
+        default: diagnosticFailure = .invalid
+        }
+        OperationDiagnostics.shared.note(.fileOperation,
+            outcome: issue == .server || issue == .reconcileRequired ? .unconfirmed : .failed,
+            failure: Task.isCancelled ? .cancelled : diagnosticFailure, generation: diagnosticGeneration)
         if issue == .denied {
             contentConcealed = true; resources = []; versions = []; access = nil
             if let scope = clipScope { do { try retention.recordDenial(scope: scope, versionID: denialVersion) } catch { issue = .storage } }
@@ -346,29 +360,50 @@ nonisolated private struct FileDelivery: Decodable {
 nonisolated private enum PrivateFileTransfer {
     // Byte iteration must not inherit the UI actor under approachable concurrency.
     @concurrent static func read(_ request: URLRequest, session: URLSession, maximum: Int, expectedType: String? = nil) async throws -> Data {
-        let (stream, response) = try await session.bytes(for: request, delegate: FileRedirectBlocker())
-        defer { stream.task.cancel() }
-        guard let response = response as? HTTPURLResponse else { throw PrivateFileIssue.invalidResponse }
-        if !(200..<300).contains(response.statusCode) {
-            var body = Data()
-            for try await byte in stream { body.append(byte); if body.count >= 8192 { break } }
-            let code = (try? JSONSerialization.jsonObject(with: body) as? [String: String])?["error"]
-            if [401, 403].contains(response.statusCode) { throw PrivateFileIssue.denied }
-            if code == "upload_not_stored_start_new_operation" { throw PrivateFileIssue.missingUpload }
-            if ["capacity_unavailable", "private_file_capacity_unknown"].contains(code ?? "") { throw PrivateFileIssue.capacity }
-            if ["validation_resource_limit", "validator_receipt_mismatch"].contains(code ?? "") { throw PrivateFileIssue.validationFailed }
-            if ["unsupported_type", "encrypted_pdf", "malformed_file", "resource_limit", "unsupported_codec", "duration_limit", "dimension_limit", "size_limit", "active_content", "unreadable_content", "invalid_request", "unreadable", "invalid_pdf", "active_pdf", "invalid_video", "dimensions_limit", "file_validation_failed"].contains(code ?? "") { throw PrivateFileIssue.invalidFile }
-            throw PrivateFileIssue.server
+        let diagnostic = OperationDiagnostics.shared.begin(.fileTransport)
+        do {
+            let (stream, response) = try await session.bytes(for: request, delegate: FileRedirectBlocker())
+            defer { stream.task.cancel() }
+            guard let response = response as? HTTPURLResponse else { throw PrivateFileIssue.invalidResponse }
+            if !(200..<300).contains(response.statusCode) {
+                var body = Data()
+                for try await byte in stream { body.append(byte); if body.count >= 8192 { break } }
+                let code = (try? JSONSerialization.jsonObject(with: body) as? [String: String])?["error"]
+                if [401, 403].contains(response.statusCode) { throw PrivateFileIssue.denied }
+                if code == "upload_not_stored_start_new_operation" { throw PrivateFileIssue.missingUpload }
+                if ["capacity_unavailable", "private_file_capacity_unknown"].contains(code ?? "") { throw PrivateFileIssue.capacity }
+                if ["validation_resource_limit", "validator_receipt_mismatch"].contains(code ?? "") { throw PrivateFileIssue.validationFailed }
+                if ["unsupported_type", "encrypted_pdf", "malformed_file", "resource_limit", "unsupported_codec", "duration_limit", "dimension_limit", "size_limit", "active_content", "unreadable_content", "invalid_request", "unreadable", "invalid_pdf", "active_pdf", "invalid_video", "dimensions_limit", "file_validation_failed"].contains(code ?? "") { throw PrivateFileIssue.invalidFile }
+                throw PrivateFileIssue.server
+            }
+            guard maximum > 0, maximum <= 10 * 1024 * 1024, response.expectedContentLength <= maximum,
+                expectedType == nil || response.mimeType == expectedType else { throw PrivateFileIssue.integrity }
+            var bytes = Data()
+            for try await byte in stream {
+                try Task.checkCancellation()
+                bytes.append(byte)
+                guard bytes.count <= maximum else { throw PrivateFileIssue.integrity }
+            }
+            diagnostic.finish(.succeeded)
+            return bytes
+        } catch {
+            let cancelled = error is CancellationError || Task.isCancelled || (error as? URLError)?.code == .cancelled
+            let issue = error as? PrivateFileIssue
+            let failure: DiagnosticFailure
+            switch issue {
+            case .denied: failure = .denied
+            case .capacity, .hostedUnavailable, .insufficientSpace: failure = .capacity
+            case .invalidInput, .invalidFile, .missingUpload, .validationFailed: failure = .invalid
+            case .integrity: failure = .integrity
+            case .storage: failure = .storage
+            case .conflict, .reloadRequired: failure = .conflict
+            default: failure = cancelled ? .cancelled : .unavailable
+            }
+            let refused = [.denied, .capacity, .invalid, .conflict].contains(failure)
+            let uncertain = request.httpMethod == "POST" && !refused
+            diagnostic.finish(uncertain ? .unconfirmed : cancelled ? .cancelled : .failed, failure: failure)
+            throw error
         }
-        guard maximum > 0, maximum <= 10 * 1024 * 1024, response.expectedContentLength <= maximum,
-            expectedType == nil || response.mimeType == expectedType else { throw PrivateFileIssue.integrity }
-        var bytes = Data()
-        for try await byte in stream {
-            try Task.checkCancellation()
-            bytes.append(byte)
-            guard bytes.count <= maximum else { throw PrivateFileIssue.integrity }
-        }
-        return bytes
     }
 }
 nonisolated private final class FileRedirectBlocker: NSObject, URLSessionTaskDelegate, @unchecked Sendable {

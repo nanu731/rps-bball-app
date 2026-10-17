@@ -973,3 +973,18 @@ policy, hosted/device/UI/VoiceOver gates remain open. Monitoring/export scheduli
 are separate work. Actual reviewed push/CI receipt follows in TESTING.md.
 
 Reviewed performance source12a5bc6 was pushed and remote HEAD verified; actual CI38997258805 passed. Native34/private benchmarks remain separate. Standards0/Spec0; three protected working/index entries and174original JSON files are preserved. Installed canonical PerformanceAcceptance1.0(1) uses source12a5bc6; original UI6713efe is unchanged.
+
+## Bounded diagnostics preparation —2026-10-16
+
+Native content-free structured OS logging plus bounded volatile evidence now covers
+Auth/session, shared load/save and private-file outcomes. Worker processing/export
+outcomes and passive loopback health/CLI status use fixed labels. Slow/failing sinks
+cannot block core saves; no diagnostic files, support interface/export, transmission,
+provider activation or scheduler. OPERATIONS.md documents bounds, inspection and
+incident steps with reporting/response ownerTODOs. Actual emitted output inspected.
+Native83integrated then17final affected tests and Python6 passed; final gateway
+local rerun encountered2macOS process-cleanup permission errors (earlier28passed,
+1skip). TESTING.md separates exact receipts and remote CI. Independent final
+Standards0/Spec0; protected3working/index+174originalJSON unchanged. Existing Auth
+reuse, UI/VoiceOver/device26.0, hosted recovery and disabled-service gates remain.
+No crash collection, alerts, hosted monitoring or release readiness is claimed.

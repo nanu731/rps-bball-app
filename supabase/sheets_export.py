@@ -21,6 +21,8 @@ from dataclasses import dataclass
 LATEST_FORMULA = """=IFERROR(LET(entries,FILTER('TeamStats Ledger'!A2:H100001,'TeamStats Ledger'!A2:A100001<>""),ordered,SORT(entries,1,TRUE,2,TRUE,3,FALSE),keys,ARRAYFORMULA(INDEX(ordered,0,1)&"|"&INDEX(ordered,0,2)),FILTER(ordered,ARRAYFORMULA(MATCH(keys,keys,0))=SEQUENCE(ROWS(ordered)))),"")"""
 
 from http_deadline import DeadlineHTTPHandler, DeadlineHTTPSHandler
+from operation_diagnostics import DIAGNOSTICS, Category, Outcome, Failure, SafeArgumentParser
+import time
 
 class ExportError(Exception):
     """A safe, fixed error code. Provider response bodies are never logged."""
@@ -318,6 +320,25 @@ class Backend:
             raise ExportError('backend_transport') from None
 
 def run_once(backend, google, max_jobs=3):
+    started = time.monotonic()
+    try:
+        outcomes = _run_once(backend, google, max_jobs)
+    except BaseException as error:
+        cancelled = isinstance(error, (KeyboardInterrupt, SystemExit))
+        invalid = isinstance(error, ExportError) and str(error) == 'configuration_invalid'
+        DIAGNOSTICS.record(Category.EXPORT, Outcome.FAILED if invalid else Outcome.UNCONFIRMED,
+                           Failure.INVALID if invalid else Failure.CANCELLED if cancelled else Failure.UNAVAILABLE,
+                           seconds=time.monotonic()-started)
+        raise
+    failures = [x for x in outcomes if x['state'] != 'delivered']
+    disabled = any(x.get('error_code') == 'budget_disabled' for x in failures)
+    DIAGNOSTICS.record(Category.EXPORT, Outcome.FAILED if failures else Outcome.SUCCEEDED,
+                       Failure.DISABLED if disabled else Failure.UNAVAILABLE if failures else Failure.NONE,
+                       seconds=time.monotonic()-started)
+    return outcomes
+
+
+def _run_once(backend, google, max_jobs=3):
     """One bounded run. Every failure stays visible on the same persistent job."""
     if type(max_jobs) is not int or not 1 <= max_jobs <= 3:
         raise ExportError('configuration_invalid')
@@ -342,12 +363,28 @@ def run_once(backend, google, max_jobs=3):
     return outcomes
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', required=True, help='private trusted runtime JSON configuration')
+    parser = SafeArgumentParser(description=__doc__)
+    parser.add_argument('--config', help='private trusted runtime JSON configuration')
+    parser.add_argument('--status', action='store_true', help='passive readiness; no backend or Google requests')
     args = parser.parse_args()
     try:
+        if args.status:
+            config = {}
+            if args.config:
+                with open(args.config, encoding='utf-8') as handle: config = json.load(handle)
+            if not isinstance(config, dict): raise ValueError()
+            google = GoogleSheets(GoogleConfig(token=os.environ.get('TEAMSTATS_GOOGLE_ACCESS_TOKEN', ''),
+                enabled=config.get('google_enabled', False), billing_disabled_verified_at=config.get('billing_disabled_verified_at', '')))
+            permitted = False
+            try: google._guard(); permitted = True
+            except ExportError: pass
+            enabled = config.get('google_enabled') is True
+            configured = permitted and bool(config.get('backend_rest_url')) and bool(os.environ.get('TEAMSTATS_EXPORT_SERVICE_TOKEN'))
+            print(json.dumps(DIAGNOSTICS.availability(enabled=enabled, configured=configured)))
+            return 3
         with open(args.config, encoding='utf-8') as handle:
             config = json.load(handle)
+        if not isinstance(config, dict): raise ValueError()
         # Credentials are supplied by trusted environment injection, not JSON or CLI.
         backend = Backend(config['backend_rest_url'], os.environ['TEAMSTATS_EXPORT_SERVICE_TOKEN'])
         google = GoogleSheets(GoogleConfig(token=os.environ.get('TEAMSTATS_GOOGLE_ACCESS_TOKEN', ''),
@@ -358,10 +395,16 @@ def main():
         print(json.dumps({'delivered': sum(x['state'] == 'delivered' for x in outcomes),
                           'failed': sum(x['state'] == 'failed' for x in outcomes),
                           'errors': sorted({x['error_code'] for x in outcomes if 'error_code' in x})}))
-    except (ExportError, KeyError, OSError, ValueError):
+    except KeyboardInterrupt:
+        DIAGNOSTICS.record(Category.HEALTH, Outcome.CANCELLED, Failure.CANCELLED)
+        return 130
+    except Exception:
+        DIAGNOSTICS.record(Category.HEALTH, Outcome.FAILED, Failure.UNAVAILABLE, attempts=0)
         print('Export stopped: configuration or backend unavailable', file=sys.stderr)
         return 1
     return 0
 
 if __name__ == '__main__':
-    sys.exit(main())
+    result = main()
+    DIAGNOSTICS.flush()
+    sys.exit(result)

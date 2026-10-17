@@ -196,3 +196,14 @@ local reuse grace; the immediate-lockout assertion remains failed. This is separ
 from passing native denial tests; no provider
 setting, signing key or real-user authority changed. Hosted Auth/key rotation,
 recovery policy and existing UI/device/release gates remain unaccepted.
+
+## Diagnostic privacy —2026-10-16
+
+[OPERATIONS.md](OPERATIONS.md) specifies closed category/outcome/failure envelopes,
+bounded volatile evidence and rate-limited asynchronous output. No identity,
+content, credential, path/URL or raw provider error field is accepted. No support
+interface/export/upload or privileged operation is added. Account reset fences
+old spans, but already emitted OS logs have platform-managed retention. Worker
+status is passive/loopback and exposes fixed labels only; it grants no authority.
+These signals do not replace security audits, current server authorization or
+verified crash/alert/hosted-monitoring services.

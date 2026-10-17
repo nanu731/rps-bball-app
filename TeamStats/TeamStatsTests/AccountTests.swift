@@ -5,6 +5,23 @@ import Supabase
 
 @MainActor
 final class AccountTests: XCTestCase {
+    func testDiagnosticsReportAuthAndStorageFailuresWithoutContactsOrProviderBodies() async throws {
+        OperationDiagnostics.shared.reset()
+        let account = BackendAccount(storage: FixtureAccountStorage(), session: fixtureHTTPSession())
+        await account.configure(url: "https://failure.invalid", publicKey: fixtureKey, environment: .nonproduction)
+        await account.requestCode(method: .email, identifier: "synthetic@example.invalid")
+        XCTAssertEqual(account.issue, .provider)
+        XCTAssertTrue(OperationDiagnostics.shared.snapshot().events.contains { $0.category == .authentication && $0.outcome == .unconfirmed })
+        let storage = FixtureAccountStorage(); storage.rejectReads(true)
+        let failedStorage = BackendAccount(storage: storage, session: fixtureHTTPSession())
+        await failedStorage.restoreIfNeeded()
+        XCTAssertEqual(failedStorage.issue, .storage)
+        let events = OperationDiagnostics.shared.snapshot().events
+        XCTAssertTrue(events.contains { $0.category == .session && $0.failure == .storage })
+        let output = String(decoding: try JSONEncoder().encode(events), as: UTF8.self)
+        for forbidden in ["synthetic@example.invalid", fixtureKey, "failure.invalid", fixtureUserID.uuidString, "Authorization", "refresh_token"] { XCTAssertFalse(output.contains(forbidden)) }
+        print("TEST ONLY DIAGNOSTIC " + output)
+    }
     func testLostOTPReplyIsNotAutomaticallyReplayed() async throws {
         let session = fixtureHTTPSession(mode: "lostOTP")
         let trace = session.configuration.httpAdditionalHeaders?["X-Fixture-Trace"] as! String
