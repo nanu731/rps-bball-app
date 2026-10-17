@@ -796,7 +796,7 @@ rollback/forward-fix boundaries. No real records or existing database were expor
 | Actual synthetic database round trip | PostgreSQL17;13 migrations applied before backup, custom pg_dump restored to a second new database without reseeding. All30 fixture tables/policies/effective ACLs, RLS and function-security properties matched; allowed/denied access, immutable data, queued outbox and identity/missing-value assertions passed. | Auth/Storage platform stand-ins; no real login/JWT/provider recovery. No outbound worker started. |
 | Post-restore regressions |343 existing pgTAP checks passed: access81, stats136, draft recovery37, administrator identities20, private files69. Rollback-only suites left restored rows/security unchanged. | Actual local PostgreSQL policy behavior; not hosted or signed Auth-service acceptance. |
 | Portable CI commands locally | Export20 passed; gateway25 ran,1 skipped because platform hard resource limits are unavailable; relay8 passed; recovery5 passed. | Full native media tests need their configured validator/renderer/fixtures. An initial broad unconfigured discovery failed; it is not reported green or included in portable CI. |
-| CI configuration | No earlier local/remote workflow. YAML parsed; public-only standard Linux runner, read-only token, pinned official action/image, no secret/cache/artifact/deploy or privileged PR trigger. Public visibility/Actions enablement and current public-runner $0 policy verified. | Configuration validity and local command checks only at this checkpoint; actual remote run pending reviewed push. Native CI deferred until toolchain availability is established. |
+| CI configuration | No earlier local/remote workflow. YAML parsed; public-only standard Linux runner, read-only token, pinned official action/image, no secret/cache/artifact/deploy or privileged PR trigger. Public visibility/Actions enablement and current public-runner $0 policy verified. | Configuration and local checks are distinct from the actual remote run recorded below. Native CI deferred until toolchain availability is established. |
 
 The stronger ACL check initially distinguished explicit owner-only ACL arrays from
 equivalent PostgreSQL defaults; it now resolves defaults before comparison and
@@ -811,3 +811,16 @@ original JSON hashes are checked separately. Private evidence lives under the
 ignored `.scratch/teamstats-reliability-20261016/`. Synthetic restoration is not an
 operational backup, encrypted destination, hosted disaster-recovery proof or release
 readiness. Owner destination/retention/RPO/RTO/reporting decisions remain open.
+
+### Reviewed push and actual remote CI
+
+Independent reviews of c55063b...7d1090e returned Standards:0 documented breaches/
+0 actionable smells; Spec:0 actionable findings. Commit7d1090e was pushed to
+`codex/teamstats-completion` and remote HEAD verified. The actual
+[GitHub Actions run38990992635](https://github.com/nanu731/rps-bball-app/actions/runs/38990992635)
+on that source completed successfully: export20, gateway25(1skip), recovery5 and
+relay8;13 migrations plus actual synthetic database backup/restore, permission
+assertions and separate object-byte recovery passed in the pinned container.
+This is actual CI execution, not YAML-only evidence. The343-check post-restore
+pgTAP suite and native8 checks were local, not this job. No deployment, provider
+activation, managed Auth/Storage recovery or completed UI acceptance is implied.

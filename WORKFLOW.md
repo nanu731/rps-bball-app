@@ -1835,9 +1835,17 @@ standard Linux workflow is prepared for portable worker/relay/recovery checks an
 reproducible migration/restore verification. Local export20/gateway25(1skip)/relay8
 and recovery5 checks passed; YAML parsed. Native media tests require their explicit
 tooling and are excluded, not claimed passed by unconfigured discovery. Actual CI
-execution remains separate pending reviewed push; native CI/toolchain deferred.
+execution is now verified separately below; native CI/toolchain deferred.
 
 No external backup destination, real record export, provider/production activation,
 original app reset/uninstall, history rewrite or broader feature work. New isolated
 drill artifacts/databases are retained. Protected Xcode bytes/index,174original JSON
 hashes and temporary identities are preserved. See TESTING.md for current evidence.
+
+Independent Standards/Spec review of c55063b...7d1090e found0 actionable issues.
+Reviewed commit7d1090e pushed and remote HEAD verified. Actual GitHub Actions
+run38990992635 passed export20, gateway25(1skip), recovery5, relay8 and the pinned
+container13-migration synthetic database/object recovery drill. No real provider
+credentials, private artifacts, deploy or provider activation were involved. Local native8 and
+post-restore pgTAP343 remain separate evidence. UI acceptance and real hosted
+recovery remain open; the four owner policy decisions are consolidated in RECOVERY.md.

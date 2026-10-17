@@ -913,13 +913,17 @@ database/object/Auth boundaries and minimal public-only no-deploy CI. Native
 restore8 and object/guard5 tests passed;13 migrations and an actual synthetic
 database archive restored30 fixture tables/security properties without reseeding.
 Post-restore pgTAP343 checks passed. No existing database/local records exported,
-no ownership bootstrap rerun and no provider/worker activation. Auth stand-ins and
+no existing owner bootstrap rerun and no provider/worker activation. Auth stand-ins and
 filesystem bytes are not hosted recovery proof. RECOVERY.md inventories assets,
 secret references, owner policy TODOs and release rollback/forward-fix constraints.
 
 CI configuration is pinned/read-only, uses verified-free public standard runners,
 and includes portable worker/relay tests and fresh migration/restore verification.
-Actual remote execution is separate and pending reviewed push at this checkpoint.
+Actual remote run38990992635 on reviewed commit7d1090e passed export20,
+gateway25(1skip), recovery5, relay8 and13-migration synthetic backup/restore with
+permissions and separate object bytes. Both independent reviews found0 actionable
+findings; push and remote HEAD were verified. This is CI execution evidence, not
+hosted disaster recovery or UI acceptance.
 Native CI remains deferred. No production/release or broader networking/performance/
 monitoring work is included. Original identities/records and protected Xcode working/
 staged entries remain preserved; the UI test artifact is unchanged from6713efe.
