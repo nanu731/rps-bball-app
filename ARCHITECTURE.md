@@ -98,15 +98,15 @@ shot categories without inventing player attribution to possessions.
   recalled. Offline clip retention is not full shared-data synchronization.
 - Four local draft stores remain unchanged and are never automatically uploaded.
 
-## Planned shot capture boundary
+## Shot capture boundary
 
-Owner-authorized, not implemented: ADR0007 adds an in-app iPad-first recorder for
-both teams. A durable account/team/game-scoped shot draft and controlled deferred
-submission feed a separate reviewed shot dataset. Official after-game records are
-comparison sources, not overwritten or added to these totals. Free throws have
-per-attempt outcomes without court coordinates. Score reconciliation and coverage
-claims are separate. No new service, database schema or hosted activation is
-established by this design record; implementation/evidence must update this section.
+ADR0007/0008 now have implemented source and isolated local evidence: an iPad-first
+recorder for both teams, durable account/team/game-scoped journal and controlled
+deferred submission into a separate reviewed dataset. Official after-game records
+are comparison sources, never overwritten or added to captured totals. Free throws
+retain per-attempt outcomes without court coordinates. Score reconciliation and
+coverage claims remain separate. New migrations18/19 are tested only in isolated
+synthetic databases; existing/hosted activation and acceptance remain open.
 
 ## Backup and recovery boundary
 
@@ -177,3 +177,19 @@ Immutable snapshots/reservations remain the external write fence. SQL claim toke
 fence acknowledgments only. See [exports.md](supabase/exports.md) and the consolidated
 [READINESS.md](READINESS.md); neither prepared source nor local evidence activates
 Google, a recurring worker, or a hosted migration.
+
+
+### Shot analysis and independent score references
+
+ShotAnalysis reads validated snapshots without mutating capture or official stores.
+Pending outcomes remain lower-bound counts; unknown2/3 values remain unclassified,
+FT attempts have separate answers and no court dots. Comparison adapters retain
+missing/overflow-unavailable states and accepted-version provenance. Native charts
+are read-only; existing entry screens remain the editing path.
+
+Migration19 score references are a separate append-only authority boundary, not a
+score inferred from the recorder. stats.review confirms each entered team score
+with a source note and expected revision; blanks remain missing independently.
+The existing frozen-command/receipt mechanism handles uncertain replies, and a
+fresh refresh is required before another action. Neither agreement nor publication
+establishes missed-attempt coverage; owner signoff policy remains unresolved.

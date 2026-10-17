@@ -63,6 +63,7 @@ actor ShotPreparationStore {
         let token = UUID(); value.checking = token; value.eligibleGameIDs = []; try write(value); return token
     }
     func unlock(_ scope: ShotDeviceScope, token: UUID, entry: ShotPreparedEntry?) throws {
+        try Task.checkCancellation()
         guard var value = try read(scope), value.checking == token else { throw ShotCaptureIssue.stale }
         if let entry { value.entries.removeAll { $0.gameID == entry.gameID }; value.entries.append(entry); value.eligibleGameIDs = [entry.gameID] }
         value.checking = nil; try write(value)
@@ -141,6 +142,16 @@ nonisolated struct ShotFrozenCommand: Codable, Sendable {
     let rpc: String
     let arguments: [String: AnyJSON]
     let payloadDigest: String?
+    var operation: String? {
+        switch rpc {
+        case "shots_save": "save"
+        case "shots_assign": "assign"
+        case "shots_recovery": "recovery"
+        case "shots_score_confirm": "score_confirm"
+        case "shots_decide": arguments["p_action"]?.stringValue
+        default: nil
+        }
+    }
 }
 nonisolated struct ShotCommandEnvelope: Codable { let pending: ShotFrozenCommand?; var rejection: String? = nil }
 
@@ -160,6 +171,16 @@ nonisolated struct SharedShotState: Decodable, Sendable {
     let can_publish: Bool
     let recording_valid_until: String?
 }
+nonisolated struct ShotScoreReference: Decodable, Sendable {
+    let team_id: UUID
+    let game_id: UUID
+    let revision: Int
+    let reference_id: UUID?
+    let our_points: Int?
+    let opponent_points: Int?
+    let source_note: String?
+    let can_confirm: Bool
+}
 nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
     let snapshot_id: UUID
     let local_revision: Int
@@ -178,6 +199,8 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
 
 /// One instance serializes explicit online operations. Every write is frozen on disk first.
 @MainActor @Observable final class SharedShotCapture {
+    private(set) var score: ShotScoreReference?
+    private(set) var scoreIssue: String?
     private(set) var state: SharedShotState?
     private(set) var recorder: ShotCaptureRecorder?
     private(set) var pending: ShotFrozenCommand?
@@ -186,6 +209,8 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
     private(set) var proposals: [ShotRecoveryProposal] = []
     private(set) var isBusy = false
     private(set) var issue: String?
+    private(set) var feedbackConfirmed = false
+    private(set) var lastConfirmedBatch: UUID?
     private(set) var receiptNotFound = false
     private(set) var rejectedCommand = false
     private(set) var offline = false
@@ -282,7 +307,7 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
     func refresh() async {
         guard isCurrent, !isBusy, recorder?.needsSave != true, recorder?.isBusy != true else { return }
         gateEpoch = ShotDeviceGate.shared.lock(scope)
-        isBusy = true; issue = nil; eligibility = false; recorder?.invalidate()
+        isBusy = true; issue = nil; feedbackConfirmed = false; eligibility = false; recorder?.invalidate()
         defer { isBusy = false }
         do {
             let token = try await store.lock(scope); currentOperation = token
@@ -290,10 +315,24 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
             guard isCurrent, currentOperation == token else { return }
             proposals = []
             if value.can_review { proposals = try decode([ShotRecoveryProposal].self, await call("shots_recoveries", scopeArguments)); hasMoreProposals = proposals.count == 50 }
+            score = nil; scoreIssue = nil
+            do {
+                let reference = try decode(ShotScoreReference.self, await call("shots_score_read", scopeArguments))
+                guard reference.team_id == scope.teamID, reference.game_id == gameID, reference.revision >= 0,
+                      reference.our_points.map({ $0 >= 0 }) ?? true, reference.opponent_points.map({ $0 >= 0 }) ?? true else { throw ShotCaptureIssue.corrupt }
+                score = reference
+            } catch {
+                if error is CancellationError || Task.isCancelled { throw CancellationError() }
+                if let failure = error as? PostgrestError, ["42501", "PGRST301"].contains(failure.code ?? "") { throw error }
+                guard isCurrent else { throw error }
+                scoreIssue = "Official score reference unavailable. Capture loading remains independent; this is not an empty-score result."
+            }
             pending = try await store.pending(at: store.outboxURL(scope, game: gameID))
             rejectedCommand = try await store.rejection(at: store.outboxURL(scope, game: gameID)) != nil
+            try Task.checkCancellation()
             knownExpiry = value.can_record ? value.recording_valid_until.flatMap(administrationDate) : nil
             try await install(value)
+            try Task.checkCancellation()
             if value.can_record, let session = value.session_id, !localConflict {
                 let expiry = value.recording_valid_until.flatMap(administrationDate); knownExpiry = expiry
                 try await store.unlock(scope, token: token, entry: ShotPreparedEntry(gameID: gameID, sessionID: session, title: title, expiresAt: expiry))
@@ -339,6 +378,14 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
             await command(recovery ? "shots_recovery" : "shots_save", args, digest: ShotDeviceScope.digest(text))
         } catch { issue = "Capture validation failed; no submission was made." }
     }
+    func confirmScore(our: Int?, opponent: Int?, source: String) async {
+        guard let score, score.can_confirm, our != nil || opponent != nil,
+              our.map({ (0...Int(Int32.max)).contains($0) }) ?? true, opponent.map({ (0...Int(Int32.max)).contains($0) }) ?? true,
+              !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, source.count <= 200 else { return }
+        var args = scopeArguments; args["p_expected_revision"] = .integer(score.revision)
+        args["p_our_points"] = our.map(AnyJSON.integer) ?? .null; args["p_opponent_points"] = opponent.map(AnyJSON.integer) ?? .null; args["p_source_note"] = .string(source)
+        await command("shots_score_confirm", args)
+    }
     func decide(_ action: String, snapshot: UUID? = nil, reason: String) async {
         guard let state, let snapshot = snapshot ?? state.snapshot_id else { return }
         var args = revisionArguments(state); args["p_snapshot_id"] = .string(snapshot.uuidString); args["p_action"] = .string(action); args["p_reason"] = .string(reason)
@@ -347,6 +394,7 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
     }
     private func command(_ rpc: String, _ arguments: [String: AnyJSON], digest: String? = nil) async {
         guard isCurrent, !isBusy, pending == nil, recorder?.needsSave != true, recorder?.isBusy != true else { return }
+        feedbackConfirmed = false
         let batch = UUID(); var args = arguments
         if rpc == "shots_assign" { args["p_expected_assignment"] = args.removeValue(forKey: "p_assignment_revision") }
         args["p_batch_id"] = .string(batch.uuidString)
@@ -387,7 +435,7 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
             _ = try await store.lock(scope)
             try validateCommand(pending)
             var args = scopeArguments; args["p_batch_id"] = .string(pending.batch.uuidString)
-            let receipt = try await call("shots_receipt", args)
+            let receipt = try await call(pending.rpc == "shots_score_confirm" ? "shots_score_receipt" : "shots_receipt", args)
             if receipt.isNil { receiptNotFound = true; issue = "No committed receipt was found. You may explicitly retry the same frozen command; it may still be rejected as stale." }
             else { try await accept(receipt, pending) }
         } catch {
@@ -419,7 +467,7 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
         } catch { issue = "Could not retain and supersede this command. Its pending bytes remain preserved." }
     }
     private func conceal() {
-        eligibility = false; hasAuthorizedContent = false; state = nil; proposals = []; inspectedProposal = nil; deviceDocument = nil; recorder?.invalidate()
+        feedbackConfirmed = false; eligibility = false; hasAuthorizedContent = false; score = nil; scoreIssue = nil; state = nil; proposals = []; inspectedProposal = nil; deviceDocument = nil; recorder?.invalidate()
     }
     func loadProposal(_ id: UUID) async {
         guard isCurrent, !isBusy else { return }
@@ -446,7 +494,7 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
         } catch { conceal(); issue = "Recovery listing unavailable. Reverify current access." }
     }
     private func validateCommand(_ command: ShotFrozenCommand) throws {
-        guard ["shots_save", "shots_assign", "shots_decide", "shots_recovery"].contains(command.rpc),
+        guard ["shots_save", "shots_assign", "shots_decide", "shots_recovery", "shots_score_confirm"].contains(command.rpc),
               command.arguments["p_team_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == scope.teamID,
               command.arguments["p_game_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == gameID,
               command.arguments["p_batch_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == command.batch else { throw ShotCaptureIssue.corrupt }
@@ -457,9 +505,12 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
               values["actor_user_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == scope.actorID,
               values["team_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == scope.teamID,
               values["game_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == gameID,
+              values["operation"]?.stringValue == command.operation,
               command.payloadDigest == nil || values["document_digest"]?.stringValue == command.payloadDigest else { throw ShotCaptureIssue.corrupt }
         try await store.clear(expected: command.batch, at: store.outboxURL(scope, game: gameID))
+        lastConfirmedBatch = command.batch
         pending = nil; receiptNotFound = false; rejectedCommand = false
+        conceal(); feedbackConfirmed = true
         issue = "Server receipt confirmed. Refresh current capture before another action. Saving a draft is not review or publication."
     }
 }

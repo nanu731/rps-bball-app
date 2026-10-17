@@ -33,7 +33,7 @@ final class ShotCaptureAcceptanceTests: XCTestCase {
         runFlow()
     }
     private func reveal(_ element: XCUIElement, upward: Bool = true) {
-        for _ in 0..<8 {
+        for _ in 0..<20 {
             if element.exists && element.isHittable { return }
             if upward { app.swipeUp() } else { app.swipeDown() }
         }
@@ -118,7 +118,8 @@ final class ShotCaptureAcceptanceTests: XCTestCase {
         app.buttons["Free throws"].tap()
         let count = app.textFields["Other positive whole-number attempts"]
         count.tap(); count.typeText(XCUIKeyboardKey.delete.rawValue + "2")
-        guard app.keyboards.firstMatch.waitForExistence(timeout: 3) else {
+        let keyboard = app.keyboards.firstMatch
+        guard keyboard.waitForExistence(timeout: 3), keyboard.frame.height > 100, keyboard.frame.intersects(app.frame) else {
             throw XCTSkip("Software keyboard not visible with current Simulator keyboard configuration")
         }
         let start = app.buttons["Start free throws"]
@@ -126,6 +127,59 @@ final class ShotCaptureAcceptanceTests: XCTestCase {
         let image = XCTAttachment(screenshot: app.screenshot()); image.name = "Keyboard-visible FT start"; image.lifetime = .keepAlways; add(image)
         start.tap()
         XCTAssertTrue(app.staticTexts["FT1/2 · Pending"].waitForExistence(timeout: 5))
+    }
+
+    func testRecordedChartsReachableAndKeepCoverageSeparate() {
+        openCapture()
+        let court = app.otherElements["shot.court"]
+        XCTAssertTrue(court.waitForExistence(timeout: 5)); tapCourt(court, x: 0.3, y: 0.25)
+        app.buttons["shot.result.2.made"].tap()
+        XCTAssertTrue(app.staticTexts["Saved on this device"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.firstMatch.tap()
+        let charts = app.buttons["Recorded shot charts"]
+        reveal(charts); charts.tap()
+        let coverage = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Attempt coverage unverified")).firstMatch
+        reveal(coverage); XCTAssertTrue(coverage.exists)
+        // At maximum text the preceding rows fill the phone; List creates the picker after scrolling.
+        let team = app.segmentedControls["shot.chart.team"]
+        reveal(team); XCTAssertTrue(team.exists)
+        if app.launchArguments.contains("UICTContentSizeCategoryAccessibilityXXXL") {
+            let selection = app.staticTexts["shot.chart.selection"]
+            reveal(selection); XCTAssertEqual(selection.label, "All our players")
+            let image = XCTAttachment(screenshot: app.screenshot()); image.name = "Full chart selection at maximum text"; image.lifetime = .keepAlways; add(image)
+        }
+        let chart = app.otherElements["shot.court"]
+        reveal(chart)
+        // List exposes the full row as this accessibility frame, not the narrower drawing.
+        // Center the drawing for visual geometry inspection instead of asserting the row ratio.
+        tapCourt(chart, x: 0.5, y: 0.5)
+        let image = XCTAttachment(screenshot: app.screenshot()); image.name = "Synthetic recorded shot chart"; image.lifetime = .keepAlways; add(image)
+        reveal(team, upward: false); team.buttons["Opponent"].tap()
+        let empty = app.staticTexts["No observations entered for this selection. This does not mean no attempts occurred."]
+        reveal(empty); XCTAssertTrue(empty.exists)
+        let comparisons = app.staticTexts["Independent after-game count comparisons"]
+        reveal(comparisons)
+        XCTAssertTrue(comparisons.exists)
+        reveal(app.staticTexts["Individual observations · read-only"])
+    }
+
+    func testGuideKeepsCaptureAndOfficialSourcesSeparate() {
+        continueAfterFailure = false; app.launch()
+        let local = app.buttons["Local drafts"].firstMatch
+        XCTAssertTrue(local.waitForExistence(timeout: 5)); local.tap()
+        app.buttons["Using TeamStats"].tap()
+        let guidance = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Score agreement does not establish attempt coverage")).firstMatch
+        reveal(guidance); XCTAssertTrue(guidance.exists)
+        let submission = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "fresh server authority, separate review and publication still apply")).firstMatch
+        reveal(submission); XCTAssertTrue(submission.exists)
+        let pilot = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Shared manual statistics are the first pilot scope")).firstMatch
+        reveal(pilot); XCTAssertTrue(pilot.exists)
+        let image = XCTAttachment(screenshot: app.screenshot()); image.name = "Shot and manual-pilot guidance"; image.lifetime = .keepAlways; add(image)
+    }
+
+    func testMaximumTextRecordedCharts() {
+        app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        testRecordedChartsReachableAndKeepCoverageSeparate()
     }
 
 }

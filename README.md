@@ -8,7 +8,8 @@ statistics. Device-local saved drafts are separate, incomplete and unreviewed.
 Owner scope update2026-10-17: the first pilot may use shared manual statistics
 while automatic Sheets/media delivery remains unfinished. An optional iPad-first
 shot recorder for both teams, with per-player our-team shots and side-panel free
-throws, is now authorized but **not yet implemented**. See
+throws, now has implemented source and isolated local acceptance. Hosted, device
+and release gates remain in READINESS.md. See
 [shot requirements](PRD.md#in-game-shot-recorder-amendment--2026-10-17).
 The completion target is2026-11-17, not a release-readiness claim.
 
@@ -100,8 +101,8 @@ On-device recognition can misread zero as O; representative marked-form accuracy
 and device interactions remain unverified. No app photo/text persistence or upload occurs; Photos may create temporary
 provider files. Possession turnover answers require explicit Unanswered/Yes/No
 review; they are never inferred from recognized text.
-The currently implemented statistics workflow is after-game. The planned shot
-recorder is the only authorized in-game exception; clocks, possession tracking,
+Box-score, possession and player paint-touch entry remain after-game. The implemented
+shot recorder is the only authorized in-game exception; clocks, possession tracking,
 substitutions, lineups and public live-score broadcasts remain outside scope.
 
 ### Where to find connected features
@@ -243,3 +244,26 @@ completion tickets/configuration are excluded from the public repository.
 Network deadlines, session/refresh semantics, durable file-admission controls and
 remaining hosted activation gates are documented in [NETWORK.md](NETWORK.md).
 Synthetic/native CI does not certify hosted Auth, provider billing or release readiness.
+
+
+### Optional shot capture: local and shared boundaries
+
+Game details expose a separate shot recorder and recorded-shot charts. Our field
+goals use the existing player identity; opponent observations are team-only. Each
+field goal has a schematic location, explicit2/3 value and Make/Miss or pending
+answer. FT series retain each answer separately and never acquire court dots.
+Atomic local journals retain corrections/Undo and do not alter official stat stores.
+
+Shared recording requires a server designation and distinct recording/review/
+publication capabilities. Prepare an actual-roster capture online; its narrowly
+scoped device journal can then continue through venue interruptions. Reconnect and
+explicitly submit immutable batches; uncertain replies use receipt recovery.
+Fresh authority is required. Competing branches require explicit reviewer adoption,
+not automatic merging. Local temporary-roster captures are never auto-uploaded.
+
+Charts show team/player observed counts, pending inputs, schematic basket-relative
+bands and independent after-game comparisons. An authorized statistics reviewer
+may separately confirm either team's final-score reference, leaving the other
+unentered. Score agreement is not attempt coverage or completion. Coverage signoff
+remains an owner decision. Migrations18/19 are tested in new synthetic databases
+only; existing/hosted activation and acceptance are separate gates. See READINESS.md.

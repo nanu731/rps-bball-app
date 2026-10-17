@@ -15,9 +15,10 @@ opponent shots and side-button free throws with per-attempt results/Undo.
 [PRD.md](PRD.md#in-game-shot-recorder-amendment--2026-10-17) is canonical;
 [ADR0007](docs/adr/0007-integrated-shot-capture-and-independent-reconciliation.md)
 records the boundary. This supersedes older blanket live-tracking exclusions only
-for shot capture. It is not implemented yet; keep independent shot datasets,
-coverage claims and score reconciliation distinct. Existing acceptance below is
-historical evidence, not proof of this new feature.
+for shot capture. Its five source slices are now implemented, with separate local
+model, signed synthetic service and rendered evidence in TESTING.md. Keep independent
+shot datasets, coverage claims and score reconciliation distinct. Historical acceptance
+below does not establish the new hosted/device/release gates.
 
 Current acceptance snapshot (2026-10-14, native design continuation): PARTIAL.
 The reviewed game-centered SwiftUI pass adds real game context, task rows,
@@ -1130,3 +1131,16 @@ concealed on known loss/expiry; unknown revocation requires reconnection. No loc
 statistics or temporary players are uploaded. Migration18 is tested only in new
 synthetic databases, not activated on existing/hosted services. TESTING distinguishes
 signed local stand-ins, native seam tests and remaining rendered/hosted gates.
+
+### Shot charts and integration2026-10-17
+
+All five authorized shot-recorder source slices now exist. ShotAnalysis/ShotChartsView
+compare captured team/player observations to independent saved/accepted sources;
+FT stays separate and pending/missing values remain honest. Migration19 adds a
+separate, optional-per-team official-score reference under stats.review, using
+immutable receipts and current authority. Captures do not rewrite official stats;
+matching scores never establish attempt coverage. Owner coverage policy remains TODO.
+Actual isolated signed SQL/native evidence, rendered iPad shared draft/score actions
+and final chart tests are distinguished in TESTING.md. Existing/hosted migrations
+14–19 remain inactive. READINESS.md is the finite remaining external/device/release
+list; source completion does not establish hosted or release readiness.

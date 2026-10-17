@@ -375,6 +375,7 @@ private struct GameDetailsView: View {
                 NavigationLink { LocalShotCaptureView(game: game) } label: {
                     TeamTaskLabel(title: "Shot recorder", detail: "Optional in-game capture · separate local draft", symbol: "basketball")
                 }.accessibilityIdentifier("Shot recorder")
+                NavigationLink { LocalShotChartsView(game: game) } label: { TeamTaskLabel(title: "Recorded shot charts", detail: "Read-only observations and independent comparisons", symbol: "chart.xyaxis.line") }.accessibilityIdentifier("Recorded shot charts")
                 task("Single-player entry", "One player's box score at a time", "person") { entryMode = .player }
                 task("Whole-roster table entry", "The same draft, with native table scrolling", "tablecells") { entryMode = .table }
                 task("Player paint-touch drafts", "Independently recorded game totals", "person.crop.rectangle") { showingPlayerPaintTouches = true }

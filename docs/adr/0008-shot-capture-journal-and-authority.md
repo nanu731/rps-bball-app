@@ -84,3 +84,13 @@ journals are retained. A SQL-confirmed rejection or denied receipt can be explic
 archived with its frozen bytes before a newly authorized recovery proposal. This
 is not proof of non-commit and never triggers automatic resubmission. Recording
 deadlines do not block a fresh server-authorized published/reviewer view.
+
+## Independent score reference
+
+A separate append-only reference accepts independently confirmed final points for
+either team, retaining missing values for the other team and explicit zero. The
+existing `stats.review` authority confirms a source note; recording permission
+alone cannot do so. References use stable command IDs, revision checks and receipt
+recovery. They never modify box scores, possessions, captured events or export jobs.
+The UI requires an explicit declaration about entered scores, protects unfinished
+input and labels score agreement separately from unresolved coverage signoff.

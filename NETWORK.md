@@ -176,3 +176,10 @@ Known expiry, account loss and a newer team check conceal mounted content. Unkno
 remote revocation cannot be detected offline. Device journal bytes remain intact.
 Recovery discovery pages at50 metadata rows; one selected document is fetched
 separately. Captures remain separate from official stats and the export outbox.
+
+Independent score references use a separate `stats.review` command and immutable
+history/receipt. Either team's points can be missing independently; at least one
+valid confirmed value and a source note are required. They share the single frozen
+local command slot, so recovery cannot replace another pending mutation. Optional
+score-read failure leaves other independently loaded capture data available;
+cancellation or confirmed denial propagates and leaves preparation locked.

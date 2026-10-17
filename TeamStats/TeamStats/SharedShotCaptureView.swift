@@ -5,10 +5,11 @@ struct SharedShotCaptureView: View {
     let account: BackendAccount
     let game: ConnectedGame
     let roster: [ServerRosterEntry]
+    var statistics: ConnectedStatistics? = nil
     @State private var model: SharedShotCapture?
     var body: some View {
         Group {
-            if let model { SharedShotControls(model: model, roster: roster) }
+            if let model { SharedShotControls(model: model, roster: roster, statistics: statistics) }
             else { ProgressView("Opening shared capture") }
         }
         .navigationTitle("Shared shots").navigationBarTitleDisplayMode(.inline)
@@ -24,6 +25,8 @@ struct SharedShotCaptureView: View {
 struct SharedShotControls: View {
     let model: SharedShotCapture
     let roster: [ServerRosterEntry]
+    var statistics: ConnectedStatistics? = nil
+    @State private var showingScore = false
     @State private var recorderID = ""
     @State private var reason = ""
     @State private var importing = false
@@ -40,7 +43,7 @@ struct SharedShotControls: View {
                         Label("Prepared device capture · current authority unverified", systemImage: "wifi.slash")
                         Text("Continue this journal without a connection. Reconnect and verify the current recorder before submitting. Remote revocation cannot be discovered offline.").font(.footnote)
                     }
-                    if let issue = model.issue { Label(issue, systemImage: "exclamationmark.triangle").fixedSize(horizontal: false, vertical: true) }
+                    if let issue = model.issue { Label(issue, systemImage: model.feedbackConfirmed ? "checkmark.circle" : "exclamationmark.triangle").fixedSize(horizontal: false, vertical: true) }
                     if model.isBusy { ProgressView("Checking current authority") }
                     Button("Refresh current access and capture") { Task { await model.refresh() } }
                         .disabled(model.isBusy || model.recorder?.needsSave == true)
@@ -69,6 +72,7 @@ struct SharedShotControls: View {
                 if let recorder = model.recorder, model.canRecord {
                     Section("Courtside entry") {
                         NavigationLink("Open device shot recorder") { ShotCaptureWorkspace(recorder: recorder, title: model.title) }
+                        if let doc = recorder.visibleDocument { NavigationLink("Device journal charts") { ShotChartsView(document: doc, status: "Device draft · incomplete and unreviewed", score: model.score, officialSources: sources, isVisible: { model.contentCurrent }) } }
                         Text("Every change saves to this device first. Shared submission is explicit.").font(.footnote)
                         if !model.offline, let doc = recorder.visibleDocument {
                             Button("Save captured journal as shared draft") { Task { await model.save(doc, recovery: false) } }.disabled(model.pending != nil)
@@ -83,8 +87,21 @@ struct SharedShotControls: View {
                         Text("A handoff changes who may submit. Device forks may overlap and require explicit review; stable IDs cannot identify two independently recorded observations of the same attempt.").font(.footnote)
                         if state.can_record, state.document == nil { Button("Prepare actual-roster capture on this device") { Task { await model.register(players: roster) } } }
                         if let doc = state.document {
+                            NavigationLink("Saved capture charts") { ShotChartsView(document: doc, status: "Saved shared snapshot · \(state.status)", score: model.score, officialSources: sources, isVisible: { model.contentCurrent && model.state != nil }) }
                             NavigationLink("Inspect saved capture") { ShotCaptureReadOnlyView(document: doc, status: state.status, isVisible: { model.contentCurrent && model.state != nil }) }
                         }
+                    }
+                    Section("Independent score reference") {
+                        if let score = model.score {
+                            LabeledContent("Our confirmed score", value: score.our_points.map(String.init) ?? "Unavailable")
+                            LabeledContent("Opponent confirmed score", value: score.opponent_points.map(String.init) ?? "Unavailable")
+                            if let note = score.source_note { Text("Reference revision \(score.revision): \(note)").font(.footnote) }
+                            if score.can_confirm {
+                                Button("Enter independently confirmed score reference") { showingScore = true }
+                                    .disabled(model.pending != nil)
+                            }
+                        } else { Text(model.scoreIssue ?? "Official score unavailable — no reference loaded.") }
+                        Button("Refresh capture and accepted sources") { Task { await model.refresh(); await statistics?.reload() } }
                     }
                     if state.can_review {
                         Section("Recorder designation / handoff") {
@@ -129,6 +146,7 @@ struct SharedShotControls: View {
         }
         .disabled(model.isBusy)
         .navigationTitle("Shared shots")
+        .sheet(isPresented: $showingScore) { ShotScoreReferenceForm(model: model) }
         .task(id: model.knownExpiry) { await model.watchExpiry() }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
             do {
@@ -141,6 +159,17 @@ struct SharedShotControls: View {
                 importIssue = nil; Task { await model.save(document, recovery: true) }
             } catch { importIssue = "Recovery file could not be validated. No proposal was sent." }
         }
+    }
+    private func sources(_ team: ShotTeam, _ player: String?) -> [ShotOfficialSource] {
+        guard let statistics, statistics.didLoadGame, statistics.selectedGame?.id == model.gameID else { return [] }
+        var result: [ShotOfficialSource] = []
+        if team == .our, let version = statistics.publishedVersions[.boxScores], let rows = try? version.boxScores() {
+            result.append(.boxes(rows, expectedPlayerIDs: player.map { [$0] } ?? version.coveredRoster.map { $0.id.uuidString }, label: "Loaded accepted box score · revision \(version.revision) · version \(version.id)"))
+        }
+        if player == nil, let version = statistics.publishedVersions[team == .our ? .ourPossessions : .opponentPossessions], let rows = try? version.possessions() {
+            result.append(.possessions(rows, label: "Loaded accepted possession sheet · revision \(version.revision) · version \(version.id)"))
+        }
+        return result
     }
 }
 
@@ -229,5 +258,72 @@ private struct ShotRecoveryInspection: View {
             else if let issue = model.issue { ContentUnavailableView("Recovery unavailable", systemImage: "lock", description: Text(issue)) }
             else { ProgressView("Checking recovery access") }
         }.task { await model.loadProposal(id) }
+    }
+}
+
+private struct ShotScoreReferenceForm: View {
+    let model: SharedShotCapture
+    @Environment(\.dismiss) private var dismiss
+    @State private var our: String
+    @State private var opponent: String
+    @State private var source: String
+    @State private var confirmed = false
+    @State private var frozen = false
+    @State private var confirmingDiscard = false
+    @FocusState private var focused: Bool
+    private let initialOur: String, initialOpponent: String, initialSource: String
+    init(model: SharedShotCapture) {
+        self.model = model
+        let our = model.score?.our_points.map(String.init) ?? "", opponent = model.score?.opponent_points.map(String.init) ?? "", source = model.score?.source_note ?? ""
+        _our = State(initialValue: our); _opponent = State(initialValue: opponent); _source = State(initialValue: source)
+        initialOur = our; initialOpponent = opponent; initialSource = source
+    }
+    private var dirty: Bool { !frozen && (our != initialOur || opponent != initialOpponent || source != initialSource || confirmed) }
+    private func value(_ text: String) -> Int? { BoxScoreCount(text).number }
+    private var valid: Bool {
+        let values = [BoxScoreCount(our), BoxScoreCount(opponent)]
+        return !values.contains(.invalid) && values.contains { $0.number != nil } && values.allSatisfy { ($0.number ?? 0) <= Int(Int32.max) }
+            && !source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && source.count <= 200
+    }
+    var body: some View {
+        NavigationStack {
+            Form {
+                if model.contentCurrent {
+                    Section("Independent final score reference") {
+                        TextField("Our official points", text: $our).keyboardType(.numberPad).focused($focused)
+                        TextField("Opponent official points", text: $opponent).keyboardType(.numberPad).focused($focused)
+                        Text("Blank is unavailable for that team; explicit zero is0. Enter at least one independently confirmed score.").font(.footnote)
+                        TextField("Independent score source", text: $source, axis: .vertical).focused($focused).accessibilityIdentifier("shot.score.source")
+                        Toggle("I independently confirmed each entered score", isOn: $confirmed)
+                        Text("Use the independent scorebook or official result. Never copy captured points just to force a match. This appends a reference; it does not rewrite statistics or establish attempt coverage.").font(.footnote)
+                        if !valid { Text("Enter a nonnegative whole-number score within the supported integer range and an independent source of at most200 characters.").font(.footnote) }
+                        Button("Confirm score reference") {
+                            focused = false
+                            Task {
+                                let before = model.lastConfirmedBatch
+                                await model.confirmScore(our: value(our), opponent: value(opponent), source: source)
+                                frozen = model.pending != nil || model.lastConfirmedBatch != before
+                            }
+                        }.disabled(!valid || !confirmed || model.isBusy || model.pending != nil || frozen)
+                    }.disabled(model.isBusy || frozen)
+                }
+                if model.isBusy { ProgressView("Saving reference; do not enter it again") }
+                if let issue = model.issue { Label(issue, systemImage: model.feedbackConfirmed ? "checkmark.circle" : "info.circle").fixedSize(horizontal: false, vertical: true) }
+                if model.pending != nil { Button("Recover command receipt") { Task { await model.recoverReceipt() } } }
+                if !model.contentCurrent { Text("Entered fields are concealed until current access is verified. Any frozen command remains preserved.") }
+            }
+            .navigationTitle("Official score reference").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Close") { requestClose() }.disabled(model.isBusy) }
+                ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { focused = false } }
+            }
+            .confirmationDialog("Leave this unfinished reference?", isPresented: $confirmingDiscard, titleVisibility: .visible) {
+                Button("Keep editing", role: .cancel) {}
+                Button("Discard unsaved input", role: .destructive) { dismiss() }
+            } message: { Text("Only this unfinished form is discarded. Existing saved records and frozen commands remain preserved.") }
+        }.interactiveDismissDisabled(dirty || model.isBusy)
+    }
+    private func requestClose() {
+        if dirty { confirmingDiscard = true } else { dismiss() }
     }
 }

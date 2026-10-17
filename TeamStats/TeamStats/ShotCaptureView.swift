@@ -67,7 +67,7 @@ struct ShotCaptureWorkspace: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(movingID != nil ? "Tap the corrected location" : "Tap where the field goal was taken").font(.headline)
                                 ShotCourtView(events: events, flipped: flipped, selectedID: selectedID) { point in record(point) }
-                                    .frame(maxWidth: 420).aspectRatio(0.65, contentMode: .fit)
+                                    .aspectRatio(0.65, contentMode: .fit).frame(maxWidth: 420)
                                     .disabled(!canStart && movingID == nil)
                                 Text("Schematic full court · 2/3 points are always selected explicitly.")
                                     .font(.caption).foregroundStyle(TeamStatsStyle.secondaryText)

@@ -215,3 +215,11 @@ restoring the pending device challenge after recreating Account. Email codes
 remain supported for senders that provide them; new Free projects cannot alter
 default templates as of June3,2026. No external sender, SMS or paid service was
 enabled. Capture of a redirect does not establish actual OS link-opening UI.
+
+Shot source preparation: migrations18/19 (`202610170004`/`202610170005`) add private
+RLS-protected capture journals/assignments/immutable receipts and independent score
+references. They are tested only in newly created synthetic environments. Do not
+apply them, or earlier pending14–17, to existing/hosted databases through these
+instructions. Recording/review/publication remain distinct; `stats.review` confirms
+independent score references. New local integration entry points run after the
+synthetic recovery fixture; no real accounts, files or Google writes are needed.

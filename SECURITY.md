@@ -248,3 +248,15 @@ restricted issuance, renewal/revocation and custody are external activation gate
 The role can process all approved project export jobs and attest receipts; it is
 not per-team isolation or protection against a malicious trusted worker. Signed
 hosted tests remain unperformed. No existing grants/migrations were activated.
+
+
+### Independent shot-score references
+
+Shot recording does not grant authority to confirm an official score. Migration19
+uses current stats.review authority and active verified session/team checks; its
+private append-only table retains RLS and denies direct client table access.
+Receipt recovery remains scoped to the current authorized actor/operation and
+immutable batch contents. Either team's score may remain NULL. No score reference
+changes official statistics, capture observations, review or publication state.
+Native cancellation/known authorization denial conceals stale data rather than
+issuing a continuation permit. This migration is isolated-test preparation only.

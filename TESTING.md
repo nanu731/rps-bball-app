@@ -1285,3 +1285,127 @@ Final shared native suite:11tests passed on the isolated iPhone26.4 Simulator;
 15local-journal tests passed in the preceding affected regression run. Independent
 Standards/Spec rereviews report zero remaining source findings. This is not a claim
 of hosted activation or rendered shared acceptance.
+
+## Shot charts, independent references and final integration —2026-10-17
+
+Source ticket05 adds team/player charts, separate makes/misses/attempts, pending
+lower bounds, schematic basket-relative FG bands, FT summaries without dots and
+independent saved-source comparisons. No source is added to another or overwritten.
+Matching points cannot establish attempt coverage. Coverage signoff remains an owner
+policy decision; no automatic Coverage complete state is provided.
+
+Migration19 adds append-only independently confirmed score references under current
+stats.review authority, separate from shots.record/review/publish. Either team's
+score may remain NULL; explicit0 remains0. Source notes, expected revisions and
+stable receipt IDs preserve corrections and uncertain-result recovery. Cancellation
+or known authorization denial during independent reads does not grant a continuation
+permit. Dirty score forms retain input when native cancellation is chosen.
+
+Final synthetic model checks are recorded below. Meaningful cases include identical
+points with different misses, pending FT attempts that are not misses, unknown2/3
+values, team/player filtering, corrected/undone observations, basket-relative bands,
+missing/zero independent counts and checked overflow. These are domain/seam tests,
+not whole-game coverage or real team results.
+
+Fresh19-migration PostgreSQL archive/restore and both shot SQL integration entry
+points passed in a new task-owned cluster. Signed local PostgREST tests covered
+separate actors, one receipt under overlapping commands, lost replies, stale409,
+current designation/grant/session denial and unchanged independent stat records.
+Synthetic JWT/Auth stand-ins exercise actual SQL/HTTP authorization; they are not
+hosted Auth/refresh proof. Existing portable CI checks passed locally with authorized
+loopback access. The first sandbox-only socket-bind failures remain environmental
+failures, not passed tests. Actual remote CI results are recorded separately.
+
+Rendered shared integration used a private isolated root/injected synthetic identity
+with actual signed loopback HTTP and SQL. iPad actions prepared a synthetic shared-roster fixture with stable server IDs,
+entered FT1 Make/FT2 Miss, explicitly saved the shared draft and obtained a receipt.
+Actual readback retained one stable FT event/revision3 and two registration/save
+snapshots. A separate our-team official-reference1 with opponentNULL was confirmed;
+legacy official statistics remained unchanged. Native iPad confirmation popovers
+omit the cancel row: the initial test expected a Keep editing button incorrectly.
+Supported desktop outside cancellation then verified unfinished fields remained;
+actual keyboard-visible score confirmation and subsequent refreshed values passed.
+Concealing the synthetic identity hid chart content. No hosted provider was used.
+
+Final maximum-text iPad chart traversal passed140.6seconds through the observations
+section. Private screenshot inspection confirmed the full court at intended0.65
+proportions, readable legend and pending/coverage hierarchy. A failed ratio assertion
+measured the full List accessibility row (780×676.5), not its actual drawing
+(420×646.5); it was corrected to center the drawing for visual inspection. The
+source modifier order was also corrected after earlier visual stretching: aspect
+ratio precedes the width constraint. These facts are distinct from actual rotation.
+
+Actual landscape, VoiceOver interaction and physical/iOS26.0 testing remain open.
+Existing iPad Reduce Motion manual pan/transition limitations are not retested or
+accepted here. FT typed/count-start checks passed, but the earlier screenshot did
+not prove a visible FT software keyboard; visually confirm that specific Start
+interaction separately. The independently visible score-reference keyboard does
+not close it. Original apps/records were never reset or uninstalled. The separate
+local-draft export still excludes shot journals. Hosted migrations14–19, actual
+shared handoff/review with provider Auth, real Google/media delivery, backup/recovery
+and release/distribution remain separate gates. Scheduler and SMS remain disabled.
+
+Final analysis/shared model run:18tests passed (13SharedShotCaptureTests,
+5ShotAnalysisTests). The prior15journal/8legacy-backup checks remain accepted;
+unchanged model cases were not rerun as substitutes for rendered evidence.
+The focused signed iPad chart-readback/concealment test passed49.7seconds: our
+independent reference agreed with captured1, opponent remained unavailable, and
+identity concealment removed content. Private screenshots were inspected. Its
+injected TEST ONLY banner can overlap the navigation title; this is private root
+fixture decoration, not production layout. Actual no-deploy CI39070914909 passed
+shared sourceaecd7f9; the final chart/reference commit's remote execution is evaluated
+separately after push, never inferred from local tests or configuration existence.
+
+Final integrated iPad run: court/FT/Undo/relaunch passed71.0seconds and the updated
+maximum-text chart traversal passed103.3seconds, including the explicit Temporary
+roster status. Screenshots were inspected privately. The strengthened software-
+keyboard FT Start test skipped because no visibly sized on-screen keyboard was
+available; its earlier accessibility-only result is not promoted to visual proof.
+Exact remaining manual check in the isolated TEST ONLY app: open a synthetic game's
+Shot recorder → Free throws → Other positive whole-number attempts; show the software
+keyboard, type2, reach Start free throws while the keyboard remains visible, then
+verify FT1/2 and FT2/2 can be answered. Do not substitute an original game or reset
+an app to make automation work.
+
+The final isolated iPhone guide journey passed28.1seconds: Local drafts → Using
+TeamStats, with reachable coverage, explicit submission/current-authority and
+manual-pilot guidance. This verifies the revisitable guide's content/reachability,
+not the underlying authorization protocol. A phone maximum-text chart attempt
+failed before scrolling to its team picker: screenshot/tree showed the native List
+status/coverage rows filling the viewport and the offscreen picker not yet created.
+The test was corrected to scroll coverage→picker before assertion; no product
+repair was justified by that failure. Its corrected result follows below.
+
+The corrected phone maximum-text traversal then passed128.7seconds through the
+final observations section. Screenshot inspection found a separate small visual
+defect: the native player's selected-value summary was ellipsized at accessibility
+sizes. A wrapping full selected-name/number label now appears below that picker
+only at accessibility Dynamic Type sizes; filtering, identities and authority are
+unchanged. Both independent reviews found0 remaining findings in this narrow repair;
+its final phone/iPad rendered receipts follow below.
+
+A bounded supported desktop alternative displayed both floating and full iPad FT
+software keyboards with Start visible. One stale accessibility reference (-10005)
+and focus/key-routing inconsistencies prevented reliable verification of activation
+while that keyboard remained visible. No further unchanged attempts were made.
+The entered synthetic count2 was subsequently saved as two pending attempts with
+no keyboard present, preserving that fixture input; this does not pass the outstanding
+keyboard-visible Start interaction. Existing original records were never selected.
+
+Final presentation-repair builds passed maximum-text chart traversal on iPhone
+(120.2seconds) and iPad (89.7seconds), including the full selected-player label and
+all comparison/observation sections. Private screenshots were inspected; native
+picker abbreviation no longer hides the full visible selection at accessibility
+sizes. Both installed isolated apps are TeamStats UI TEST1.0(1), bundle
+com.narayanlekhi.TeamStats.ShotAcceptance, built from42 production Swift
+files exactly matching this slice’s source. Installed binary/source fingerprints are private.
+Actual runtime is26.4; minimum-target26.0 metadata is not an actual26.0 test.
+
+All five shot source tickets are complete within this local/synthetic scope.
+Standards0/Spec0 remaining. Hosted activation/acceptance, real roster/input evidence,
+actual landscape, iPad Reduce Motion pan/transitions, actual VoiceOver, physical
+hardware, iOS26.0 and keyboard-visible FT Start activation remain distinct open gates.
+No release readiness is claimed. All3 protected working/index entries and174 original
+simulator JSON files matched their snapshots at final inspection. Test-owned
+loopback gateways/databases were stopped with all data/diagnostics retained; no
+existing application/provider was stopped or reset.

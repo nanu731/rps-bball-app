@@ -69,12 +69,13 @@ extension SharedShotCaptureTests {
         var receipt: AnyJSON = .null
         let model = SharedShotCapture(scope: scope, gameID: doc.context.gameID, title: "TEST ONLY", store: store, request: { name, args in
             if name == "shots_state" { return try self.state(remote, scope: scope) }
+            if name == "shots_score_read" { throw URLError(.unsupportedURL) }
             if name == "shots_receipt" { return receipt }
             XCTAssertEqual(name, "shots_save"); writes += 1
             let text = try XCTUnwrap(args["p_document_text"]?.stringValue)
             let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
             remote = try decoder.decode(ShotCaptureDocument.self, from: Data(text.utf8))
-            receipt = .object(["batch_id": args["p_batch_id"]!, "actor_user_id": .string(scope.actorID.uuidString), "team_id": .string(scope.teamID.uuidString), "game_id": .string(doc.context.gameID.uuidString), "document_digest": .string(ShotDeviceScope.digest(text))])
+            receipt = .object(["batch_id": args["p_batch_id"]!, "operation": .string("save"), "actor_user_id": .string(scope.actorID.uuidString), "team_id": .string(scope.teamID.uuidString), "game_id": .string(doc.context.gameID.uuidString), "document_digest": .string(ShotDeviceScope.digest(text))])
             throw URLError(.networkConnectionLost)
         }, isCurrent: { true })
         await model.refresh()
@@ -97,7 +98,8 @@ extension SharedShotCaptureTests {
         var writes = 0
         let model = SharedShotCapture(scope: scope, gameID: doc.context.gameID, title: "TEST ONLY", store: store, request: { name, args in
             if name == "shots_state" { return try self.state(doc, scope: scope) }
-            if name == "shots_receipt" { return .object(["batch_id": args["p_batch_id"]!, "actor_user_id": .string(UUID().uuidString)]) }
+            if name == "shots_receipt" { return .object(["batch_id": args["p_batch_id"]!, "operation": .string("save"), "actor_user_id": .string(UUID().uuidString)]) }
+            if name == "shots_score_read" { throw URLError(.unsupportedURL) }
             writes += 1; throw URLError(.timedOut)
         }, isCurrent: { current })
         await model.refresh(); await model.save(doc, recovery: false)
@@ -158,6 +160,7 @@ extension SharedShotCaptureTests {
         var writes = 0
         let model = SharedShotCapture(scope: scope, gameID: doc.context.gameID, title: "TEST ONLY", store: store, request: { name, _ in
             if name == "shots_state" { return try self.state(doc, scope: scope) }
+            if name == "shots_score_read" { throw URLError(.unsupportedURL) }
             writes += 1; await Task.yield(); throw URLError(.timedOut)
         }, isCurrent: { true })
         await model.refresh()
@@ -234,5 +237,37 @@ extension SharedShotCaptureTests {
         viewer = true; await model.refresh()
         XCTAssertTrue(model.contentCurrent); XCTAssertFalse(model.canRecord)
         XCTAssertEqual(model.state?.document, doc)
+    }
+}
+
+extension SharedShotCaptureTests {
+    func testScoreReadCancellationDoesNotUnlockPreparedCapture() async throws {
+        let (scope, doc, store) = try fixture()
+        var cancel = false
+        let model = SharedShotCapture(scope: scope, gameID: doc.context.gameID, title: "TEST ONLY", store: store, request: { name, _ in
+            if name == "shots_state" { return try self.state(doc, scope: scope) }
+            if cancel { throw CancellationError() }
+            throw URLError(.unsupportedURL)
+        }, isCurrent: { true })
+        await model.refresh(); XCTAssertTrue(model.canRecord)
+        cancel = true; await model.refresh()
+        XCTAssertFalse(model.contentCurrent); XCTAssertNil(model.recorder?.visibleDocument)
+        let entries = try await store.entries(scope); XCTAssertTrue(entries.isEmpty)
+        let file = try await store.documentURL(scope, game: doc.context.gameID, session: doc.id)
+        XCTAssertEqual(try ShotCaptureStorage.load(from: file, context: doc.context), doc)
+    }
+    func testIndependentScoreAllowsOneMissingTeamAndDoesNotMutateStatistics() async throws {
+        let (scope, doc, store) = try fixture()
+        var writes: [String] = [], captured: [String: AnyJSON] = [:]
+        let model = SharedShotCapture(scope: scope, gameID: doc.context.gameID, title: "TEST ONLY", store: store, request: { name, args in
+            if name == "shots_state" { return try self.state(doc, scope: scope) }
+            if name == "shots_score_read" { return .object(["team_id": .string(scope.teamID.uuidString), "game_id": .string(doc.context.gameID.uuidString), "revision": .integer(0), "reference_id": .null, "our_points": .null, "opponent_points": .null, "source_note": .null, "can_confirm": .bool(true)]) }
+            writes.append(name); captured = args
+            return .object(["batch_id": args["p_batch_id"]!, "operation": .string("score_confirm"), "actor_user_id": .string(scope.actorID.uuidString), "team_id": .string(scope.teamID.uuidString), "game_id": .string(doc.context.gameID.uuidString), "score_revision": .integer(1)])
+        }, isCurrent: { true })
+        await model.refresh(); await model.confirmScore(our: 0, opponent: nil, source: "TEST ONLY independent score")
+        XCTAssertEqual(writes, ["shots_score_confirm"])
+        XCTAssertEqual(captured["p_our_points"], .integer(0)); XCTAssertEqual(captured["p_opponent_points"], .null)
+        XCTAssertNil(model.pending); XCTAssertNotNil(model.lastConfirmedBatch); XCTAssertTrue(model.feedbackConfirmed)
     }
 }

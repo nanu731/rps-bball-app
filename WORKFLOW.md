@@ -2090,3 +2090,19 @@ unlock newer checks, and a fresh game does not revive a prior denied preparation
 Independent source reviews caught and resolved response bounds, receipt authority,
 outbox races and concealment gaps. No existing/hosted migration or service activated.
 Charts/independent comparison and rendered shared acceptance remain next.
+
+### Shot ticket05: charts and independent reconciliation
+
+Implemented read-only team/player charts, observed makes/misses/attempts, pending
+lower bounds, basket-relative schematic FG bands and separate FT summaries.
+Independent local/accepted-source adapters preserve missing values, checked arithmetic
+and provenance; no double counting or source replacement. Separate append-only
+score references require stats.review, preserve either team's unentered value and
+use frozen-command/receipt recovery. Owner coverage signoff remains unresolved.
+Actual isolated19-migration restore/SQL and signed synthetic authority checks passed;
+rendered shared draft/score actions were checked against saved server records.
+Native popover and List-row geometry assertion failures were diagnosed separately
+from product defects. TESTING records final device/model results and open gates.
+Independent Standards/Spec review found no remaining source issues after targeted
+cancellation, dirty-form, optional-score and arithmetic repairs. No existing-server
+migration/provider activation, original-record upload or broader offline sync.

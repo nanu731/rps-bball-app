@@ -186,7 +186,7 @@ private struct ConnectedGameDetailView: View {
                         .font(.footnote).foregroundStyle(TeamStatsStyle.secondaryText)
                 }
                 Section("Shot capture") {
-                    NavigationLink("Shot recorder, handoff and review") { SharedShotCaptureView(account: account, game: game, roster: model.roster) }
+                    NavigationLink("Shot recorder, handoff and review") { SharedShotCaptureView(account: account, game: game, roster: model.roster, statistics: model) }
                     Text("Separate from official statistics. One designated recorder; explicit deferred submission.").font(.footnote)
                 }
                 Section("Game Film") {

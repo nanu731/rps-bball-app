@@ -66,5 +66,7 @@ jobs:
             --recovery-output "$RUNNER_TEMP/teamstats-recovery"
           python3 supabase/tests/shot_capture_integration.py --container "$PG_CONTAINER" \
             --recovery-output "$RUNNER_TEMP/teamstats-recovery"
+          python3 supabase/tests/shot_score_integration.py --container "$PG_CONTAINER" \
+            --recovery-output "$RUNNER_TEMP/teamstats-recovery"
       # No deploy, secrets, private fixtures, caches, artifact uploads or provider calls.
       # Full pgTAP, native media validation, Xcode and actual hosted recovery are separate.
