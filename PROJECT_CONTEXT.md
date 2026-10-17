@@ -1062,3 +1062,11 @@ cluster-isolation gaps were repaired. A reproduced DST expiry gap uses168elapsed
 hours in the still-unactivated migration15. Actual request-intake CI39008209659
 passed. No migrations14–17, hosted role/issuer, provider, scheduler or delivery
 activation. READINESS.md distinguishes local preparation from external acceptance.
+
+Reviewed worker source4954d79 pushed/remote verified; actual CI39008933352 passed.
+Actual local PostgREST16.4 synthetic signed-role mapping also passed4 execution
+commands/10denials and one loopback provider batch. Hosted issuer/renewal and real
+Google remain unverified/disabled. Native test host source d253216 was fingerprinted
+against35 committed Swift files; private rendered request harness remains separate.
+Final reviews Standards0/Spec0; original174 JSON and3protected working/index
+entries preserved. READINESS.md is the remaining owner/provider/device/release list.

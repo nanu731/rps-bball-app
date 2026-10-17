@@ -1163,3 +1163,33 @@ Migrations14–17, scheduler activation and real Google delivery remain disabled
 existing/hosted systems. Signing/issuer/renewal/revocation, patched media deployment,
 hosted recovery, owner policy/content, actual VoiceOver/landscape/manual traversal,
 physical devices and actual26.0 remain separate gates in READINESS.md.
+
+### Final signed local boundary and actual CI
+
+Reviewed worker preparation4954d79 is pushed and remote HEAD verified. Actual
+[CI39008933352](https://github.com/nanu731/rps-bball-app/actions/runs/39008933352)
+passed the configured portable/relay tests plus17-migration synthetic restore,
+queue, account-request, admission and new worker-identity integration. Final
+Standards0/Spec0 remaining actionable findings. Earlier review/test failures remain
+recorded above rather than overwritten by the final pass.
+
+Actual approved PostgREST16.4 was then started once on loopback against a new clone
+in the task-created PostgreSQL cluster. Fresh test-only HS256 material, synthetic
+login/roles and an authenticated audience were used; no existing/hosted signing
+key, account credential or provider was accessed. The four execution RPCs worked
+through actual signed HTTP. Ten negative requests covered wrong signature, expiry,
+audience/role/SQL lifetime/type bounds, direct table/inspection and resume denial.
+The actual Python worker completed through PostgREST with a timeout-applied
+loopback Google fixture and one verified batch. Source snapshot unchanged; the
+owned gateway stopped afterwards. This verifies local signed role mapping, not
+hosted issuer trust, signing-key rotation, renewal/revocation or Google delivery.
+
+Installed TeamStats UI TEST1.0(1), com.narayanlekhi.TeamStats.AutonomousAcceptance,
+has35 production Swift files matching d253216 and an executable matching the tested
+build. The separate com.narayanlekhi.TeamStats.AutonomousRender harness matches34
+production files from d253216 plus its private synthetic root/HTTP adapter; its
+installed binary also matches its build. Existing rendered far-right observations
+used UIAcceptance source6713efe. Native source has not changed since d253216; worker
+and documentation commits do not constitute new rendered full-app acceptance.
+All3 protected working/index entries and174 original simulator JSON hashes were
+unchanged at final inspection; no guessed restoration or original-app reset.

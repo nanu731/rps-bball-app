@@ -1994,3 +1994,12 @@ DST-crossing retry cap corrected to168elapsed hours in unactivated source15.
 Final local configured portable/relay and actual17-migration restore/queue/account/
 file regressions passed. Hosted credentials/mapping/renewal, providers, recovery,
 owner policies and deferred device/VoiceOver checks remain gates; no activation.
+
+Final worker checkpoint4954d79 pushed/remote verified; CI39008933352 succeeded.
+One actual approved local PostgREST16.4 instance tested signed synthetic role mapping:
+4commands/10denials, actual worker+timeout-applied loopback provider1verifiedbatch.
+Gateway stopped; no hosted credential/configuration or service activation. Final
+Standards0/Spec0. Native installed test host remains d253216, source/binary matched;
+request-render harness and prior UI6713efe observations remain separate evidence.
+Finite independently actionable queue completed; exact owner/provider/device gates
+remain in READINESS.md and private resumable checklist. No release-readiness claim.

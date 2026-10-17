@@ -304,3 +304,11 @@ expected synthetic roles, no non-system objects or role memberships. It refuses
 occupied clusters before mutation. SQL role fixtures are not signed JWT ingress,
 actual Google delivery or hosted permission evidence. Migrations14–17, provider
 activation, scheduler registration and real Google delivery remain disabled.
+
+Actual local signed boundary: PostgREST16.4 against a new synthetic17-migration
+clone passed the four execution commands and10 signature/expiry/audience/role/
+bounds/access denials. Fresh test-only signing material and a synthetic local
+login were used; the owned gateway stopped after verification. A timeout-applied
+loopback Google fixture produced one verified batch through the actual worker and
+PostgREST. This does not verify hosted issuer/mapping/renewal/revocation, signing-key
+rotation, actual Google permissions or a usable free deployment. See TESTING.md.
