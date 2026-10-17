@@ -24,6 +24,9 @@ final class ConnectedEditingAcceptanceTests: XCTestCase {
         }
         try tap(app.buttons["Shared games and statistics"])
         try tap(app.staticTexts[fixture.sharedGameOpponent].firstMatch)
+        // This link is inserted only after the real game load succeeds.
+        // Wait before scrolling so a loading screen cannot send us past it.
+        try require(app.buttons["Player box scores"])
         try tap(app.buttons["Player box scores"])
         let start = app.buttons["Start player box scores draft"]
         if start.exists { try tap(start) }

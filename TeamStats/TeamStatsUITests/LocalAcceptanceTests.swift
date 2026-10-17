@@ -6,6 +6,7 @@ final class LocalAcceptanceTests: XCTestCase {
     private var app: XCUIApplication!
     private let first = "temporary-roster-v1-a"
     private let second = "temporary-roster-v1-b"
+    private var originalReduceMotion: String?
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -25,6 +26,22 @@ final class LocalAcceptanceTests: XCTestCase {
             capture("Failure")
             let hierarchy = XCTAttachment(string: app.debugDescription)
             hierarchy.name = "Failure hierarchy"; hierarchy.lifetime = .keepAlways; add(hierarchy)
+        }
+        if let originalReduceMotion {
+            let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
+            settings.activate()
+            let motion = settings.switches["REDUCE_MOTION"].firstMatch
+            if motion.waitForExistence(timeout: 5) {
+                if motion.value as? String != originalReduceMotion {
+                    motion.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+                }
+                let restored = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", originalReduceMotion), object: motion)
+                XCTAssertEqual(XCTWaiter.wait(for: [restored], timeout: 5), .completed,
+                    "Restore the recorded Reduce Motion preference")
+            } else { XCTFail("Reduce Motion restoration control unavailable") }
+            let image = XCTAttachment(screenshot: settings.screenshot())
+            image.name = "Reduce Motion original preference restored"; image.lifetime = .keepAlways; add(image)
+            self.originalReduceMotion = nil
         }
         app.terminate()
     }
@@ -186,21 +203,118 @@ final class LocalAcceptanceTests: XCTestCase {
         }
     }
 
-    func testApprovedLedgerLandscapeGeometry() {
-        let game = createGame("landscape ledger")
-        defer { XCUIDevice.shared.orientation = .portrait }
-        XCUIDevice.shared.orientation = .landscapeLeft
-        let landscape = NSPredicate { _, _ in self.app.frame.width > self.app.frame.height }
-        let rotation = expectation(for: landscape, evaluatedWith: app)
-        wait(for: [rotation], timeout: 8)
-        XCTAssertGreaterThan(app.frame.width, app.frame.height, "Actual app window must be landscape")
+    func testLedgerWithActualReduceMotion() throws {
+        let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
+        settings.activate()
+        let motion = settings.switches["REDUCE_MOTION"].firstMatch
+        if !motion.exists {
+            for title in ["Accessibility", "Motion"] {
+                var reached = false
+                for _ in 0..<8 {
+                    let candidates = settings.buttons.matching(identifier: title).allElementsBoundByIndex +
+                        settings.cells.matching(identifier: title).allElementsBoundByIndex +
+                        settings.staticTexts.matching(identifier: title).allElementsBoundByIndex
+                    if let row = candidates.first(where: { $0.isHittable }) { row.tap(); reached = true; break }
+                    if title == "Accessibility", let back = settings.navigationBars.buttons.allElementsBoundByIndex.first(where: { $0.isHittable }) {
+                        back.tap()
+                    } else { settings.swipeUp() }
+                }
+                guard reached else { throw XCTSkip("Native Settings motion route unavailable; no preference changed") }
+            }
+        }
+        XCTAssertTrue(motion.waitForExistence(timeout: 5))
+        let original = motion.value as? String
+        guard let original, ["0", "1"].contains(original) else { XCTFail("Unrecognized Reduce Motion state"); return }
+        // XCTest event-synthesis aborts can bypass Swift defer; teardown still runs.
+        originalReduceMotion = original
+        if original == "0" { motion.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap() }
+        XCTAssertEqual(motion.value as? String, "1")
+        let enabled = XCTAttachment(screenshot: settings.screenshot())
+        enabled.name = "Actual Reduce Motion enabled"; enabled.lifetime = .keepAlways; add(enabled)
+        app.terminate(); app.launch(); selectTab("Local drafts")
+        _ = createGame("Reduce Motion ledger")
         tap(app.buttons["Single-player entry"])
-        replace(field(first + ".chargesDrawn"), with: "0")
-        XCTAssertTrue(app.keyboards.firstMatch.exists)
-        XCTAssertTrue(app.frame.contains(app.buttons["Save draft"].frame))
-        capture("Actual landscape window, keyboard-visible Save")
+        tap(app.buttons[first + ".points.increase"])
+        XCTAssertEqual(contents(field(first + ".points")), "1")
+        tap(app.buttons[first + ".points.decrease"])
+        XCTAssertEqual(contents(field(first + ".points")), "0")
+        replace(field(first + ".chargesDrawn"), with: "1")
+        capture("Reduce Motion single-player scrolling and keyboard Save")
         tap(app.buttons["Save draft"])
         XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        hideKeyboard()
+        tap(app.buttons["Roster table"])
+        replace(field(first + ".freeThrowsMissed", axis: .horizontal), with: "1", axis: .horizontal)
+        capture("Reduce Motion roster final field and keyboard Save")
+        tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        hideKeyboard()
+        tap(app.navigationBars["Box-score draft"].buttons["Done"])
+        tap(app.buttons["View box score"])
+        tap(app.buttons["box-score.expand." + first])
+        capture("Reduce Motion saved ledger expansion")
+    }
+
+    func testApprovedLedgerLandscapeGeometry() throws {
+        let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
+        settings.activate()
+        defer { XCUIDevice.shared.orientation = .portrait; app.activate() }
+        XCUIDevice.shared.orientation = .portrait
+        let portrait = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            settings.frame.height > settings.frame.width
+        }, object: settings)
+        XCTAssertEqual(XCTWaiter.wait(for: [portrait], timeout: 8), .completed)
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let landscape = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            settings.frame.width > settings.frame.height
+        }, object: settings)
+        let result = XCTWaiter.wait(for: [landscape], timeout: 8)
+        let geometry = XCTAttachment(string: "Settings window: \(settings.frame); requested landscape; device orientation: \(XCUIDevice.shared.orientation.rawValue)")
+        geometry.name = "System orientation geometry"; geometry.lifetime = .keepAlways; add(geometry)
+        let image = XCTAttachment(screenshot: settings.screenshot())
+        image.name = "Actual system rotation baseline"; image.lifetime = .keepAlways; add(image)
+        if result != .completed {
+            XCUIDevice.shared.orientation = .portrait
+            XCUIDevice.shared.press(.home)
+            let system = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+            system.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.01))
+                .press(forDuration: 0.05, thenDragTo: system.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.65)))
+            let controls = XCTAttachment(string: system.debugDescription)
+            controls.name = "Rotation-control diagnosis"; controls.lifetime = .keepAlways; add(controls)
+            let systemImage = XCTAttachment(screenshot: system.screenshot())
+            systemImage.name = "Rotation-control system view"; systemImage.lifetime = .keepAlways; add(systemImage)
+        }
+        guard result == .completed else {
+            throw XCTSkip("System Settings retained portrait geometry after a landscape request; app rotation cannot be accepted")
+        }
+        app.activate()
+        XCUIDevice.shared.orientation = .portrait
+        selectTab("Local drafts")
+        _ = createGame("actual rotation")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let appLandscape = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            self.app.frame.width > self.app.frame.height
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [appLandscape], timeout: 8), .completed)
+        capture("Actual landscape game ledger geometry")
+        tap(app.buttons["Single-player entry"])
+        replace(field(first + ".chargesDrawn"), with: "0")
+        capture("Actual landscape single-player scrolling and Save")
+        tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        hideKeyboard()
+        tap(app.buttons["Roster table"])
+        replace(field(first + ".freeThrowsMissed", axis: .horizontal), with: "0", axis: .horizontal)
+        capture("Actual landscape table and final field")
+        tap(app.buttons["Save draft"])
+        XCTAssertTrue(text(containing: "Draft saved on this device.").waitForExistence(timeout: 5))
+        hideKeyboard()
+        XCUIDevice.shared.orientation = .portrait
+        let appPortrait = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            self.app.frame.height > self.app.frame.width
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [appPortrait], timeout: 8), .completed)
+        capture("Actual restored portrait table geometry")
     }
 
     func testApprovedLargeTextRenderedLayout() {

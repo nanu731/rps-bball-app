@@ -870,3 +870,25 @@ VoiceOver acceptance is separate. Installed26.4 lacks the newer Simulator contro
 a capable toolchain or separately authorized device is the remaining prerequisite.
 Rotation, shared-entry and Reduce Motion checks were not repeated. Physical and
 actual26.0 testing stay deferred. No release-readiness claim or next feature.
+
+## Remaining native acceptance —2026-10-16, baseline6713efe
+
+Application source/design remains unchanged. iPad shared entry passed against real
+isolated local services: individual/table4/7 edits, calm notice, actual draft Save
+and unique-record readback; no completion/publication. Phone Reduce Motion On-state
+functional navigation/counters/scrolling/Save/viewer passed and restored Off.
+Both original settings are restored, including cleanup after an aborted iPad test.
+Test fixes wait for successful game loading and move setting restoration to teardown.
+
+Acceptance remains PARTIAL even within Simulator scope: Settings itself refused
+landscape geometry on both devices, phone shared entry lost a field snapshot, and
+full iPad motion/temporal animation observation and actual VoiceOver remain open.
+Mac lock blocked desktop control; native alternatives were attempted and unchanged
+failures stopped. Installed26.4 lacks exposed VoiceOver controls; Inspector evidence
+is separate. TESTING.md records exact prerequisites, final-build evidence and
+installed TeamStats UI TEST1.0(1), app source6713efe.
+
+All174 original JSON files, temporary identities, protected Xcode bytes/index and
+original server permissions/history remain preserved. Pre-session personal UI-state
+drift was retained without restoration. Strict$0; provider activation, physical
+work and actual26.0 testing remain separate/deferred. No next feature started.

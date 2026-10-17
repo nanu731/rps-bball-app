@@ -1774,3 +1774,26 @@ current versus older personal UI-state snapshots are retained without restoratio
 iPad keyboard preference restored. No dependency, backend/provider action or cost.
 Simulator Inspector reading-order/speech support was checked separately from actual
 VoiceOver; broader acceptance and deferred physical/26.0 checks remain open.
+
+##2026-10-16 — remaining native acceptance from6713efe
+
+No app repair was demonstrated. Scoped tests now wait for the server-loaded shared
+entry link, restore observed Reduce Motion in XCTest teardown after event aborts,
+and gate app landscape acceptance on actual Settings geometry. Final builds and
+installed signatures pass. iPad shared local-service entry/Save/readback and phone
+Reduce Motion On-state functionality passed individually; mixed test commands also
+contain documented failures/skips. Source/design/scoring/storage/authority unchanged.
+
+Both devices' Settings retained portrait after landscape requests. Phone shared
+editing lost a native field snapshot; iPad motion hit event/query timeouts. Awake
+assertions and native alternatives did not fully recover control; no further
+unchanged retries. Motion settings restored Off. Recorder error2 prevented temporal
+inspection. Installed26.4 has no exposed VoiceOver control; Inspector is not actual
+screen-reader acceptance. TESTING.md is the current acceptance ledger and checklist.
+
+Status remains PARTIAL, including Simulator scope. Original records/identities,
+three protected Xcode byte/index entries and original server grants/history remain
+intact; current personal UI-state drift predates this task and was retained. No
+provider/production activation, original upload, physical work or spending. Resume
+only the blocked acceptance after Mac unlock/supported accessibility prerequisites;
+physical and actual26.0 checks stay deferred. No next feature started.

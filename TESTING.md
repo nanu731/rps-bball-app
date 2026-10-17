@@ -660,7 +660,9 @@ describes physical VoiceOver testing; newer toolchains may add Simulator support
 so hardware is not asserted as a universal prerequisite. No toolchain download or
 system VoiceOver activation was attempted in this bounded task.
 
-### Exact remaining manual checks
+### Remaining manual checks at6713efe
+
+The later remaining-native-acceptance checkpoint below supersedes this checklist.
 
 Use only **TeamStats UI TEST** and clearly labeled TEST ONLY games. Preserve the
 original app/data; do not reset or uninstall anything to recover automation.
@@ -684,3 +686,84 @@ original app/data; do not reset or uninstall anything to recover automation.
    stay saveable. Inspector speech alone does not pass this check.
 
 Actual26.0 and physical-device testing remain deferred. No release-readiness claim.
+
+## Remaining native acceptance —2026-10-16, app source6713efe
+
+**PARTIAL: this UI slice is not fully accepted within the tested Simulator scope.**
+No application source changed. The closed floating-keypad Save and maximum-text
+notice checks were not reopened. Only native acceptance adapters and evidence changed.
+
+Installed on iPhone17 and iPad(A16): **TeamStats UI TEST1.0(1)**,
+`com.narayanlekhi.TeamStats.UIAcceptance`, minimum26.0, actual runtime26.4;
+Xcode26.4 build17E192. Both installed signatures verify strictly. Private fingerprints
+confirm application source matches6713efe, including the earlier saved-receipt repair.
+
+| Remaining check | Final evidence | Acceptance |
+| --- | --- | --- |
+| Actual rotation, both devices | Settings retained portrait402×874 on phone and820×1180 on iPad after landscape requests; native request reported orientation3. Desktop menu/toolbar rotated the iPad bezel while content stayed sideways. An additional awake iPad preflight still refused landscape. | BLOCKED; app landscape checks skipped, underlying system cause unknown |
+| Shared entry, iPad | Actual signed local-service account/membership, individual4/7 lower-bound notice, shared unsaved mode switch and server-confirmed draft Save passed. Stored draft has one unique game/player record, revision2, points4/threesMade7, no published version. Captures inspected. | PASS, local integration only |
+| Shared entry, iPhone | Initial navigation raced successful game loading. Explicitly waiting for the link reached the editor; a later native query lost the virtualized threes-made field snapshot. | BLOCKED; no final phone shared Save pass |
+| Reduce Motion, iPhone | Real Settings On captured; counters, vertical scrolling, both entry modes, far-right field, keyboard Save and saved-ledger expansion passed. Original Off restored in teardown and independently read back. Captures inspected. | PASS for functional On-state usability |
+| Reduce Motion, iPad | Initial On-state counters, vertical scrolling, single-player Save and mode switch passed before event-synthesis timeout. Changed awake replay hit a query timeout before finishing. Corrected teardown restored Off even after that abort; actual preference readback agrees. | PARTIAL; full On-state journey remains open |
+| Transition-motion observation | A supported Simulator recording attempt returned SimRenderServer error2. No unchanged recording retry. Stills and successful interactions do not establish temporal animation behavior. | BLOCKED; no measured/visual motion-reduction claim |
+| Actual screen reader | Installed Simulator Accessibility settings omit VoiceOver; installed XCTest headers expose no VoiceOver controller. Earlier menu/Inspector capability inspection remains applicable to this unchanged toolchain. | BLOCKED; no actual VoiceOver interaction performed |
+
+The two demonstrated test defects were corrected: shared navigation now waits for
+its asynchronously inserted entry link before scrolling, and Reduce Motion
+restoration runs in XCTest teardown. A native event-synthesis abort bypassed the
+previous Swift defer; the final failed iPad probe demonstrably ran the new cleanup.
+No product defect was established, so no persistence, layout, authority or
+completion behavior was changed. Draft discrepancies remain saveable; the shared
+game stayed draft-only, without completion, submission or publication.
+
+The Mac locked during desktop control; an unlock request remains pending. Native
+alternatives recovered some interactions, but subsequent lost-snapshot/query/event
+failures stopped further unchanged probes. Retained power logs show sleep/wake
+cycles; temporary process-scoped wake assertions did not establish full recovery
+and have ended. Durations affected by this environment are not performance evidence.
+Selected phone motion and iPad shared tests passed individually; mixed commands
+also contain failures/skips and are **not** reported as a green overall suite.
+
+Independent final reviews: Standards0 documented breaches/actionable smells; Spec0.
+Final native builds passed. Private result bundles, captures, source/signature
+receipts and data readbacks are under
+`.scratch/teamstats-native-remaining-20261016/`. All174 original JSON hashes,
+temporary identities and three protected Xcode working/index entries are preserved.
+The personal UI-state file already differed from the previous task at entry;
+current bytes and older snapshots were retained, with no further task drift.
+Known older isolated rows and independent possession/paint stores remain unchanged.
+Full available local-server readback shows only the dedicated synthetic draft
+update and an appended audit event; original grants, memberships and audit rows
+remain intact. Three export tables correctly denied direct reads rather than being
+reported empty. No original app reset/uninstall, automatic upload, provider
+activation, physical-device work, dependency or paid action occurred.
+
+### Exact remaining prerequisites and checks
+
+1. Unlock the Mac and keep it awake for desktop Simulator control. Diagnose system
+   rotation first: confirm the existing Simulator's rotation-lock control and that
+   Settings itself settles into landscape. Preserve apps/containers; do not reset
+   anything. Only then inspect actual app geometry, game header/viewer, both entry
+   modes, vertical/horizontal scrolling and keyboard Save on each device; return
+   to portrait. The active-pan hidden-indicator observation remains unverified.
+2. On the isolated phone, confirm the configured synthetic account and TEST ONLY
+   team/game. Open Player box scores, retain points4/threesMade7 with other makes
+   blank, switch modes and require “Server confirmed all draft changes.” Verify
+   actual saved records remain unique and draft-only. Do not complete/publish.
+3. On the isolated iPad, record Reduce Motion's current setting, enable it, and
+   finish the local synthetic ledger's individual/table counters, scrolling, Save
+   and viewer expansion. Observe actual transitions on both device families;
+   functional On-state acceptance alone does not certify temporal motion behavior.
+   Restore the recorded setting. Both settings are currently restored to Off.
+4. Actual VoiceOver needs a supported screen-reader-capable Simulator/toolchain,
+   or separately authorized device work outside this task. Test real focus/order,
+   labels/values, missing versus zero, editing/disclosure and Save announcements.
+   [Inspector reading order and spoken descriptions](https://developer.apple.com/documentation/accessibility/inspecting-the-accessibility-of-screens)
+   are separate evidence, not VoiceOver gesture/focus acceptance. No universal
+   hardware-only claim is made.
+
+Provider limits remain separate: shared rendered evidence here uses actual isolated
+local services; hosted UI/provider delivery is not accepted by it. Hosted media
+capacity/worker, Google export and email/SMS prerequisites are unchanged, with no
+activation. Physical-device work remains deferred. Actual iOS/iPadOS26.0 remains
+unverified (installed iOS runtimes are18.6 and26.4). No release-readiness claim.
