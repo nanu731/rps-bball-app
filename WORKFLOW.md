@@ -1876,6 +1876,8 @@ additional11s wait produced denial. No provider settings/key rotation/real autho
 changed. Hosted Auth/ingress/$0 enforcement stays gated; no speculative provider fix.
 NETWORK.md documents exact bounds, relay-buffer and whole-worker-cancellation limits.
 
-Existing CI extended with TLS/concurrent-admission checks; final remote result is
-pending reviewed push. Independent final Standards/Spec review follows. Broader
+Existing CI extended with TLS/concurrent-admission checks. Source7bc8811 pushed,
+remote HEAD verified; actual run38994907823 passed worker/TLS/recovery/relay and
+14-migration/concurrent-admission checks. Independent final Standards/Spec reviews
+found0 actionable issues. Native117 and actual Auth timing remain separate evidence. Broader
 performance/monitoring/export scheduling and all prior UI/recovery policies deferred.

@@ -838,7 +838,7 @@ transitions and actual VoiceOver stay open. Recovery/CI infrastructure was reuse
 | Worker/relay/TLS | Gateway28 tests passed(1platform resource-limit skip); export21 passed; relay10 passed; actual synthetic trusted-localhost TLS1 passed. Existing recovery5 passed. | Loopback/external-provider fixtures. TLS fixture uses existing OpenSSL only; actual Google/hosted transport remains disabled. |
 | SQL |14migrations applied only to new synthetic source/restored DBs;31table/security snapshot equality and new rollback-only admission assertions passed. Existing343 post-restore checks passed. New isolated clone admitted exactly30of40 parallel calls, persisted denial across connections, isolated another actor and preserved unrelated rows/security. | SQL synthetic claims, not signed hosted enforcement. No existing Auth database/schema or hosted migration activation. |
 | Actual isolated Authv2.197.0 | Fresh synthetic confirmed accounts, no email/SMS: sign-in, credential rotation, concurrent reuse, old-grandparent rejection after10s, explicit recovery and sign-out/refresh rejection passed. Additional11s after rejected reuse produced child denial. | Strict immediate family-lockout assertion failed: child refresh initially returned200. Both receipts retained; running rotation=true/reuse10 verified. No signing-key rotation; actual access-token expiry unverified because no signing secret exported. |
-| CI | Same public-only/read-token/pinned no-deploy workflow extended with TLS and concurrent admission checks. Local commands pass; no deployment or provider credentials. | Actual final remote execution pending reviewed push; local/native/actual Auth evidence is separate from CI. |
+| CI | Same public-only/read-token/pinned no-deploy workflow extended with TLS and concurrent admission checks. Local commands pass; no deployment or provider credentials. | Actual reviewed-source CI run38994907823 passed, recorded below; local/native/actual Auth evidence is separate from CI. |
 
 NETWORK.md owns exact request/deadline/retry/uncertainty contracts and remaining
 Auth/ingress/direct-RPC/cost activation gates. Admission precedes worker body reads,
@@ -850,3 +850,18 @@ App test host: `com.narayanlekhi.TeamStats.NetworkAcceptance`,1.0(1). The existi
 UIAcceptance artifact remains UI source6713efe and was not replaced. Physical
 devices/actual26.0/hosted recovery/release remain unaccepted. Protected Xcode working/
 index entries, original JSON/temporary identities and retained files are preserved.
+
+### Final reviewed source and remote execution
+
+Source7bc8811: final native build/117 tests passed, including every pinned SDK Auth
+retry-status response through the account seam. Independent Standards:0 breaches/
+actionable smells; Spec:0 actionable findings. Reviewed source pushed and remote
+HEAD verified. [Actual CI run38994907823](https://github.com/nanu731/rps-bball-app/actions/runs/38994907823)
+passed export21, gateway28(1skip), TLS1, recovery5, relay10 and the14-migration
+synthetic database/object restore plus concurrent admission30of40 checks. No
+private fixtures/artifacts or provider credentials were published. The343 SQL and
+117 native tests are local evidence; actual Auth timing probes are separate.
+
+Final preservation checks retain3protected Xcode working/index entries and174
+original JSON hashes unchanged; no retained media or original app container was
+changed. NetworkAcceptance1.0(1) uses7bc8811 source; UIAcceptance remains6713efe.
