@@ -1648,3 +1648,49 @@ separate. Exact next check: on a working current isolated nonproduction build,
 Account → Check session again, verify intended owner against its trusted Auth UUID,
 then exercise the retained synthetic game's shared forms/Save/reopen/completion and
 review controls. Do not alter existing grants to recover access.
+
+
+## Hosted native gap follow-up —2026-10-18
+
+Owner-confirmed physical session/UUID/server-owner check passed. Native XCTest
+recovered iPad Account recheck, current synthetic team access, retained TEST ONLY
+game navigation, four author correction requests and four distinct-owner reopening
+approvals. The ordinary member opened all four accepted versions with no review or
+submission actions (1test/0failures); accepted summary screenshot inspected.
+Tests use HostedManualAcceptance1.0(1), initial sourcec2db392 and final repaire2c5691,
+with41 source-matching app Swift files plus one private memory-only AuthLocalStorage
+adapter, iPadA16/iPhone17 Simulator26.4.
+No normal Keychain-persistence or automated real-owner physical-device claim.
+
+Actual iPhone box-form discrepancy Save/reopen/correction/completion used initial
+sourcec2db392. It exposed a product defect: status selected older published history
+instead of the just-completed correction. Repaire2c5691 retains active proposal
+selection; the regression first failed4 assertions, then31 connected-statistics
+tests passed, including two completed proposals. Independent Standards/Spec reviews
+resolved all findings; CI39096294965 passed. Final-source UI verified the correct
+completed revision/Submit, paired Save/reopen/independent completion/submission,
+paint1→blank→0 persistence/completion/submission, four iPad owner publications and
+ordinary-member accepted viewing. Passing final author/owner/member phases each
+ran1selected UI test/0failures; resumed earlier actions have individual receipts.
+Final signed readback passed24 identity/value/pointer/lineage checks;9versions,
+4datasets and9queued undelivered jobs, all attempts0. Original5jobs/history unchanged.
+
+Private harness fixes addressed cursor placement, grouped static labels, switch
+thumb targeting, virtualized rows, enabled-state waits and sidebar/detail targeting.
+Coordinate drags did not move the iPad list; bounded native app swipes passed owner
+review. Static informational text was not made interactive. Earlier failed runs
+remain evidence, not passing suite results. No uncertain write was blindly retried.
+
+Manual-only iPad Save check: prepare a permitted synthetic working revision using
+existing author/owner accounts and normal edit-request approval if needed; type one
+count, manually tap Save with the keypad visible, confirm the response, leave/reopen
+and reconcile the saved value/revision. Tested automation saw enabled visible Save
+but could not activate it; signed readback showed no mutation. This remains unknown,
+not an app persistence failure or passed iPad Save check.
+
+Private evidence retains actual UI receipts, screenshots and signed readbacks.
+Original174 simulator JSON files and all protected staged entries are unchanged.
+The personal Xcode UI-state working bytes changed unexpectedly during tooling;
+start/current snapshots are retained, no guessed restoration or staging performed.
+Other protected working bytes remain unchanged. Prior physical/iOS26.0, rotation,
+VoiceOver, provider and release gates are separate and were not rerun.

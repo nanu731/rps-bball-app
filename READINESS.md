@@ -196,8 +196,8 @@ and persistence evidence, separate from prior local/simulated tests and rendered
 | Correction/provenance | Approved correction created a new author-owned version linked to the original acceptance. The original accepted pointer remained visible during drafting; acceptance advanced it while retaining unchanged history. Final scope:4datasets,5versions,5publication generations. Authenticated readback matched receipts. |
 | Delivery/preservation | Five export delivery records remain queued with zero attempts and no delivered timestamp; publication is not Google delivery. All pre-existing rows in the scoped synthetic baseline, including roster/membership/grants/delegation, remained unchanged. Original records/protected Xcode state are checked separately. |
 
-Native hosted UI and the intended real owner's current device session remain
-unverified. Simulator screenshot/AX inspection worked, but Account-tab input failed
+At the preceding checkpoint, native hosted UI and the intended real owner's
+current device session remained unverified; see the dated follow-up below. Simulator screenshot/AX inspection worked, but Account-tab input failed
 with noWindowsAvailable, including after rebinding; unchanged retries stopped.
 The original iPhone installation is older/local-only; the current isolated UI test
 installation was left configured as found. Signed synthetic HTTP authority does not
@@ -217,3 +217,61 @@ completion and review through working Simulator controls or a manual walkthrough
 Existing physical/iOS26.0/accessibility and release gates remain separate.
 Only the consolidated participant/role/roster, backup/recovery and privacy/deletion
 decisions above are required before introducing real team records.
+
+
+## Native hosted UI follow-up —2026-10-18
+
+The owner reports a fresh physical-app Account → Check session again pass, private
+Auth UUID match and Manage team “Owner access confirmed by server.” This closes the
+requested owner-session check as owner-confirmed manual evidence, not automated
+physical-device or general hardware acceptance. The real owner was not substituted
+with the synthetic test-team owner and no team grant was changed.
+
+Native XCTest recovered supported iPad interaction after the desktop coordinate
+path failed with noWindowsAvailable. Existing genuine synthetic Auth sessions were
+verified through Auth and signed team access. The isolated
+com.narayanlekhi.TeamStats.HostedManualAcceptance1.0(1) build uses application
+sourcec2db392 for initial checks and repaire2c5691 for final checks, with41
+source-matching app Swift files and one private memory-only session storage adapter. Normal UI/server commands and authority checks remain in use;
+this does not verify the normal Keychain persistence adapter. Original app sign-ins
+were not overwritten. Screenshots and fixtures stay private.
+
+| Rendered hosted check | Result |
+| --- | --- |
+| Author correction requests | Four independent requests confirmed through iPad UI and signed readback. |
+| Owner correction review | Four reopening approvals confirmed through iPad UI; author readback shows four new private working drafts. |
+| Ordinary member accepted viewing | All four current accepted dataset screens opened; no Submit/Approve/Publish controls. Screenshot inspection confirms missing versus0 presentation. |
+| Author entry/save onward | iPhone box discrepancy Save/reopen/correction, independent paired-sheet Save/reopen/completion/submission, and paint1→missing→0 Save/reopen/completion/submission passed. Repaired status link opens the completed correction and permits submission. |
+| Owner acceptance/publication | All four submitted corrections reviewed/published through final-source iPad UI;1selected test/0failures. Native swipes recovered traversal after coordinate drags failed. |
+| Final ordinary-member view | Final-source iPad test passed1/0 after publication; all four current accepted versions opened without Submit/Approve/Publish actions. |
+| iPad entry Save variant | Still unverified: enabled visible Save was not actionable through the tested control paths; signed readback proved no save. iPhone persistence passed. Cause is not established as an app defect. |
+
+A rendered defect was found after box completion: the editor chose older published
+history by UUID order, hiding the new proposal's Submit action. Repaire2c5691
+prioritizes the author's draft/completed/submitted proposal and retains the selected
+active identity. It changes no data, permissions or accepted pointer. The regression
+first failed for completed/submitted history ordering;31 connected-statistics tests
+then passed, including multiple-proposal retention. Independent Standards/Spec
+reviews found no remaining findings. This is not canonical newest-history selection.
+
+Final signed readback passed24 checks: four stable dataset identities, nine retained
+published versions, current accepted pointers/correction bases, stable unique record
+UUIDs, honest missing/zero values and unchanged turnovers. The original five queued
+jobs/history remain unchanged; four new publication jobs are also queued. All nine
+have zero delivery attempts and no delivered timestamp. No provider, scheduling,
+migration, bootstrap, account creation or grant changes. One additional refresh per
+existing synthetic author/owner/member was separately approved and verified;
+credentials remain private. Previous
+signed backend lifecycle evidence is reused, not relabeled rendered acceptance.
+No release readiness is claimed. The consolidated decisions before real team
+records remain participants/roles/roster, backup/recovery and privacy/deletion above.
+
+The rendered journey supports owner-supervised synthetic use on the tested iPhone
+entry/iPad review-and-view paths. Full native/device acceptance remains partial.
+For the remaining iPad Save variant, an authorized operator must manually edit and
+Save/reopen a permitted synthetic working draft in the isolated app. If its retained
+version is Published, use normal Request permission to edit and existing synthetic
+owner approval first; do not change grants or replace the physical owner's sign-in.
+An actual saved-value readback is required, not just a visible receipt. Normal
+Keychain persistence, fresh revocation, broader accessibility/device and hosted
+provider/recovery/release gates remain separate.

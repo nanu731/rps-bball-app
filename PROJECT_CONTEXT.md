@@ -1207,3 +1207,19 @@ device session. No app source changed.
 The intended real owner-device session and actual hosted rendered Save/review remain
 unverified because native input failed; server success is not full native pilot or
 release acceptance. READINESS.md holds scope/next checks and consolidated decisions.
+
+
+### Native hosted follow-up —2026-10-18
+
+Owner confirmed physical-app session/UUID match and server owner access. Actual
+synthetic iPhone entry and iPad reopening/review/publication/accepted viewing passed
+across resumed native UI phases. Repaire2c5691 fixes completed correction selection;
+31native regression tests, independent Standards/Spec reviews and CI passed.
+Final24 signed readback checks confirm4datasets/9retained published versions;
+original5jobs/history unchanged,4new jobs queued, all9undelivered/attempts0.
+No accounts created or grants/migrations/providers changed; approved refreshes stayed private.
+Isolated build uses41source-matching files plus memory-only Auth storage adapter;
+normal Keychain/device acceptance is separate. iPad Save-control variant remains
+manual-only; READINESS.md/TESTING.md give exact boundaries and next check.
+Original174JSON files/all protected staged entries unchanged. Personal UI-state
+working bytes changed unexpectedly; snapshots retained, no guessed restoration.
