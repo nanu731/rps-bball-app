@@ -2137,3 +2137,11 @@ three SQL suites,12signed local HTTP checks,46native tests and rendered iPad/max
 text iPhone continuations passed; TESTING distinguishes test-harness failures from
 the demonstrated UUID representation repair. Standards0/Spec0. Migration20 is source
 only for hosted/application environments; nothing activated and bootstrap untouched.
+
+Continuation unit11: prepared the minimum shared-manual pilot plan in READINESS.md.
+The13-only synthetic catalog/ACL check supports a conditional zero-pending-migration
+core lane; optional14–20 and selective-shot installation remain separate. Review
+corrected three-versus-four dataset wording; Standards0/Spec0. Owner bootstrap,
+existing records/grants/history, hosted/provider settings and disabled delivery stay
+untouched. Next executable pilot task is read-only hosted core compatibility preflight,
+not bulk migration activation. Unit10 available native checks continue separately.

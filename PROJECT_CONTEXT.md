@@ -28,7 +28,8 @@ workflow is implemented in native source and prepared migration20, with isolated
 authority/version/receipt and rendered evidence in TESTING.md. Existing/hosted
 activation remains separate; no approved coverage transfers to local/device journals.
 
-Current acceptance snapshot (2026-10-14, native design continuation): PARTIAL.
+Historical acceptance snapshot (2026-10-14, native design continuation): PARTIAL.
+READINESS.md and the latest TESTING.md receipts supersede its open-item list.
 The reviewed game-centered SwiftUI pass adds real game context, task rows,
 grouped scoring inputs, compact guidance, readable missing values and a bounded
 revisitable guide. Explicit four-store local JSON export is implemented; no
@@ -1127,8 +1128,8 @@ Local game details expose optional Shot recorder, using the same temporary IDs i
 an explicitly labeled roster snapshot. Native UI adapts court/results horizontally
 or vertically, keeps FT separate and preserves pending answers. Failed writes offer
 same-change Retry or preservation of a separate recovery copy before reopening;
-explicit export of that copy is user-directed and contains capture data. Existing
-local backup still excludes shot journals. Source/actual native checks do not grant
+explicit export of that copy is user-directed and contains capture data. This historical slice excluded shot journals; continuation backup format2 now
+includes saved local journals. Source/actual native checks do not grant
 shared authority or establish full-game coverage.
 
 Shared shot source now prepares separate protected journals for already registered
@@ -1147,7 +1148,8 @@ compare captured team/player observations to independent saved/accepted sources;
 FT stays separate and pending/missing values remain honest. Migration19 adds a
 separate, optional-per-team official-score reference under stats.review, using
 immutable receipts and current authority. Captures do not rewrite official stats;
-matching scores never establish attempt coverage. Owner coverage policy remains TODO.
+matching scores never establish attempt coverage. The later owner coverage decision
+and prepared migration20 are described in the latest scope above.
 Actual isolated signed SQL/native evidence, rendered iPad shared draft/score actions
 and final chart tests are distinguished in TESTING.md. Existing/hosted migrations
 14–19 remain inactive. READINESS.md is the finite remaining external/device/release
@@ -1159,3 +1161,13 @@ Analytics planning2026-10-17: PRD’s proposed roadmap starts with coach-confirm
 journals; old format1 remains restorable/re-exportable. Isolated recovery only;
 no shared authority/credentials, automatic import/upload or cloud destination.
 26affected native tests passed; RECOVERY.md/TESTING.md contain exact boundaries.
+
+### Minimum shared-manual pilot plan2026-10-17
+
+READINESS.md identifies no pending migration for core manual statistics conditional
+on a fresh read-only13-baseline compatibility check. A newly created13-only database
+verified20required RPC signatures/client grants, public RLS, private-table denial and
+private migration history; this is catalog evidence, not hosted lifecycle acceptance.
+The plan names all four independently versioned datasets and separates optional
+14–20 lanes. Preserve verified owner authority/history and never rerun bootstrap.
+No hosted changes, real-record export, provider, delivery or scheduler activation.

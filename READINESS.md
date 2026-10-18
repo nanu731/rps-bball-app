@@ -25,7 +25,7 @@ No release-readiness claim is made.
 | Category | Remaining work and evidence required |
 | --- | --- |
 | Independently actionable engineering/product | The five shot-recorder source slices are implemented; finish the explicitly open rendered/hosted gates below. Close demonstrated defects in existing flows. Pinned-package notices and a finite official advisory review are prepared in DEPENDENCIES.md. Defensive client compatibility checks passed at their public seams. Account-deletion request intake is source/local tested; execution/handling policy and existing-server activation remain open. Verify release-specific compatibility and recovery boundaries. Export scheduling preparation now has local evidence; an export-only database role, separate credential contract and local recovery proof are prepared; signed issuer/renewal/revocation and hosted mapping still require verification. No broker, Redis, enterprise monitoring or full offline sync is justified. |
-| Provider/configuration | Migrations14/15, account-request migration16 and worker-identity migration17 and shot migrations18/19 remain unactivated on existing application/hosted databases. Verify hosted Auth expiry, refresh/reuse/revocation, rate/sender and signing-key procedures. Keep the local failed immediate-family-lockout assertion separate from passed extra-grace rejection. Establish a verified$0 runtime/capacity/validator/ingress contract before media delivery, including patched Storage/Imgproxy and actual hosted-version evidence from DEPENDENCIES.md. Google needs runtime identity/OAuth, protected operational ranges/latest view, fresh billing/quotas proof and actual nonproduction automated-delivery acceptance. Email delivery/sender and any genuinely free phone delivery remain gates; SMS stays disabled. Verify hosted database/Auth recovery and Storage bytes separately. |
+| Provider/configuration | Migrations14/15, account-request migration16 and worker-identity migration17 and shot migrations18/19/20 remain unactivated on existing application/hosted databases. Verify hosted Auth expiry, refresh/reuse/revocation, rate/sender and signing-key procedures. Keep the local failed immediate-family-lockout assertion separate from passed extra-grace rejection. Establish a verified$0 runtime/capacity/validator/ingress contract before media delivery, including patched Storage/Imgproxy and actual hosted-version evidence from DEPENDENCIES.md. Google needs runtime identity/OAuth, protected operational ranges/latest view, fresh billing/quotas proof and actual nonproduction automated-delivery acceptance. Email delivery/sender and any genuinely free phone delivery remain gates; SMS stays disabled. Verify hosted database/Auth recovery and Storage bytes separately. |
 | Owner policy/content | Actual roster and branding/assets/official color; representative filled forms and authorized Hudl/media examples/rights. Approve deletion execution, ownership/shared-history handling and request/backup retention; use the selected contact route; choose actual handlers and response policy. Select private encrypted backup destination/access holder, retention and acceptable data loss/downtime. Reporting contact is selected above; choose notification owner and response commitments. Define pilot participants/criteria and distribution; automated Sheets/media delivery may follow the approved manual pilot. Never convert temporary identities into real ones. |
 | Device/accessibility and real inputs | Actual iPhone/iPad landscape geometry; iPad Reduce Motion manual horizontal pan/active-pan indicator and transition acceptance (accessibility-directed far-right reachability passed); actual VoiceOver interaction separately from Inspector evidence. Physical-device and actual26.0 checks remain deferred. Validate representative real-form OCR/review and authorized Hudl/media behavior; synthetic fixtures do not pass those gates. Preserve already accepted save/wrapping/shared-draft checks unless changed. |
 | Release-only | Verify signed distribution artifacts, final privacy/support content and pilot acceptance; exercise compatibility/rollback/forward-fix verification without destructive data reversal. Obtain explicit owner release approval. Unsigned archives, runbooks and passing synthetic CI are preparation, not distribution or production acceptance. |
@@ -105,8 +105,7 @@ Cancel row was corrected using supported desktop controls. This is not hosted
 sign-in, real-user handoff acceptance or approval to publish captures.
 
 Final device receipts and remaining rendered gates are in TESTING.md. Actual
-landscape, VoiceOver, physical devices and iOS26.0 remain open. Existing local-draft
-backup explicitly excludes separate shot journals; configured encrypted backup and
+landscape, VoiceOver, physical devices and iOS26.0 remain open. Continuation backup format2 explicitly includes saved local shot journals; configured encrypted backup and
 hosted recovery remain owner/provider gates. The2026-11-17 target is not a release
 promise. No scheduler, Google/media delivery or SMS activation is included.
 
@@ -114,9 +113,9 @@ Final chart presentation checks passed on iPhone/iPad at maximum accessibility t
 including a wrapping full selected-player label and traversal to final observations.
 Final shared/analysis seam run passed18tests; earlier15journal/8backup receipts are
 retained. Actual signed iPad comparison/concealment and the revisitable guide passed.
-FT software-keyboard activation remains a specific manual gate: desktop controls
-could display the keyboard and Start together, but reliable activation while visible
-was not established. Exact steps and failed-test diagnoses are in TESTING.md.
+The earlier FT software-keyboard activation gap was closed in continuation unit07
+(custom3 Start, all answers and cold reopening). TESTING.md retains earlier failed
+control attempts separately from the later actual pass.
 
 Continuation coverage implementation: migration20 and native controls implement the
 approved manager-confirmation → owner/current-statistics-reviewer approval workflow
@@ -124,3 +123,23 @@ for an exact saved shared snapshot. Later saved edits reset current signoff whil
 retaining history. This is isolated source/integration evidence only; migrations14–20
 remain unapplied to existing/hosted environments. Matching points does not grant
 coverage, completion or publication. TESTING.md records actual acceptance scope.
+
+## Minimum shared manual-statistics pilot plan
+
+Core manual entry needs no pending migration beyond the verified13-migration hosted baseline, subject to a fresh read-only compatibility preflight. Source inspection plus a newly created13-only synthetic database found all20 required administration/manual-statistics RPCs with authenticated execution and anon denial; public application tables retain RLS, private tables deny client access, and migration history denies client schema/table access. This catalog evidence is not a fresh hosted workflow test. Authenticated USAGE on team_private is intentionally required by policy helpers; do not revoke it blindly. Dashboard Data API exposure must exclude team_private and supabase_migrations; SQL catalog checks alone do not prove that setting.
+
+| Lane | Pending source | Pilot decision |
+| --- | --- | --- |
+| Manual games/roster/four statistic datasets (box scores, our possessions, opponent possessions, player paint touches)/review/publication/correction | None if exact baseline13 and client contracts pass preflight | Smallest lane; preserve existing teams, grants and history. No bootstrap rerun. |
+| Private-file request admission |14:202610160001 | Deferred with disabled hosted delivery. |
+| Automatic export queue and export-only identity |15:202610170001,17:202610170003 | Deferred; no scheduler or Google activation. |
+| Account deletion request intake |16:202610170002 | Optional separate activation; request intake is not deletion execution or a prerequisite for core statistics. Policy/release obligations remain open. |
+| Shared shots, independent score, coverage signoff |18:202610170004,19:202610170005,20:202610170006 | Separate optional lane, not required for manual pilot. Full ordered chain has isolated evidence; selective installation has NOT been verified. Do not cherry-pick/apply it through this plan. |
+
+Next task: read-only hosted core compatibility preflight. Reverify current project/account/team privately against the already-verified owner Auth UUID; never bootstrap/grant to repair a mismatch. Compare migration history/source checksums and required signatures, public RLS/policies/effective ACLs, private-schema exposure and current app configuration. Preserve catalog/access/history evidence privately without exporting real records or secrets. Any drift stops that lane for separate diagnosis; it does not authorize bulk migrations or permission repairs.
+
+After explicit authorization and owner-selected pilot participants/criteria, use one labeled synthetic game and distinct admitted/denied identities for hosted manual draft save/reopen, independent completion, submission/review/publication, accepted-only viewer access, correction lineage and revocation concealment. Keep receipts and accepted pointers separate from queued, disabled export jobs. Lost write replies require reload/reconciliation, not blind retry. Preserve all pre-existing records/grants; no original-device upload. Reuse passed local evidence; test newly changed hosted contracts only.
+
+Recovery boundary: preserve app/backend version compatibility and immutable published history; stop pilot mutations on uncertain authority or corruption. Use explicit draft recovery and forward fixes; a Git revert does not restore records. Hosted database/Auth recovery and Storage bytes are separate unverified gates. Choose encrypted backup destination/access holder, retention and recovery objectives before real pilot records; the10GB allocation alone is not a backup.
+
+Owner/provider gates remain: real roster and identity mapping without converting temporary IDs; pilot roles/criteria, privacy/deletion handlers/retention and distribution approval; verified$0 Auth/sender/rate/refresh configuration. Retain both local Auth observations (immediate family rejection failed; rejection after an additional11seconds passed). Actual screen-reader, physical-device and26.0 acceptance remain separate. Nothing in this plan activates providers, migrations, grants, delivery, schedules or production.

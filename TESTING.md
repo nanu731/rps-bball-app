@@ -1471,3 +1471,17 @@ regressions and the three affected SQL suites passed. A separate receipt regress
 failed before UUID parsing and passed afterward. Independent Standards0/Spec0.
 All migration changes were tested only in newly created synthetic databases; no
 existing application/hosted database, grants, bootstrap or provider was changed.
+
+### Continuation unit11: minimum pilot dependency check
+
+A newly created synthetic database applied only the first13 source migrations.
+Read-only catalog assertions passed for20required core administration/statistics
+RPCs (authenticated execution, anon denial), public-table RLS, private-table client
+denial and migration-history schema/table denial. Optional shot RPCs were absent.
+Initial overbroad test assumptions were corrected: authenticated team_private USAGE
+is required for existing policy helpers, and three private file tables use revoked
+client ACLs rather than RLS. No permission or source repair was made. A prepared
+read-only preflight and checksum receipt are private; no hosted query was executed.
+Standards0/Spec0 after correcting the plan to name all four statistic datasets.
+The proposed zero-pending-migration core lane still requires hosted compatibility
+and authorized synthetic lifecycle acceptance, plus owner/device/recovery gates.

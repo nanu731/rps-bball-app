@@ -27,6 +27,10 @@ these server-confirmed states distinct. Existing synthetic checks are recorded i
 TESTING.md; they do not authorize a new provider activation or real-record upload.
 Actual hosted signup/access, distribution, privacy/retention, device/accessibility
 and selected pilot participants remain required acceptance inputs.
+The [minimum pilot plan](READINESS.md#minimum-shared-manual-statistics-pilot-plan)
+identifies no additional migration for core statistics if the verified13-migration
+baseline passes a fresh read-only preflight. Optional shot and delivery lanes remain
+separate; no activation or bootstrap is authorized by that plan.
 
 The selected support/security/deletion contact is in READINESS.md and Using
 TeamStats. It does not establish a response commitment or deletion executor.

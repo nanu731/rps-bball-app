@@ -231,3 +231,13 @@ The statistics reviewer can inspect the saved capture head without gaining shot
 designation/review/publication powers. Frozen command receipts are replay-safe and
 recheck authority. Later saved versions need renewed signoff; legacy coverage claims
 are not approval. New migrations remain unactivated on existing/hosted databases.
+
+Minimum manual-pilot preparation: the existing13-migration baseline supplies the
+20administration/manual-statistics RPCs inspected by the current client. A fresh
+13-only synthetic catalog/ACL check passed; this is not new hosted workflow evidence.
+Core manual entry therefore proposes no pending migration, conditional on read-only
+hosted compatibility/RLS/ACL/history and dashboard exposed-schema preflight. Preserve
+authenticated team_private USAGE for policy helpers while denying private-table
+client access. Do not expose team_private or supabase_migrations in the Data API.
+Migrations14–20 remain separate unactivated source; selective shot-chain installation
+has not been verified. See READINESS.md for the lane table and recovery boundary.
