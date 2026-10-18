@@ -315,6 +315,28 @@ final class ConnectedStatisticsTests: XCTestCase {
         XCTAssertTrue(values["points"] is NSNull)
         XCTAssertEqual(values["twosMade"] as? Int, 0)
     }
+    func testEntryKeepsActiveCorrectionInsteadOfEarlierPublishedHistory() async throws {
+        for status in ["draft", "completed", "submitted"] {
+            let fixture = StatisticsFixture()
+            fixture.includePublishedHistory(workingStatus: status)
+            let model = fixture.model()
+            await model.loadGames(); await model.loadGame(try XCTUnwrap(model.games.first))
+            XCTAssertTrue(model.didLoadGame)
+            XCTAssertEqual(model.entryVersion(for: .boxScores)?.id, statsWorkingID, status)
+            XCTAssertEqual(model.entryVersion(for: .boxScores, retaining: statsWorkingID)?.id, statsWorkingID, status)
+            XCTAssertEqual(model.publishedVersions[.boxScores]?.id, statsVersionID)
+        }
+    }
+    func testEntryRetainsSelectedProposalAmongMultipleCompletedVersions() async throws {
+        let fixture = StatisticsFixture()
+        fixture.includePublishedHistory(workingStatus: "completed", anotherProposal: true)
+        let model = fixture.model()
+        await model.loadGames(); await model.loadGame(try XCTUnwrap(model.games.first))
+        XCTAssertTrue(model.didLoadGame)
+        XCTAssertEqual(model.entryVersion(for: .boxScores, retaining: statsWorkingID)?.id, statsWorkingID)
+        XCTAssertEqual(model.entryVersion(for: .boxScores, retaining: statsSecondVersionID)?.id, statsSecondVersionID)
+        XCTAssertEqual(model.publishedVersions[.boxScores]?.id, statsVersionID)
+    }
     func testCompletionConfirmationsAndPublicationUseServerStatusOnly() async throws {
         let fixture = StatisticsFixture()
         let model = fixture.model()
@@ -603,6 +625,21 @@ private final class StatisticsFixture: @unchecked Sendable {
     private var versionStatus = "draft"
     private var editStatus: String?
     private var workingVersion: [String: Any]?
+    private var otherCompletedVersion: [String: Any]?
+    func includePublishedHistory(workingStatus: String, anotherProposal: Bool = false) {
+        lock.withLock {
+            var copy = version(status: workingStatus)
+            copy["id"] = statsWorkingID.uuidString
+            copy["base_published_version_id"] = statsVersionID.uuidString
+            workingVersion = copy
+            if anotherProposal {
+                copy["id"] = statsSecondVersionID.uuidString
+                copy["status"] = "completed"
+                otherCompletedVersion = copy
+            }
+            versionStatus = "published"
+        }
+    }
     var commands: [Command] { lock.withLock { commandValues } }
     var requestCount: Int { lock.withLock { requests } }
     var gameOffsets: [Int] { lock.withLock { offsets } }
@@ -750,7 +787,7 @@ private final class StatisticsFixture: @unchecked Sendable {
         if name == "stat_datasets", isRecoveryMode {
             return json([["id": statsDatasetID.uuidString, "team_id": statsTeamID.uuidString, "game_id": fixtureGameID.uuidString, "dataset_type": "box_scores", "published_version_id": statsRecoveryPublishedID.uuidString]])
         }
-        if name == "stat_versions" { return json([version(status: versionStatus, revision: revision)] + (workingVersion.map { [$0] } ?? []) + (mode == .paired ? [secondVersion()] : [])) }
+        if name == "stat_versions" { return json([version(status: versionStatus, revision: revision)] + (workingVersion.map { [$0] } ?? []) + (otherCompletedVersion.map { [$0] } ?? []) + (mode == .paired ? [secondVersion()] : [])) }
         if name == "stat_edit_requests" {
             if mode == .seasonRequests {
                 requestURLs.append(request.url!)

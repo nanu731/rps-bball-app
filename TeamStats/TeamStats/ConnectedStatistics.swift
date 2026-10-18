@@ -284,6 +284,14 @@ final class ConnectedStatistics {
     @ObservationIgnored private var historicalRoster: [ConnectedRosterLabel] = []
     @ObservationIgnored private var retryGame: ConnectedGame?
     var ownVersions: [ConnectedVersion] { versions.filter { $0.authorUserID == access?.userID } }
+    func entryVersion(for kind: ConnectedDatasetType, retaining versionID: UUID? = nil) -> ConnectedVersion? {
+        let own = ownVersions.filter { $0.datasetType == kind }
+        let proposals = own.filter { [.draft, .completed, .submitted].contains($0.status) }
+        // UUID order is not lifecycle order; completion must retain the current proposal.
+        return proposals.first { $0.status == .draft } ??
+        proposals.first { $0.id == versionID } ?? proposals.first ??
+        own.first ?? publishedVersions[kind]
+    }
     var reviewQueue: [ConnectedVersion] {
         guard didLoadGame, access?.can(.statsReview) == true else { return [] }
         return versions.filter { $0.status == .submitted && (access?.isOwner == true || $0.authorUserID != access?.userID) }

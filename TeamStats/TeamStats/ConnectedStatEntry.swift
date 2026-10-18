@@ -467,8 +467,7 @@ struct ConnectedStatEntryView: View {
         model.ownVersions.first { $0.datasetType == kind && $0.status != .draft } ?? model.publishedVersions[kind]
     }
     private func currentWorkingVersion(_ kind: ConnectedDatasetType) -> ConnectedVersion? {
-        model.ownVersions.first { $0.datasetType == kind && $0.status == .draft } ??
-        model.ownVersions.first { $0.datasetType == kind } ?? model.publishedVersions[kind]
+        model.entryVersion(for: kind, retaining: baseVersions[kind]?.id)
     }
     private func stale(_ kind: ConnectedDatasetType) -> Bool {
         guard let base = baseVersions[kind] else { return currentWorkingVersion(kind)?.status == .draft }
