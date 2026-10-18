@@ -2127,3 +2127,13 @@ shot journals while accepting/re-exporting version1 backups. New-directory-only
 restoration preserves pending attempts/corrections/IDs and refuses malformed, duplicate
 or shared journals. Build/26native tests passed; Standards0/Spec0 after legacy encoding
 repair. RECOVERY.md records plaintext/quiescence and separate recovery-copy exclusions.
+
+Continuation unit09: implemented designated-manager confirmation followed by
+owner/current stats.review approval against an exact saved shot snapshot, retaining
+append-only history and requiring renewed signoff after a later saved edit. Native
+frozen commands/receipts preserve pending recovery; server authority remains current.
+Matching points stays independent of coverage/publication. Fresh20-migration restore,
+three SQL suites,12signed local HTTP checks,46native tests and rendered iPad/maximum-
+text iPhone continuations passed; TESTING distinguishes test-harness failures from
+the demonstrated UUID representation repair. Standards0/Spec0. Migration20 is source
+only for hosted/application environments; nothing activated and bootstrap untouched.

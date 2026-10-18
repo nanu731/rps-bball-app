@@ -85,7 +85,8 @@ The owner resolved coverage signoff on2026-10-17: designated-manager confirmatio
 that every field-goal and free-throw attempt was recorded, followed by owner or
 authorized statistics-reviewer approval for that capture version. Manager-only
 confirmation is awaiting review; later edits require renewed confirmation/review.
-This resolves the policy gate, not implementation or acceptance of the workflow.
+This resolves the policy gate; the continuation evidence below records implementation
+and isolated acceptance separately from hosted activation.
 
 Migration18 provides designation/assignment epochs, frozen batches, immutable
 snapshots/receipts, separate review/publication and explicit recovery-branch adoption.
@@ -116,3 +117,10 @@ retained. Actual signed iPad comparison/concealment and the revisitable guide pa
 FT software-keyboard activation remains a specific manual gate: desktop controls
 could display the keyboard and Start together, but reliable activation while visible
 was not established. Exact steps and failed-test diagnoses are in TESTING.md.
+
+Continuation coverage implementation: migration20 and native controls implement the
+approved manager-confirmation → owner/current-statistics-reviewer approval workflow
+for an exact saved shared snapshot. Later saved edits reset current signoff while
+retaining history. This is isolated source/integration evidence only; migrations14–20
+remain unapplied to existing/hosted environments. Matching points does not grant
+coverage, completion or publication. TESTING.md records actual acceptance scope.

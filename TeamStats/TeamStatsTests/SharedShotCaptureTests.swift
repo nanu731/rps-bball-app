@@ -271,3 +271,66 @@ extension SharedShotCaptureTests {
         XCTAssertNil(model.pending); XCTAssertNotNil(model.lastConfirmedBatch); XCTAssertTrue(model.feedbackConfirmed)
     }
 }
+
+
+extension SharedShotCaptureTests {
+    func testCoverageLostReplyRecoversFrozenVersionWithoutAnotherMutation() async throws {
+        let (scope, doc, store) = try fixture()
+        let snapshot = UUID()
+        var receipt: AnyJSON = .null, writes = 0
+        let request: @MainActor (String, [String: AnyJSON]) async throws -> AnyJSON = { name, args in
+            if name == "shots_state" {
+                var values = try XCTUnwrap(self.state(doc, scope: scope).objectValue)
+                values["snapshot_id"] = .string(snapshot.uuidString)
+                values["coverage"] = .object(["snapshot_id": .string(snapshot.uuidString), "status": .string("not_confirmed"),
+                    "confirmation_id": .null, "approval_id": .null, "can_confirm": .bool(true), "can_approve": .bool(false)])
+                return .object(values)
+            }
+            if name == "shots_score_read" { throw URLError(.unsupportedURL) }
+            if name == "shots_coverage_receipt" { return receipt }
+            XCTAssertEqual(name, "shots_coverage_decide"); writes += 1
+            XCTAssertEqual(args["p_snapshot_id"]?.stringValue, snapshot.uuidString)
+            receipt = .object(["batch_id": args["p_batch_id"]!, "operation": .string("coverage_confirm"),
+                "team_id": .string(scope.teamID.uuidString), "game_id": .string(doc.context.gameID.uuidString),
+                "actor_user_id": .string(scope.actorID.uuidString), "snapshot_id": .string(snapshot.uuidString.lowercased()),
+                "confirmation_id": args["p_batch_id"]!])
+            throw URLError(.networkConnectionLost)
+        }
+        let model = SharedShotCapture(scope: scope, gameID: doc.context.gameID, title: "TEST ONLY", store: store, request: request, isCurrent: { true })
+        await model.refresh(); await model.decideCoverage("confirm")
+        XCTAssertEqual(writes, 1); XCTAssertNotNil(model.pending); XCTAssertNil(model.state)
+        await model.sendPending(); XCTAssertEqual(writes, 1)
+        let restarted = SharedShotCapture(scope: scope, gameID: doc.context.gameID, title: "TEST ONLY", store: store, request: request, isCurrent: { true })
+        await restarted.refresh(); XCTAssertNotNil(restarted.pending)
+        await restarted.recoverReceipt()
+        XCTAssertNil(restarted.pending); XCTAssertEqual(writes, 1)
+        XCTAssertTrue(restarted.feedbackConfirmed); XCTAssertNil(restarted.state) // Receipt is not a fresh coverage read.
+        let pending = try await store.pending(at: store.outboxURL(scope, game: doc.context.gameID))
+        XCTAssertNil(pending)
+    }
+}
+
+
+extension SharedShotCaptureTests {
+    func testNewerDeviceJournalCannotBeMistakenForSavedCoverageVersion() async throws {
+        let (scope, doc, store) = try fixture()
+        var mutations = 0
+        let model = SharedShotCapture(scope: scope, gameID: doc.context.gameID, title: "TEST ONLY", store: store, request: { name, _ in
+            if name == "shots_state" {
+                var values = try XCTUnwrap(self.state(doc, scope: scope).objectValue)
+                values["coverage"] = .object(["snapshot_id": values["snapshot_id"]!, "status": .string("not_confirmed"),
+                    "confirmation_id": .null, "approval_id": .null, "can_confirm": .bool(true), "can_approve": .bool(false)])
+                return .object(values)
+            }
+            if name == "shots_score_read" { throw URLError(.unsupportedURL) }
+            mutations += 1; throw URLError(.badServerResponse)
+        }, isCurrent: { true })
+        await model.refresh()
+        let recorder = try XCTUnwrap(model.recorder)
+        await recorder.change { _ = try $0.startFreeThrows(team: .opponent, playerID: nil, attempts: 2) }
+        await model.decideCoverage("confirm")
+        XCTAssertEqual(mutations, 0); XCTAssertNil(model.pending)
+        XCTAssertTrue(model.issue?.contains("newer device journal") == true)
+        XCTAssertEqual(try recorder.visibleDocument?.totals(team: .opponent).pending, 2)
+    }
+}

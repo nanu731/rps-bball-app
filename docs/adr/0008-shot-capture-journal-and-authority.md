@@ -94,3 +94,24 @@ alone cannot do so. References use stable command IDs, revision checks and recei
 recovery. They never modify box scores, possessions, captured events or export jobs.
 The UI requires an explicit declaration about entered scores, protects unfinished
 input and labels score agreement separately from unresolved coverage signoff.
+
+## UUID representation compatibility —2026-10-17
+
+Rendered correction exposed valid lowercase server IDs being re-encoded uppercase
+by Swift UUID Codable and rejected as changed history. Migration20 adds comparison-
+only case folding at native UUID-typed paths: document/context IDs, journal change/
+event/Undo IDs and before/after event IDs. Conventional hyphenated hex strings may
+differ in case across snapshots. Player IDs remain exact strings; all other data,
+keys, missing/null, arrays, timestamps and values remain subject to existing checks.
+Both documents independently pass the unchanged validator/Undo/no-op rules. This
+does not promise compatibility for previously invalid mixed before-images or every
+UUID syntax PostgreSQL accepts. Unchanged alternate syntax receives no new equivalence.
+
+Saved snapshot JSONB is never rewritten; new snapshots keep their submitted JSONB,
+and receipts continue binding SHA256 of the original raw request text. Same-batch
+case-changed bytes still conflict. Save-prefix and recovery-header comparisons use
+the private bounded schema-directed projection; no general canonicalizer or data
+migration is added. Native source spelling state would complicate the domain model;
+fixture-only changes would leave valid imported/adopted journals vulnerable. Council
+considered these tradeoffs; authenticated regressions and the original rendered
+case are required. Existing/hosted activation remains separately gated.

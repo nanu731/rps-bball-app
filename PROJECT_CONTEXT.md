@@ -23,8 +23,10 @@ below does not establish the new hosted/device/release gates.
 Owner coverage decision (2026-10-17): the designated manager confirms every
 field-goal/free-throw attempt was recorded, then the owner or an authorized
 statistics reviewer approves that capture version. Until approval, confirmation
-is awaiting review. Later edits require renewed confirmation/review. This is an
-approved requirement, not evidence that the workflow has been implemented/tested.
+is awaiting review. Later saved edits require renewed confirmation/review. The
+workflow is implemented in native source and prepared migration20, with isolated
+authority/version/receipt and rendered evidence in TESTING.md. Existing/hosted
+activation remains separate; no approved coverage transfers to local/device journals.
 
 Current acceptance snapshot (2026-10-14, native design continuation): PARTIAL.
 The reviewed game-centered SwiftUI pass adds real game context, task rows,

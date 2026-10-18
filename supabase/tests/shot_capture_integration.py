@@ -59,7 +59,7 @@ def verify(pg, recovery_output, apply_migration=False):
     assert call(1,'shots_save',TEAM,GAME,2,2,batch,payload(document),'unknown')==registered
     state=call(1,'shots_state',TEAM,GAME)
     assert state['document']==document and state['status']=='draft'
-    assert call(2,'shots_state',TEAM,GAME)['document'] is None
+    assert call(2,'shots_state',TEAM,GAME)['document']==document  # stats.review may inspect coverage; no recording/review/publication grant.
     event={'id':str(uuid.uuid4()),'kind':'freeThrows','team':'opponent','freeThrowAttempts':2,'answers':[]}
     document['journal'].append({'id':str(uuid.uuid4()),'revision':1,'recordedAt':'2037-01-01T00:00:00Z','eventID':event['id'],'after':copy.deepcopy(event)})
     saved=call(1,'shots_save',TEAM,GAME,2,3,str(uuid.uuid4()),payload(document),'partial')
@@ -67,7 +67,7 @@ def verify(pg, recovery_output, apply_migration=False):
     submitted=call(1,'shots_decide',TEAM,GAME,2,4,str(uuid.uuid4()),saved['snapshot_id'],'submit','',None)
     assert submitted['state_revision']==5 and call(1,'shots_state',TEAM,GAME)['status']=='submitted'
     denied(1,'shots_decide',TEAM,GAME,2,5,str(uuid.uuid4()),saved['snapshot_id'],'approve','',None,code='22023')
-    assert call(2,'shots_state',TEAM,GAME)['document'] is None
+    assert call(2,'shots_state',TEAM,GAME)['document']==document  # stats.review may inspect coverage; no recording/review/publication grant.
     legacy=pg.sql(target,"select jsonb_agg(to_jsonb(v) order by id) from public.stat_versions v")
     handoff=call(1,'shots_assign',TEAM,GAME,uid(2),2,5,str(uuid.uuid4()),'TEST ONLY manager handoff')
     denied(1,'shots_receipt',TEAM,GAME,registered['batch_id'],code='PT409')

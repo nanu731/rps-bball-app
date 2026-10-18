@@ -17,7 +17,7 @@ UI acceptance remains separately PARTIAL in [TESTING.md](TESTING.md).
 | Plays/media metadata | `plays`, `play_versions`, `media_resources`, `media_resource_versions`, `file_resources`, `file_resource_versions` in `public` | Preserve game/play/version relationships, immutable review targets and accepted pointers. Hudl films remain external. |
 | Private file operations | `team_private.file_budget`, `file_uploads`, `file_deliveries` | Preserve reservations, uncertain transfers and charged capacity; do not release allowance merely because an operation expired. Unknown hosted capacity stays disabled. |
 | File request admission | `team_private.file_request_windows` | Preserve current actor/window/count; restoration does not authorize manual allowance refunds. Normal window expiry is distinct from historical file/storage charges. |
-| Database enforcement | Schemas, functions/owners/search paths, triggers, constraints, RLS/policies, grants, extensions and `supabase_migrations.schema_migrations` | All22 public tables and4 private tables are covered by the drill. Migration history stays inaccessible to clients and outside the exposed Data API schemas. |
+| Database enforcement | Schemas, functions/owners/search paths, triggers, constraints, RLS/policies, grants, extensions and `supabase_migrations.schema_migrations` | Table/ACL/policy coverage is recorded in each synthetic drill receipt as source evolves. Migration history stays inaccessible to clients and outside the exposed Data API schemas. |
 | Auth | Verified user UUIDs and linked provider identities/verification/MFA state needed for account continuity; current authorization and revocation boundary | Real managed Auth recovery is not implemented/tested here. Device sessions, refresh tokens, PKCE and offline actor stamps are not portable authority. Require fresh sign-in and trusted UUID reconciliation; do not silently remap owners. |
 | Uploaded object bytes | Every retained `teamstats-private` object key with version binding, byte count, SHA256, content type and corresponding file metadata; include pending/rejected/uncertain bytes that still occupy capacity | Database dumps contain metadata, **not object bytes**. Inventory and recover objects separately; missing bytes are a failure, not an empty bucket. |
 | Explicit retained device clips | Account/team/version manifest and complete verified bytes, if owner policy elects to preserve them | Not an authoritative media backup. Copied sessions/stamps must not revive access. Remote originals and known revocation must be reconciled. |
@@ -198,3 +198,9 @@ is not merged automatically and can be exported deliberately to a private locati
 An oversized successor is rejected before becoming pending, because the ordinary
 copy mechanism cannot preserve an over-limit document. Tests retain original bytes
 and event IDs in both the reopened capture and isolated recovery copy.
+
+Migration20's private append-only shot coverage attestations belong with authoritative
+shot sessions/snapshots, assignments, decisions and receipts in database recovery.
+They are never imported from a device backup. Recovery must preserve exact snapshot
+and confirmation links, actor UUIDs and historical approvals; restored data alone
+does not grant current recording/reviewer authority. No hosted restore was performed.

@@ -4,6 +4,7 @@ struct ShotChartsView: View {
     let document: ShotCaptureDocument
     let status: String
     var score: ShotScoreReference? = nil
+    var coverage: ShotCoverageState? = nil
     var officialSources: (ShotTeam, String?) -> [ShotOfficialSource] = { _, _ in [] }
     var isVisible: () -> Bool = { true }
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -20,7 +21,7 @@ struct ShotChartsView: View {
             List {
                 Section("Capture scope") {
                     Text(status).font(.headline)
-                    Text("Attempt coverage unverified. Score agreement cannot prove that missed attempts or every location were recorded. Final coverage signoff still needs an owner decision.")
+                    Text((coverage?.summary ?? "Attempt coverage unverified for this device journal.") + " Score agreement cannot prove that missed attempts or every location were recorded. Coverage approval is separate from outcome completeness, score reconciliation and publication.")
                         .font(.footnote)
                     Picker("Chart team", selection: $team) { Text("Our team").tag(ShotTeam.our); Text("Opponent").tag(ShotTeam.opponent) }.pickerStyle(.segmented)
                         .accessibilityIdentifier("shot.chart.team")

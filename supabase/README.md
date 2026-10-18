@@ -223,3 +223,11 @@ apply them, or earlier pending14–17, to existing/hosted databases through thes
 instructions. Recording/review/publication remain distinct; `stats.review` confirms
 independent score references. New local integration entry points run after the
 synthetic recovery fixture; no real accounts, files or Google writes are needed.
+
+Coverage source preparation: migration20 (`202610170006`) adds private RLS-protected,
+append-only exact-version attestations. Current designated shots.record managers
+confirm every FG/FT attempt; owner or current stats.review approves that confirmation.
+The statistics reviewer can inspect the saved capture head without gaining shot
+designation/review/publication powers. Frozen command receipts are replay-safe and
+recheck authority. Later saved versions need renewed signoff; legacy coverage claims
+are not approval. New migrations remain unactivated on existing/hosted databases.

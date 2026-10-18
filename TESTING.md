@@ -1,7 +1,8 @@
 # TeamStats testing and acceptance
 
-Updated 2026-10-14 for the native design/readiness continuation. This is the test entry point,
-not a new claim that suites were rerun or a release was approved. Read
+Updated2026-10-17 for the shot/recovery/coverage continuation. Historical results
+retain their original source/runtime; this is not a claim that every suite was
+rerun or that a release was approved. Read
 [ARCHITECTURE.md](ARCHITECTURE.md) for the source map and
 [SECURITY.md](SECURITY.md) for boundaries that require denied-access tests.
 
@@ -1438,3 +1439,35 @@ malformed/truncated rejection, occupied/symlink destination refusal, unchanged s
 bytes and absence of partial destinations. Both independent re-reviews:0findings.
 Actual hosted DR, encryption/destination/retention policy and automatic restore are
 not established. No original app records or shared preparations were imported.
+
+### Continuation unit09: version-bound attempt coverage
+
+Fresh isolated20-migration restore/security comparison passed (39tables), followed
+by shot capture, independent score and coverage SQL suites. Twelve actual signed
+synthetic PostgREST checks passed: distinct manager/reviewer authority, stale and
+unauthorized decisions, applied-reply recovery/replay, competing approvals and
+revocation concealment. These use a local test issuer, not hosted Auth verification.
+Final native build and46tests passed (15shared capture,15journal,11backup,5analysis).
+
+Rendered isolated iPad26.4 passed confirmation→awaiting review→approval→saved charts
+→FT correction→shared save→renewed coverage required (26.94seconds). At maximum
+Dynamic Type on iPhone26.4, manager confirmation, reviewer approval and chart
+inspection were observed in earlier runs; the focused correction/save/refresh
+continuation passed96.81seconds. Private screenshots were inspected. Several prior
+test failures concerned List virtualization, stale scroll containers and incorrect
+scroll direction, not demonstrated app clipping. Static information was tested for
+readability and viewport intersection rather than tappability. Final saved-record
+readback retained4historical attestations,4capture snapshots and unchanged2stat
+versions, with no approval inherited by the edited head. This is draft capture,
+not completion/publication or hosted acceptance.
+
+A genuine UUID-casing interoperability defect appeared during the first rendered
+correction: independently valid lowercase saved UUIDs and Swift uppercase UUIDs
+were treated as rewritten history. A failing native-prefix SQL tracer reproduced
+it. Migration20 now compares only the conventional typed UUID paths case-insensitively
+across versions, preserving original documents, raw digests and strict fact/history
+checks. Existing migration18 remains unchanged. Negative mutation/Undo/recovery
+regressions and the three affected SQL suites passed. A separate receipt regression
+failed before UUID parsing and passed afterward. Independent Standards0/Spec0.
+All migration changes were tested only in newly created synthetic databases; no
+existing application/hosted database, grants, bootstrap or provider was changed.

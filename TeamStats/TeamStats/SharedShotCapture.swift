@@ -149,12 +149,44 @@ nonisolated struct ShotFrozenCommand: Codable, Sendable {
         case "shots_recovery": "recovery"
         case "shots_score_confirm": "score_confirm"
         case "shots_decide": arguments["p_action"]?.stringValue
+        case "shots_coverage_decide": arguments["p_action"]?.stringValue.map { "coverage_" + $0 }
         default: nil
         }
     }
 }
 nonisolated struct ShotCommandEnvelope: Codable { let pending: ShotFrozenCommand?; var rejection: String? = nil }
 
+nonisolated struct ShotCoverageState: Decodable, Sendable {
+    let snapshot_id: UUID?
+    let status: String
+    let confirmation_id: UUID?
+    let approval_id: UUID?
+    let can_confirm: Bool
+    let can_approve: Bool
+
+    var summary: String {
+        switch status {
+        case "approved": "Attempt coverage approved for this saved version."
+        case "awaiting_review": "Manager confirmed every field-goal and free-throw attempt. Awaiting owner or statistics-reviewer approval."
+        case "not_recorded": "No saved capture to confirm."
+        default: "Attempt coverage not confirmed."
+        }
+    }
+    func validate(snapshot: UUID?) throws {
+        guard snapshot_id == snapshot else { throw ShotCaptureIssue.corrupt }
+        switch status {
+        case "not_recorded":
+            guard snapshot == nil, confirmation_id == nil, approval_id == nil, !can_confirm, !can_approve else { throw ShotCaptureIssue.corrupt }
+        case "not_confirmed":
+            guard snapshot != nil, confirmation_id == nil, approval_id == nil, !can_approve else { throw ShotCaptureIssue.corrupt }
+        case "awaiting_review":
+            guard snapshot != nil, confirmation_id != nil, approval_id == nil, !can_confirm else { throw ShotCaptureIssue.corrupt }
+        case "approved":
+            guard snapshot != nil, confirmation_id != nil, approval_id != nil, !can_confirm, !can_approve else { throw ShotCaptureIssue.corrupt }
+        default: throw ShotCaptureIssue.corrupt
+        }
+    }
+}
 nonisolated struct SharedShotState: Decodable, Sendable {
     let team_id: UUID
     let game_id: UUID
@@ -165,6 +197,7 @@ nonisolated struct SharedShotState: Decodable, Sendable {
     let snapshot_id: UUID?
     let document: ShotCaptureDocument?
     let coverage_claim: String?
+    let coverage: ShotCoverageState?
     let status: String
     let can_record: Bool
     let can_review: Bool
@@ -261,6 +294,8 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
     }
     private func validate(_ value: SharedShotState) throws {
         guard value.team_id == scope.teamID, value.game_id == gameID, value.state_revision >= 0, value.assignment_revision >= 0 else { throw ShotCaptureIssue.corrupt }
+        try value.coverage?.validate(snapshot: value.snapshot_id)
+        if value.coverage != nil, value.snapshot_id != nil, value.document == nil { throw ShotCaptureIssue.corrupt }
         if let doc = value.document {
             try doc.validate()
             guard doc.id == value.session_id, doc.context.gameID == gameID, doc.context.teamID == scope.teamID, doc.context.isShared else { throw ShotCaptureIssue.corrupt }
@@ -392,6 +427,19 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
         args["p_displaced_snapshot_id"] = action == "adopt" ? state.snapshot_id.map { .string($0.uuidString) } ?? .null : .null
         await command("shots_decide", args)
     }
+    func decideCoverage(_ action: String) async {
+        guard let state, let coverage = state.coverage, let snapshot = state.snapshot_id,
+              (action == "confirm" && coverage.can_confirm) || (action == "approve" && coverage.can_approve) else { return }
+        if let local = recorder?.visibleDocument, local != state.document {
+            issue = "Submit your newer device journal and refresh before confirming this saved version. Your entries are preserved."
+            return
+        }
+        var args = revisionArguments(state)
+        args["p_snapshot_id"] = .string(snapshot.uuidString)
+        args["p_action"] = .string(action)
+        args["p_confirmation_id"] = action == "approve" ? coverage.confirmation_id.map { .string($0.uuidString) } ?? .null : .null
+        await command("shots_coverage_decide", args)
+    }
     private func command(_ rpc: String, _ arguments: [String: AnyJSON], digest: String? = nil) async {
         guard isCurrent, !isBusy, pending == nil, recorder?.needsSave != true, recorder?.isBusy != true else { return }
         feedbackConfirmed = false
@@ -435,7 +483,9 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
             _ = try await store.lock(scope)
             try validateCommand(pending)
             var args = scopeArguments; args["p_batch_id"] = .string(pending.batch.uuidString)
-            let receipt = try await call(pending.rpc == "shots_score_confirm" ? "shots_score_receipt" : "shots_receipt", args)
+            let receiptRPC = pending.rpc == "shots_score_confirm" ? "shots_score_receipt" :
+                pending.rpc == "shots_coverage_decide" ? "shots_coverage_receipt" : "shots_receipt"
+            let receipt = try await call(receiptRPC, args)
             if receipt.isNil { receiptNotFound = true; issue = "No committed receipt was found. You may explicitly retry the same frozen command; it may still be rejected as stale." }
             else { try await accept(receipt, pending) }
         } catch {
@@ -494,10 +544,17 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
         } catch { conceal(); issue = "Recovery listing unavailable. Reverify current access." }
     }
     private func validateCommand(_ command: ShotFrozenCommand) throws {
-        guard ["shots_save", "shots_assign", "shots_decide", "shots_recovery", "shots_score_confirm"].contains(command.rpc),
+        guard ["shots_save", "shots_assign", "shots_decide", "shots_recovery", "shots_score_confirm", "shots_coverage_decide"].contains(command.rpc),
               command.arguments["p_team_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == scope.teamID,
               command.arguments["p_game_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == gameID,
               command.arguments["p_batch_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == command.batch else { throw ShotCaptureIssue.corrupt }
+        if command.rpc == "shots_coverage_decide" {
+            let action = command.arguments["p_action"]?.stringValue
+            guard action == "confirm" || action == "approve",
+                  command.arguments["p_snapshot_id"]?.stringValue.flatMap(UUID.init(uuidString:)) != nil,
+                  action == "confirm" ? command.arguments["p_confirmation_id"]?.isNil == true :
+                    command.arguments["p_confirmation_id"]?.stringValue.flatMap(UUID.init(uuidString:)) != nil else { throw ShotCaptureIssue.corrupt }
+        }
     }
     private func accept(_ receipt: AnyJSON, _ command: ShotFrozenCommand) async throws {
         guard isCurrent, let values = receipt.objectValue,
@@ -507,6 +564,14 @@ nonisolated struct ShotRecoveryProposal: Decodable, Identifiable, Sendable {
               values["game_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == gameID,
               values["operation"]?.stringValue == command.operation,
               command.payloadDigest == nil || values["document_digest"]?.stringValue == command.payloadDigest else { throw ShotCaptureIssue.corrupt }
+        if command.rpc == "shots_coverage_decide" {
+            let expectedConfirmation = command.arguments["p_action"]?.stringValue == "confirm" ? command.batch :
+                command.arguments["p_confirmation_id"]?.stringValue.flatMap(UUID.init(uuidString:))
+            guard let snapshot = command.arguments["p_snapshot_id"]?.stringValue.flatMap(UUID.init(uuidString:)),
+                  values["snapshot_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == snapshot,
+                  expectedConfirmation != nil,
+                  values["confirmation_id"]?.stringValue.flatMap(UUID.init(uuidString:)) == expectedConfirmation else { throw ShotCaptureIssue.corrupt }
+        }
         try await store.clear(expected: command.batch, at: store.outboxURL(scope, game: gameID))
         lastConfirmedBatch = command.batch
         pending = nil; receiptNotFound = false; rejectedCommand = false

@@ -265,5 +265,7 @@ Charts show team/player observed counts, pending inputs, schematic basket-relati
 bands and independent after-game comparisons. An authorized statistics reviewer
 may separately confirm either team's final-score reference, leaving the other
 unentered. Score agreement is not attempt coverage or completion. Coverage signoff
-remains an owner decision. Migrations18/19 are tested in new synthetic databases
+requires designated-manager confirmation followed by owner/current-statistics-reviewer
+approval of the exact saved version. Later saved edits require renewed signoff;
+original approvals remain attached to their versions. Migrations18–20 are tested in new synthetic databases
 only; existing/hosted activation and acceptance are separate gates. See READINESS.md.

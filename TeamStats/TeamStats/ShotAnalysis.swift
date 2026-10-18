@@ -23,7 +23,7 @@ nonisolated enum ShotComparison: Equatable, Sendable {
         switch self {
         case .unavailable: "Unavailable — official input missing or invalid"
         case .incomplete: "Check incomplete — captured inputs still pending"
-        case .match: "Values agree · coverage remains unverified"
+        case .match: "Values agree · agreement does not establish coverage"
         case .disagree: "Values disagree"
         case .lowerBoundDisagrees: "Disagree — recorded lower bound already exceeds official value"
         }
@@ -65,7 +65,7 @@ nonisolated struct ShotAnalysis: Sendable {
     let points: Int
     let pending: Int
     let bands: [ShotBand]
-    var coverageEstablished: Bool { false } // Owner signoff contract remains unresolved.
+    var coverageEstablished: Bool { false } // Raw observations never establish server-confirmed coverage authority.
     init(document: ShotCaptureDocument, team: ShotTeam, playerID: String?) throws {
         try document.validate()
         events = try document.events().filter { $0.team == team && (playerID == nil || $0.playerID == playerID) }

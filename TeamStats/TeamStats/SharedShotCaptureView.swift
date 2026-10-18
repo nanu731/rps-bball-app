@@ -87,10 +87,31 @@ struct SharedShotControls: View {
                         Text("A handoff changes who may submit. Device forks may overlap and require explicit review; stable IDs cannot identify two independently recorded observations of the same attempt.").font(.footnote)
                         if state.can_record, state.document == nil { Button("Prepare actual-roster capture on this device") { Task { await model.register(players: roster) } } }
                         if let doc = state.document {
-                            NavigationLink("Saved capture charts") { ShotChartsView(document: doc, status: "Saved shared snapshot · \(state.status)", score: model.score, officialSources: sources, isVisible: { model.contentCurrent && model.state != nil }) }
-                            NavigationLink("Inspect saved capture") { ShotCaptureReadOnlyView(document: doc, status: state.status, isVisible: { model.contentCurrent && model.state != nil }) }
+                            NavigationLink("Saved capture charts") { ShotChartsView(document: doc, status: "Saved shared snapshot · \(state.status)", score: model.score, coverage: state.coverage, officialSources: sources, isVisible: { model.contentCurrent && model.state != nil }) }
+                            NavigationLink("Inspect saved capture") { ShotCaptureReadOnlyView(document: doc, status: state.status, coverage: state.coverage, isVisible: { model.contentCurrent && model.state != nil }) }
                         }
                     }
+                    Section("Attempt coverage · saved version") {
+                        if let coverage = state.coverage {
+                            Text(coverage.summary).font(.headline).fixedSize(horizontal: false, vertical: true)
+                                .accessibilityIdentifier("shot.coverage.status")
+                            if let snapshot = state.snapshot_id {
+                                Text("Capture revision \(state.document?.revision ?? 0) · version \(snapshot.uuidString)")
+                                    .font(.footnote).fixedSize(horizontal: false, vertical: true)
+                            }
+                            Text("The designated manager confirms every field-goal and free-throw attempt, then the owner or a current statistics reviewer approves this saved version. Later saved changes need renewed confirmation and review; original approvals remain attached to their versions.")
+                                .font(.footnote)
+                            if coverage.can_confirm {
+                                Button("Confirm every field-goal and free-throw attempt was recorded") { Task { await model.decideCoverage("confirm") } }
+                                    .frame(minHeight: 44).accessibilityIdentifier("shot.coverage.confirm")
+                            }
+                            if coverage.can_approve {
+                                Button("Approve attempt coverage for this saved version") { Task { await model.decideCoverage("approve") } }
+                                    .frame(minHeight: 44).accessibilityIdentifier("shot.coverage.approve")
+                            }
+                        } else { Text("Coverage signoff is unavailable on this server. No coverage approval is implied.") }
+                        Text("Coverage approval does not publish data, resolve pending outcomes or reconcile independent scores.").font(.footnote)
+                    }.disabled(model.pending != nil)
                     Section("Independent score reference") {
                         if let score = model.score {
                             LabeledContent("Our confirmed score", value: score.our_points.map(String.init) ?? "Unavailable")
@@ -225,10 +246,11 @@ private struct PreparedShotCaptureDetail: View {
 struct ShotCaptureReadOnlyView: View {
     let document: ShotCaptureDocument
     let status: String
+    var coverage: ShotCoverageState? = nil
     var isVisible: () -> Bool = { true }
     var body: some View {
         if !isVisible() { ContentUnavailableView("Capture concealed", systemImage: "lock") } else { List {
-            Section { Text(status).font(.headline); Text("Read-only saved observations. Coverage remains unverified; these do not replace official after-game statistics.").font(.footnote) }
+            Section { Text(status).font(.headline); Text((coverage?.summary ?? "Attempt coverage unverified for this device journal.") + " Read-only observations do not replace official after-game statistics.").font(.footnote) }
             ForEach(ShotTeam.allCases, id: \.self) { team in
                 Section(team == .our ? "Our team" : "Opponent") {
                     if let totals = try? document.totals(team: team) {

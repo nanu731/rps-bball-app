@@ -105,7 +105,7 @@ recorder for both teams, durable account/team/game-scoped journal and controlled
 deferred submission into a separate reviewed dataset. Official after-game records
 are comparison sources, never overwritten or added to captured totals. Free throws
 retain per-attempt outcomes without court coordinates. Score reconciliation and
-coverage claims remain separate. New migrations18/19 are tested only in isolated
+coverage claims remain separate. New migrations18–20 are tested only in isolated
 synthetic databases; existing/hosted activation and acceptance remain open.
 
 ## Backup and recovery boundary
@@ -192,4 +192,18 @@ score inferred from the recorder. stats.review confirms each entered team score
 with a source note and expected revision; blanks remain missing independently.
 The existing frozen-command/receipt mechanism handles uncertain replies, and a
 fresh refresh is required before another action. Neither agreement nor publication
-establishes missed-attempt coverage; owner signoff policy remains unresolved.
+establishes missed-attempt coverage. Migration20 adds append-only exact-snapshot
+manager confirmations and owner/current stats.review approvals. Only the current
+designated shots.record manager may confirm; unapproved confirmations are also
+bound to the current assignment. A handoff before approval requires the new manager
+to confirm. Existing approvals stay attached to their original immutable snapshot;
+a new head or correction has no inherited confirmation/approval. Historical approval
+is not erased by later grant revocation, while new decisions/receipt access always
+check current authority. stats.review can inspect the saved head to review coverage;
+it does not confer recorder designation, shots.review or publication authority.
+
+Coverage commands reuse the durable frozen-command/explicit receipt-recovery path,
+with exact snapshot and confirmation UUID validation. No blind retries or shared-data
+migration are added. The metadata is shown only for its saved shared version; newer
+device journals and local journals never inherit it. Pending outcomes, independent
+comparisons and publication remain separate.
