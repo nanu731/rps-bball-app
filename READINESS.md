@@ -180,3 +180,40 @@ Consolidated owner decisions before real pilot records:
 - Assign privacy/security/deletion handlers; settle consent/privacy content, shared
   history and deletion handling, retention and response commitments. The selected
   contact route does not establish these policies.
+
+## Actual hosted synthetic manual-statistics journey —2026-10-17
+
+The signed server journey passed on the verified nonproduction13-migration baseline;
+no new migration or permission change was needed. This is actual hosted Auth/RPC/RLS
+and persistence evidence, separate from prior local/simulated tests and rendered UI.
+
+| Area | Actual result and boundary |
+| --- | --- |
+| Existing identities/authority | One approved refresh attempt recovered four existing distinct synthetic identities: test-team owner, statistics reviewer/author, ordinary active member and outsider. Auth verified their expected identities; signed team_access confirmed current owner/review/reopen/member authority and outsider denial. The old contributor refresh credential returned refresh_token_not_found and was not retried. No account/grant/membership/bootstrap changes. |
+| Fixture scope | One retained clearly labeled TEST ONLY game, using one existing TEST ONLY player UUID in the shared real-identity namespace. No roster edit, temporary-ID conversion or original-device upload. |
+| Drafts/completion | Box scores, our possessions, opponent possessions and player paint totals saved/reloaded/reopened with stable identities and revisions. Missing/zero/clearing preserved. Partial proven scoring contradictions and exact mismatches saved as drafts but failed completion; corrected scores completed. Each sheet completed independently; unanswered turnovers failed, explicit possession-zero confirmation changed only existing records. Completion did not publish. |
+| Review/visibility | Four submissions were accepted by the distinct owner; author publication without authority and ordinary-member review failed. The ordinary member saw only accepted versions/pointers; the verified outsider received no game/dataset/version rows and could not open a draft. No grant changes manufactured revocation; fresh revocation remains unexercised. |
+| Correction/provenance | Approved correction created a new author-owned version linked to the original acceptance. The original accepted pointer remained visible during drafting; acceptance advanced it while retaining unchanged history. Final scope:4datasets,5versions,5publication generations. Authenticated readback matched receipts. |
+| Delivery/preservation | Five export delivery records remain queued with zero attempts and no delivered timestamp; publication is not Google delivery. All pre-existing rows in the scoped synthetic baseline, including roster/membership/grants/delegation, remained unchanged. Original records/protected Xcode state are checked separately. |
+
+Native hosted UI and the intended real owner's current device session remain
+unverified. Simulator screenshot/AX inspection worked, but Account-tab input failed
+with noWindowsAvailable, including after rebinding; unchanged retries stopped.
+The original iPhone installation is older/local-only; the current isolated UI test
+installation was left configured as found. Signed synthetic HTTP authority does not
+verify either device's real-owner session or rendered hosted forms.
+
+Focused actual hosted native SDK/model readback passed1test/0failures in the
+isolated ShotAcceptance1.0(1) iPhone17/26.4 build, sourcec2db392/42Swift files.
+In-memory real Auth sessions verified four role categories, accepted snapshots,
+correction/missingness and reload; this does not verify rendered UI or real-owner
+device session. No app source changed.
+
+No core product defect was established. The signed server lane supports further
+owner-supervised synthetic use without migrations, but the native hosted pilot is
+not yet accepted end to end: confirm the intended owner in the current privately
+configured nonproduction build and exercise rendered hosted saving/reopening,
+completion and review through working Simulator controls or a manual walkthrough.
+Existing physical/iOS26.0/accessibility and release gates remain separate.
+Only the consolidated participant/role/roster, backup/recovery and privacy/deletion
+decisions above are required before introducing real team records.

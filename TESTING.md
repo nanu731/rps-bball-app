@@ -1591,3 +1591,60 @@ No owner login, refresh, new test account or synthetic hosted data was created.
 Shared shots, delivery, schedules/SMS, hosted recovery and release acceptance remain
 outside this task. Private prepared queries, sanitized receipts and checkpoint are
 retained; no privileged configuration or real records are in the public evidence.
+
+### Actual hosted synthetic manual-statistics acceptance —2026-10-17
+
+Base5ec4b19/applicationc2db392. Prior preflight CI39092730765 passed; compatibility
+inspection was reused. Actual Auth refresh/user and signed team_access verified
+four existing synthetic accounts/current authority. One prior contributor refresh
+returned400/refresh_token_not_found; no account recreation or credential loop.
+Expired access probes initially received numeric403 responses; a harness guard
+assuming newer string error codes repeated GETs without refreshing. After explicit
+approval, exactly one refresh per existing tester was attempted; four succeeded.
+This is not signing-key rotation, new signup or a fresh revocation test.
+
+Actual hosted HTTP phases passed: one new labeled synthetic game, existing labeled
+shared roster identity unchanged, four datasets with stable IDs/draft revisions,
+missing vs0/paint clearing, independent paired possession counts, unanswered-turnover
+blocking, explicit numeric-zero completion, scoring contradiction draft saves and
+completion denials, reload/reopen, independent completion, submission, distinct-owner
+review, unauthorized publication/review denial, accepted-only ordinary-member views,
+outsider concealment and correction lineage. Final4datasets/5versions/5publication
+generations; old acceptance stayed visible during correction and unchanged afterward.
+Authenticated readback matched saved responses. No uncertain write remained pending.
+
+Pre-existing rows in nine scoped synthetic-team tables retained their hashes,
+including membership/grants/delegation/roster. Five export delivery rows are queued,
+attempts0, delivered_atNULL; no provider write or schedule was invoked. Fixtures are
+retained privately. No real-team rows or privileged credentials were used by the application journey.
+No accounts, memberships or grants were created or changed; no migration or bootstrap ran.
+
+Pre-execution independent reviews corrected two private harness errors: expecting
+no delivery rows despite automatic queued rows, and aliasing a retained correction
+receipt while preparing an edit. Completion readbacks explicitly check unchanged
+possession IDs/counts, confirmed zeros and optional box/paint missing values.
+These were test defects, not product defects or hosted drift.
+
+One focused native integration test passed on iPhone17 Simulator26.4 through the
+current Supabase SDK and ConnectedStatistics model, using actual hosted owner,
+author/reviewer, ordinary-member and outsider credentials in memory only. It verified
+fresh Auth identity, five retained versions/four accepted pointers, correction base,
+missing/zero decoding, owner-only outbox exposure and repeated read-only reload.
+The outsider's game list remained empty. This is actual native-client hosted readback,
+not rendered interaction or the intended real owner's persisted device session.
+Isolated app com.narayanlekhi.TeamStats.ShotAcceptance1.0(1), sourcec2db392/42Swift
+files, built and passed; no app source changed. An initial private test compile
+failed because it used enum keys for a String-keyed dictionary; corrected harness
+passed. No product defect was inferred from that test error.
+
+Native UI limitation: original iPhone app opened as older/local-only; current isolated
+UIAcceptance app opened. Screenshot/AX observation succeeded, but Account input
+failed twice with -10005/noWindowsAvailable, once after rebinding. No further unchanged
+input probes, resets, uninstalls, owner sign-in or Keychain overwrite. Actual intended
+owner-device session and hosted rendered entry/review remain unverified. Synthetic
+SDK/HTTP identities do not close that gap. Existing local UI results are not relabeled
+hosted; fresh revocation, landscape/VoiceOver, physical/iOS26.0 and release remain
+separate. Exact next check: on a working current isolated nonproduction build,
+Account → Check session again, verify intended owner against its trusted Auth UUID,
+then exercise the retained synthetic game's shared forms/Save/reopen/completion and
+review controls. Do not alter existing grants to recover access.

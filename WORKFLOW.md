@@ -2167,3 +2167,20 @@ repaired in product/history. READINESS/TESTING distinguish compatibility from si
 workflow/device-session acceptance. No local test/build reruns or hosted mutations;
 next journey requires separate authorization and valid existing-user sessions.
 Owner decisions are consolidated in READINESS.md; no new migration is indicated.
+
+Actual hosted manual acceptance2026-10-17 from5ec4b19: existing signed synthetic
+owner/reviewer/plain-member/outsider authority verified without account/grant changes.
+One retained TEST ONLY game/four datasets/one existing synthetic roster identity;
+draft validation/persistence, independent completion, distinct owner acceptance,
+viewer/outsider denial and one accepted correction passed authenticated readback.
+Five generations/jobs remain queued/zero-attempt/undelivered. Pre-existing scoped
+synthetic rows unchanged. Private harness review issues corrected before execution;
+no demonstrated app/source repair, migration, bootstrap or provider activation.
+Focused actual hosted native SDK/model readback passed1test/0failures in the
+isolated ShotAcceptance1.0(1) iPhone17/26.4 build, sourcec2db392/42Swift files.
+In-memory real Auth sessions verified four role categories, accepted snapshots,
+correction/missingness and reload; this does not verify rendered UI or real-owner
+device session. No app source changed.
+Real owner-device session and actual hosted rendered workflow remain open after
+Simulator input noWindowsAvailable; unchanged retries stopped. READINESS/TESTING
+separate actual hosted server evidence, native model evidence and remaining UI gates.

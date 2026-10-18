@@ -1190,3 +1190,20 @@ stores no SQL, so full original hosted source provenance remains unavailable;
 migration is indicated before separately authorized signed synthetic acceptance.
 Current device session/workflow/release acceptance is not claimed. READINESS.md
 contains the consolidated pilot-role, backup/recovery and privacy/deletion decisions.
+
+### Actual hosted manual-statistics acceptance —2026-10-17
+
+Existing synthetic owner/reviewer/member/outsider sessions and current authority
+supported a complete signed server journey on baseline13: four independent datasets,
+stable drafts, honest missing/zero values, validation, distinct owner acceptance,
+accepted-only views, denied actions and preserved correction lineage. One new labeled
+game/one existing synthetic roster identity/five final versions; no grants, accounts,
+roster edits, migrations or bootstrap. Five export jobs remain queued, not delivered.
+Focused actual hosted native SDK/model readback passed1test/0failures in the
+isolated ShotAcceptance1.0(1) iPhone17/26.4 build, sourcec2db392/42Swift files.
+In-memory real Auth sessions verified four role categories, accepted snapshots,
+correction/missingness and reload; this does not verify rendered UI or real-owner
+device session. No app source changed.
+The intended real owner-device session and actual hosted rendered Save/review remain
+unverified because native input failed; server success is not full native pilot or
+release acceptance. READINESS.md holds scope/next checks and consolidated decisions.
