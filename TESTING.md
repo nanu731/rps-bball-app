@@ -1485,3 +1485,62 @@ read-only preflight and checksum receipt are private; no hosted query was execut
 Standards0/Spec0 after correcting the plan to name all four statistic datasets.
 The proposed zero-pending-migration core lane still requires hosted compatibility
 and authorized synthetic lifecycle acceptance, plus owner/device/recovery gates.
+
+### Continuation unit10: available native acceptance and exact limits
+
+Normal application source c2db392 built successfully for both isolated devices.
+Installed TeamStats UI TEST1.0(1), bundle com.narayanlekhi.TeamStats.ShotAcceptance,
+now matches all42production Swift files and the final built binary on iPad A16 and
+iPhone17. Runtime26.4, target26.0; no actual26.0 or physical-device test. Private
+coverage-harness roots were replaced by the normal application without uninstalling.
+
+The iPad system Settings initially displayed upright landscape after a desktop
+rotation. The subsequent supported XCTest run verified Settings and app landscape
+window geometry, single-player vertical entry, native horizontal header drags to
+FT misses, typed0 and successful draft saves. That entire method is NOT a pass:
+it failed afterward because its keyboard-dismiss helper required an action even
+though no keyboard was visible. The following setup verified portrait geometry.
+Screenshot inspection also exposed disagreement between the desktop device shell
+and raw device orientation, including in Settings. Direct menu orientation restored
+upright portrait but did not establish repeatable upright landscape. A focused
+iPad court attempt stalled on native screenshot lookup after the system baseline
+failed; only its task-owned coordinator was interrupted, with artifacts retained.
+The independent iPhone system-first attempt skipped because Settings stayed portrait
+(23.35seconds,1skip, not a rotation pass). No speculative app repair/reset followed.
+Overall visual landscape acceptance remains open on both devices.
+
+With actual iPad Settings Reduce Motion0→1, the native touch test traversed the
+roster header to FT misses, entered1 and saved successfully; final rendered readback
+showed Saved locally and the expected field. Its later keyboard-dismiss assertion
+failed for the same absent-keyboard assumption, so that full method is not green.
+A supported desktop continuation then inspected the saved value, expanded player
+details, opened the editor and dismissed it unchanged. Actual settled/mid-dismissal
+views were inspected with Reduce Motion on; Prefer Cross-Fade Transitions remained
+off. Source adds no custom motion. Original Reduce Motion0 was restored and verified.
+Desktop mouse drag and horizontal-wheel attempts did not visibly move the saved
+table; manual pan/active-pan appearance remains separate from the passing synthesized
+native touch traversal. No new product defect was established by these control limits.
+
+Actual VoiceOver remains unverified. Installed Xcode26.4 exposes native accessibility
+audits but no VoiceOver driver was found in its public XCTest interfaces, Simulator
+Features or the runtime Settings Vision controls. This is toolchain-specific, not
+a universal physical-hardware requirement: Apple's [WWDC26 accessibility lab](https://developer.apple.com/videos/play/wwdc2026/8005/)
+describes Simulator VoiceOver support with newer Xcode27 testing APIs. No toolchain
+upgrade was installed. Inspector/tree/audit evidence is not screen-reader acceptance.
+
+Remaining exact acceptance: establish consistent upright Settings landscape first,
+then verify court/entry layout, scrolling and actions in both app orientations;
+check manual iPad header pan to the last statistic with Reduce Motion on; use a
+working compatible VoiceOver setup to read/navigate the court alternative, explicit
+2/3results, FT controls, draft feedback and calm scoring notice. Physical hardware
+and actual26.0 remain deferred. Approved court/maroon/scoring/hidden-indicator source
+was preserved. All3protected working/index entries and174original JSON hashes
+matched this continuation's startup snapshot; no new unexpected drift. The earlier
+personal UI-state difference from the preceding handoff remains preserved, not restored.
+Source CI39082969941 passed the20-migration synthetic workflow; this is not hosted
+activation, real Google delivery, configured disaster recovery or release acceptance.
+
+Independent final documentation reviews: Standards0/Spec0. No new UI source change
+was required for these control limitations. Source CI39082969941 and pilot-plan
+checkpoint CI39083650601 completed successfully. Task-owned gateways and synthetic
+database processes were stopped; every fixture/database/pending record was retained.

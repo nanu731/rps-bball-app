@@ -1171,3 +1171,10 @@ private migration history; this is catalog evidence, not hosted lifecycle accept
 The plan names all four independently versioned datasets and separates optional
 14–20 lanes. Preserve verified owner authority/history and never rerun bootstrap.
 No hosted changes, real-record export, provider, delivery or scheduler activation.
+
+Continuation native acceptance: installed normal TeamStats UI TEST1.0(1) on
+iPhone17/iPad A16 matches sourcec2db392 and42Swift files, runtime26.4. Actual iPad
+Reduce Motion header traversal/save and saved-detail/editor transitions have scoped
+evidence; full methods retain keyboard-helper failures. Landscape visual consistency
+and actual VoiceOver remain open; TESTING separates passed observations, skipped
+system checks and interrupted automation. No new UI repair was justified.

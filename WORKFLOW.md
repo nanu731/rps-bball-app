@@ -2145,3 +2145,15 @@ corrected three-versus-four dataset wording; Standards0/Spec0. Owner bootstrap,
 existing records/grants/history, hosted/provider settings and disabled delivery stay
 untouched. Next executable pilot task is read-only hosted core compatibility preflight,
 not bulk migration activation. Unit10 available native checks continue separately.
+
+Continuation unit10: available native checks attempted serially; no new app repair
+justified. iPad actual Reduce Motion native header traversal/far-right edit/save and
+desktop saved-detail expansion/editor presentation/dismissal were observed; original
+preference restored. Full test methods retain their absent-keyboard helper failures.
+iPad geometry checks passed but visual shell/orientation disagreement prevents full
+landscape acceptance; independent phone system baseline skipped, not passed. Actual
+VoiceOver is unsupported by the inspected installed controls/API, not claimed from
+audit labels. TESTING gives exact remaining checks. Both isolated normal installed
+apps match42production files/binary/sourcec2db392, runtime26.4. No original app reset
+or provider action; protected3working/index and174JSON unchanged. Available queue
+work is finished; remaining gates are environment/owner/provider/device/release.
