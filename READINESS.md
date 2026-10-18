@@ -136,10 +136,47 @@ Core manual entry needs no pending migration beyond the verified13-migration hos
 | Account deletion request intake |16:202610170002 | Optional separate activation; request intake is not deletion execution or a prerequisite for core statistics. Policy/release obligations remain open. |
 | Shared shots, independent score, coverage signoff |18:202610170004,19:202610170005,20:202610170006 | Separate optional lane, not required for manual pilot. Full ordered chain has isolated evidence; selective installation has NOT been verified. Do not cherry-pick/apply it through this plan. |
 
-Next task: read-only hosted core compatibility preflight. Reverify current project/account/team privately against the already-verified owner Auth UUID; never bootstrap/grant to repair a mismatch. Compare migration history/source checksums and required signatures, public RLS/policies/effective ACLs, private-schema exposure and current app configuration. Preserve catalog/access/history evidence privately without exporting real records or secrets. Any drift stops that lane for separate diagnosis; it does not authorize bulk migrations or permission repairs.
+The read-only hosted core compatibility preflight was performed on2026-10-17; its results and evidence limits follow below. The original preflight contract was to reverify current project/account/team privately against the already-verified owner Auth UUID; never bootstrap/grant to repair a mismatch. Compare migration history/source checksums and required signatures, public RLS/policies/effective ACLs, private-schema exposure and current app configuration. Preserve catalog/access/history evidence privately without exporting real records or secrets. Any drift stops that lane for separate diagnosis; it does not authorize bulk migrations or permission repairs.
 
 After explicit authorization and owner-selected pilot participants/criteria, use one labeled synthetic game and distinct admitted/denied identities for hosted manual draft save/reopen, independent completion, submission/review/publication, accepted-only viewer access, correction lineage and revocation concealment. Keep receipts and accepted pointers separate from queued, disabled export jobs. Lost write replies require reload/reconciliation, not blind retry. Preserve all pre-existing records/grants; no original-device upload. Reuse passed local evidence; test newly changed hosted contracts only.
 
 Recovery boundary: preserve app/backend version compatibility and immutable published history; stop pilot mutations on uncertain authority or corruption. Use explicit draft recovery and forward fixes; a Git revert does not restore records. Hosted database/Auth recovery and Storage bytes are separate unverified gates. Choose encrypted backup destination/access holder, retention and recovery objectives before real pilot records; the10GB allocation alone is not a backup.
 
 Owner/provider gates remain: real roster and identity mapping without converting temporary IDs; pilot roles/criteria, privacy/deletion handlers/retention and distribution approval; verified$0 Auth/sender/rate/refresh configuration. Retain both local Auth observations (immediate family rejection failed; rejection after an additional11seconds passed). Actual screen-reader, physical-device and26.0 acceptance remain separate. Nothing in this plan activates providers, migrations, grants, delivery, schedules or production.
+
+## Hosted core compatibility preflight —2026-10-17
+
+Read-only inspection of the intended nonproduction project passed within the scope
+below. No core incompatibility requiring a migration was established. This permits
+planning a separately authorized synthetic manual-statistics journey against the
+existing13-migration baseline; it does not constitute that journey or release approval.
+
+| Area | Actual evidence and limits |
+| --- | --- |
+| Target and authority | Connected dashboard account/project matched the expected private nonproduction configuration. Trusted Auth read matched the previously verified owner UUID/contact and confirmed/nonanonymous/nondeleted/nonbanned state. Read-only SQL confirmed the intended team's owner binding, active owner membership and retained bootstrap event. No authority was inferred from a submitted contact or granted anew. |
+| Migration history | Exactly13 expected version/name rows. Migrations1–9 intentionally have no stored SQL; their retained local source pins still match, but hosted full-source provenance for those rows remains unavailable. Migrations10–12 exactly match reviewed source with outer transaction wrappers removed; migration13 matches full source. No history backfill or migration executed. |
+| Core contracts/security | All20 inspected RPC signatures, argument names and return types match (19core plus owner export-status read). Bodies/security/search paths of44 relevant functions match source. All13 core read tables retain RLS;13 policy inventories/roles/expressions, effective client ACLs and restricted private helpers match. Required authenticated team_private USAGE remains intact. |
+| Actual Data API | Dashboard exposes only public/graphql_public. Read-only requests for team_private and supabase_migrations both returned406/PGRST106. This verifies exposure separately from catalog ACLs. Anonymous public-table read was denied. |
+| Client/configuration | Current client fields and the named correction relationship match hosted catalog/OpenAPI metadata; private URL/key configuration was accepted. Email is enabled and phone disabled. No email/SMS or delivery was activated. |
+
+Unknowns: no fresh signed-in device-session verification or signed allowed/denied
+manual lifecycle was performed. An existing server session row is not fresh JWT
+proof. Historical1–9 full SQL cannot be independently recovered from migration
+history. Prior accepted tests remain distinct; none were rerun here. Hosted recovery,
+provider/device/accessibility and release gates elsewhere in this document remain.
+
+Next executable pilot task, after separate authorization: use valid sessions for the
+existing owner and distinct authorized test users for one labeled synthetic manual
+journey. No new migration is indicated by this preflight. Do not create users,
+bootstrap or grant access as an implicit prerequisite. Existing signed access must
+be available; this task neither logged in nor refreshed an application session.
+
+Consolidated owner decisions before real pilot records:
+
+- Confirm participants, their entry/review/publication/administration roles, actual
+  roster identities, pilot acceptance criteria and distribution scope.
+- Choose encrypted backup destination and access holder, retention, acceptable data
+  loss and recovery time. The existing10GB cap does not configure recovery.
+- Assign privacy/security/deletion handlers; settle consent/privacy content, shared
+  history and deletion handling, retention and response commitments. The selected
+  contact route does not establish these policies.

@@ -1544,3 +1544,50 @@ Independent final documentation reviews: Standards0/Spec0. No new UI source chan
 was required for these control limitations. Source CI39082969941 and pilot-plan
 checkpoint CI39083650601 completed successfully. Task-owned gateways and synthetic
 database processes were stopped; every fixture/database/pending record was retained.
+
+### Read-only hosted core preflight —2026-10-17, baseline1a08444
+
+Actual authorized nonproduction inspection used three exact-source-verified
+BEGIN READ ONLY/ROLLBACK transactions with bounded statement timeouts and six
+bounded GETs. No application RPC was executed, no application/statistical records
+were exported, and no account, grant, migration, bootstrap or provider was changed.
+Original local suites and builds were not repeated; application source staysc2db392.
+
+Verified current project/dashboard account continuity; trusted existing owner Auth
+UUID/prior-contact match and account flags; exact intended-team owner binding, active
+membership and retained bootstrap event. These are current server records, not a
+new signed-in-device session or hosted workflow pass. A server session row alone
+does not prove current JWT/session refresh behavior.
+
+History contains exactly13 expected versions/names. An initial full-source checksum
+assertion failed because it assumed every row stored the complete migration file.
+Reviewed original activation stored only version/name for1–9: full hosted source
+provenance is unavailable there, while retained private local pins still match.
+The three10–12 stored sources omit only outer transaction wrappers; exact checksums
+against that reviewed preparation passed. Migration13's full-source checksum passed.
+No retrospective history repair was attempted.
+
+All20 actual client RPC contracts (19core plus owner export-status read) match
+signatures, input argument names and return types. A diagnostic probe incorrectly
+expected JSONB for roster save; source/client require UUID, and the corrected check
+passed. No product repair was justified. All44 relevant function bodies/security
+modes/fixed search paths match source. Core13 tables retain RLS;13 policy identities,
+roles and expressions were inspected against source, including published/author/
+review/edit visibility. Effective authenticated SELECT/EXECUTE, anonymous denial,
+direct-write denial and private-table/helper restrictions passed. Authenticated
+team_private USAGE needed for policy helpers remains present and unchanged.
+
+Dashboard Data API settings selected only public/graphql_public; actual requests
+for both private/history profiles returned406/PGRST106. An anonymous limit0 table
+request returned401/42501, without returning rows. Actual service-role OpenAPI
+metadata includes the20 RPCs and selected client columns; the named correction FK
+and recovery lineage column match. This is metadata/cache evidence, not execution
+of writes or authenticated workflow behavior. The existing private publishable-key
+configuration was accepted by Auth settings: email enabled, phone disabled.
+
+No unresolved core drift was established. Core synthetic acceptance can be planned
+without migrations, but needs separately authorized existing-user signed sessions.
+No owner login, refresh, new test account or synthetic hosted data was created.
+Shared shots, delivery, schedules/SMS, hosted recovery and release acceptance remain
+outside this task. Private prepared queries, sanitized receipts and checkpoint are
+retained; no privileged configuration or real records are in the public evidence.

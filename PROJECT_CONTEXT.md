@@ -1178,3 +1178,15 @@ Reduce Motion header traversal/save and saved-detail/editor transitions have sco
 evidence; full methods retain keyboard-helper failures. Landscape visual consistency
 and actual VoiceOver remain open; TESTING separates passed observations, skipped
 system checks and interrupted automation. No new UI repair was justified.
+
+### Read-only hosted core compatibility —2026-10-17
+
+The1a08444 continuation verified the existing nonproduction owner/team binding and
+13-migration core contracts without writes or activation.20RPC contracts/44function
+bodies/security,13core RLS/policies and actual Data API private-schema exclusion
+match; current client metadata/private configuration is compatible. History1–9
+stores no SQL, so full original hosted source provenance remains unavailable;
+10–12 reviewed wrapper-removed receipts and13full-source checksums match. No core
+migration is indicated before separately authorized signed synthetic acceptance.
+Current device session/workflow/release acceptance is not claimed. READINESS.md
+contains the consolidated pilot-role, backup/recovery and privacy/deletion decisions.

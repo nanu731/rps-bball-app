@@ -2157,3 +2157,13 @@ audit labels. TESTING gives exact remaining checks. Both isolated normal install
 apps match42production files/binary/sourcec2db392, runtime26.4. No original app reset
 or provider action; protected3working/index and174JSON unchanged. Available queue
 work is finished; remaining gates are environment/owner/provider/device/release.
+
+Read-only hosted core preflight2026-10-17: expected1a08444 had no newer work.
+Current target/owner/team,13version history,20client RPC contracts,44source function
+bodies/security,13core RLS/policies/client ACLs and actual private-schema exclusion
+were checked. History1–9 lacks stored SQL;10–12 uses reviewed wrapper-removed source,
+13full source. Initial receipt/roster-return probe assumptions were diagnosed, not
+repaired in product/history. READINESS/TESTING distinguish compatibility from signed
+workflow/device-session acceptance. No local test/build reruns or hosted mutations;
+next journey requires separate authorization and valid existing-user sessions.
+Owner decisions are consolidated in READINESS.md; no new migration is indicated.
