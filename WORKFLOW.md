@@ -2115,6 +2115,51 @@ capture version. PRD.md is canonical. This supersedes the unresolved policy
 checkpoint above; implementation, server enforcement and acceptance remain work
 to verify. Score agreement and available attempt-count comparisons stay separate.
 
+### Meeting proposals under evaluation —2026-10-26
+
+The owner supplied computer-science meeting notes proposing OCR with an optional
+decision model/LLM, Google Drive intake, dataset exports, Firebase instead of
+Supabase, web delivery or a local model, simplified team-only iPad capture with a
+clock, reduced advanced-stat collection, and a Wispr Flow dictation experiment.
+The original notes are retained privately. These are proposals, not approval to
+rewrite the application, remove data/requirements, migrate providers or upload
+images/audio. PRD.md remains canonical.
+
+Recommended decision sequence, pending owner choices:
+
+1. Verify a viable $0 distribution route and required devices before further
+   platform-specific expansion. School developer access/fee-waiver eligibility
+   and Android/browser requirements are unanswered. Do not assume Personal Team
+   testing establishes distribution to the full team. Evaluate bounded web
+   feasibility in parallel with the school inquiry; neither authorizes a rewrite.
+   Confirm installations/shared devices as well as user count.
+2. Define the required collection outputs and a representative sheet/rehearsal
+   with checked expected values. Preserve blank/zero, source and coverage meaning.
+3. Measure current manual entry, on-device OCR review and courtside effort.
+   Choose measurable correctness/time/recovery criteria before comparing variants.
+4. Improve only the measured bottleneck. Deterministic sheet mapping is the first
+   candidate for known layouts/notation; an LLM or different OCR provider needs
+   evidence, authorization and a verified $0/privacy/device path.
+5. Reassess collection scope explicitly. Team charts can aggregate player shots;
+   removing attribution loses individual analysis. Shot events cannot replace
+   possession/paint-touch observations. Define any clock separately before approval.
+6. Resume bounded implementation/acceptance against the chosen platform and
+   approved scope. Replan the existing2026-11-17 target if a material rewrite or
+   new collection workflow is selected; do not promise unchanged delivery dates.
+
+Keep Supabase provisionally: PERFORMANCE.md does not establish a hosted platform
+bottleneck or a Firebase comparison. Drive automation, a required LLM, Parquet and
+voice integration are not prerequisites. Confirmed imports still enter ordinary
+draft validation, explicit Save and existing server review/publication. No provider,
+scope or release activation occurred in this planning review.
+
+Proposed planning cutoffs, not delivery commitments: by2026-10-29, the owner
+selects a pilot distribution route from verified options; by2026-11-02, select the
+capture workflow after a representative trial and explicit correctness/effort
+criteria. Identify who captures, reviews and corrects on which devices. If inputs
+or optional automation remain unavailable, retain the approved manual-statistics
+pilot scope; do not invent recognition accuracy or remove acceptance gates.
+
 Continuation unit06: added a planning-only analytics roadmap (<500words) and audited game dates/UUIDs, normalized coordinates/baskets, independent sources and revision provenance. Coverage policy is now approved by4832f1c, with implementation tracked separately. No inputs, models, dependencies or predictive UI added. Current personal UI-state bytes differ from the preceding handoff; captured current bytes/staged entries, retained older snapshots, restored nothing.
 
 Continuation unit07: keyboard-visible custom FT Start, all answers, atomic saves
