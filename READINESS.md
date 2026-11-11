@@ -1,5 +1,8 @@
 # Remaining TeamStats work
 
+> Historical native readiness ledger. Current web scope is being clarified in PROJECT_DIRECTION.md. These native gates remain evidence/reference for existing features, not a requirement to complete every legacy integration before the new pilot.
+
+
 Reconciled2026-10-17 against PRD.md, the private111-item reliability audit and
 latest TESTING.md evidence. This is the current remaining-work list; historical
 TODOs already resolved by adopted contracts are not new requirements. Source,

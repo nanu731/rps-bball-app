@@ -1,5 +1,8 @@
 # TeamStats — Project Context and Development Sequence
 
+> Historical native implementation/context ledger. Start with PROJECT_DIRECTION.md for the current web direction. Entries below retain their original dates and evidence scope; older next-step instructions are inactive unless explicitly selected for current work.
+
+
 ## Latest owner scope — 2026-10-17
 
 The owner authorizes a shared-manual-statistics first pilot with Sheets/media

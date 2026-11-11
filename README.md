@@ -1,5 +1,8 @@
 # rps-bball-app
 
+> Current direction (2026-11-11): planning a practice-and-game web app while preserving the existing native implementation. Start with [PROJECT_DIRECTION.md](PROJECT_DIRECTION.md) for confirmed direction and open questions. The sections below describe existing native code and historical acceptance; no web implementation or release acceptance is claimed.
+
+
 TeamStats is a native SwiftUI app for after-game high-school basketball statistics
 on iPhone and iPad (minimum iOS/iPadOS 26.0). Managers enter box scores,
 team possessions, and individual paint-touch totals; players view accepted shared

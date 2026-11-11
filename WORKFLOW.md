@@ -1,5 +1,8 @@
 # TeamStats — Planning and Implementation Workflow
 
+> Historical native workflow and evidence ledger. The active sequence and chat/skill responsibilities now live in PROJECT_DIRECTION.md. Older queues, stopping rules, native-only constraints and proposed decision dates below are historical, not current instructions.
+
+
 Current acceptance snapshot (2026-10-14, native design continuation): PARTIAL.
 The reviewed game-centered SwiftUI pass adds real game context, task rows,
 grouped scoring inputs, compact guidance, readable missing values and a bounded

@@ -1,5 +1,8 @@
 # TeamStats native design system
 
+> Current direction (2026-11-11): preserve this palette and approved sports-ledger visual language for the proposed web app. Native controls, SwiftUI APIs and past device receipts below are implementation-specific reference, not requirements to avoid browser components. Use PROJECT_DIRECTION.md and docs/agents/ui-ux-workflow.md for the active workflow.
+
+
 Rutgers Prep maroon is owner-confirmed. These provisional sRGB values are our
 accessible implementation palette, not an official school hex specification.
 Logo: `TODO_TEAM_LOGO`; final icon: `TODO_APP_ICON`; actual roster: `TODO_TEAM_ROSTER`.

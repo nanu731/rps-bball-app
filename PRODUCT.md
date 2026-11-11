@@ -1,22 +1,36 @@
 # TeamStats product context
 
-Confirmed requirements live in PRD.md; PROJECT_CONTEXT.md records implementation evidence.
-This short native-design context does not replace either document.
+## Positioning
 
-TeamStats helps a high school basketball team collect statistics after games,
-review shared datasets, and find approved plays, practice clips, scouting PDFs
-and authorized Hudl shortcuts. Owner amendment2026-10-17 also authorizes a planned
-in-app iPad-first shot recorder for both teams, including side-panel free throws.
-It is not implemented yet. This is the only exception to earlier no-live-tracking
-rules; existing box-score/possession/paint-touch entry stays after-game. Read
-PRD.md's shot-recorder amendment and ADR0007 before work on capture or charts.
+One high-school basketball team's practice-and-game planning, capture and review
+workspace. PROJECT_DIRECTION.md records confirmed direction and pending owner
+questions; it is the current planning source of truth.
 
-iPhone and iPad use native SwiftUI, system typography, Dynamic Type and restrained
-motion. Local incomplete drafts and temporary identities remain device-local;
-Supabase confirms shared authority, review and publication. Missing inputs are
-not zeros. Google Sheets is one-way output, never the source of authority.
+## Operating context
 
-Use DESIGN_SYSTEM.md's provisional maroon palette and native semantic surfaces.
-No decorative glass, gradients, generic card grids or invented team assets.
-Official color, logo, roster, privacy/legal content and distribution remain owner TODOs.
-The budget is strictly $0; unavailable hosted delivery stays disabled.
+Coaches prepare practices and choose collection priorities. Managers record practice
+shooting and selected game observations; players and coaches view authorized,
+reviewed results. Add Practice belongs beside Add Game. Exact pilot scope, platform
+stack, clock semantics and collection templates await owner clarification.
+The existing implementation is SwiftUI/Supabase; a web plan is not a built web app.
+Budget: strictly $0. Do not activate services based on assumed free allowances.
+
+## Evidence on hand
+
+Existing source, backend contracts and TESTING.md record native/local/hosted checks
+with scoped limitations. PRD.md and native planning ledgers are historical reference.
+They do not prove browser, handwriting or courtside acceptance. Coach notes name
+nine-spot shooting and drills but do not define locations or protocols.
+
+## Product principles
+
+Preserve the approved maroon sports ledger, compact aligned viewing, spacious touch
+entry, calm scoring notices and accessible horizontal statistics. Follow
+DESIGN_SYSTEM.md; native details need browser adaptation. Use Impeccable,
+apple-design and UI/UX Pro Max without a competing visual system.
+Record evidence before interpreting it. Missing is not zero; saved is not reviewed.
+Retain source/history, current server authority and user corrections. OCR/voice
+proposals require review. Preserve native work and original records.
+
+Unknown owner facts stay visible: TODO_NINE_SPOT_LAYOUT, TODO_DRILL_PROTOCOL,
+TODO_TEAM_ROSTER, TODO_TEAM_LOGO, TODO_OFFICIAL_MAROON_HEX.

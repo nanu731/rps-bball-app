@@ -1,5 +1,8 @@
 # TeamStats — Product Requirements
 
+> Historical native requirements: retained for legacy behavior and previously agreed scope. For current web planning and unresolved scope, start with PROJECT_DIRECTION.md. Do not treat native-only platform rules or the former completion target below as current web instructions.
+
+
 Status: working requirements; current implementation and verification evidence
 are recorded in PROJECT_CONTEXT.md and WORKFLOW.md. End-to-end authorization
 below supersedes older bounded-step stopping rules; open provider gates remain.

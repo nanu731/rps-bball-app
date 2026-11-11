@@ -1,32 +1,42 @@
 # TeamStats agent instructions
 
-Before implementation read PRD.md, PROJECT_CONTEXT.md, WORKFLOW.md and README.md.
-Preserve existing local records and temporary identities; never auto-upload them.
-Preserve both personal Xcode files' working bytes and staged entries. Use explicit-path commits.
-Owner2026-10-12 authorizes necessary free dependencies/tooling; verify official provenance, pins/checksums, licenses and disk space.
-Ask before paid/uncertain-cost actions, unrelated file reorganization or deleting work. Actual tool confirmations still apply.
-Never put privileged credentials or real student records in source, logs or handoffs.
-New owner end-to-end authorization overrides older bounded-step stopping instructions.
+## Start here
 
-## Agent skills
+Read PROJECT_DIRECTION.md and PRODUCT.md. PROJECT_DIRECTION.md owns the current
+web planning direction, confirmed requirements, pending owner questions and sequence.
+Resolve its pending choices before dependent implementation. Earlier PRD.md,
+PROJECT_CONTEXT.md, WORKFLOW.md and READINESS.md are historical native references,
+not active instructions or an automatic backlog for the web app.
 
-### Issue tracker
-Private local Markdown tickets under `.scratch/`; see docs/agents/issue-tracker.md.
-Do not publish internal tickets/specs in the public repository.
+## Execution and preservation
 
-### Triage labels
-Use canonical default labels; see docs/agents/triage-labels.md.
+Execute authorized work; use the smallest complete change and meaningful checks.
+Commit completed steps with explicit paths and clear messages. Preserve existing
+local records and temporary identities; never auto-upload or reinterpret them.
+Preserve all three pre-existing personal/project Xcode working files AND staged
+entries. Do not restore guessed bytes or include unrelated changes in commits.
+Necessary free tooling is authorized; verify official provenance, pins/checksums,
+licenses and disk space. Ask before paid/uncertain-cost actions, unrelated file
+reorganization or deleting work. Actual tool confirmations still apply.
+Never commit credentials, real student records or private tickets/specs.
+No automatic hosted migration, owner bootstrap, provider activation or release.
 
-### Domain docs
-Single context. Before relevant exploration read GLOSSARY.md and applicable docs/adr entries;
-see docs/agents/domain.md. Create decision records only for material tradeoffs.
+## Relevant context only
 
-### Implementation and tests
-Read `.scratch/teamstats-completion/spec.md` and the claimed ticket before work.
-Independent implementation agents use isolated worktrees based on the integration tip.
-Only the integrator edits the Xcode project. Advisors/reviewers are read-only.
-Test public seams specified in the spec: storage/validation/metric results, authenticated
-server commands and denied access, session state, and user-observable navigation/saving.
-Keep simulated successes separate from actual provider integration evidence.
+Read GLOSSARY.md, applicable ADRs and relevant source/backend contracts before
+changing existing behavior. Identify conflicts with the new direction explicitly.
+Private tasks/specs belong under .scratch/; see docs/agents/issue-tracker.md and
+triage-labels.md. The old native completion spec is not a mandatory web task list.
+Only the integrator edits shared integration/project configuration; independent
+implementers use isolated worktrees and advisors/reviewers are read-only.
 
-Before UI changes read DESIGN_SYSTEM.md; maroon is confirmed, official hex remains unknown. Preserve native accessibility, current-authority checks and local/shared separation.
+## Design and verification
+
+Before UI work read DESIGN_SYSTEM.md and relevant DESIGN.md visual evidence.
+Use Impeccable, apple-design and UI/UX Pro Max through docs/agents/ui-ux-workflow.md.
+Preserve the approved maroon sports-ledger direction and accessible interaction;
+adapt native implementation details to the browser rather than copying them.
+Test public behavior: validation, durability/recovery, authoritative permissions,
+denied access, correction/review, navigation/saving and relevant accessibility.
+Keep simulated, local integration, hosted and real-device evidence distinct.
+Use current primary documentation/Context7 for platform and SDK questions.

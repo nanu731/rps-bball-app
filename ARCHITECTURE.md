@@ -1,5 +1,8 @@
 # TeamStats architecture
 
+> Scope note (2026-11-11): this describes the existing native implementation. PROJECT_DIRECTION.md is the current web planning entry point; browser architecture remains proposed. Reuse backend contracts only after compatibility checks.
+
+
 Documentation snapshot: 2026-10-12, integration through `e7b119e` plus reviewed native file UI.
 This describes implementation and boundaries, not release acceptance.
 
