@@ -6,6 +6,7 @@ import {
   decodeManual,
   encodeRecords,
   ServerError,
+  CoreServer,
 } from "./server.ts";
 
 test("browser configuration rejects secret keys and arbitrary destinations", () => {
@@ -100,5 +101,36 @@ test("native uppercase UUIDs decode without losing player values or missingness"
       ])[0] as { values: unknown }
     ).values,
     { points: 4, defensiveRebounds: 0 },
+  );
+});
+
+// A navigation/account epoch change cannot prove whether a dispatched write committed.
+test("account generation change after dispatch retains an uncertain outcome", async () => {
+  let server: CoreServer;
+  const client = {
+    auth: {
+      getUser: async () => ({
+        data: { user: { id: "synthetic-actor", is_anonymous: false } },
+        error: null,
+      }),
+    },
+    rpc: async (name: string) => {
+      if (name === "team_access")
+        return {
+          data: {
+            team_id: "synthetic-team",
+            capabilities: [],
+            access_revision: 1,
+          },
+          error: null,
+        };
+      server.epoch++;
+      return { data: { saved: true }, error: null };
+    },
+  };
+  server = new CoreServer(client as unknown as CoreServer["client"]);
+  await assert.rejects(
+    server.command("synthetic-team", "test_only_mutation", {}),
+    (e: unknown) => e instanceof ServerError && e.uncertain,
   );
 });

@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: false,
   timeout: 45000,
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL: process.env.TEAMSTATS_WEB_BASE_URL ?? "http://127.0.0.1:5173",
     browserName: "chromium",
     channel: "chrome",
     headless: true,

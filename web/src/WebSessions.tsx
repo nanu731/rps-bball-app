@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import type { Player, Session, Template, Ledger } from "./domain.ts";
-import { id, newSession, validateLedger, emptyLedger } from "./domain.ts";
+import {
+  id,
+  newSession,
+  validateLedger,
+  emptyLedger,
+  clockSeconds,
+} from "./domain.ts";
 import { CoreServer, ServerError } from "./server.ts";
 import type { Access, Game } from "./server.ts";
 import { Practice } from "./Practice.tsx";
 import { CaptureEntry, ShotResults } from "./Capture.tsx";
-import { Empty, Notice, Tabs, download } from "./ui.tsx";
+import { Empty, Notice, Tabs, download, useUnsavedGuard } from "./ui.tsx";
 
+import type { NavigationGuard } from "./ui.tsx";
 type WebRow = {
   id: string;
   team_id: string;
@@ -65,7 +72,8 @@ function clockFor(r: Reply): Session["clock"] {
     seconds: Number(row.clock_seconds),
     startedAt: started,
     configured: row.clock_revision > 0,
-    length: Number(row.clock_seconds),
+    // Shared remaining time is fractional; the local-only period-length field is unused.
+    length: 0,
   };
 }
 function sessionFor(r: Reply): Session | null {
@@ -80,6 +88,7 @@ function sessionFor(r: Reply): Session | null {
   return s;
 }
 export function WebSessions({
+  navigationGuard,
   server,
   team,
   actor,
@@ -95,7 +104,9 @@ export function WebSessions({
   roster: Player[];
   games: Game[];
   onDenied: () => void;
+  navigationGuard: NavigationGuard;
 }) {
+  const [clockNow, setClockNow] = useState(Date.now);
   const bufferKey = `teamstats-web-session-buffer:${encodeURIComponent(server.namespace)}:${team}:${actor}`;
   const [rows, setRows] = useState<WebRow[]>([]),
     [reply, setReply] = useState<Reply | null>(null),
@@ -145,10 +156,16 @@ export function WebSessions({
     [receiptMissing, setReceiptMissing] = useState(false),
     [clockPeriod, setClockPeriod] = useState("Period 1"),
     [clockRemaining, setClockRemaining] = useState("");
+  useUnsavedGuard(navigationGuard, dirty);
   const gate = useRef(false),
     generation = useRef(0),
     dirtyRef = useRef(false),
     rowRef = useRef<WebRow | null>(null);
+  useEffect(() => {
+    if (!reply?.session.clock_started_at) return;
+    const timer = setInterval(() => setClockNow(Date.now()), 500);
+    return () => clearInterval(timer);
+  }, [reply?.session.clock_started_at]);
   const can = (cap: string) =>
     access.is_owner || access.capabilities.includes(cap);
   const fail = (e: unknown) => {
@@ -188,6 +205,10 @@ export function WebSessions({
   };
   const state = async (sessionID: string, replace = true) => {
     const gen = ++generation.current;
+    if (replace) {
+      gate.current = true;
+      setBusy(true);
+    }
     try {
       await server.access(team);
       const { data, error } = await server.client.rpc("web_session_state", {
@@ -212,10 +233,14 @@ export function WebSessions({
         setBase(null);
         setDirty(false);
         dirtyRef.current = false;
-      } else if (r.document_scope === "accepted") {
+      } else if (
+        r.document_scope === "accepted" ||
+        r.session.status !== "draft" ||
+        !dirtyRef.current
+      ) {
         if (dirtyRef.current)
           setError(
-            "Working entries remain in this account’s recovery buffer. Only the accepted snapshot is displayed.",
+            "Working entries remain in this account’s recovery buffer. Only the server-permitted snapshot is displayed.",
           );
         setDraft(sessionFor(r));
         setBase(r.session);
@@ -223,7 +248,12 @@ export function WebSessions({
         dirtyRef.current = false;
       }
     } catch (e) {
-      fail(e);
+      if (gen === generation.current) fail(e);
+    } finally {
+      if (replace && gen === generation.current) {
+        gate.current = false;
+        setBusy(false);
+      }
     }
   };
   const validateReply = (r: Reply) => {
@@ -789,17 +819,10 @@ export function WebSessions({
                 <div className="clock-strip">
                   <div>
                     <strong className="clock">
-                      {Math.max(
-                        0,
-                        Number(current!.clock_seconds) -
-                          (current!.clock_started_at
-                            ? (Date.now() - (reply.receivedAt ?? Date.now())) /
-                                1000 +
-                              (Date.parse(reply.server_time) -
-                                Date.parse(current!.clock_started_at)) /
-                                1000
-                            : 0),
-                      ).toFixed(1)}{" "}
+                      {clockSeconds(
+                        clockFor(reply),
+                        Math.max(clockNow, reply.receivedAt ?? clockNow),
+                      ).toFixed(1)}
                       seconds
                     </strong>
                     <small>
@@ -922,6 +945,7 @@ export function WebSessions({
                         </fieldset>
                       ) : tab === "Court" ? (
                         <CaptureEntry
+                          shared
                           session={withClock}
                           save={captureSave}
                           templates={templates}

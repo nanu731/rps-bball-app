@@ -1,4 +1,4 @@
-import { useId, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { count, validCount } from "./domain.ts";
 export function Icon({ name, size = 20 }: { name: string; size?: number }) {
@@ -201,4 +201,19 @@ export function download(
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+export type NavigationGuard = { current: () => boolean };
+export function useUnsavedGuard(guard: NavigationGuard, dirty: boolean) {
+  useEffect(() => {
+    const check = () =>
+      !dirty ||
+      window.confirm(
+        "Discard unsaved shared entries and leave? Cancel keeps editing. Download a recovery copy first if needed.",
+      );
+    guard.current = check;
+    return () => {
+      if (guard.current === check) guard.current = () => true;
+    };
+  }, [guard, dirty]);
 }

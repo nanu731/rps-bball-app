@@ -18,6 +18,7 @@ export function CaptureEntry({
   templates,
   pending = false,
   clockBlocked = blocked,
+  shared = false,
 }: {
   session: Session;
   save: (s: Session) => Promise<boolean>;
@@ -25,6 +26,7 @@ export function CaptureEntry({
   templates: Template[];
   pending?: boolean;
   clockBlocked?: boolean;
+  shared?: boolean;
 }) {
   const [team, setTeam] = useState<"ours" | "opponent">("ours"),
     [player, setPlayer] = useState(s.players[0]?.id ?? ""),
@@ -46,8 +48,10 @@ export function CaptureEntry({
   }, []);
   const seconds = clockSeconds(s.clock, now),
     events = currentEvents(s.changes);
-  const eventTemplate = templates.find((t) => t.id === label),
-    correctedKind = events.find((e) => e.id === correct)?.kind;
+  const correction = events.find((e) => e.id === correct);
+  const eventTemplate =
+      correction?.template ?? templates.find((t) => t.id === label),
+    correctedKind = correction?.kind;
   const selected = s.players.find((p) => p.id === player);
   const push = async (kind: Capture["kind"], made: boolean | null) => {
     try {
@@ -176,7 +180,9 @@ export function CaptureEntry({
             {pending
               ? "Pending write — clock state not saved"
               : s.clock.startedAt !== null && seconds > 0
-                ? "Running on this browser"
+                ? shared
+                  ? "Server-anchored shared reference"
+                  : "Running on this browser"
                 : "Stopped"}{" "}
             · not the official scoreboard
           </small>
@@ -256,289 +262,312 @@ export function CaptureEntry({
       <details className="clock-guidance">
         <summary>Clock authority & recovery</summary>
         <p>
-          Clock continues from saved start time after backgrounding/refresh. One
-          browser controls this reference; shared manager authority is not
-          activated. Historical event readings are retained.
+          {shared
+            ? "Current server assignment controls this reference. Reconnect and reload authority after connection loss; historical event readings are retained."
+            : "Clock continues from saved start time after backgrounding/refresh. One browser controls this local reference; historical event readings are retained."}
         </p>
       </details>
       {issue && <Notice error>{issue}</Notice>}
       <div className="section-heading">
         <h2>{correct ? "Correct recorded event" : "Record a field goal"}</h2>
-        <span className="badge">Browser draft only</span>
+        <span className="badge">
+          {shared ? "Shared draft · unreviewed" : "Browser draft only"}
+        </span>
       </div>
-      <div className="capture-layout">
-        <div>
-          <div className="player-header">
-            <div className="segmented">
-              <button
-                type="button"
-                aria-pressed={team === "ours"}
-                onClick={() => {
-                  setTeam("ours");
-                  setPoint(null);
-                }}
-              >
-                Our team
-              </button>
-              <button
-                type="button"
-                aria-pressed={team === "opponent"}
-                onClick={() => {
-                  setTeam("opponent");
-                  setPoint(null);
-                }}
-              >
-                Opponent
-              </button>
-            </div>
-            {team === "ours" ? (
-              <>
-                <div
-                  className="player-quick"
-                  role="group"
-                  aria-label="Quick player selection"
+      <fieldset className="entry-fields" disabled={blocked}>
+        <div className="capture-layout">
+          <div>
+            <div className="player-header">
+              <div className="segmented">
+                <button
+                  type="button"
+                  aria-pressed={team === "ours"}
+                  onClick={() => {
+                    setTeam("ours");
+                    setPoint(null);
+                  }}
                 >
-                  {s.players.map((p) => (
-                    <button
-                      type="button"
-                      key={p.id}
-                      aria-pressed={player === p.id}
-                      onClick={() => {
-                        setPlayer(p.id);
+                  Our team
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={team === "opponent"}
+                  onClick={() => {
+                    setTeam("opponent");
+                    setPoint(null);
+                  }}
+                >
+                  Opponent
+                </button>
+              </div>
+              {team === "ours" ? (
+                <>
+                  <div
+                    className="player-quick"
+                    role="group"
+                    aria-label="Quick player selection"
+                  >
+                    {s.players.map((p) => (
+                      <button
+                        type="button"
+                        key={p.id}
+                        aria-pressed={player === p.id}
+                        onClick={() => {
+                          setPlayer(p.id);
+                          setPoint(null);
+                        }}
+                      >
+                        <strong>#{p.number}</strong>
+                        <small>{p.name}</small>
+                      </button>
+                    ))}
+                  </div>
+                  <label className="field">
+                    Player
+                    <select
+                      value={player}
+                      onChange={(e) => {
+                        setPlayer(e.target.value);
                         setPoint(null);
                       }}
                     >
-                      <strong>#{p.number}</strong>
-                      <small>{p.name}</small>
-                    </button>
-                  ))}
-                </div>
-                <label className="field">
-                  Player
-                  <select
-                    value={player}
-                    onChange={(e) => {
-                      setPlayer(e.target.value);
-                      setPoint(null);
-                    }}
-                  >
-                    <option value="">Choose a player</option>
-                    {s.players.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        #{p.number} {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                      <option value="">Choose a player</option>
+                      {s.players.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          #{p.number} {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              ) : (
+                <p className="team-only">Opponent · team-only recording</p>
+              )}
+            </div>
+            <CourtDiagram
+              events={events}
+              team={team}
+              point={point}
+              onPick={(p) => {
+                if (!blocked) setPoint(p);
+              }}
+            />
+            <div className="court-commit">
+              <div className="segmented">
+                <button
+                  type="button"
+                  aria-pressed={value === 2}
+                  onClick={() => setValue(2)}
+                >
+                  2 points
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={value === 3}
+                  onClick={() => setValue(3)}
+                >
+                  3 points
+                </button>
+              </div>
+              <div className="make-miss">
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={
+                    blocked ||
+                    !point ||
+                    (team === "ours" && !selected) ||
+                    (correctedKind !== undefined && correctedKind !== "shot")
+                  }
+                  onClick={() => void push("shot", true)}
+                >
+                  Make
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={
+                    blocked ||
+                    !point ||
+                    (team === "ours" && !selected) ||
+                    (correctedKind !== undefined && correctedKind !== "shot")
+                  }
+                  onClick={() => void push("shot", false)}
+                >
+                  Miss
+                </button>
+              </div>
+              <p className="muted">
+                A location tap is provisional. Make/Miss records exactly one
+                observed attempt.
+              </p>
+            </div>
+            <div className="court-caption">
+              <span>
+                Schematic half court · geometry does not assign shot value
+              </span>
+              <span>{point ? "Location selected" : "Select a location"}</span>
+            </div>
+            <details>
+              <summary>Keyboard / precise location</summary>
+              <div className="field-grid">
+                {(["x", "y"] as const).map((axis) => (
+                  <label className="field" key={axis}>
+                    {axis === "x" ? "Horizontal" : "Vertical"} location (%)
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={(point?.[axis] ?? 0.5) * 100}
+                      onChange={(e) =>
+                        setPoint({
+                          ...(point ?? { x: 0.5, y: 0.5 }),
+                          [axis]: Number(e.target.value) / 100,
+                        })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setPoint({ x: 0.5, y: 0.5 })}
+              >
+                Select center location
+              </button>
+            </details>
+          </div>
+          <div className="capture-controls">
+            <h3>
+              {team === "ours"
+                ? (selected?.name ?? "Choose a player")
+                : "Opponent"}
+            </h3>
+            <h3>Free throws</h3>
+            <p className="muted">
+              Separate from court locations. Record one observed attempt.
+            </p>
+            <div className="actions">
+              <button
+                type="button"
+                disabled={
+                  blocked ||
+                  (team === "ours" && !selected) ||
+                  (correctedKind !== undefined && correctedKind !== "freeThrow")
+                }
+                onClick={() => void push("freeThrow", true)}
+              >
+                FT make
+              </button>
+              <button
+                type="button"
+                disabled={
+                  blocked ||
+                  (team === "ours" && !selected) ||
+                  (correctedKind !== undefined && correctedKind !== "freeThrow")
+                }
+                onClick={() => void push("freeThrow", false)}
+              >
+                FT miss
+              </button>
+            </div>
+            <h3>Selected observations</h3>
+            <label className="field">
+              Event definition
+              <select
+                value={label}
+                disabled={blocked || correctedKind === "event"}
+                onChange={(e) => {
+                  setLabel(e.target.value);
+                  setEventValues({});
+                  setNote("");
+                }}
+              >
+                <option value="">Choose an event</option>
+                {(correctedKind === "event" && eventTemplate
+                  ? [eventTemplate]
+                  : templates
+                ).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} · v{t.version}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {eventTemplate && (
+              <>
+                <p className="muted">
+                  {eventTemplate.definition} · definition v
+                  {eventTemplate.version}
+                </p>
+                {eventTemplate.kind === "count" ||
+                eventTemplate.kind === "timed" ? (
+                  <Count
+                    label={
+                      eventTemplate.kind === "timed"
+                        ? "Event time (seconds)"
+                        : "Observed count"
+                    }
+                    value={eventValues.count ?? ""}
+                    onChange={(v) =>
+                      setEventValues({ ...eventValues, count: v })
+                    }
+                  />
+                ) : eventTemplate.kind === "makes" ? (
+                  <>
+                    <Count
+                      label="Event makes"
+                      value={eventValues.made ?? ""}
+                      onChange={(v) =>
+                        setEventValues({ ...eventValues, made: v })
+                      }
+                    />
+                    <Count
+                      label="Event attempts"
+                      value={eventValues.attempts ?? ""}
+                      onChange={(v) =>
+                        setEventValues({ ...eventValues, attempts: v })
+                      }
+                    />
+                  </>
+                ) : null}
               </>
-            ) : (
-              <p className="team-only">Opponent · team-only recording</p>
+            )}
+            <label className="field">
+              Counting rule / context
+              <input
+                maxLength={500}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Use your coach’s definition"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={
+                blocked ||
+                !eventTemplate ||
+                (correctedKind !== undefined && correctedKind !== "event") ||
+                (eventTemplate.kind === "note" && !note.trim())
+              }
+              onClick={() => void push("event", null)}
+            >
+              Record event
+            </button>
+            {correct && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCorrect(null);
+                  setPoint(null);
+                }}
+              >
+                Cancel correction
+              </button>
             )}
           </div>
-          <CourtDiagram
-            events={events}
-            team={team}
-            point={point}
-            onPick={setPoint}
-          />
-          <div className="court-commit">
-            <div className="segmented">
-              <button
-                type="button"
-                aria-pressed={value === 2}
-                onClick={() => setValue(2)}
-              >
-                2 points
-              </button>
-              <button
-                type="button"
-                aria-pressed={value === 3}
-                onClick={() => setValue(3)}
-              >
-                3 points
-              </button>
-            </div>
-            <div className="make-miss">
-              <button
-                type="button"
-                className="primary"
-                disabled={
-                  blocked ||
-                  !point ||
-                  (team === "ours" && !selected) ||
-                  (correctedKind !== undefined && correctedKind !== "shot")
-                }
-                onClick={() => void push("shot", true)}
-              >
-                Make
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                disabled={
-                  blocked ||
-                  !point ||
-                  (team === "ours" && !selected) ||
-                  (correctedKind !== undefined && correctedKind !== "shot")
-                }
-                onClick={() => void push("shot", false)}
-              >
-                Miss
-              </button>
-            </div>
-            <p className="muted">
-              A location tap is provisional. Make/Miss records exactly one
-              observed attempt.
-            </p>
-          </div>
-          <div className="court-caption">
-            <span>
-              Schematic half court · geometry does not assign shot value
-            </span>
-            <span>{point ? "Location selected" : "Select a location"}</span>
-          </div>
-          <details>
-            <summary>Keyboard / precise location</summary>
-            <div className="field-grid">
-              {(["x", "y"] as const).map((axis) => (
-                <label className="field" key={axis}>
-                  {axis === "x" ? "Horizontal" : "Vertical"} location (%)
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={(point?.[axis] ?? 0.5) * 100}
-                    onChange={(e) =>
-                      setPoint({
-                        ...(point ?? { x: 0.5, y: 0.5 }),
-                        [axis]: Number(e.target.value) / 100,
-                      })
-                    }
-                  />
-                </label>
-              ))}
-            </div>
-            <button type="button" onClick={() => setPoint({ x: 0.5, y: 0.5 })}>
-              Select center location
-            </button>
-          </details>
         </div>
-        <div className="capture-controls">
-          <h3>
-            {team === "ours"
-              ? (selected?.name ?? "Choose a player")
-              : "Opponent"}
-          </h3>
-          <h3>Free throws</h3>
-          <p className="muted">
-            Separate from court locations. Record one observed attempt.
-          </p>
-          <div className="actions">
-            <button
-              type="button"
-              disabled={
-                blocked ||
-                (team === "ours" && !selected) ||
-                (correctedKind !== undefined && correctedKind !== "freeThrow")
-              }
-              onClick={() => void push("freeThrow", true)}
-            >
-              FT make
-            </button>
-            <button
-              type="button"
-              disabled={
-                blocked ||
-                (team === "ours" && !selected) ||
-                (correctedKind !== undefined && correctedKind !== "freeThrow")
-              }
-              onClick={() => void push("freeThrow", false)}
-            >
-              FT miss
-            </button>
-          </div>
-          <h3>Selected observations</h3>
-          <label className="field">
-            Event definition
-            <select value={label} onChange={(e) => setLabel(e.target.value)}>
-              <option value="">Choose an event</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} · v{t.version}
-                </option>
-              ))}
-            </select>
-          </label>
-          {eventTemplate && (
-            <>
-              <p className="muted">
-                {eventTemplate.definition} · definition v{eventTemplate.version}
-              </p>
-              {eventTemplate.kind === "count" ||
-              eventTemplate.kind === "timed" ? (
-                <Count
-                  label={
-                    eventTemplate.kind === "timed"
-                      ? "Event time (seconds)"
-                      : "Observed count"
-                  }
-                  value={eventValues.count ?? ""}
-                  onChange={(v) => setEventValues({ ...eventValues, count: v })}
-                />
-              ) : eventTemplate.kind === "makes" ? (
-                <>
-                  <Count
-                    label="Event makes"
-                    value={eventValues.made ?? ""}
-                    onChange={(v) =>
-                      setEventValues({ ...eventValues, made: v })
-                    }
-                  />
-                  <Count
-                    label="Event attempts"
-                    value={eventValues.attempts ?? ""}
-                    onChange={(v) =>
-                      setEventValues({ ...eventValues, attempts: v })
-                    }
-                  />
-                </>
-              ) : null}
-            </>
-          )}
-          <label className="field">
-            Counting rule / context
-            <input
-              maxLength={500}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Use your coach’s definition"
-            />
-          </label>
-          <button
-            type="button"
-            disabled={
-              blocked ||
-              !eventTemplate ||
-              (correctedKind !== undefined && correctedKind !== "event") ||
-              (eventTemplate.kind === "note" && !note.trim())
-            }
-            onClick={() => void push("event", null)}
-          >
-            Record event
-          </button>
-          {correct && (
-            <button
-              type="button"
-              onClick={() => {
-                setCorrect(null);
-                setPoint(null);
-              }}
-            >
-              Cancel correction
-            </button>
-          )}
-        </div>
-      </div>
+      </fieldset>
       <div className="section-heading">
         <h2>Recorded observations</h2>
         <button
@@ -586,7 +615,11 @@ export function CaptureEntry({
                 {e.template ? `· definition v${e.template.version}` : ""}
               </small>
             </div>
-            <button type="button" onClick={() => chooseCorrection(e)}>
+            <button
+              type="button"
+              disabled={blocked}
+              onClick={() => chooseCorrection(e)}
+            >
               Correct
             </button>
           </div>

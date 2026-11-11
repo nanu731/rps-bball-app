@@ -202,3 +202,17 @@ spend money or release merely because this direction document exists.
 Never commit privileged credentials, student records or private internal tickets.
 Security/recovery requirements remain applicable; existing native verification
 is reusable evidence only for unchanged contracts and its recorded environment.
+
+## Web implementation evidence — 2026-11-11
+
+The implementation branch now contains the responsive pilot in web/. Browser-local
+and explicit synthetic-demo ledgers stay separate from shared records. Actual signed
+isolated Auth/PostgREST journeys exercise practice/capture and the existing manual
+statistics lifecycle; prepared new contracts are not activated hosted. See
+web/README.md and ADR0009 for guarantees and activation boundaries. A fresh isolated
+cluster replayed the current 21 migrations with 64 web SQL checks; those tests use
+Auth platform stand-ins and are distinct from signed browser evidence.
+
+Final rendered review is in progress. This does not resolve the coach facts or
+owner decisions above, establish Safari/physical-device/screen-reader acceptance,
+or authorize hosted activation, native data upload, provider spending or release.

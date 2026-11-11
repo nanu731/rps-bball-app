@@ -23,10 +23,15 @@ import type {
   PendingOperation,
 } from "./server.ts";
 import { ManualEntry, ManualSummary } from "./Manual.tsx";
-import { Empty, Notice, Tabs, download } from "./ui.tsx";
+import { Empty, Notice, Tabs, download, useUnsavedGuard } from "./ui.tsx";
+import type { NavigationGuard } from "./ui.tsx";
 const CONFIG = "teamstats-web-public-config";
 const kinds = Object.keys(KIND_LABEL) as Kind[];
-export function Connected() {
+export function Connected({
+  navigationGuard,
+}: {
+  navigationGuard: NavigationGuard;
+}) {
   const [url, setUrl] = useState(""),
     [key, setKey] = useState(""),
     [client, setClient] = useState<SupabaseClient | null>(null),
@@ -138,6 +143,7 @@ export function Connected() {
     setMessage("");
     try {
       if (action === "out") {
+        if (!navigationGuard.current()) return;
         generation.current++;
         server!.epoch++;
         setUser(null);
@@ -198,7 +204,7 @@ export function Connected() {
           <button
             type="button"
             disabled={pending}
-            onClick={() => void verify()}
+            onClick={() => void verify(true)}
           >
             {pending ? "Checking…" : "Check session again"}
           </button>
@@ -210,7 +216,7 @@ export function Connected() {
           <button
             type="button"
             disabled={pending}
-            onClick={() => void verify()}
+            onClick={() => void verify(true)}
           >
             Retry connection
           </button>
@@ -341,7 +347,12 @@ export function Connected() {
           ) : (
             <label className="field">
               Team
-              <select value={team} onChange={(e) => setTeam(e.target.value)}>
+              <select
+                value={team}
+                onChange={(e) => {
+                  if (navigationGuard.current()) setTeam(e.target.value);
+                }}
+              >
                 <option value="">Choose a team</option>
                 {teams.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -395,6 +406,7 @@ export function Connected() {
               server={server}
               team={teams.find((t) => t.id === team)!}
               actor={user.id}
+              navigationGuard={navigationGuard}
             />
           )}
         </>
@@ -415,6 +427,7 @@ export function Connected() {
   );
 }
 function SharedTeam({
+  navigationGuard,
   server,
   team,
   actor,
@@ -422,6 +435,7 @@ function SharedTeam({
   server: CoreServer;
   team: Team;
   actor: string;
+  navigationGuard: NavigationGuard;
 }) {
   const adminKey = `teamstats-web-admin-pending:${encodeURIComponent(server.namespace)}:${team.id}:${actor}`;
   type AdminAttempt = { name: string; args: Record<string, unknown> };
@@ -611,9 +625,14 @@ function SharedTeam({
       );
       await load();
       setMembers(
-        await server.rows("team_memberships", "status,user_id", {
-          team_id: team.id,
-        }),
+        await server.rows(
+          "team_memberships",
+          "status,user_id",
+          {
+            team_id: team.id,
+          },
+          "user_id",
+        ),
       );
     } catch (e) {
       if (e instanceof ServerError && e.uncertain) setAdminLocked(true);
@@ -655,6 +674,7 @@ function SharedTeam({
           "team_memberships",
           "status,user_id",
           { team_id: team.id, user_id: String(adminAttempt.args.p_user_id) },
+          "user_id",
         );
         description = `Current membership: ${found[0]?.status ?? "not visible"}.`;
       } else
@@ -698,9 +718,14 @@ function SharedTeam({
                   try {
                     setAccess(await server.access(team.id));
                     setMembers(
-                      await server.rows("team_memberships", "status,user_id", {
-                        team_id: team.id,
-                      }),
+                      await server.rows(
+                        "team_memberships",
+                        "status,user_id",
+                        {
+                          team_id: team.id,
+                        },
+                        "user_id",
+                      ),
                     );
                   } catch (e) {
                     if (
@@ -896,7 +921,9 @@ function SharedTeam({
         <Tabs
           items={["Manual games", "Practices & capture"]}
           value={section}
-          onChange={setSection}
+          onChange={(next) => {
+            if (navigationGuard.current()) setSection(next);
+          }}
           label="Shared team section"
         />
       )}
@@ -909,10 +936,17 @@ function SharedTeam({
           roster={roster}
           games={games}
           onDenied={conceal}
+          navigationGuard={navigationGuard}
         />
       ) : game && access ? (
         <>
-          <button type="button" className="back" onClick={() => setGame(null)}>
+          <button
+            type="button"
+            className="back"
+            onClick={() => {
+              if (navigationGuard.current()) setGame(null);
+            }}
+          >
             Back to shared games
           </button>
           <SharedGame
@@ -924,6 +958,7 @@ function SharedTeam({
             roster={roster}
             rosterHistory={revisions}
             onDenied={conceal}
+            navigationGuard={navigationGuard}
           />
         </>
       ) : (
@@ -1021,6 +1056,7 @@ function SharedTeam({
   );
 }
 function SharedGame({
+  navigationGuard,
   server,
   game,
   actor,
@@ -1036,7 +1072,21 @@ function SharedGame({
   roster: Player[];
   rosterHistory: Player[];
   onDenied: () => void;
+  navigationGuard: NavigationGuard;
 }) {
+  const pendingKey = `teamstats-manual-pending:${encodeURIComponent(server.namespace)}:${actor}:${game.team_id}:${game.id}`;
+  const [retainedOperation] = useState<PendingOperation | null>(() => {
+    try {
+      const raw = sessionStorage.getItem(pendingKey);
+      if (!raw) return null;
+      const op = JSON.parse(raw);
+      if (op.actor !== actor || typeof op.name !== "string" || !op.args)
+        throw Error();
+      return op;
+    } catch {
+      return { actor, name: "unreadable", args: {} };
+    }
+  });
   const [versions, setVersions] = useState<Version[]>([]),
     [pointers, setPointers] = useState<
       { dataset_type: Kind; published_version_id: string | null }[]
@@ -1055,17 +1105,18 @@ function SharedGame({
       opponent: [],
     }),
     [dirty, setDirty] = useState(false),
-    [uncertain, setUncertain] = useState(false),
+    [uncertain, setUncertain] = useState(!!retainedOperation),
     [confirmRoster, setConfirmRoster] = useState(false),
     [confirmZeros, setConfirmZeros] = useState(false),
     [paired, setPaired] = useState<Version[]>([]),
     [loaded, setLoaded] = useState(false),
     [reconciled, setReconciled] = useState(false);
+  useUnsavedGuard(navigationGuard, dirty);
   const busyRef = useRef(false),
     generation = useRef(0),
     recoveryKey = `teamstats-shared-buffer:${actor}:${game.team_id}:${game.id}`,
-    pendingOp = useRef<PendingOperation | null>(null);
-  const load = async () => {
+    pendingOp = useRef<PendingOperation | null>(retainedOperation);
+  const load = async (reportExternalChange = true) => {
     const g = ++generation.current;
     setBusy(true);
     setError("");
@@ -1109,7 +1160,7 @@ function SharedGame({
       setPointers(p);
       setRequests(r);
       setLoaded(true);
-      if (editing) {
+      if (editing && reportExternalChange) {
         const latest = v.find((x) => x.id === editing.id);
         if (latest && latest.revision > editing.revision)
           setMessage(
@@ -1163,15 +1214,21 @@ function SharedGame({
     pendingOp.current = { name, args: structuredClone(args), actor };
     setReconciled(false);
     try {
+      sessionStorage.setItem(pendingKey, JSON.stringify(pendingOp.current));
       const value = await server.command<T>(game.team_id, name, args);
       onSuccess?.(value);
+      sessionStorage.removeItem(pendingKey);
       pendingOp.current = null;
       setMessage(
         "Server confirmed this operation. Saving, completion, submission and publication are separate states.",
       );
-      await load();
+      await load(false);
     } catch (e) {
-      if (e instanceof ServerError && e.uncertain) setUncertain(true);
+      if (!(e instanceof ServerError) || e.uncertain) setUncertain(true);
+      else {
+        sessionStorage.removeItem(pendingKey);
+        pendingOp.current = null;
+      }
       if (
         e instanceof ServerError &&
         ["401", "403", "42501"].includes(e.code)
@@ -1280,7 +1337,23 @@ function SharedGame({
       setRequests(r);
       setReconciled(true);
       if (pendingOp.current && operationConfirmed(pendingOp.current, v, r)) {
-        const current = editing ? v.find((x) => x.id === editing.id) : null;
+        const args = pendingOp.current.args;
+        const target =
+          editing?.id ??
+          args.p_version_id ??
+          (Array.isArray(args.p_items)
+            ? args.p_items[0]?.version_id
+            : undefined);
+        const current =
+          v.find((x) => x.id === target) ??
+          (pendingOp.current.name === "stats_open_draft"
+            ? v.find(
+                (x) =>
+                  x.author_user_id === actor &&
+                  x.dataset_type === args.p_dataset_type &&
+                  x.status === "draft",
+              )
+            : undefined);
         if (current)
           begin(
             current,
@@ -1293,6 +1366,7 @@ function SharedGame({
                 ["draft", "completed", "submitted"].includes(x.status),
             ),
           );
+        sessionStorage.removeItem(pendingKey);
         setUncertain(false);
         pendingOp.current = null;
         setMessage(
@@ -1332,12 +1406,14 @@ function SharedGame({
         }
         const args = { p_game_id: game.id, p_dataset_type: k };
         pendingOp.current = { name: "stats_open_draft", args, actor };
+        sessionStorage.setItem(pendingKey, JSON.stringify(pendingOp.current));
         const v = await server.command<Version>(
           game.team_id,
           "stats_open_draft",
           args,
         );
         found.push(validateVersion(v, game.team_id, game.id));
+        sessionStorage.removeItem(pendingKey);
         pendingOp.current = null;
       }
       begin(
@@ -1346,7 +1422,11 @@ function SharedGame({
       );
       await load();
     } catch (e) {
-      if (e instanceof ServerError && e.uncertain) setUncertain(true);
+      if (!(e instanceof ServerError) || e.uncertain) setUncertain(true);
+      else {
+        sessionStorage.removeItem(pendingKey);
+        pendingOp.current = null;
+      }
       if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
         onDenied();
       setError((e as Error).message);
@@ -1451,19 +1531,25 @@ function SharedGame({
             <button
               type="button"
               onClick={() => {
+                try {
+                  sessionStorage.removeItem(pendingKey);
+                } catch {
+                  setError(
+                    "Recovery marker could not be cleared; further writes remain blocked.",
+                  );
+                  return;
+                }
                 setUncertain(false);
                 pendingOp.current = null;
-                if (editing) {
-                  const current = versions.find((v) => v.id === editing.id);
-                  if (current) setEditing(current);
-                }
-                setDirty(true);
+                setEditing(null);
+                setDirty(false);
+                setView("Review & history");
                 setMessage(
-                  "Resumed from reloaded revisions with retained browser entries. No old command was retried.",
+                  "Current server state loaded. No old command was replayed. Open a permitted current draft before recovering browser entries.",
                 );
               }}
             >
-              Resume with retained entries after reviewing server state
+              Continue from reviewed server state without replay
             </button>
           )}
         </Notice>

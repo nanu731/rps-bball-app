@@ -342,7 +342,8 @@ export class CoreServer {
     } catch {
       throw new ServerError("network", true);
     }
-    if (epoch !== this.epoch) throw new ServerError("401");
+    // A dispatched write may have committed even after this account/view detached.
+    if (epoch !== this.epoch) throw new ServerError("account_changed", true);
     if (result.error) throw new ServerError(result.error.code, true);
     return result.data as T;
   }

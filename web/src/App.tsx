@@ -32,6 +32,7 @@ export default function App() {
     [tab, setTab] = useState("Plan"),
     [adding, setAdding] = useState<"practice" | "game" | null>(null),
     [theme, setTheme] = useState("system");
+  const sharedGuard = useRef(() => true);
   const busyRef = useRef(false),
     file = useRef<HTMLInputElement>(null),
     dock = useRef<HTMLDivElement>(null),
@@ -192,6 +193,7 @@ export default function App() {
       setError("Save or download unsaved work before switching ledgers.");
       return;
     }
+    if (screen === "Shared team" && !sharedGuard.current()) return;
     const nextMode = !demo;
     if (nextMode && localStorage.getItem(DEMO) === null) {
       try {
@@ -272,6 +274,7 @@ export default function App() {
           href="#"
           onClick={(e) => {
             e.preventDefault();
+            if (screen === "Shared team" && !sharedGuard.current()) return;
             setSelected(null);
             setScreen("Workspace");
           }}
@@ -319,6 +322,12 @@ export default function App() {
                 key={name}
                 aria-current={screen === name ? "page" : undefined}
                 onClick={() => {
+                  if (
+                    screen === "Shared team" &&
+                    name !== screen &&
+                    !sharedGuard.current()
+                  )
+                    return;
                   setScreen(name);
                   setSelected(null);
                   setAdding(null);
@@ -447,7 +456,7 @@ export default function App() {
                     Supabase account. No demo action grants server authority.
                   </Empty>
                 ) : (
-                  <Connected />
+                  <Connected navigationGuard={sharedGuard} />
                 )
               ) : screen === "Setup" ? (
                 <>

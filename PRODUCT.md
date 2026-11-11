@@ -17,7 +17,9 @@ game shots, selected events and manual box scores/possessions/player paint touch
 Our-team shots are player-attributed; opponent shots are team-only. A running game
 clock and simple reusable collection templates are confirmed. Detailed clock
 operation, nine-spot layout and drill protocols remain unresolved.
-The existing implementation is SwiftUI/Supabase; a web plan is not a built web app.
+The web pilot is implemented under web/ with local and signed isolated-service
+checks documented in web/README.md. SwiftUI/Supabase remains preserved legacy work.
+Source and local evidence do not establish hosted deployment or device acceptance.
 Budget: strictly $0. Do not activate services based on assumed free allowances.
 
 ## Evidence on hand
