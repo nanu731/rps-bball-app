@@ -10,8 +10,13 @@ questions; it is the current planning source of truth.
 
 Coaches prepare practices and choose collection priorities. Managers record practice
 shooting and selected game observations; players and coaches view authorized,
-reviewed results. Add Practice belongs beside Add Game. Exact pilot scope, platform
-stack, clock semantics and collection templates await owner clarification.
+reviewed results. The confirmed primary product is a responsive React/TypeScript
+web app for phone, iPad and desktop with existing Supabase; Swift remains legacy.
+The pilot includes practice plans/PDFs, nine-spot player shooting, FT conditioning,
+game shots, selected events and manual box scores/possessions/player paint touches.
+Our-team shots are player-attributed; opponent shots are team-only. A running game
+clock and simple reusable collection templates are confirmed. Detailed clock
+operation, nine-spot layout and drill protocols remain unresolved.
 The existing implementation is SwiftUI/Supabase; a web plan is not a built web app.
 Budget: strictly $0. Do not activate services based on assumed free allowances.
 

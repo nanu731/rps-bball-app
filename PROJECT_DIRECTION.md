@@ -1,6 +1,6 @@
 # TeamStats — current direction and working agreement
 
-Updated: 2026-11-11. Status: planning; owner clarification pending.
+Updated: 2026-11-11. Status: primary platform and pilot scope confirmed; detailed capture rules pending.
 
 ## Authority and reading order
 
@@ -43,24 +43,29 @@ The operating budget remains strictly $0.
   hidden horizontal indicators. Preserve accessible alternatives to gestures.
 - Use Impeccable, apple-design and UI/UX Pro Max as described below.
 
-## Choices awaiting owner answers
+## Owner-confirmed decisions — 2026-11-11
 
-These are not approved implementation defaults. Resolve them before dependent work.
+| ID | Decision |
+|---|---|
+| Q1 | Responsive React/TypeScript web app for phone, iPad and desktop, using the existing Supabase backend. Preserve the Swift app as legacy work, not a parallel active product. |
+| Q2 | First web pilot includes practice plans/PDFs, nine-spot player shooting, free-throw conditioning, game shot recording and selected game events, PLUS manual box scores, possessions and player paint touches. |
+| Q3 | Our-team game shots require player selection; opponent shots are team-only. Include a running game clock in the app. Practice shooting remains player-attributed. |
+| Q4 | Support simple reusable coach-selected templates using counts, makes/attempts, timed events and notes. Preserve the definition used for earlier sessions. |
 
-| ID | Question | Proposed answer / marker |
-|---|---|---|
-| Q1 | Primary platform, stack and native maintenance? | Responsive React/TypeScript web app with existing Supabase; preserve native source. TODO_PLATFORM_STACK_CONFIRMATION |
-| Q2 | First web pilot scope? | Practice plans, nine-spot shooting, FT, game shot capture and selected game events; legacy manual datasets/media/plays/Sheets need explicit placement. TODO_WEB_PILOT_SCOPE |
-| Q3 | Game attribution and time? | Our-team player selection, opponent team-only; manual period/game-clock reading initially. Team-only mode and running clock remain choices. TODO_GAME_CAPTURE_MODE |
-| Q4 | Changing collection definitions? | Simple reusable templates with count, makes/attempts, timed event and notes; fixed screens are an alternative. TODO_TEMPLATE_SCOPE |
+Playbook, practice-video delivery, scouting, Sheets delivery, OCR and voice are
+not prerequisites for this first web pilot. Their prior requirements/history are
+retained for later scope review; they are not silently deleted or claimed ported.
 
 Before detailed capture implementation obtain:
 
 - TODO_NINE_SPOT_LAYOUT: coach's locations and labels, court dimensions/rules.
 - TODO_DRILL_PROTOCOL: whether each attempt or station totals are entered; sets,
   rotations, simultaneous baskets, collector responsibility and counting rules.
-- TODO_TIME_MEANING: game clock, drill countdown, video offset and device time
-  are different facts. Do not infer one from another.
+- TODO_GAME_CLOCK_RULES: period lengths/overtime, who starts/stops/corrects the
+  clock, and how other managers share it. The running clock is confirmed; exact
+  operation is not. It is a manager-maintained reference, not verified official
+  scoreboard synchronization. Drill countdown, video offset and device time
+  remain separate; do not infer one from another.
 - TODO_EVENT_DEFINITIONS: e.g. when a missed box out or successful stunt counts,
   whether attribution is player/team and whether opportunities are observed.
 - TODO_PILOT_DEVICES_AND_CRITERIA: actual browsers/devices, manager rehearsal and
@@ -82,10 +87,16 @@ throws off the court as per-attempt or agreed makes/attempts entry. A location
 tap alone must not persist an attempt. Retain a visible selection and recent
 records so a wrong player, value or location can be corrected.
 
-A team-level game mode must not erase historical player attribution. Practice
-player results are needed for the coach's requested individual percentages.
-Court shots cannot reconstruct possession logs, paint touches or other
-uncollected events. Decide legacy modules' new scope explicitly.
+Our-team game shots are player-attributed; opponent shots are team-only. Practice
+player results are required. Preserve historical player attribution. Manual box
+scores, possessions and player paint touches are explicitly included in the web
+pilot, retaining their after-game entry and independent reconciliation. Court
+shots do not replace or reconstruct those datasets; never sum sources twice.
+
+The running game clock accompanies capture. Store the period and displayed clock
+reading associated with an event separately from device timestamps. Define how
+recorders share clock authority and handle pauses, corrections or disconnection
+before dependent implementation; do not silently rewrite older event times.
 
 ## Data and analysis rules to retain
 
@@ -104,9 +115,10 @@ uncollected events. Decide legacy modules' new scope explicitly.
   players. Such analysis needs coach-defined play opportunities, roles, outcomes
   and context; descriptive comparisons are not causal recommendations.
 
-## Proposed technical baseline, subject to Q1
+## Confirmed platform and proposed implementation details
 
-React + TypeScript + Vite; responsive touch-friendly browser UI; a small PWA shell
+React + TypeScript and existing Supabase are confirmed. Vite is the proposed
+build tool; use a responsive touch-friendly browser UI and a small PWA shell
 if installability is needed; existing Supabase Auth/Postgres/RPC/RLS contracts
 where compatible; SVG court; browser print-to-PDF; CSV export initially.
 Cloudflare Pages Free is a frontend-host candidate, not proof all services are free.
@@ -114,7 +126,9 @@ Cloudflare Pages Free is a frontend-host candidate, not proof all services are f
 Offline capture needs an explicit bounded design: local journal, clear pending /
 server-confirmed states, duplicate prevention, connection recovery and authority
 checks at submission. Browser storage is not an independent backup. Do not add
-full offline synchronization or a background-running clock by assumption.
+full offline synchronization or promise uninterrupted background clock operation.
+Clock recovery after backgrounding, refresh and connection loss needs explicit
+verification; the confirmed running-clock feature must not be dropped as a shortcut.
 
 OCR and voice are optional proposal generators, not dependencies for manual entry.
 Photo → template/cell recognition → field mapping → validation → human review →
@@ -149,15 +163,19 @@ reduced motion and screen-reader paths. Prototype/native passes do not accept we
 
 ## Working sequence and chat roles
 
-1. Resolve Q1–Q4 and record owner answers here; replace only resolved TODOs.
+1. Q1–Q4 are resolved above. Define remaining clock, drill and collector rules;
+   retain explicit TODOs for coach facts that are still unknown.
 2. Define one real practice protocol and its desired results. Prototype the
    approved court/player flow without manufacturing coach facts.
 3. Plan the smallest approved web slice end-to-end: create session, record,
    correct/Undo, save/reopen, review and results. Define its checkable acceptance.
 4. Implement/test that slice on actual target browsers, including authorization,
    interrupted connection, duplicate handling, touch speed and accessibility.
-5. Add approved game modules, then evaluate OCR/voice on representative forms
-   and rehearsal data against manual effort. Expand analysis only with evidence.
+5. Deliver the rest of the approved pilot: running-clock shot capture, selected
+   game events, reusable templates and after-game box scores, possessions and
+   player paint touches. Smaller delivery slices do not remove pilot features.
+   Then evaluate OCR/voice separately against manual effort. Expand analysis only
+   with evidence.
 6. Re-scope release dates after platform/pilot decisions; the previous November 17
    target is not a verified delivery estimate for this new direction.
 
