@@ -278,11 +278,6 @@ test("same browser tabs cannot both overwrite one base revision", async ({
       .getByRole("button", { name: "Create game draft", exact: true })
       .click(),
   ]);
-  const saved = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("teamstats.web.local.v1")!),
-  );
-  expect(saved.sessions).toHaveLength(1);
-  expect(saved.revision).toBe(1);
   await expect
     .poll(async () => {
       const rejected = await Promise.all(
@@ -291,4 +286,9 @@ test("same browser tabs cannot both overwrite one base revision", async ({
       return rejected.some((n) => n > 0);
     })
     .toBe(true);
+  const saved = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("teamstats.web.local.v1")!),
+  );
+  expect(saved.sessions).toHaveLength(1);
+  expect(saved.revision).toBe(1);
 });

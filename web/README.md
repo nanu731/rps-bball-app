@@ -35,7 +35,7 @@ private configuration or real records.
   and ADR0009 define practice/capture snapshots, explicit recorder/clock authority,
   immutable publication history and duplicate-safe operation receipts. The web
   bridge fails closed if unavailable. This migration is **not activated hosted**.
-- **Executed checkpoint evidence**: 13 domain/server checks and focused Chrome
+- **Executed checkpoint evidence**: 14 domain/server checks and focused Chrome
   journeys exercise local/demo durability, actual signed isolated Auth/PostgREST
   practice/capture review, the four independent manual datasets, accepted viewing,
   denied visibility, correction lineage, clock assignment, interrupted replies and

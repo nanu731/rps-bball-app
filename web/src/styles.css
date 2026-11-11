@@ -1105,8 +1105,6 @@ details > button {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  position: sticky;
-  bottom: 0;
   padding: 16px 0;
   background: var(--surface);
   border-block: 1px solid var(--border);

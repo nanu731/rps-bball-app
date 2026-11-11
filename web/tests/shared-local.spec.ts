@@ -1091,6 +1091,7 @@ test("actual SDK account switch and browser sign-out conceal the previous accoun
   await expect(
     page.getByRole("heading", { name: title, exact: true }),
   ).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
 for (const kind of ["practice", "game"] as const)
@@ -1424,4 +1425,54 @@ test("authorized manual correction review shows saved base versus proposal witho
   ).toContainText("01");
   await shot(reviewer, "desktop-authorized-correction-comparison");
   await reviewer.close();
+});
+
+test("shared Save stays in flow without covering the banner and works in a short viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 540 });
+  await signed(page);
+  const title = "TEST ONLY unobstructed Save " + randomUUID().slice(0, 8);
+  const session = await createShared(page, "practice", title);
+  const geometry = await page.evaluate(() => {
+    const a = document
+        .querySelector(".session-banner")!
+        .getBoundingClientRect(),
+      b = document.querySelector(".shared-save")!.getBoundingClientRect();
+    return { bannerBottom: a.bottom, saveTop: b.top };
+  });
+  expect(geometry.saveTop).toBeGreaterThanOrEqual(geometry.bannerBottom);
+  await page
+    .getByRole("textbox", {
+      name: "Sets, rotations, baskets and collector responsibility",
+      exact: true,
+    })
+    .fill("TEST ONLY short viewport saved protocol");
+  const save = page.getByRole("button", {
+    name: "Save shared session draft",
+    exact: true,
+  });
+  await save.scrollIntoViewIfNeeded();
+  await expect(save).toBeInViewport();
+  await save.click();
+  await expect(page.getByText(/Server confirmed save/)).toBeVisible();
+  const state = await rpc("owner", "web_session_state", {
+    p_team_id: fixture.team,
+    p_session_id: session,
+  });
+  expect(state.document.session.protocol).toBe(
+    "TEST ONLY short viewport saved protocol",
+  );
+  expect(state.session.revision).toBe(2);
+  await page
+    .getByRole("button", { name: "Back to shared sessions", exact: true })
+    .click();
+  await openShared(page, title);
+  await expect(
+    page.getByRole("textbox", {
+      name: "Sets, rotations, baskets and collector responsibility",
+      exact: true,
+    }),
+  ).toHaveValue("TEST ONLY short viewport saved protocol");
+  await shot(page, "phone-shared-short-viewport-save");
 });
