@@ -8,6 +8,7 @@ const path =
 const fixture = existsSync(path)
   ? JSON.parse(readFileSync(path, "utf8"))
   : null;
+test.use({ actionTimeout: 10000 });
 test.skip(
   !fixture,
   "Requires private synthetic isolated Auth/PostgREST fixture.",
@@ -17,6 +18,7 @@ const evidence = process.env.TEAMSTATS_EVIDENCE;
 async function shot(page: Page, name: string) {
   if (evidence) {
     mkdirSync(evidence, { recursive: true });
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({
       path: evidence + "/" + name + ".png",
       fullPage: true,
@@ -68,9 +70,7 @@ async function signed(page: Page, role = "owner", pending?: unknown) {
   await page
     .getByRole("button", { name: "Practices & capture", exact: true })
     .click();
-  await expect(
-    page.getByRole("heading", { name: "Shared practices & capture" }),
-  ).toBeVisible();
+  await expect(page.locator(".web-sessions")).toBeVisible();
 }
 async function rpc(role: string, name: string, args: Record<string, unknown>) {
   safeFixture();
@@ -140,6 +140,9 @@ test("lost administration reply reconciles the actual target before enabling ano
   page,
 }) => {
   await signed(page);
+  await page
+    .getByText("Team authority & administration", { exact: true })
+    .click();
   await page.getByRole("button", { name: "Manage team", exact: true }).click();
   await shot(page, "desktop-shared-owner-administration");
   await page
@@ -207,6 +210,11 @@ test("lost administration reply reconciles the actual target before enabling ano
   ).toEqual([]);
 });
 
+async function recovery(page: Page) {
+  const summary = page.getByText("Recovery & server snapshot", { exact: true });
+  if (await summary.evaluate((e) => !e.parentElement?.hasAttribute("open")))
+    await summary.click();
+}
 async function openShared(page: Page, title: string) {
   await page
     .getByRole("button", { name: new RegExp("^" + title + " ") })
@@ -322,6 +330,7 @@ test("actual signed practice plan, recording, review, accepted viewer and correc
   });
   await recorder.setViewportSize({ width: 390, height: 844 });
   await shot(recorder, "phone-shared-practice-entry");
+  await recovery(recorder);
   await recorder
     .getByRole("button", { name: "Load server snapshot", exact: true })
     .click();
@@ -365,9 +374,27 @@ test("actual signed practice plan, recording, review, accepted viewer and correc
     p_session_id: session,
   });
   expect(accepted.document_scope).toBe("accepted");
+  await expect(viewer.locator(".clock-strip")).toHaveCount(0);
+  await viewer
+    .getByRole("combobox", { name: "Results player", exact: true })
+    .selectOption(fixture.roster[1]);
+  await expect(
+    viewer
+      .getByRole("region", { name: "Practice shooting results", exact: true })
+      .locator("tbody tr"),
+  ).toHaveCount(1);
+  await expect(
+    viewer
+      .getByRole("region", { name: "Practice shooting results", exact: true })
+      .locator("tbody tr"),
+  ).toContainText("TEST ONLY Web Player B");
+  await viewer
+    .getByRole("combobox", { name: "Results player", exact: true })
+    .selectOption("all");
   await viewer.setViewportSize({ width: 1024, height: 768 });
   await viewer.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await shot(viewer, "tablet-shared-practice-accepted-dark");
+  await recovery(recorder);
   await recorder
     .getByRole("button", { name: "Load server snapshot", exact: true })
     .click();
@@ -377,6 +404,7 @@ test("actual signed practice plan, recording, review, accepted viewer and correc
   await expect(
     recorder.getByText(/Server confirmed request edit/),
   ).toBeVisible();
+  await recovery(reviewer);
   await reviewer
     .getByRole("button", { name: "Load server snapshot", exact: true })
     .click();
@@ -483,6 +511,19 @@ test("separate assigned clock operator and recorder save an actual shared shot w
     }),
   ).toBeVisible();
   await viewer.setViewportSize({ width: 1024, height: 768 });
+  expect(
+    await viewer.evaluate(() => document.documentElement.scrollWidth),
+  ).toBe(1024);
+  await viewer
+    .getByRole("button", {
+      name: "Scroll Recorded-shot totals right",
+      exact: true,
+    })
+    .click();
+  await expect(
+    viewer.getByRole("columnheader", { name: "Observed %", exact: true }),
+  ).toBeInViewport();
+  await expect(viewer.locator(".clock-strip .clock")).toHaveText(/^\d+:\d{2}$/);
   await shot(viewer, "tablet-shared-game-accepted");
   const accepted = await rpc("viewer", "web_session_state", {
     p_team_id: fixture.team,
@@ -830,11 +871,9 @@ test("actual shared manual box, paired possessions and paint keep independent co
     "Opponent possessions",
     "Player paint touches",
   ]) {
-    const row = reviewer
-      .locator(".version-list > section")
-      .filter({
-        has: reviewer.getByRole("heading", { name: label, exact: true }),
-      });
+    const row = reviewer.locator(".version-list > section").filter({
+      has: reviewer.getByRole("heading", { name: label, exact: true }),
+    });
     await row
       .getByRole("button", { name: "Accept & publish", exact: true })
       .click();
@@ -1017,7 +1056,11 @@ test("actual SDK account switch and browser sign-out conceal the previous accoun
     .getByRole("combobox", { name: "Team", exact: true })
     .selectOption(fixture.team);
   await expect(
-    page.getByRole("button", { name: "Manage team", exact: true }),
+    page.getByRole("button", {
+      name: "Manage team",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveCount(0);
   await page
     .getByRole("button", { name: "Practices & capture", exact: true })
@@ -1035,6 +1078,7 @@ test("actual SDK account switch and browser sign-out conceal the previous accoun
       exact: true,
     }),
   ).toHaveCount(0);
+  await page.locator(".account-details > summary").click();
   await page
     .getByRole("button", { name: "Sign out of this browser", exact: true })
     .click();
@@ -1191,3 +1235,193 @@ for (const kind of ["practice", "game"] as const)
       await recorder.close();
     },
   );
+
+test("authorized manual correction review shows saved base versus proposal without losing zero or missing", async ({
+  page,
+  browser,
+}) => {
+  const gameID = randomUUID(),
+    title = "TEST ONLY correction compare " + randomUUID().slice(0, 8);
+  await rpc("recorder", "stats_create_game", {
+    p_team_id: fixture.team,
+    p_game_id: gameID,
+    p_date: "2037-01-01",
+    p_opponent: title,
+    p_home_away: "home",
+    p_game_type: "regularSeason",
+  });
+  let v = await rpc("recorder", "stats_open_draft", {
+    p_team_id: fixture.team,
+    p_game_id: gameID,
+    p_dataset_type: "box_scores",
+  });
+  const values = Object.fromEntries(
+    [
+      "points",
+      "offensiveRebounds",
+      "defensiveRebounds",
+      "assists",
+      "turnovers",
+      "steals",
+      "blocks",
+      "fouls",
+      "chargesDrawn",
+      "twosMade",
+      "twosMissed",
+      "threesMade",
+      "threesMissed",
+      "freeThrowsMade",
+      "freeThrowsMissed",
+    ].map((k) => [k, 0]),
+  );
+  v = await rpc("recorder", "stats_save_draft", {
+    p_team_id: fixture.team,
+    p_version_id: v.id,
+    p_expected_revision: v.revision,
+    p_records: fixture.roster.map((id: string) => ({
+      gameID: gameID,
+      playerID: id,
+      values,
+    })),
+    p_covered_roster: fixture.roster.map((id: string) => ({ id, version: 1 })),
+  });
+  v = await rpc("recorder", "stats_complete", {
+    p_team_id: fixture.team,
+    p_version_id: v.id,
+    p_expected_revision: v.revision,
+    p_confirm_roster: true,
+  });
+  v = await rpc("recorder", "stats_submit", {
+    p_team_id: fixture.team,
+    p_version_id: v.id,
+    p_expected_revision: v.revision,
+  });
+  await rpc("reviewer", "stats_review", {
+    p_team_id: fixture.team,
+    p_version_id: v.id,
+    p_expected_revision: v.revision,
+    p_approve: true,
+    p_reason: "",
+  });
+  await signed(page, "recorder");
+  await page.getByRole("button", { name: "Manual games", exact: true }).click();
+  await page
+    .getByRole("button", { name: new RegExp("^" + title + " ") })
+    .click();
+  await page
+    .getByRole("button", { name: "Review & history", exact: true })
+    .click();
+  page.on("dialog", (d) =>
+    d.type() === "prompt"
+      ? d.accept("TEST ONLY correction comparison")
+      : d.accept(),
+  );
+  await page
+    .getByRole("button", { name: "Request permission to edit", exact: true })
+    .click();
+  await expect(
+    page.getByText("Edit request · pending", { exact: true }),
+  ).toBeVisible();
+  const reviewer = await browser.newPage();
+  await signed(reviewer, "reviewer");
+  await reviewer
+    .getByRole("button", { name: "Manual games", exact: true })
+    .click();
+  await reviewer
+    .getByRole("button", { name: new RegExp("^" + title + " ") })
+    .click();
+  await reviewer
+    .getByRole("button", { name: "Review & history", exact: true })
+    .click();
+  reviewer.on("dialog", (d) => d.accept());
+  await reviewer
+    .getByRole("button", { name: "Approve reopening", exact: true })
+    .click();
+  await expect(
+    reviewer.getByText("Edit request · approved", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Back to shared games", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: new RegExp("^" + title + " ") })
+    .click();
+  await page
+    .getByRole("button", { name: "Review & history", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Edit this draft", exact: true })
+    .click();
+  await page.getByLabel("Points", { exact: true }).fill("");
+  await page.getByLabel("Assists", { exact: true }).fill("1");
+  const savedResponse = page.waitForResponse((r) =>
+    r.url().endsWith("/rpc/stats_save_draft"),
+  );
+  await page
+    .getByRole("button", { name: "Save server draft", exact: true })
+    .click();
+  const response = await savedResponse;
+  expect(response.ok()).toBe(true);
+  const savedProposal = await response.json();
+  await expect(page.getByText(/Server confirmed this operation/)).toBeVisible();
+  await expect(reviewer.locator(".version-list > section")).toHaveCount(1);
+  await page
+    .getByText("Complete this independent dataset", { exact: true })
+    .click();
+  await page
+    .getByRole("checkbox", {
+      name: "I confirm this game and the covered real roster.",
+      exact: true,
+    })
+    .check();
+  await page
+    .getByRole("button", { name: "Complete player box scores", exact: true })
+    .click();
+  await expect(page.getByText(/This version is frozen/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Review & history", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Submit for review", exact: true })
+    .click();
+  await expect(
+    page.getByText("submitted · revision " + (savedProposal.revision + 2), {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await reviewer
+    .getByRole("button", { name: "Back to shared games", exact: true })
+    .click();
+  await reviewer
+    .getByRole("button", { name: new RegExp("^" + title + " ") })
+    .click();
+  await reviewer
+    .getByRole("button", { name: "Review & history", exact: true })
+    .click();
+  await expect(reviewer.locator(".version-list > section")).toHaveCount(2);
+  const proposal = reviewer.locator(".version-list > section").filter({
+    has: reviewer.getByRole("button", {
+      name: "Accept & publish",
+      exact: true,
+    }),
+  });
+  await proposal
+    .getByText("Review saved values and correction context", { exact: true })
+    .click();
+  const changes = proposal.getByRole("region", {
+    name: "Correction changes",
+    exact: true,
+  });
+  await expect(
+    changes.getByRole("row").filter({
+      has: reviewer.getByRole("cell", { name: "Points", exact: true }),
+    }),
+  ).toContainText("0Not entered");
+  await expect(
+    changes.getByRole("row").filter({
+      has: reviewer.getByRole("cell", { name: "Assists", exact: true }),
+    }),
+  ).toContainText("01");
+  await shot(reviewer, "desktop-authorized-correction-comparison");
+  await reviewer.close();
+});

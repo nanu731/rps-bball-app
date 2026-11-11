@@ -368,11 +368,15 @@ export default function App() {
         <main id="main">
           <div className={`context-bar ${demo ? "demo" : ""}`}>
             <span>
-              {demo ? "SYNTHETIC DEMO · TEST ONLY" : "LOCAL BROWSER WORKSPACE"}
+              {demo
+                ? "SYNTHETIC DEMO · TEST ONLY"
+                : screen === "Shared team"
+                  ? "SHARED TEAM WORKSPACE"
+                  : "LOCAL BROWSER WORKSPACE"}
             </span>
             <span>
               {screen === "Shared team" && !demo
-                ? "Server authority checked separately"
+                ? "Current server permissions required"
                 : dirty
                   ? "Unsaved draft changes"
                   : `Browser ledger · revision ${db.revision}`}

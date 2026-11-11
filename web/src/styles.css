@@ -1732,3 +1732,18 @@ button {
     margin-top: 18px;
   }
 }
+
+.capture-layout > * {
+  min-width: 0;
+}
+.account-details,
+.team-authority,
+.recovery-controls {
+  margin-block: 10px 16px;
+}
+.account-details > summary,
+.team-authority > summary,
+.recovery-controls > summary {
+  min-height: 44px;
+  padding: 10px 0;
+}

@@ -10,7 +10,7 @@ import {
   count,
   validatePair,
 } from "./domain.ts";
-import { Count, Icon, Notice } from "./ui.tsx";
+import { Count, Icon, Notice, Scroller } from "./ui.tsx";
 export function CaptureEntry({
   session: s,
   save,
@@ -786,17 +786,19 @@ export function ShotResults({
             Entered-data subtotal, not the official score or proof every attempt
             was captured. Never added to manual totals.
           </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Made</th>
-                <th>Attempted</th>
-                <th>Observed %</th>
-              </tr>
-            </thead>
-            <tbody>{[result(2), result(3), result(1)]}</tbody>
-          </table>
+          <Scroller label="Recorded-shot totals">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Made</th>
+                  <th>Attempted</th>
+                  <th>Observed %</th>
+                </tr>
+              </thead>
+              <tbody>{[result(2), result(3), result(1)]}</tbody>
+            </table>
+          </Scroller>
         </div>
       </div>
       <h3>Selected event observations</h3>

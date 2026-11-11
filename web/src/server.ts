@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Manual, Player, Possession, Values } from "./domain.ts";
-import { count, validCount } from "./domain.ts";
+import { count, validCount, BOX_FIELDS, POS_FIELDS } from "./domain.ts";
 export type Access = {
   team_id: string;
   user_id: string;
@@ -438,4 +438,82 @@ export function operationConfirmed(
           )),
     );
   return false;
+}
+
+/** Compare only saved fields from two visible versions of the same dataset. */
+export function recordChanges(base: Version, proposal: Version) {
+  if (
+    base.team_id !== proposal.team_id ||
+    base.game_id !== proposal.game_id ||
+    base.dataset_type !== proposal.dataset_type
+  )
+    throw Error("Comparison requires the same game and dataset.");
+  const player =
+    proposal.dataset_type === "box_scores" ||
+    proposal.dataset_type === "player_paint_touches";
+  const records = (version: Version) => {
+    const map = new Map<string, Record<string, unknown>>();
+    for (const row of version.records) {
+      const key = String(row[player ? "playerID" : "id"] ?? "").toLowerCase();
+      if (!key || map.has(key))
+        throw Error("Comparison has missing or duplicate record identities.");
+      map.set(key, row);
+    }
+    return map;
+  };
+  const before = records(base),
+    after = records(proposal);
+  const fields =
+    proposal.dataset_type === "box_scores"
+      ? BOX_FIELDS.map(([key, , label]) => [key, label])
+      : proposal.dataset_type === "player_paint_touches"
+        ? [["total", "Paint touches"]]
+        : [
+            ...POS_FIELDS.map(([key, , label]) => [key, label]),
+            ["turnover", "Turnover"],
+            ["number", "Possession number"],
+          ];
+  const changes: {
+    record: string;
+    field: string;
+    previous: string;
+    proposed: string;
+  }[] = [];
+  const display = (v: unknown, field: string) =>
+    v === null || v === undefined
+      ? field === "turnover"
+        ? "Not answered"
+        : "Not entered"
+      : typeof v === "boolean"
+        ? v
+          ? "Yes"
+          : "No"
+        : safeValue(v);
+  for (const key of new Set([...before.keys(), ...after.keys()])) {
+    const old = before.get(key),
+      next = after.get(key);
+    if (!old || !next)
+      changes.push({
+        record: key,
+        field: "Record",
+        previous: old ? "Present" : "Not present",
+        proposed: next ? "Present" : "Not present",
+      });
+    for (const [field, label] of fields) {
+      const value = (row: Record<string, unknown> | undefined) =>
+        field === "total" || field === "turnover" || field === "number"
+          ? row?.[field]
+          : (row?.values as Record<string, unknown> | undefined)?.[field];
+      const a = value(old),
+        b = value(next);
+      if ((a ?? null) !== (b ?? null))
+        changes.push({
+          record: key,
+          field: label,
+          previous: display(a, field),
+          proposed: display(b, field),
+        });
+    }
+  }
+  return changes;
 }

@@ -17,6 +17,7 @@ test("practice station collection, missing versus zero, save/reopen and plan PDF
   page,
 }) => {
   await demo(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/desktop-workspace-light.png",
     fullPage: true,
@@ -41,6 +42,7 @@ test("practice station collection, missing versus zero, save/reopen and plan PDF
   await expect(
     page.getByText("Saved in this browser’s separate synthetic demo ledger."),
   ).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/desktop-practice-shooting.png",
     fullPage: true,
@@ -96,6 +98,7 @@ test("game court provisional selection, explicit value, FT, correction Undo and 
   await expect(
     page.getByText("Running on this browser", { exact: false }),
   ).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/desktop-game-court-light.png",
     fullPage: true,
@@ -135,6 +138,7 @@ test("manual modes share draft, calm scoring does not block Save, independent pa
   await expect(
     page.getByText("Saved in this browser’s separate synthetic demo ledger."),
   ).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/desktop-manual-table.png",
     fullPage: true,
@@ -159,11 +163,13 @@ test("responsive phone/tablet, dark, reduced motion and accessible scrolling ren
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await demo(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/phone-workspace-light.png",
     fullPage: true,
   });
   await page.getByRole("button", { name: /TEST ONLY opponent/ }).click();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/phone-game-court-light.png",
     fullPage: true,
@@ -171,6 +177,7 @@ test("responsive phone/tablet, dark, reduced motion and accessible scrolling ren
   await page.getByRole("button", { name: "Manual entry", exact: true }).click();
   await page.getByLabel("Points", { exact: true }).fill("4");
   await page.getByLabel("Threes made", { exact: true }).fill("7");
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/phone-manual-warning.png",
     fullPage: true,
@@ -179,6 +186,7 @@ test("responsive phone/tablet, dark, reduced motion and accessible scrolling ren
   await page
     .getByRole("button", { name: "Scroll Box-score roster right" })
     .click();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/phone-manual-far-right.png",
     fullPage: true,
@@ -188,6 +196,7 @@ test("responsive phone/tablet, dark, reduced motion and accessible scrolling ren
   );
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/tablet-manual-dark-reduced-motion.png",
     fullPage: true,
@@ -196,6 +205,7 @@ test("responsive phone/tablet, dark, reduced motion and accessible scrolling ren
     .getByRole("button", { name: "Save browser draft", exact: true })
     .click();
   await page.getByRole("button", { name: "Court", exact: true }).click();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: evidence + "/tablet-game-dark.png",
     fullPage: true,

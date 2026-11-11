@@ -6,6 +6,7 @@ import {
   validateLedger,
   emptyLedger,
   clockSeconds,
+  formatClock,
 } from "./domain.ts";
 import { CoreServer, ServerError } from "./server.ts";
 import type { Access, Game } from "./server.ts";
@@ -546,16 +547,20 @@ export function WebSessions({
     draft && reply ? { ...draft, clock: clockFor(reply) } : draft;
   return (
     <section className="web-sessions">
-      <div className="section-heading">
-        <h2>Shared practices & capture</h2>
-        <button type="button" disabled={busy} onClick={() => void loadList()}>
-          Check availability / Retry
-        </button>
-      </div>
-      <p>
-        New session permissions are separate from video grants. Only server
-        replies confirm a save, assignment or publication.
-      </p>
+      {!selected && (
+        <div className="section-heading">
+          <h2>Shared practices & capture</h2>
+          <button type="button" disabled={busy} onClick={() => void loadList()}>
+            Check availability / Retry
+          </button>
+        </div>
+      )}
+      {!selected && (
+        <p>
+          New session permissions are separate from video grants. Only server
+          replies confirm a save, assignment or publication.
+        </p>
+      )}
       {error && <Notice error>{error}</Notice>}
       {receipt && (
         <p role="status" className="receipt">
@@ -744,168 +749,175 @@ export function WebSessions({
                     ? "Accepted snapshot"
                     : current!.status}{" "}
                   · revision {reply.document_revision ?? current!.revision}
-                  <br />
-                  Clock revision {current!.clock_revision} · assignment{" "}
-                  {current!.assignment_revision}
                 </span>
               </div>
-              <div className="actions">
-                <button
-                  type="button"
-                  disabled={busy || !!pending}
-                  onClick={() => {
-                    if (
-                      dirty &&
-                      !window.confirm(
-                        "Keep a recovery copy of unsaved entries before loading the server snapshot? Cancel keeps editing.",
-                      )
-                    )
-                      return;
-                    void state(selected);
-                  }}
-                >
-                  Load server snapshot
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    download(
-                      "teamstats-shared-session-recovery.json",
-                      JSON.stringify(
-                        { actor, team, base, draft, pending },
-                        null,
-                        2,
-                      ),
-                    )
-                  }
-                >
-                  Download retained entries
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || !isWorking || current!.status !== "draft"}
-                  onClick={() => {
-                    try {
-                      const raw = sessionStorage.getItem(bufferKey);
-                      if (!raw)
-                        throw Error("No retained buffer for this account.");
-                      const saved = JSON.parse(raw);
+              <details className="recovery-controls">
+                <summary>Recovery & server snapshot</summary>
+                <p>
+                  Clock revision {current!.clock_revision} · assignment{" "}
+                  {current!.assignment_revision}
+                </p>
+                <div className="actions">
+                  <button
+                    type="button"
+                    disabled={busy || !!pending}
+                    onClick={() => {
                       if (
-                        saved.actor !== actor ||
-                        saved.team !== team ||
-                        saved.session.id !== selected
+                        dirty &&
+                        !window.confirm(
+                          "Keep a recovery copy of unsaved entries before loading the server snapshot? Cancel keeps editing.",
+                        )
                       )
-                        throw Error(
-                          "Retained entries belong to a different session/account.",
-                        );
-                      const candidate = {
-                        ...emptyLedger(),
-                        sessions: [saved.session],
-                      };
-                      validateLedger(candidate);
-                      change({ ...saved.session, clock: clockFor(reply) });
-                      setReceipt(
-                        "Retained entries recovered in this browser; not server-saved.",
-                      );
-                    } catch (e) {
-                      fail(e);
+                        return;
+                      void state(selected);
+                    }}
+                  >
+                    Load server snapshot
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      download(
+                        "teamstats-shared-session-recovery.json",
+                        JSON.stringify(
+                          { actor, team, base, draft, pending },
+                          null,
+                          2,
+                        ),
+                      )
                     }
-                  }}
-                >
-                  Recover this account’s buffer
-                </button>
-              </div>
-              {(!withClock || !canRecord) && reply && (
-                <div className="clock-strip">
-                  <div>
-                    <strong className="clock">
-                      {clockSeconds(
-                        clockFor(reply),
-                        Math.max(clockNow, reply.receivedAt ?? clockNow),
-                      ).toFixed(1)}
-                      seconds
-                    </strong>
-                    <small>
-                      {current!.clock_period} · server-anchored manager
-                      reference
-                    </small>
-                  </div>
-                  {current!.clock_user_id === actor &&
-                    can("sessions.clock") && (
-                      <div>
-                        <div className="actions">
-                          <button
-                            type="button"
-                            disabled={busy || !!pending}
-                            onClick={() =>
-                              void command(
-                                current!.clock_started_at
-                                  ? "clock_stop"
-                                  : "clock_start",
-                                null,
-                                {
-                                  assignment_revision:
-                                    current!.assignment_revision,
-                                },
-                                current!.id,
-                                current!.clock_revision,
-                              )
-                            }
-                          >
-                            {current!.clock_started_at
-                              ? "Stop shared clock"
-                              : "Start shared clock"}
-                          </button>
-                        </div>
-                        <details>
-                          <summary>Set shared clock</summary>
-                          <label className="field">
-                            Clock period
-                            <input
-                              value={clockPeriod}
-                              onChange={(e) => setClockPeriod(e.target.value)}
-                            />
-                          </label>
-                          <label className="field">
-                            Shared clock seconds
-                            <input
-                              inputMode="numeric"
-                              value={clockRemaining}
-                              onChange={(e) =>
-                                setClockRemaining(e.target.value)
-                              }
-                            />
-                          </label>
-                          <button
-                            type="button"
-                            disabled={
-                              busy ||
-                              !!pending ||
-                              !/^\d+$/.test(clockRemaining) ||
-                              !Number.isSafeInteger(Number(clockRemaining))
-                            }
-                            onClick={() =>
-                              void command(
-                                "clock_set",
-                                null,
-                                {
-                                  assignment_revision:
-                                    current!.assignment_revision,
-                                  period: clockPeriod,
-                                  seconds: Number(clockRemaining),
-                                },
-                                current!.id,
-                                current!.clock_revision,
-                              )
-                            }
-                          >
-                            Set stopped shared clock
-                          </button>
-                        </details>
-                      </div>
-                    )}
+                  >
+                    Download retained entries
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || !isWorking || current!.status !== "draft"}
+                    onClick={() => {
+                      try {
+                        const raw = sessionStorage.getItem(bufferKey);
+                        if (!raw)
+                          throw Error("No retained buffer for this account.");
+                        const saved = JSON.parse(raw);
+                        if (
+                          saved.actor !== actor ||
+                          saved.team !== team ||
+                          saved.session.id !== selected
+                        )
+                          throw Error(
+                            "Retained entries belong to a different session/account.",
+                          );
+                        const candidate = {
+                          ...emptyLedger(),
+                          sessions: [saved.session],
+                        };
+                        validateLedger(candidate);
+                        change({ ...saved.session, clock: clockFor(reply) });
+                        setReceipt(
+                          "Retained entries recovered in this browser; not server-saved.",
+                        );
+                      } catch (e) {
+                        fail(e);
+                      }
+                    }}
+                  >
+                    Recover this account’s buffer
+                  </button>
                 </div>
-              )}
+              </details>
+              {current!.kind === "game" &&
+                (!withClock || !canRecord) &&
+                reply && (
+                  <div className="clock-strip">
+                    <div>
+                      <strong className="clock">
+                        {formatClock(
+                          clockSeconds(
+                            clockFor(reply),
+                            Math.max(clockNow, reply.receivedAt ?? clockNow),
+                          ),
+                        )}
+                      </strong>
+                      <small>
+                        {current!.clock_period} · server-anchored manager
+                        reference
+                      </small>
+                    </div>
+                    {current!.clock_user_id === actor &&
+                      can("sessions.clock") && (
+                        <div>
+                          <div className="actions">
+                            <button
+                              type="button"
+                              disabled={busy || !!pending}
+                              onClick={() =>
+                                void command(
+                                  current!.clock_started_at
+                                    ? "clock_stop"
+                                    : "clock_start",
+                                  null,
+                                  {
+                                    assignment_revision:
+                                      current!.assignment_revision,
+                                  },
+                                  current!.id,
+                                  current!.clock_revision,
+                                )
+                              }
+                            >
+                              {current!.clock_started_at
+                                ? "Stop shared clock"
+                                : "Start shared clock"}
+                            </button>
+                          </div>
+                          <details>
+                            <summary>Set shared clock</summary>
+                            <label className="field">
+                              Clock period
+                              <input
+                                value={clockPeriod}
+                                onChange={(e) => setClockPeriod(e.target.value)}
+                              />
+                            </label>
+                            <label className="field">
+                              Shared clock seconds
+                              <input
+                                inputMode="numeric"
+                                value={clockRemaining}
+                                onChange={(e) =>
+                                  setClockRemaining(e.target.value)
+                                }
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              disabled={
+                                busy ||
+                                !!pending ||
+                                !/^\d+$/.test(clockRemaining) ||
+                                !Number.isSafeInteger(Number(clockRemaining))
+                              }
+                              onClick={() =>
+                                void command(
+                                  "clock_set",
+                                  null,
+                                  {
+                                    assignment_revision:
+                                      current!.assignment_revision,
+                                    period: clockPeriod,
+                                    seconds: Number(clockRemaining),
+                                  },
+                                  current!.id,
+                                  current!.clock_revision,
+                                )
+                              }
+                            >
+                              Set stopped shared clock
+                            </button>
+                          </details>
+                        </div>
+                      )}
+                  </div>
+                )}
               {withClock ? (
                 <>
                   {current!.status === "draft" && isWorking ? (

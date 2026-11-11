@@ -71,6 +71,11 @@ test("large text, keyboard focus, reduced viewport and every roster column remai
   if (evidence) {
     mkdirSync(evidence, { recursive: true });
     await page.screenshot({
+      path: evidence + "/phone-large-text-focused-viewport.png",
+      fullPage: false,
+    });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({
       path: evidence + "/phone-large-text-short-viewport.png",
       fullPage: true,
     });

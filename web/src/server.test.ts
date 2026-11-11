@@ -7,6 +7,8 @@ import {
   encodeRecords,
   ServerError,
   CoreServer,
+  recordChanges,
+  type Version,
 } from "./server.ts";
 
 test("browser configuration rejects secret keys and arbitrary destinations", () => {
@@ -132,5 +134,77 @@ test("account generation change after dispatch retains an uncertain outcome", as
   await assert.rejects(
     server.command("synthetic-team", "test_only_mutation", {}),
     (e: unknown) => e instanceof ServerError && e.uncertain,
+  );
+});
+
+test("correction comparison preserves missing versus zero and turnover answers", () => {
+  const base: Version = {
+    id: "base",
+    team_id: "team",
+    game_id: "game",
+    dataset_id: "dataset",
+    dataset_type: "box_scores",
+    author_user_id: "author",
+    revision: 1,
+    status: "published",
+    records: [{ playerID: "player", values: { points: null, assists: 0 } }],
+    covered_roster: [],
+    base_published_version_id: null,
+  };
+  const proposal: Version = {
+    ...base,
+    id: "proposal",
+    status: "draft",
+    records: [{ playerID: "player", values: { points: 0, assists: 1 } }],
+    base_published_version_id: "base",
+  };
+  assert.deepEqual(recordChanges(base, proposal), [
+    {
+      record: "player",
+      field: "Points",
+      previous: "Not entered",
+      proposed: "0",
+    },
+    { record: "player", field: "Assists", previous: "0", proposed: "1" },
+  ]);
+  assert.equal(
+    base.records[0].values && JSON.stringify(base.records[0].values),
+    '{"points":null,"assists":0}',
+  );
+  const possessions: Version = {
+    ...base,
+    dataset_type: "our_possessions",
+    records: [
+      {
+        id: "possession",
+        number: 1,
+        values: { paintTouches: 0 },
+        turnover: null,
+      },
+    ],
+  };
+  assert.deepEqual(
+    recordChanges(possessions, {
+      ...possessions,
+      records: [
+        {
+          id: "possession",
+          number: 1,
+          values: { paintTouches: 0 },
+          turnover: false,
+        },
+      ],
+    }),
+    [
+      {
+        record: "possession",
+        field: "Turnover",
+        previous: "Not answered",
+        proposed: "No",
+      },
+    ],
+  );
+  assert.throws(() =>
+    recordChanges(base, { ...proposal, game_id: "different" }),
   );
 });

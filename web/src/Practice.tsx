@@ -22,6 +22,16 @@ export function Practice({
   tab: string;
   provenance?: string;
 }) {
+  const [resultPlayer, setResultPlayer] = useState("all");
+  const resultPlayers = s.players.filter(
+    (p) => resultPlayer === "all" || p.id === resultPlayer,
+  );
+  const resultObservations = currentObservations(s.observations).filter(
+    (o) =>
+      resultPlayer === "all" ||
+      o.playerID === resultPlayer ||
+      o.playerID === null,
+  );
   const [player, setPlayer] = useState(s.players[0]?.id ?? ""),
     [chosen, setChosen] = useState(""),
     [values, setValues] = useState<Values>({}),
@@ -584,7 +594,23 @@ export function Practice({
       )}
       {tab === "Results" && (
         <>
-          <h2>Practice observations</h2>
+          <div className="section-heading">
+            <h2>Practice observations</h2>
+            <label className="field">
+              Results player
+              <select
+                value={resultPlayer}
+                onChange={(e) => setResultPlayer(e.target.value)}
+              >
+                <option value="all">All included players</option>
+                {s.players.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} · #{p.number}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <Notice>
             {provenance} Percentages use observed makes / attempts. No ranking
             or causal conclusions are inferred.
@@ -604,7 +630,7 @@ export function Practice({
                 </tr>
               </thead>
               <tbody>
-                {s.players.map((p) => (
+                {resultPlayers.map((p) => (
                   <tr key={p.id}>
                     <th scope="row">
                       {p.name}
@@ -630,10 +656,10 @@ export function Practice({
             </table>
           </Scroller>
           <h3>Recorded template observations</h3>
-          {visibleObservations.length === 0 ? (
+          {resultObservations.length === 0 ? (
             <p className="muted">No observations entered.</p>
           ) : (
-            visibleObservations.map((o) => (
+            resultObservations.map((o) => (
               <p key={o.id}>
                 {o.template.name} (definition v{o.template.version}) ·{" "}
                 {s.players.find((p) => p.id === o.playerID)?.name ?? "Team"} ·{" "}

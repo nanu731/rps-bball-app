@@ -12,6 +12,7 @@ import {
   decodeManual,
   encodeRecords,
   operationConfirmed,
+  recordChanges,
 } from "./server.ts";
 import type {
   Access,
@@ -23,7 +24,14 @@ import type {
   PendingOperation,
 } from "./server.ts";
 import { ManualEntry, ManualSummary } from "./Manual.tsx";
-import { Empty, Notice, Tabs, download, useUnsavedGuard } from "./ui.tsx";
+import {
+  Empty,
+  Notice,
+  Tabs,
+  download,
+  useUnsavedGuard,
+  Scroller,
+} from "./ui.tsx";
 import type { NavigationGuard } from "./ui.tsx";
 const CONFIG = "teamstats-web-public-config";
 const kinds = Object.keys(KIND_LABEL) as Kind[];
@@ -195,12 +203,14 @@ export function Connected({
       <div className="page-heading">
         <div>
           <h1>Shared team workspace</h1>
-          <p>
-            Supabase is authoritative. Browser drafts never upload
-            automatically.
-          </p>
+          {!team && (
+            <p>
+              Supabase is authoritative. Browser drafts never upload
+              automatically.
+            </p>
+          )}
         </div>
-        {client && (
+        {client && !team && (
           <button
             type="button"
             disabled={pending}
@@ -222,194 +232,206 @@ export function Connected({
           </button>
         </Notice>
       )}
-      {message && (
-        <p className="receipt" role="status">
-          {message}
-        </p>
-      )}
-      {!client ? (
-        <form
-          className="create-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            try {
-              const c = clientFor(url, key);
-              localStorage.setItem(CONFIG, JSON.stringify({ url, key }));
-              setClient(c);
-              setError("");
-            } catch (e) {
-              setError((e as Error).message);
-            }
-          }}
-        >
-          <h2>Connect nonproduction</h2>
-          <p>
-            Only a browser publishable/anon key belongs here. Never enter a
-            service-role key. No project or owner authority is created.
-          </p>
-          <label className="field">
-            Project URL
-            <input
-              type="url"
-              required
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://your-project.supabase.co"
-            />
-          </label>
-          <label className="field">
-            Publishable key
-            <input
-              required
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              autoComplete="off"
-            />
-          </label>
-          <button type="submit" className="primary">
-            Use this connection
+      <details className="account-details" open={!team}>
+        <summary>Team and account{user ? " · verified" : ""}</summary>
+        {team && client && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => void verify(true)}
+          >
+            Check session again
           </button>
-        </form>
-      ) : !user ? (
-        <section className="auth-form">
-          <h2>Sign in to an existing account</h2>
+        )}
+        {message && (
+          <p className="receipt" role="status">
+            {message}
+          </p>
+        )}
+        {!client ? (
           <form
+            className="create-form"
             onSubmit={(e) => {
               e.preventDefault();
-              void auth(sent ? "verify" : "send");
+              try {
+                const c = clientFor(url, key);
+                localStorage.setItem(CONFIG, JSON.stringify({ url, key }));
+                setClient(c);
+                setError("");
+              } catch (e) {
+                setError((e as Error).message);
+              }
             }}
           >
+            <h2>Connect nonproduction</h2>
+            <p>
+              Only a browser publishable/anon key belongs here. Never enter a
+              service-role key. No project or owner authority is created.
+            </p>
             <label className="field">
-              Email
+              Project URL
               <input
-                type="email"
-                autoComplete="email"
+                type="url"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://your-project.supabase.co"
               />
             </label>
-            {sent && (
-              <label className="field">
-                Email code
-                <input
-                  value={otp}
-                  onChange={(e) => setOTP(e.target.value)}
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  required
-                />
-              </label>
-            )}
-            <div className="actions">
-              <button type="submit" className="primary" disabled={pending}>
-                {pending
-                  ? "Contacting Supabase…"
-                  : sent
-                    ? "Verify code"
-                    : "Request sign-in email"}
-              </button>
-              {sent && (
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => void auth("send")}
-                >
-                  Request new email
-                </button>
-              )}
-            </div>
-          </form>
-          <p className="muted">
-            SMS remains disabled under the $0 boundary. Email delivery/templates
-            and redirect allowlists are provider configuration gates. No signup
-            or paid sender is activated here.
-          </p>
-        </section>
-      ) : (
-        <>
-          <div className="account-strip">
-            <strong>Account verified</strong>
-            <span>{user.email ?? "Verified account"}</span>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => void auth("out")}
-            >
-              Sign out of this browser
-            </button>
-          </div>
-          {teams.length === 0 ? (
-            <Empty title="No accessible teams">
-              A verified account is not team membership. Request admission with
-              a team ID supplied privately by the owner.
-            </Empty>
-          ) : (
             <label className="field">
-              Team
-              <select
-                value={team}
-                onChange={(e) => {
-                  if (navigationGuard.current()) setTeam(e.target.value);
-                }}
-              >
-                <option value="">Choose a team</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              Publishable key
+              <input
+                required
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                autoComplete="off"
+              />
             </label>
-          )}
-          <details>
-            <summary>Request team admission</summary>
+            <button type="submit" className="primary">
+              Use this connection
+            </button>
+          </form>
+        ) : !user ? (
+          <section className="auth-form">
+            <h2>Sign in to an existing account</h2>
             <form
-              className="inline-form"
-              onSubmit={async (e) => {
+              onSubmit={(e) => {
                 e.preventDefault();
-                if (pending) return;
-                setPending(true);
-                try {
-                  const { data, error } = await client.rpc(
-                    "team_request_membership",
-                    { p_team_id: join.trim() },
-                  );
-                  if (error) throw new ServerError(error.code);
-                  setMessage(
-                    `Server-confirmed admission status: ${data}. Only an authorized administrator can activate membership.`,
-                  );
-                } catch (e) {
-                  setError((e as Error).message);
-                } finally {
-                  setPending(false);
-                }
+                void auth(sent ? "verify" : "send");
               }}
             >
               <label className="field">
-                Owner-provided team ID
+                Email
                 <input
+                  type="email"
+                  autoComplete="email"
                   required
-                  value={join}
-                  onChange={(e) => setJoin(e.target.value)}
-                  pattern="[0-9a-fA-F-]{36}"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </label>
-              <button type="submit" disabled={pending}>
-                Request admission
-              </button>
+              {sent && (
+                <label className="field">
+                  Email code
+                  <input
+                    value={otp}
+                    onChange={(e) => setOTP(e.target.value)}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    required
+                  />
+                </label>
+              )}
+              <div className="actions">
+                <button type="submit" className="primary" disabled={pending}>
+                  {pending
+                    ? "Contacting Supabase…"
+                    : sent
+                      ? "Verify code"
+                      : "Request sign-in email"}
+                </button>
+                {sent && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => void auth("send")}
+                  >
+                    Request new email
+                  </button>
+                )}
+              </div>
             </form>
-          </details>
-          {team && server && (
-            <SharedTeam
-              key={`${user.id}:${team}`}
-              server={server}
-              team={teams.find((t) => t.id === team)!}
-              actor={user.id}
-              navigationGuard={navigationGuard}
-            />
-          )}
-        </>
+            <p className="muted">
+              SMS remains disabled under the $0 boundary. Email
+              delivery/templates and redirect allowlists are provider
+              configuration gates. No signup or paid sender is activated here.
+            </p>
+          </section>
+        ) : (
+          <>
+            <div className="account-strip">
+              <strong>Account verified</strong>
+              <span>{user.email ?? "Verified account"}</span>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => void auth("out")}
+              >
+                Sign out of this browser
+              </button>
+            </div>
+            {teams.length === 0 ? (
+              <Empty title="No accessible teams">
+                A verified account is not team membership. Request admission
+                with a team ID supplied privately by the owner.
+              </Empty>
+            ) : (
+              <label className="field">
+                Team
+                <select
+                  value={team}
+                  onChange={(e) => {
+                    if (navigationGuard.current()) setTeam(e.target.value);
+                  }}
+                >
+                  <option value="">Choose a team</option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <details>
+              <summary>Request team admission</summary>
+              <form
+                className="inline-form"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (pending) return;
+                  setPending(true);
+                  try {
+                    const { data, error } = await client.rpc(
+                      "team_request_membership",
+                      { p_team_id: join.trim() },
+                    );
+                    if (error) throw new ServerError(error.code);
+                    setMessage(
+                      `Server-confirmed admission status: ${data}. Only an authorized administrator can activate membership.`,
+                    );
+                  } catch (e) {
+                    setError((e as Error).message);
+                  } finally {
+                    setPending(false);
+                  }
+                }}
+              >
+                <label className="field">
+                  Owner-provided team ID
+                  <input
+                    required
+                    value={join}
+                    onChange={(e) => setJoin(e.target.value)}
+                    pattern="[0-9a-fA-F-]{36}"
+                  />
+                </label>
+                <button type="submit" disabled={pending}>
+                  Request admission
+                </button>
+              </form>
+            </details>
+          </>
+        )}
+      </details>
+      {user && team && server && (
+        <SharedTeam
+          key={user.id + ":" + team}
+          server={server}
+          team={teams.find((t) => t.id === team)!}
+          actor={user.id}
+          navigationGuard={navigationGuard}
+        />
       )}
       <details className="capability-boundary">
         <summary>What is connected in this web pilot?</summary>
@@ -703,45 +725,49 @@ function SharedTeam({
     <section className="shared-team">
       <div className="section-heading">
         <h2>{team.name}</h2>
-        <div className="actions">
-          <button type="button" disabled={busy} onClick={() => void load()}>
-            Reload current authority
-          </button>
-          {access &&
-            (access.is_owner ||
-              access.capabilities.includes("members.manage") ||
-              access.capabilities.includes("roster.manage")) && (
-              <button
-                type="button"
-                onClick={async () => {
-                  setManage(!manage);
-                  try {
-                    setAccess(await server.access(team.id));
-                    setMembers(
-                      await server.rows(
-                        "team_memberships",
-                        "status,user_id",
-                        {
-                          team_id: team.id,
-                        },
-                        "user_id",
-                      ),
-                    );
-                  } catch (e) {
-                    if (
-                      e instanceof ServerError &&
-                      ["401", "403", "42501"].includes(e.code)
-                    )
-                      conceal();
-                    setError((e as Error).message);
-                    setMembers([]);
-                  }
-                }}
-              >
-                Manage team
-              </button>
-            )}
-        </div>
+        <details className="team-authority">
+          <summary>Team authority & administration</summary>
+          <p>Access revision {access?.access_revision ?? "not loaded"}</p>
+          <div className="actions">
+            <button type="button" disabled={busy} onClick={() => void load()}>
+              Reload current authority
+            </button>
+            {access &&
+              (access.is_owner ||
+                access.capabilities.includes("members.manage") ||
+                access.capabilities.includes("roster.manage")) && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setManage(!manage);
+                    try {
+                      setAccess(await server.access(team.id));
+                      setMembers(
+                        await server.rows(
+                          "team_memberships",
+                          "status,user_id",
+                          {
+                            team_id: team.id,
+                          },
+                          "user_id",
+                        ),
+                      );
+                    } catch (e) {
+                      if (
+                        e instanceof ServerError &&
+                        ["401", "403", "42501"].includes(e.code)
+                      )
+                        conceal();
+                      setError((e as Error).message);
+                      setMembers([]);
+                    }
+                  }}
+                >
+                  Manage team
+                </button>
+              )}
+          </div>
+        </details>
       </div>
       {error && <Notice error>{error}</Notice>}
       {busy && <p role="status">Loading current team state…</p>}
@@ -752,7 +778,6 @@ function SharedTeam({
             : access.can_propose_stats
               ? "Active member · draft proposals allowed"
               : "Active viewer"}{" "}
-          · access revision {access.access_revision}
         </p>
       )}
       {manage && access && (
@@ -1920,18 +1945,75 @@ function SharedGame({
                 </div>
                 <details>
                   <summary>Review saved values and correction context</summary>
+                  {v.base_published_version_id ? (
+                    (() => {
+                      const base = versions.find(
+                        (b) => b.id === v.base_published_version_id,
+                      );
+                      if (!base)
+                        return (
+                          <p>
+                            Accepted base unavailable to this account. No
+                            comparison is inferred.
+                          </p>
+                        );
+                      const changes = recordChanges(base, v);
+                      return (
+                        <section>
+                          <h4>Changes from accepted base</h4>
+                          {changes.length === 0 ? (
+                            <p>No saved field changes.</p>
+                          ) : (
+                            <Scroller label="Correction changes">
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th>Player / record</th>
+                                    <th>Field</th>
+                                    <th>Previous</th>
+                                    <th>Proposed</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {changes.map((c, i) => (
+                                    <tr key={i}>
+                                      <th scope="row">
+                                        {rosterHistory.find(
+                                          (p) =>
+                                            p.id.toLowerCase() === c.record,
+                                        )?.name ??
+                                          "Possession " +
+                                            String(
+                                              [
+                                                ...v.records,
+                                                ...base.records,
+                                              ].find(
+                                                (r) =>
+                                                  String(r.id).toLowerCase() ===
+                                                  c.record,
+                                              )?.number ?? "unavailable",
+                                            )}
+                                      </th>
+                                      <td>{c.field}</td>
+                                      <td>{c.previous}</td>
+                                      <td>{c.proposed}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </Scroller>
+                          )}
+                        </section>
+                      );
+                    })()
+                  ) : (
+                    <p>Original proposal — no accepted base to compare.</p>
+                  )}
                   <ManualSummary
                     manual={decodeManual([v], game.id)}
                     players={labelsFor(v)}
                     provenance={`${v.status} · server revision ${v.revision}`}
                   />
-                  {v.base_published_version_id && (
-                    <p>
-                      Correction of a retained published version. Compare the
-                      saved values below with its base in history before
-                      acceptance.
-                    </p>
-                  )}
                   <details>
                     <summary>Technical record identifiers / raw JSON</summary>
                     <pre>{JSON.stringify(v.records, null, 2)}</pre>
