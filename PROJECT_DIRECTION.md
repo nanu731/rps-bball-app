@@ -213,6 +213,9 @@ web/README.md and ADR0009 for guarantees and activation boundaries. A fresh isol
 cluster replayed the current 21 migrations with 64 web SQL checks; those tests use
 Auth platform stand-ins and are distinct from signed browser evidence.
 
-Final rendered review is in progress. This does not resolve the coach facts or
-owner decisions above, establish Safari/physical-device/screen-reader acceptance,
-or authorize hosted activation, native data upload, provider spending or release.
+Compiled Chrome/synthetic acceptance is recorded in web/README.md: source beb7a12,
+14 unit checks, 22 compiled-browser checks, separate signed local account-switch
+proof and three independent visual scores averaging 95.33. This accepts only the
+recorded local/isolated scope. It does not resolve coach facts or owner decisions,
+establish Safari/mobile-keyboard/physical-device/screen-reader acceptance, or
+authorize hosted activation, native data upload, provider spending or release.
