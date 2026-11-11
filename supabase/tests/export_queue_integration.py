@@ -118,9 +118,13 @@ def verify(pg, output):
     advance(8*86400);assert rpc('stats_export_claim') is None
     assert all(x['queue_state']=='manual_review' for x in status())
     call('stats_export_resume',p_job_id=claim['job_id'])
-    # Fixed elapsed-time example crosses the2026 DST fallback. Civil '7 days'
+    # This elapsed-time example crosses a future DST fallback. Civil '7 days'
     # in this session is169hours; the documented retry cap is168elapsed hours.
-    now[0]=dt.datetime(2026,10,26,6,tzinfo=dt.timezone.utc);advance(0)
+    # Keep time monotonic so an elapsed provider pause cannot become active again.
+    november=dt.datetime(now[0].year+1,11,1,6,tzinfo=dt.timezone.utc)
+    fallback=november+dt.timedelta(days=(6-november.weekday())%7)
+    now[0]=fallback-dt.timedelta(days=6);advance(0)
+    assert sql("select extract(epoch from ((team_private.export_now()+interval '7 days')-team_private.export_now()))")=='608400.000000'
     sql("update public.stat_export_deliveries set cycle_started_at=team_private.export_now(),next_attempt_at=team_private.export_now() where job_id="+quote(claim['job_id']))
     advance(7*86400-1);boundary=rpc('stats_export_claim');assert boundary is not None
     advance(2);refused('stats_export_claimed_reserve',args(boundary))
