@@ -3,6 +3,13 @@
 Responsive React/TypeScript workspace using the existing maroon sports-ledger
 visual direction. The native project remains preserved legacy work.
 
+Court locations automatically select two or three points using the displayed arc
+and straight corner lines; on-line selections count as two. The value remains
+manually adjustable, and only Make/Miss records an attempt. Keyboard location
+controls use the same rule. Existing recorded values are not recalculated.
+This follow-up passed 15 unit checks, the build and all seven browser-local pilot
+journeys, including automatic selection at phone/tablet widths and manual override.
+
 ## Run locally
 
 Node 22.12 or later. Exact dependencies are pinned in the lockfile.

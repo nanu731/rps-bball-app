@@ -1,3 +1,19 @@
+export const SHOT_COURT = {
+  width: 500,
+  height: 420,
+  centerX: 250,
+  arcY: 99,
+  radius: 216,
+} as const;
+
+export function shotValueAt(point: { x: number; y: number }): 2 | 3 {
+  const { width, height, centerX, arcY, radius } = SHOT_COURT;
+  const dx = Math.abs(point.x * width - centerX);
+  const dy = Math.max(0, point.y * height - arcY);
+  // The line itself is two points; epsilon absorbs floating-point roundoff.
+  return Math.hypot(dx, dy) <= radius + 1e-7 ? 2 : 3;
+}
+
 export const BOX_FIELDS = [
   ["points", "PTS", "Points"],
   ["offensiveRebounds", "OREB", "Offensive rebounds"],

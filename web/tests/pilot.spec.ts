@@ -63,6 +63,53 @@ test("practice station collection, missing versus zero, save/reopen and plan PDF
   );
 });
 
+test("court locations automatically select shot value, with manual override and explicit recording", async ({
+  page,
+}) => {
+  await demo(page);
+  await page.getByRole("button", { name: /TEST ONLY opponent/ }).click();
+  const court = page.getByRole("img", { name: /Schematic court/ });
+  const two = page.getByRole("button", { name: "2 points", exact: true });
+  const three = page.getByRole("button", { name: "3 points", exact: true });
+  const observations = page.locator(".observation");
+  const before = await observations.count();
+  for (const width of [390, 1024]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const bounds = (await court.boundingBox())!;
+    for (const [x, y, value] of [
+      [250, 250, 2],
+      [250, 350, 3],
+      [20, 50, 3],
+      [50, 50, 2],
+      [480, 50, 3],
+    ]) {
+      await court.click({
+        position: { x: (bounds.width * x) / 500, y: (bounds.height * y) / 420 },
+      });
+      await expect(value === 2 ? two : three).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expect(observations).toHaveCount(before);
+    }
+  }
+  await two.click();
+  await expect(two).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Make", exact: true }).click();
+  await expect(
+    page.getByText("TEST ONLY Player A · 2PT make", { exact: true }),
+  ).toBeVisible();
+  await expect(observations).toHaveCount(before + 1);
+  await page.getByText("Keyboard / precise location", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Select center location", exact: true })
+    .click();
+  await expect(two).toHaveAttribute("aria-pressed", "true");
+  await page.getByLabel("Horizontal location (%)", { exact: true }).fill("0");
+  await expect(three).toHaveAttribute("aria-pressed", "true");
+  await expect(observations).toHaveCount(before + 1);
+});
+
 test("game court provisional selection, explicit value, FT, correction Undo and running clock", async ({
   page,
 }) => {

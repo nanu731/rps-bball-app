@@ -9,6 +9,8 @@ import {
   undoChange,
   count,
   validatePair,
+  SHOT_COURT,
+  shotValueAt,
 } from "./domain.ts";
 import { Count, Icon, Notice, Scroller } from "./ui.tsx";
 export function CaptureEntry({
@@ -53,6 +55,10 @@ export function CaptureEntry({
       correction?.template ?? templates.find((t) => t.id === label),
     correctedKind = correction?.kind;
   const selected = s.players.find((p) => p.id === player);
+  const choosePoint = (p: { x: number; y: number }) => {
+    setPoint(p);
+    setValue(shotValueAt(p));
+  };
   const push = async (kind: Capture["kind"], made: boolean | null) => {
     try {
       if (team === "ours" && !selected)
@@ -349,7 +355,7 @@ export function CaptureEntry({
               team={team}
               point={point}
               onPick={(p) => {
-                if (!blocked) setPoint(p);
+                if (!blocked) choosePoint(p);
               }}
             />
             <div className="court-commit">
@@ -398,14 +404,12 @@ export function CaptureEntry({
                 </button>
               </div>
               <p className="muted">
-                A location tap is provisional. Make/Miss records exactly one
-                observed attempt.
+                Location selects 2 or 3 points. Adjust if needed, then Make/Miss
+                records one observed attempt.
               </p>
             </div>
             <div className="court-caption">
-              <span>
-                Schematic half court · geometry does not assign shot value
-              </span>
+              <span>Schematic half court · on the line counts as 2 points</span>
               <span>{point ? "Location selected" : "Select a location"}</span>
             </div>
             <details>
@@ -420,7 +424,7 @@ export function CaptureEntry({
                       max="100"
                       value={(point?.[axis] ?? 0.5) * 100}
                       onChange={(e) =>
-                        setPoint({
+                        choosePoint({
                           ...(point ?? { x: 0.5, y: 0.5 }),
                           [axis]: Number(e.target.value) / 100,
                         })
@@ -431,7 +435,7 @@ export function CaptureEntry({
               </div>
               <button
                 type="button"
-                onClick={() => setPoint({ x: 0.5, y: 0.5 })}
+                onClick={() => choosePoint({ x: 0.5, y: 0.5 })}
               >
                 Select center location
               </button>
@@ -650,10 +654,10 @@ export function CourtDiagram({
       role="img"
       aria-label={
         onPick
-          ? "Schematic court. Tap a location, then explicitly choose two or three points and Make or Miss. Keyboard location controls follow."
+          ? "Schematic court. Tap a location to select two or three points automatically, adjust if needed, then Make or Miss. Keyboard location controls follow."
           : "Recorded-shot location chart. Marks show observed attempts only; made shots are circles and misses are crosses."
       }
-      viewBox="0 0 500 420"
+      viewBox={`0 0 ${SHOT_COURT.width} ${SHOT_COURT.height}`}
       onClick={
         onPick
           ? (e) => {
@@ -667,7 +671,10 @@ export function CourtDiagram({
       }
     >
       <rect x="12" y="12" width="476" height="396" rx="2" />
-      <path d="M12 408h476M175 12v155h150V12M175 167a75 75 0 0 0 150 0M34 12v87a216 216 0 0 0 432 0V12M222 42h56" />
+      <path d="M12 408h476M175 12v155h150V12M175 167a75 75 0 0 0 150 0M222 42h56" />
+      <path
+        d={`M${SHOT_COURT.centerX - SHOT_COURT.radius} 12V${SHOT_COURT.arcY}a${SHOT_COURT.radius} ${SHOT_COURT.radius} 0 0 0 ${2 * SHOT_COURT.radius} 0V12`}
+      />
       <circle cx="250" cy="57" r="12" />
       <path d="M190 408a60 60 0 0 1 120 0" />
       {events

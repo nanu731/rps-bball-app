@@ -82,7 +82,9 @@ attempts → corrected, reviewed session results. Use the same session identity
 between plan and results. Nine-spot geometry is coach-provided.
 
 Game: choose tracking modules → selected player/team → provisional court marker
-→ explicit 2/3-point value and Make/Miss → recorded event with Undo. Keep free
+→ geometry-selected 2/3-point value (manually adjustable) and Make/Miss → recorded
+event with Undo. New location selections use the drawn arc and corner lines;
+on-line taps select two points. Existing recorded values are not recalculated. Keep free
 throws off the court as per-attempt or agreed makes/attempts entry. A location
 tap alone must not persist an attempt. Retain a visible selection and recent
 records so a wrong player, value or location can be corrected.

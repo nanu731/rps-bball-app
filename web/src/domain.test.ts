@@ -12,7 +12,30 @@ import {
   currentEvents,
   saveLedger,
   readLedger,
+  shotValueAt,
 } from "./domain.ts";
+
+test("court geometry selects twos inside/on the line and threes beyond the arc or corners", () => {
+  const at = (x: number, y: number) => shotValueAt({ x: x / 500, y: y / 420 });
+  assert.equal(at(250, 57), 2);
+  assert.equal(at(250, 314), 2);
+  assert.equal(at(250, 315), 2);
+  assert.equal(at(250, 316), 3);
+  for (const y of [12, 57, 99]) {
+    assert.equal(at(33, y), 3);
+    assert.equal(at(34, y), 2);
+    assert.equal(at(35, y), 2);
+    assert.equal(at(465, y), 2);
+    assert.equal(at(466, y), 2);
+    assert.equal(at(467, y), 3);
+  }
+  const diagonal = 216 / Math.sqrt(2);
+  for (const side of [-1, 1]) {
+    assert.equal(at(250 + side * diagonal, 99 + diagonal), 2);
+    assert.equal(at(250 + side * (diagonal + 1), 100 + diagonal), 3);
+  }
+  assert.equal(at(250, 408), 3);
+});
 
 test("blank remains missing; zero is explicit; invalid and overflow are rejected", () => {
   assert.equal(count(""), null);
