@@ -248,6 +248,12 @@ source-body, RLS/RPC permissions, owner binding and private-schema exclusion che
 passed. A compiled Chrome journey using existing signed synthetic accounts passed
 the independent manual-statistics save/completion/review/publication lifecycle;
 authenticated readback confirmed saved identities, missing values and accepted
-pointers. See web/README.md for scope. Provider delivery, hosted practice/game/clock
-acceptance, public hosting and real-team/device acceptance remain separate gates;
-activation alone does not establish a functional teammate pilot.
+pointers. Actual hosted synthetic practice/game/clock, correction lineage and
+post-revocation denial checks subsequently passed with original active test grants
+restored. A static nonproduction Pages preview now renders the login-first app;
+normal sign-in options remain disabled pending actual provider verification.
+See web/README.md for scope. Provider delivery and real-team/device acceptance
+remain separate gates; activation alone does not establish a functional teammate
+pilot. Google configuration is now prepared in Testing with only the approved
+owner account, an exact callback and no linked Cloud billing. Actual Google
+sign-in and email SMTP delivery remain unverified.

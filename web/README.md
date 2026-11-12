@@ -239,6 +239,25 @@ and passed afterward. Build, 16 unit checks and two focused compiled browser che
 passed, including fresh isolated synthetic membership revocation, concealment and
 restoration. The hosted manual journey passed on the repaired compiled build.
 
-Normal email/Google delivery, hosted practice/game/clock acceptance and a public
-frontend URL remain separate unfinished gates. SMS, delivery workers and schedules
+Actual hosted practice and game/clock browser journeys also passed, including
+independent clock control, saved observations, Undo, review, accepted viewing and
+correction lineage. The two bounded access cycles restored the exact original
+active synthetic grants. Fresh signed outsider reads and the former clock
+operator’s denied write/UI concealment passed after restoration, with no clock
+revision change. A private selector ambiguity was corrected for the game rerun;
+it required no application repair. Fresh membership removal/restoration remains
+local-only evidence.
+
+The static nonproduction frontend is deployed at
+[teamstats-nonproduction.pages.dev](https://teamstats-nonproduction.pages.dev).
+The connected browser rendered its expected configured assets from `a9335a4`,
+with legacy local tools hidden. A separate command-line fetch returned HTTP403;
+remote byte-for-byte asset verification through that route remains unavailable.
+Both website login options are currently hidden. The Google provider is configured
+with a new basic-identity client, an owner-only Testing audience and an exact
+preview callback; actual Google sign-in remains unverified. The new Cloud project
+has no linked billing account. A controlled Google-enabled website update awaits
+specific approval because Cloudflare calls the primary target “Production” even
+though this is the nonproduction project. Email SMTP is still disabled; its
+unsaved form is prepared for private owner credential entry. SMS, delivery workers and schedules
 remain disabled. This is neither real-team acceptance nor release readiness.
