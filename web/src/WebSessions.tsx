@@ -645,33 +645,62 @@ export function WebSessions({
       )}
       {!selected ? (
         <>
-          <div className="ledger-rows">
-            {rows.map((row) => (
-              <button
-                type="button"
-                key={row.id}
-                className="session-row"
-                onClick={() => {
-                  setSelected(row.id);
-                  void state(row.id);
-                }}
+          {available &&
+            (["practice", "game"] as const).map((kind) => (
+              <section
+                key={kind}
+                aria-label={
+                  kind === "practice" ? "Team practices" : "Team games"
+                }
               >
-                <span className="session-title">
-                  <strong>{row.title}</strong>
-                  <small>
-                    {row.session_date} · {row.kind}
-                  </small>
-                </span>
-                <span className="badge">{statusLabel(row.status)}</span>
-              </button>
+                <h3>{kind === "practice" ? "Practices" : "Games"}</h3>
+                {rows.some((row) => row.kind === kind) ? (
+                  <div className="ledger-rows">
+                    {rows
+                      .filter((row) => row.kind === kind)
+                      .map((row) => (
+                        <button
+                          type="button"
+                          key={row.id}
+                          className="session-row"
+                          onClick={() => {
+                            setSelected(row.id);
+                            void state(row.id);
+                          }}
+                        >
+                          <span className="session-title">
+                            <strong>{row.title}</strong>
+                            <small>
+                              {row.session_date} ·{" "}
+                              {kind === "practice" ? "Practice" : "Game"}
+                            </small>
+                          </span>
+                          <span>
+                            {kind === "practice"
+                              ? "Open practice"
+                              : "Open game"}
+                          </span>
+                          <span className="badge">
+                            {statusLabel(row.status)}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                ) : (
+                  <Empty
+                    title={
+                      kind === "practice"
+                        ? "No team practices yet"
+                        : "No team shot charts yet"
+                    }
+                  >
+                    {kind === "practice"
+                      ? "A team plan manager can add a practice."
+                      : "A team plan manager can link a shot chart to a team game."}
+                  </Empty>
+                )}
+              </section>
             ))}
-          </div>
-          {available && rows.length === 0 && (
-            <Empty title="No shared sessions yet">
-              An authorized plan manager can create a practice or linked game
-              capture.
-            </Empty>
-          )}
           {available && can("sessions.manage") && (
             <form
               className="create-form"

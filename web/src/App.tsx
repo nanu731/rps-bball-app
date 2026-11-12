@@ -648,64 +648,103 @@ export default function App() {
                       shots and after-game stats.
                     </Empty>
                   ) : (
-                    <div className="session-list">
-                      <div className="list-head">
-                        <span>Session</span>
-                        <span>Players</span>
-                        <span>Status</span>
-                      </div>
-                      {work.sessions
+                    <>
+                      {(["practice", "game"] as const)
                         .filter(
-                          (s) =>
+                          (kind) =>
                             filter === "All sessions" ||
                             (filter === "Practices"
-                              ? s.kind === "practice"
-                              : s.kind === "game"),
+                              ? kind === "practice"
+                              : kind === "game"),
                         )
-                        .map((s) => (
-                          <div className="session-row" key={s.id}>
-                            <span className="session-date">
-                              <strong>{s.date.slice(8)}</strong>
-                              <small>
-                                {new Date(
-                                  s.date + "T12:00:00",
-                                ).toLocaleDateString(undefined, {
-                                  month: "short",
-                                })}
-                              </small>
-                            </span>
-                            <button
-                              type="button"
-                              className="session-title session-open"
-                              onClick={() => open(s)}
-                            >
-                              <strong>{s.title}</strong>
-                              <small>
-                                {s.kind === "practice"
-                                  ? "Practice plan & stats"
-                                  : "Game shots & after-game stats"}
-                              </small>
-                            </button>
-                            <span className="session-collection">
-                              {s.players.length} players included
-                            </span>
-                            <span className="badge">Device-only draft</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelected(s.id);
-                                setTab(
-                                  s.kind === "practice" ? "Results" : "Summary",
-                                );
-                                setAdding(null);
-                              }}
-                            >
-                              View results
-                              <Icon name="arrow" />
-                            </button>
-                          </div>
+                        .map((kind) => (
+                          <section
+                            key={kind}
+                            aria-label={
+                              kind === "practice" ? "Practices" : "Games"
+                            }
+                          >
+                            <h2>
+                              {kind === "practice" ? "Practices" : "Games"}
+                            </h2>
+                            {work.sessions.some((s) => s.kind === kind) ? (
+                              <div className="session-list">
+                                <div className="list-head">
+                                  <span>Session</span>
+                                  <span>Players</span>
+                                  <span>Status</span>
+                                </div>
+                                {work.sessions
+                                  .filter((s) => s.kind === kind)
+                                  .map((s) => (
+                                    <div className="session-row" key={s.id}>
+                                      <span className="session-date">
+                                        <strong>{s.date.slice(8)}</strong>
+                                        <small>
+                                          {new Date(
+                                            s.date + "T12:00:00",
+                                          ).toLocaleDateString(undefined, {
+                                            month: "short",
+                                          })}
+                                        </small>
+                                      </span>
+                                      <button
+                                        type="button"
+                                        className="session-title session-open"
+                                        onClick={() => open(s)}
+                                      >
+                                        <strong>{s.title}</strong>
+                                        <small>
+                                          {s.kind === "practice"
+                                            ? "Practice plan & stats"
+                                            : "Game shots & after-game stats"}
+                                        </small>
+                                        <span>
+                                          {s.kind === "practice"
+                                            ? "Open practice"
+                                            : "Open game"}
+                                        </span>
+                                      </button>
+                                      <span className="session-collection">
+                                        {s.players.length} players included
+                                      </span>
+                                      <span className="badge">
+                                        Device-only draft
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelected(s.id);
+                                          setTab(
+                                            s.kind === "practice"
+                                              ? "Results"
+                                              : "Summary",
+                                          );
+                                          setAdding(null);
+                                        }}
+                                      >
+                                        View results
+                                        <Icon name="arrow" />
+                                      </button>
+                                    </div>
+                                  ))}
+                              </div>
+                            ) : (
+                              <Empty
+                                title={
+                                  kind === "practice"
+                                    ? "No practices yet"
+                                    : "No games yet"
+                                }
+                              >
+                                {kind === "practice"
+                                  ? "Add a practice to plan drills and record results."
+                                  : "Add a game to record shots and after-game stats."}
+                              </Empty>
+                            )}
+                          </section>
                         ))}
-                    </div>
+                    </>
                   )}
                   <div className="workspace-footer">
                     <h2>Keep each stat sheet separate</h2>

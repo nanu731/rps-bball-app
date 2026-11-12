@@ -449,3 +449,79 @@ test("unreadable browser drafts show a recovery action without echoing private c
     fullPage: true,
   });
 });
+
+test("session groups, filters and type-specific actions open the correct records", async ({
+  page,
+}) => {
+  await demo(page);
+  const practices = page.getByRole("region", {
+    name: "Practices",
+    exact: true,
+  });
+  const games = page.getByRole("region", { name: "Games", exact: true });
+  for (const width of [390, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(
+      practices.getByRole("heading", { name: "Practices", exact: true }),
+    ).toBeVisible();
+    await expect(
+      games.getByRole("heading", { name: "Games", exact: true }),
+    ).toBeVisible();
+    await expect(
+      practices.getByRole("button", { name: /Open practice/ }),
+    ).toHaveCount(1);
+    await expect(games.getByRole("button", { name: /Open game/ })).toHaveCount(
+      1,
+    );
+    await page.screenshot({
+      path: evidence + `/session-groups-${width}.png`,
+      fullPage: true,
+    });
+  }
+  await practices.getByRole("button", { name: /Open practice/ }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "TEST ONLY shooting practice",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "All practices & games", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Games", exact: true }).click();
+  await expect(practices).toHaveCount(0);
+  await games.getByRole("button", { name: /Open game/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "TEST ONLY opponent", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "All practices & games", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Practices", exact: true }).click();
+  await expect(games).toHaveCount(0);
+  await expect(
+    practices.getByRole("button", { name: /Open practice/ }),
+  ).toHaveCount(1);
+  // Only this test context's synthetic demo is changed to exercise an empty filter.
+  await page.evaluate(() => {
+    const key = "teamstats.web.demo.v1";
+    const db = JSON.parse(localStorage.getItem(key)!);
+    db.sessions = db.sessions.filter(
+      (s: { kind: string }) => s.kind === "practice",
+    );
+    localStorage.setItem(key, JSON.stringify(db));
+  });
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Try sample demo", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Games", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "No games yet", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Add a game to record shots and after-game stats.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+});

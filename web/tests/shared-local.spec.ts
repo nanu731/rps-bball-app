@@ -1505,3 +1505,35 @@ test("shared Save stays in flow without covering the banner and works in a short
   ).toHaveValue("TEST ONLY short viewport saved protocol");
   await shot(page, "phone-shared-short-viewport-save");
 });
+
+test("shared mixed lists expose distinct practice and game groups and opening actions", async ({
+  page,
+}) => {
+  await signed(page);
+  for (const [kind, group] of [
+    ["practice", "Team practices"],
+    ["game", "Team games"],
+  ]) {
+    const section = page.getByRole("region", { name: group, exact: true });
+    const action = section
+      .getByRole("button", { name: new RegExp("Open " + kind) })
+      .first();
+    const title = await action.locator("strong").innerText();
+    await page.setViewportSize({
+      width: kind === "practice" ? 390 : 1024,
+      height: 900,
+    });
+    await section.getByRole("heading").scrollIntoViewIfNeeded();
+    if (evidence)
+      await page.screenshot({
+        path: evidence + "/shared-list-" + kind + ".png",
+      });
+    await action.click();
+    await expect(
+      page.getByRole("heading", { name: title, exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Back to shared sessions", exact: true })
+      .click();
+  }
+});

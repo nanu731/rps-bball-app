@@ -166,3 +166,17 @@ These are scoped browser and synthetic-service results. Hosted upgrade/delivery,
 Safari, real mobile keyboards, actual screen-reader interaction, physical devices,
 coach definitions and real-team pilot acceptance remain separate gates. The existing
 bundle-size advisory remains; no performance or release-readiness claim is added.
+
+## Session-list clarity follow-up
+
+Combined local and shared lists group Practices and Games under explicit headings,
+with Open practice/Open game actions. Existing local filters, within-group ordering,
+IDs, dates, player counts and statuses are preserved. Empty categories explain what
+to add. No storage, backend or permission contract changed.
+
+Build and 16 unit checks passed. Six focused compiled Chrome checks passed across
+two batches: grouping/filtering/empty states/correct opening, local practice and
+responsive journeys, signed isolated practice/game navigation and shared-list
+phone/tablet rendering. Representative screenshots were inspected privately.
+Independent bounded source review found no actionable issues. This follow-up does
+not repeat or expand the earlier hosted, recovery or device acceptance claims.
