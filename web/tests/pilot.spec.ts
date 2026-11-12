@@ -137,10 +137,30 @@ test("game court provisional selection, explicit value, FT, correction Undo and 
     page.getByText("TEST ONLY Player A · FT miss", { exact: true }),
   ).toHaveCount(0);
   await page.getByText("Set / correct clock", { exact: true }).click();
+  const period = page.getByRole("combobox", { name: "Period", exact: true });
+  await expect(period.locator("option")).toHaveText([
+    "Quarter 1",
+    "Quarter 2",
+    "Quarter 3",
+    "Quarter 4",
+    "Overtime",
+  ]);
+  await period.selectOption("Quarter 3");
   await page.getByLabel("Period length (minutes)", { exact: true }).fill("8");
   await page
     .getByRole("button", { name: "Set stopped period", exact: true })
     .click();
+  await expect(
+    page.getByText("Quarter 3 · manager reference", { exact: true }),
+  ).toBeVisible();
+  await page.getByText("Set / correct clock", { exact: true }).click();
+  await period.selectOption("Overtime");
+  await page
+    .getByRole("button", { name: "Set stopped period", exact: true })
+    .click();
+  await expect(
+    page.getByText("Overtime · manager reference", { exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Start clock", exact: true }).click();
   await expect(
     page.getByText("Running on this browser", { exact: false }),

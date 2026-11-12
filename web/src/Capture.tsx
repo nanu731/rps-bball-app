@@ -13,6 +13,13 @@ import {
   shotValueAt,
 } from "./domain.ts";
 import { Count, Icon, Notice, Scroller } from "./ui.tsx";
+const PERIODS = [
+  "Quarter 1",
+  "Quarter 2",
+  "Quarter 3",
+  "Quarter 4",
+  "Overtime",
+];
 export function CaptureEntry({
   session: s,
   save,
@@ -39,7 +46,13 @@ export function CaptureEntry({
     [correct, setCorrect] = useState<string | null>(null),
     [now, setNow] = useState(Date.now()),
     [minutes, setMinutes] = useState(""),
-    [period, setPeriod] = useState(s.clock.period),
+    [period, setPeriod] = useState(
+      PERIODS.includes(s.clock.period)
+        ? s.clock.period
+        : s.clock.configured
+          ? ""
+          : "Quarter 1",
+    ),
     [remaining, setRemaining] = useState(""),
     [issue, setIssue] = useState(""),
     [clockOpen, setClockOpen] = useState(false),
@@ -134,7 +147,8 @@ export function CaptureEntry({
           throw Error(
             "Enter a positive whole-number period length in minutes.",
           );
-        if (!period.trim()) throw Error("Enter a period label.");
+        if (!PERIODS.includes(period))
+          throw Error("Choose a quarter or overtime.");
         c = {
           period: period.trim(),
           length: n * 60,
@@ -211,12 +225,22 @@ export function CaptureEntry({
             <summary>Set / correct clock</summary>
             <div className="clock-settings">
               <label className="field">
-                Period label
-                <input
+                Period
+                <select
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
-                  maxLength={40}
-                />
+                >
+                  {period === "" && (
+                    <option value="" disabled>
+                      Choose a period
+                    </option>
+                  )}
+                  {PERIODS.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
               </label>
               <Count
                 label="Period length (minutes)"

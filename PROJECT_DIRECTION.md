@@ -99,6 +99,8 @@ The running game clock accompanies capture. Store the period and displayed clock
 reading associated with an event separately from device timestamps. Define how
 recorders share clock authority and handle pauses, corrections or disconnection
 before dependent implementation; do not silently rewrite older event times.
+Period selection uses a dropdown: Quarter 1–4 and Overtime. New games start at
+Quarter 1; older saved labels remain intact until the user explicitly sets a period.
 
 ## Data and analysis rules to retain
 

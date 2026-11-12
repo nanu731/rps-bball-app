@@ -289,7 +289,7 @@ export function newSession(
     observations: [],
     changes: [],
     clock: {
-      period: "Period 1",
+      period: "Quarter 1",
       seconds: 0,
       startedAt: null,
       configured: false,
