@@ -253,11 +253,16 @@ The static nonproduction frontend is deployed at
 The connected browser rendered its expected configured assets from `a9335a4`,
 with legacy local tools hidden. A separate command-line fetch returned HTTP403;
 remote byte-for-byte asset verification through that route remains unavailable.
-Both website login options are currently hidden. The Google provider is configured
-with a new basic-identity client, an owner-only Testing audience and an exact
-preview callback; actual Google sign-in remains unverified. The new Cloud project
-has no linked billing account. A controlled Google-enabled website update awaits
-specific approval because Cloudflare calls the primary target “Production” even
-though this is the nonproduction project. Email SMTP is still disabled; its
-unsaved form is prepared for private owner credential entry. SMS, delivery workers and schedules
+The explicitly approved primary nonproduction deployment now enables Google
+sign-in (`a9335a4`, configured asset `index-CflhPavP.js`); email stays hidden.
+Actual Google sign-in passed with the intended owner: client/callback bindings and
+basic identity scopes matched, the callback cleared, and the signed app confirmed
+current server owner access. Trusted Auth readback independently confirmed the
+Google identity belongs to the original verified owner UUID. No owner grant was
+created. Google remains in Testing with one approved owner account; the Cloud
+project has no linked billing account.
+
+Fresh server readback shows custom SMTP is still disabled. The owner-only
+credential step is prepared, and no sign-in email has yet been requested in this
+verification pass. Actual email delivery and email sign-in remain unverified. SMS, delivery workers and schedules
 remain disabled. This is neither real-team acceptance nor release readiness.

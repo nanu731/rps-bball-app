@@ -250,10 +250,12 @@ the independent manual-statistics save/completion/review/publication lifecycle;
 authenticated readback confirmed saved identities, missing values and accepted
 pointers. Actual hosted synthetic practice/game/clock, correction lineage and
 post-revocation denial checks subsequently passed with original active test grants
-restored. A static nonproduction Pages preview now renders the login-first app;
-normal sign-in options remain disabled pending actual provider verification.
+restored. The explicitly approved nonproduction Pages update now supports Google
+sign-in in the owner-only Testing audience. Actual public-browser sign-in, exact
+callback binding, current server owner access and original owner UUID preservation
+passed. Email remains hidden pending its private SMTP setup and delivery check.
 See web/README.md for scope. Provider delivery and real-team/device acceptance
 remain separate gates; activation alone does not establish a functional teammate
-pilot. Google configuration is now prepared in Testing with only the approved
-owner account, an exact callback and no linked Cloud billing. Actual Google
-sign-in and email SMTP delivery remain unverified.
+pilot. Google remains in Testing with only the approved owner account, an exact
+callback and no linked Cloud billing. Email SMTP delivery and sign-in remain
+unverified; the authorized single owner email test has not been requested.
