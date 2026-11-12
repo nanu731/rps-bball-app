@@ -56,7 +56,6 @@ export function Connected({
   navigationGuard: NavigationGuard;
 }) {
   const [url, setUrl] = useState(""),
-    [key, setKey] = useState(""),
     [client, setClient] = useState<SupabaseClient | null>(null),
     [error, setError] = useState(""),
     [user, setUser] = useState<User | null>(null),
@@ -76,12 +75,13 @@ export function Connected({
     actorRef = useRef<string | null>(null);
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(CONFIG);
+      const saved = ["127.0.0.1", "localhost"].includes(location.hostname)
+        ? localStorage.getItem(CONFIG)
+        : null;
       const config = saved ? JSON.parse(saved) : null;
-      const u = config?.url ?? import.meta.env.VITE_SUPABASE_URL ?? "",
-        k = config?.key ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
+      const u = import.meta.env.VITE_SUPABASE_URL ?? config?.url ?? "",
+        k = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? config?.key ?? "";
       setUrl(u);
-      setKey(k);
       if (u && k) setClient(clientFor(u, k));
     } catch {
       setError(
@@ -101,6 +101,16 @@ export function Connected({
     setError("");
     setPending(true);
     try {
+      const local = await client.auth.getSession();
+      if (local.error) throw new ServerError("session");
+      if (!local.data.session) {
+        actorRef.current = null;
+        setUser(null);
+        setTeams([]);
+        setTeam("");
+        server.epoch++;
+        return;
+      }
       const u = await server.identity();
       const rows = await server.rows<Team>("teams", "id,name");
       if (g !== generation.current) return;
@@ -111,6 +121,13 @@ export function Connected({
       actorRef.current = u.id;
       setUser(u);
       setTeams(rows);
+      setTeam((current) =>
+        rows.some((t) => t.id === current)
+          ? current
+          : rows.length === 1
+            ? rows[0].id
+            : "",
+      );
       setMessage("Signed in. Choose your team to continue.");
     } catch (e) {
       if (g === generation.current) {
@@ -157,7 +174,7 @@ export function Connected({
       data.subscription.unsubscribe();
     };
   }, [client]);
-  const auth = async (action: "send" | "verify" | "out") => {
+  const auth = async (action: "send" | "verify" | "out" | "google") => {
     if (!client || pending) return;
     setPending(true);
     setError("");
@@ -176,11 +193,20 @@ export function Connected({
             "Team entries are hidden, but sign-out could not be confirmed. Check your sign-in before continuing.",
           );
         setMessage("Signed out. Your device-only drafts are still here.");
+      } else if (action === "google") {
+        const { error } = await client.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: location.origin },
+        });
+        if (error)
+          throw Error(
+            "Google sign-in could not start. Try again or ask the team owner.",
+          );
       } else if (action === "send") {
         const { error } = await client.auth.signInWithOtp({
           email: email.trim(),
           options: {
-            shouldCreateUser: false,
+            shouldCreateUser: true,
             emailRedirectTo: location.origin,
           },
         });
@@ -213,7 +239,7 @@ export function Connected({
     <>
       <div className="page-heading">
         <div>
-          <h1>Team</h1>
+          <h1>{user ? "Team" : "Sign in to TeamStats"}</h1>
           {!team && (
             <p>
               Sign in to work with your team. Drafts saved only in this browser
@@ -260,103 +286,73 @@ export function Connected({
           </p>
         )}
         {!client ? (
-          <details>
-            <summary>Owner connection settings</summary>
-            <p>
-              Ask your team owner for the test connection before signing in.
-            </p>
-            <form
-              className="create-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                try {
-                  const c = clientFor(url, key);
-                  localStorage.setItem(CONFIG, JSON.stringify({ url, key }));
-                  setClient(c);
-                  setError("");
-                } catch (e) {
-                  setError(entryError(e));
-                }
-              }}
-            >
-              <p>
-                Use the team’s test connection and public key. Never enter a
-                private server key. This does not grant team access.
-              </p>
-              <label className="field">
-                Project URL
-                <input
-                  type="url"
-                  required
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://your-project.supabase.co"
-                />
-              </label>
-              <label className="field">
-                Publishable key
-                <input
-                  required
-                  value={key}
-                  onChange={(e) => setKey(e.target.value)}
-                  autoComplete="off"
-                />
-              </label>
-              <button type="submit" className="primary">
-                Use this connection
-              </button>
-            </form>
-          </details>
+          <Empty title="Team sign-in is not ready">
+            Ask the team owner to finish connecting this test version. My drafts
+            remains separate and available in this browser.
+          </Empty>
         ) : !user ? (
           <section className="auth-form">
-            <h2>Sign in to an existing account</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void auth(sent ? "verify" : "send");
-              }}
-            >
-              <label className="field">
-                Email
-                <input
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </label>
-              {sent && (
+            <h2>Sign in or request team access</h2>
+            {import.meta.env.VITE_GOOGLE_SIGN_IN_ENABLED === "true" && (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => void auth("google")}
+              >
+                Continue with Google
+              </button>
+            )}
+            {import.meta.env.VITE_EMAIL_SIGN_IN_ENABLED === "true" ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void auth(sent ? "verify" : "send");
+                }}
+              >
                 <label className="field">
-                  Email code
+                  Email
                   <input
-                    value={otp}
-                    onChange={(e) => setOTP(e.target.value)}
-                    autoComplete="one-time-code"
-                    inputMode="numeric"
+                    type="email"
+                    autoComplete="email"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </label>
-              )}
-              <div className="actions">
-                <button type="submit" className="primary" disabled={pending}>
-                  {pending
-                    ? "Signing in…"
-                    : sent
-                      ? "Verify code"
-                      : "Request sign-in email"}
-                </button>
                 {sent && (
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => void auth("send")}
-                  >
-                    Request new email
-                  </button>
+                  <label className="field">
+                    Email code
+                    <input
+                      value={otp}
+                      onChange={(e) => setOTP(e.target.value)}
+                      autoComplete="one-time-code"
+                      inputMode="numeric"
+                      required
+                    />
+                  </label>
                 )}
-              </div>
-            </form>
+                <div className="actions">
+                  <button type="submit" className="primary" disabled={pending}>
+                    {pending
+                      ? "Signing in…"
+                      : sent
+                        ? "Verify code"
+                        : "Request sign-in email"}
+                  </button>
+                  {sent && (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => void auth("send")}
+                    >
+                      Request new email
+                    </button>
+                  )}
+                </div>
+              </form>
+            ) : (
+              <p>Email sign-in is not available on this test connection.</p>
+            )}
             <p className="muted">
               Phone sign-in is unavailable. If your sign-in email does not
               arrive, ask the team owner to check email setup.

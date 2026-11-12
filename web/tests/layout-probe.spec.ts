@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 test("diagnose document overflow around roster table", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   await page
     .getByRole("button", { name: "Try sample demo", exact: true })
     .click();

@@ -15,11 +15,12 @@ import { CaptureEntry, ShotResults } from "./Capture.tsx";
 import { Practice } from "./Practice.tsx";
 import { Connected } from "./Connected.tsx";
 import { Empty, Icon, Notice, Tabs, download, taskLabel } from "./ui.tsx";
+const localTools = ["127.0.0.1", "localhost"].includes(location.hostname);
 const LOCAL = "teamstats.web.local.v1",
   DEMO = "teamstats.web.demo.v1";
 export default function App() {
   const [demo, setDemo] = useState(false),
-    [screen, setScreen] = useState("Workspace"),
+    [screen, setScreen] = useState("Shared team"),
     [filter, setFilter] = useState("All sessions"),
     [db, setDB] = useState<Ledger>(emptyLedger),
     [work, setWork] = useState<Ledger>(emptyLedger),
@@ -286,7 +287,7 @@ export default function App() {
             e.preventDefault();
             if (screen === "Shared team" && !sharedGuard.current()) return;
             setSelected(null);
-            setScreen("Workspace");
+            setScreen(localTools ? "Workspace" : "Shared team");
           }}
           className="wordmark"
         >
@@ -310,13 +311,15 @@ export default function App() {
             <Icon name="sun" />
             {theme}
           </button>
-          <button
-            type="button"
-            className={demo ? "demo-active" : ""}
-            onClick={() => void switchMode()}
-          >
-            {demo ? "Exit sample demo" : "Try sample demo"}
-          </button>
+          {screen !== "Shared team" && (
+            <button
+              type="button"
+              className={demo ? "demo-active" : ""}
+              onClick={() => void switchMode()}
+            >
+              {demo ? "Exit sample demo" : "Try sample demo"}
+            </button>
+          )}
         </div>
       </header>
       <div className="workspace">
@@ -326,56 +329,60 @@ export default function App() {
               ["Workspace", "calendar"],
               ["Shared team", "user"],
               ["Setup", "list"],
-            ].map(([name, icon]) => (
-              <button
-                type="button"
-                key={name}
-                aria-current={screen === name ? "page" : undefined}
-                onClick={() => {
-                  if (
-                    screen === "Shared team" &&
-                    name !== screen &&
-                    !sharedGuard.current()
-                  )
-                    return;
-                  setScreen(name);
-                  setSelected(null);
-                  setAdding(null);
-                }}
-              >
-                <Icon name={icon} />
-                {taskLabel(name)}
-              </button>
-            ))}
+            ]
+              .filter(([name]) => localTools || name === "Shared team")
+              .map(([name, icon]) => (
+                <button
+                  type="button"
+                  key={name}
+                  aria-current={screen === name ? "page" : undefined}
+                  onClick={() => {
+                    if (
+                      screen === "Shared team" &&
+                      name !== screen &&
+                      !sharedGuard.current()
+                    )
+                      return;
+                    setScreen(name);
+                    setSelected(null);
+                    setAdding(null);
+                  }}
+                >
+                  <Icon name={icon} />
+                  {taskLabel(name)}
+                </button>
+              ))}
           </nav>
-          <div className="sidebar-note">
-            <strong>
-              {demo ? "Sample demo" : "My drafts · browser backups"}
-            </strong>
-            <p>
-              {demo
-                ? "TEST ONLY sample players and games. Not sent to a team."
-                : "Backups below contain My drafts only, not team entries."}
-            </p>
-            <button type="button" onClick={recovery}>
-              <Icon name="download" />
-              Download backup
-            </button>
-            <button type="button" onClick={() => file.current?.click()}>
-              Import backup
-            </button>
-            <input
-              hidden
-              type="file"
-              accept="application/json,.json"
-              ref={file}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void importRecovery(f);
-                e.target.value = "";
-              }}
-            />
-          </div>
+          {localTools && (
+            <div className="sidebar-note">
+              <strong>
+                {demo ? "Sample demo" : "My drafts · browser backups"}
+              </strong>
+              <p>
+                {demo
+                  ? "TEST ONLY sample players and games. Not sent to a team."
+                  : "Backups below contain My drafts only, not team entries."}
+              </p>
+              <button type="button" onClick={recovery}>
+                <Icon name="download" />
+                Download backup
+              </button>
+              <button type="button" onClick={() => file.current?.click()}>
+                Import backup
+              </button>
+              <input
+                hidden
+                type="file"
+                accept="application/json,.json"
+                ref={file}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void importRecovery(f);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+          )}
         </aside>
         <main id="main">
           <div className={`context-bar ${demo ? "demo" : ""}`}>
@@ -400,7 +407,7 @@ export default function App() {
               and team.
             </p>
           )}
-          {loadError ? (
+          {loadError && screen !== "Shared team" ? (
             <>
               <Notice error>{loadError}</Notice>
               <div className="actions">

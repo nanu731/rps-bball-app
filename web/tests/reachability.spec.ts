@@ -7,6 +7,7 @@ test("large text, keyboard focus, reduced viewport and every roster column remai
   await page.setViewportSize({ width: 390, height: 540 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   await page
     .getByRole("button", { name: "Try sample demo", exact: true })
     .click();

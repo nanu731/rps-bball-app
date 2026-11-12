@@ -62,6 +62,18 @@ async function signed(page: Page, role = "owner", pending?: unknown) {
   await page.goto("/");
   await page.getByRole("button", { name: "Team", exact: true }).click();
   await expect(
+    page.locator("summary").filter({ hasText: "Account and team · verified" }),
+  ).toBeVisible();
+  if (
+    !(await page
+      .getByRole("combobox", { name: "Team", exact: true })
+      .isVisible())
+  )
+    await page
+      .locator("summary")
+      .filter({ hasText: "Account and team" })
+      .click();
+  await expect(
     page.getByText("Account verified", { exact: true }),
   ).toBeVisible();
   await page
@@ -1070,9 +1082,18 @@ test("actual SDK account switch and browser sign-out conceal the previous accoun
     },
   );
   expect(switched).toBe(true);
+  await expect(page.locator(".shared-team")).not.toContainText(
+    "Team owner · access verified",
+  );
+  if (
+    !(await page
+      .getByRole("combobox", { name: "Team", exact: true })
+      .isVisible())
+  )
+    await page.locator(".account-details > summary").click();
   await expect(
     page.getByRole("combobox", { name: "Team", exact: true }),
-  ).toHaveValue("");
+  ).toHaveValue(fixture.team);
   await expect(
     page.getByRole("heading", { name: title, exact: true }),
   ).toHaveCount(0);
@@ -1102,13 +1123,18 @@ test("actual SDK account switch and browser sign-out conceal the previous accoun
       exact: true,
     }),
   ).toHaveCount(0);
-  await page.locator(".account-details > summary").click();
+  if (
+    !(await page
+      .getByRole("button", { name: "Sign out of this browser", exact: true })
+      .isVisible())
+  )
+    await page.locator(".account-details > summary").click();
   await page
     .getByRole("button", { name: "Sign out of this browser", exact: true })
     .click();
   await expect(
     page.getByRole("heading", {
-      name: "Sign in to an existing account",
+      name: "Sign in or request team access",
       exact: true,
     }),
   ).toBeVisible();
@@ -1535,5 +1561,52 @@ test("shared mixed lists expose distinct practice and game groups and opening ac
     await page
       .getByRole("button", { name: "Back to shared sessions", exact: true })
       .click();
+  }
+});
+
+test("existing outsider and already signed-out synthetic session cannot read protected team data", async ({
+  browser,
+}) => {
+  safeFixture();
+  // The SDK sign-out journey invalidated switchviewer; no memberships or grants are changed here.
+  for (const role of ["outsider", "switchviewer"]) {
+    const page = await browser.newPage();
+    await page.addInitScript(
+      ({ f, role }) => {
+        localStorage.setItem(
+          "teamstats-web-public-config",
+          JSON.stringify({ url: f.apiRoot, key: f.publishableKey }),
+        );
+        localStorage.setItem(
+          "teamstats-web-auth:" + f.apiRoot,
+          JSON.stringify(f.actors[role].session),
+        );
+      },
+      { f: fixture, role },
+    );
+    await page.goto("/");
+    if (role === "outsider")
+      await expect(
+        page.getByRole("heading", { name: "No accessible teams", exact: true }),
+      ).toBeVisible();
+    else
+      await expect(page.getByRole("alert")).toContainText(
+        "Your current sign-in or team access does not allow this action",
+      );
+    await expect(page.locator(".shared-team")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Save team draft", exact: true }),
+    ).toHaveCount(0);
+    const response = await fetch(fixture.apiRoot + "/rest/v1/rpc/team_access", {
+      method: "POST",
+      headers: {
+        apikey: fixture.publishableKey,
+        Authorization: "Bearer " + fixture.actors[role].session.access_token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ p_team_id: fixture.team }),
+    });
+    expect(response.status).toBe(403);
+    await page.close();
   }
 });

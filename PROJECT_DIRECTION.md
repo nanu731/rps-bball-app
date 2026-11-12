@@ -229,3 +229,15 @@ approved visual direction, with task labels and distinct browser/team/review sta
 Its final build, 16 unit checks and 25 compiled Chrome/signed-isolated checks passed;
 see web/README.md for the scoped evidence and design-principle mapping. This does not
 activate hosted contracts or resolve the outstanding coach/device/policy gates.
+
+## Authorized nonproduction pilot follow-up
+
+The owner confirmed a web-only pilot: preserve native source/local records, but do
+not maintain old native online-client compatibility as an additional active product.
+Login-first team access and a minimal selective hosted practice/game/clock upgrade
+are authorized for the intended Free nonproduction project after fresh review and
+synthetic rehearsal. This does not authorize bootstrap reruns, blanket migrations
+14–20, real-student uploads, paid providers, SMS, production or release. Provider
+configuration, actual delivery and hosted cross-user acceptance remain separate
+from source/local checks. Both email and Google may be offered only when their
+actual configuration and strict $0 operation are verified.

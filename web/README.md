@@ -25,7 +25,7 @@ npm --prefix web run test:browser
 Browser tests use an already installed Chrome through Playwright. No provider,
 Google, SMS, schedule or production deployment is enabled by these commands.
 Public Supabase URL/publishable-key configuration can be supplied through the
-connection screen or `.env.local`; privileged keys are rejected. Never commit
+operator-supplied `.env.local` (loopback fixtures may use private browser configuration); privileged keys are rejected. Never commit
 private configuration or real records.
 
 ## Boundaries and current evidence
@@ -180,3 +180,35 @@ responsive journeys, signed isolated practice/game navigation and shared-list
 phone/tablet rendering. Representative screenshots were inspected privately.
 Independent bounded source review found no actionable issues. This follow-up does
 not repeat or expand the earlier hosted, recovery or device acceptance claims.
+
+## Login-first pilot preparation
+
+The landing screen now starts with team sign-in. A verified user with one available
+team goes directly to it; users without membership can request admission. Team
+membership and each action remain enforced by current server permissions, not a
+client-side role label. Normal users never enter a project URL or key: the operator
+supplies public build configuration. Saved connection overrides are restricted to
+loopback development; they are ignored on public origins.
+
+Legacy My drafts, Settings and sample tools remain available on loopback for the
+preserved browser workflow, separately from the team pilot. Public origins hide
+these tools and their backups. No account adopts or uploads old browser records.
+Native source and records remain preserved; the owner chose a web-only pilot and
+retired acceptance of the old native online client against the expanded contract.
+
+Email-code and Google sign-in source options use explicit build flags, disabled by
+default. Enable a flag only after its actual provider configuration, callback URL,
+zero-cost boundary and delivery/identity behavior are verified. Email signup creates
+an Auth identity, not membership or owner authority. PKCE uses the existing browser
+SDK; verified owner authority still depends on the existing Auth UUID/server records.
+No Google, SMTP, SMS, hosting or database activation is implied by this source step.
+
+Build and 16 unit checks passed. Six focused compiled Chrome checks and a separate
+actual isolated SDK account-switch/sign-out check passed. They cover login-first
+rendering, absent key-entry controls, explicit legacy-tool access, simulated public
+origin isolation, existing group/navigation behavior, actual signed local review,
+and denied reads for an existing outsider and already signed-out identity. The
+public-origin check is simulated hosting, not a deployed website. A proposed test
+that changed a membership was rejected by automatic review and was not executed;
+no fresh membership-revocation result is claimed. Hosted provider delivery and
+cross-user pilot acceptance remain pending.

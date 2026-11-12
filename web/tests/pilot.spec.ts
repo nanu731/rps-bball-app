@@ -5,6 +5,7 @@ const evidence =
 mkdirSync(evidence, { recursive: true });
 async function demo(page: import("@playwright/test").Page) {
   await page.goto("/");
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   await page
     .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
@@ -48,6 +49,7 @@ test("practice station collection, missing versus zero, save/reopen and plan PDF
     fullPage: true,
   });
   await page.reload();
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   await page
     .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
@@ -174,6 +176,7 @@ test("game court provisional selection, explicit value, FT, correction Undo and 
   });
   await page.getByRole("button", { name: "Stop clock", exact: true }).click();
   await page.reload();
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   await page
     .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
@@ -512,6 +515,7 @@ test("session groups, filters and type-specific actions open the correct records
     localStorage.setItem(key, JSON.stringify(db));
   });
   await page.reload();
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   await page
     .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
@@ -524,4 +528,80 @@ test("session groups, filters and type-specific actions open the correct records
       exact: true,
     }),
   ).toBeVisible();
+});
+
+test("login-first landing keeps legacy browser tools separate and never asks normal users for server keys", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Sign in to TeamStats", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("textbox", { name: "Project URL", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("textbox", { name: "Publishable key", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Try sample demo", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Practices & games", exact: true }),
+  ).toBeVisible();
+});
+
+test("simulated public pilot origin cannot display legacy browser drafts or accept user-supplied connection overrides", async ({
+  page,
+}) => {
+  // Simulated host rendering only; this does not establish public hosting or delivery.
+  await page.route("http://teamstats-pilot.example/**", async (route) => {
+    const response = await route.fetch({
+      url: route
+        .request()
+        .url()
+        .replace("http://teamstats-pilot.example", "http://127.0.0.1:4173"),
+    });
+    await route.fulfill({ response });
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "teamstats.web.local.v1",
+      "{broken TEST ONLY previous draft}",
+    );
+    localStorage.setItem(
+      "teamstats-web-public-config",
+      JSON.stringify({
+        url: "http://127.0.0.1:55823",
+        key: "invalid TEST ONLY override",
+      }),
+    );
+  });
+  await page.goto("http://teamstats-pilot.example/");
+  await expect(
+    page.getByRole("heading", { name: "Sign in to TeamStats", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Team sign-in is not ready",
+      exact: true,
+    }),
+  ).toBeVisible();
+  for (const name of [
+    "My drafts",
+    "Settings",
+    "Try sample demo",
+    "Download backup",
+  ])
+    await expect(page.getByRole("button", { name, exact: true })).toHaveCount(
+      0,
+    );
+  await page.getByRole("link", { name: /TEAMSTATS Practice/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Sign in to TeamStats", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/previous draft|Your saved drafts could not be opened/),
+  ).toHaveCount(0);
 });

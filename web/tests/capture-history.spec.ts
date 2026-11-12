@@ -55,6 +55,7 @@ test("event correction retains its original rule; switching template kinds clear
     db,
   );
   await page.goto("/");
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   await page
     .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
