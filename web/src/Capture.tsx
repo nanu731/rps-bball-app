@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Capture, Session, Template, Values } from "./domain.ts";
 import {
+  entryError,
   id,
   clockSeconds,
   formatClock,
@@ -127,7 +128,7 @@ export function CaptureEntry({
         setIssue("");
       }
     } catch (e) {
-      setIssue((e as Error).message);
+      setIssue(entryError(e));
     }
   };
   const clock = async (action: "start" | "stop" | "set") => {
@@ -169,7 +170,7 @@ export function CaptureEntry({
         setClockOpen(false);
       }
     } catch (e) {
-      setIssue((e as Error).message);
+      setIssue(entryError(e));
     }
   };
   const chooseCorrection = (e: Capture) => {
@@ -198,11 +199,11 @@ export function CaptureEntry({
           </strong>
           <small>
             {pending
-              ? "Pending write — clock state not saved"
+              ? "Clock save not yet confirmed"
               : s.clock.startedAt !== null && seconds > 0
                 ? shared
-                  ? "Server-anchored shared reference"
-                  : "Running on this browser"
+                  ? "Team clock · manager’s reference"
+                  : "Running in this browser"
                 : "Stopped"}{" "}
             · not the official scoreboard
           </small>
@@ -222,7 +223,7 @@ export function CaptureEntry({
             open={clockOpen}
             onToggle={(e) => setClockOpen(e.currentTarget.open)}
           >
-            <summary>Set / correct clock</summary>
+            <summary>Set game clock</summary>
             <div className="clock-settings">
               <label className="field">
                 Period
@@ -279,7 +280,7 @@ export function CaptureEntry({
                       },
                     });
                   } catch (e) {
-                    setIssue((e as Error).message);
+                    setIssue(entryError(e));
                   }
                 }}
               >
@@ -290,18 +291,18 @@ export function CaptureEntry({
         </div>
       </div>
       <details className="clock-guidance">
-        <summary>Clock authority & recovery</summary>
+        <summary>About the game clock</summary>
         <p>
           {shared
-            ? "Current server assignment controls this reference. Reconnect and reload authority after connection loss; historical event readings are retained."
-            : "Clock continues from saved start time after backgrounding/refresh. One browser controls this local reference; historical event readings are retained."}
+            ? "Only the assigned clock operator can change the team clock. After a lost connection, reload to check it. Earlier shot times stay unchanged."
+            : "The clock keeps time when this tab is in the background. Use one browser to control it. Earlier shot times stay unchanged."}
         </p>
       </details>
       {issue && <Notice error>{issue}</Notice>}
       <div className="section-heading">
         <h2>{correct ? "Correct recorded event" : "Record a field goal"}</h2>
         <span className="badge">
-          {shared ? "Shared draft · unreviewed" : "Browser draft only"}
+          {shared ? "Team draft · not reviewed" : "Device-only draft"}
         </span>
       </div>
       <fieldset className="entry-fields" disabled={blocked}>
@@ -437,7 +438,7 @@ export function CaptureEntry({
               <span>{point ? "Location selected" : "Select a location"}</span>
             </div>
             <details>
-              <summary>Keyboard / precise location</summary>
+              <summary>Choose location with keyboard</summary>
               <div className="field-grid">
                 {(["x", "y"] as const).map((axis) => (
                   <label className="field" key={axis}>
@@ -499,9 +500,9 @@ export function CaptureEntry({
                 FT miss
               </button>
             </div>
-            <h3>Selected observations</h3>
+            <h3>Other game stats</h3>
             <label className="field">
-              Event definition
+              What to track
               <select
                 value={label}
                 disabled={blocked || correctedKind === "event"}
@@ -562,7 +563,7 @@ export function CaptureEntry({
               </>
             )}
             <label className="field">
-              Counting rule / context
+              What counts? / note
               <input
                 maxLength={500}
                 value={note}
@@ -597,7 +598,7 @@ export function CaptureEntry({
         </div>
       </fieldset>
       <div className="section-heading">
-        <h2>Recorded observations</h2>
+        <h2>Recorded shots & stats</h2>
         <button
           type="button"
           disabled={blocked || !s.changes.length}
@@ -605,7 +606,7 @@ export function CaptureEntry({
             try {
               void save({ ...s, changes: undoChange(s.changes) });
             } catch (e) {
-              setIssue((e as Error).message);
+              setIssue(entryError(e));
             }
           }}
         >
@@ -614,9 +615,8 @@ export function CaptureEntry({
         </button>
       </div>
       <p className="muted">
-        {events.length} observations · {known} recorded points across both
-        teams, not a final score. {s.changes.length} retained changes.
-        Corrections retain original event time and clock reading.
+        {events.length} entries · {known} recorded points across both teams, not
+        a final score. Corrections keep the original shot time.
       </p>
       <div className="ledger-rows">
         {[...events].reverse().map((e) => (
@@ -653,10 +653,7 @@ export function CaptureEntry({
           </div>
         ))}
       </div>
-      <p className="muted">
-        Player, team and time stay attached to each recorded observation. No
-        complete-coverage, official-score or shared-publication claim.
-      </p>
+      <p className="muted">Recorded shots may not include every attempt.</p>
     </>
   );
 }
@@ -727,7 +724,7 @@ export function CourtDiagram({
 
 export function ShotResults({
   session: s,
-  provenance = "Browser draft",
+  provenance = "Device-only draft · not reviewed",
 }: {
   session: Session;
   provenance?: string;
@@ -768,8 +765,8 @@ export function ShotResults({
   return (
     <section>
       <div className="section-heading">
-        <h2>Recorded-shot results</h2>
-        <span className="badge">{provenance} · coverage unconfirmed</span>
+        <h2>Shot-chart results</h2>
+        <span className="badge">{provenance} · recorded attempts only</span>
       </div>
       <div className="actions">
         <div className="segmented">
@@ -814,8 +811,8 @@ export function ShotResults({
         <div>
           <h3>{points} recorded points</h3>
           <p className="muted">
-            Entered-data subtotal, not the official score or proof every attempt
-            was captured. Never added to manual totals.
+            Recorded attempts only, not the final score. These points are
+            separate from after-game totals.
           </p>
           <Scroller label="Recorded-shot totals">
             <table>
@@ -832,9 +829,9 @@ export function ShotResults({
           </Scroller>
         </div>
       </div>
-      <h3>Selected event observations</h3>
+      <h3>Other game stats</h3>
       {events.filter((e) => e.kind === "event").length === 0 ? (
-        <p className="muted">No selected events recorded.</p>
+        <p className="muted">No other game stats recorded.</p>
       ) : (
         events
           .filter((e) => e.kind === "event")

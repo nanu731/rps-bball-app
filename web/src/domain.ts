@@ -147,11 +147,22 @@ export const emptyLedger = (): Ledger => ({
   templates: [],
   sessions: [],
 });
+export function entryError(error: unknown): string {
+  if (error instanceof SyntaxError)
+    return "These entries could not be read. Keep the original backup and ask for help.";
+  if (error instanceof DOMException)
+    return ["QuotaExceededError", "SecurityError"].includes(error.name)
+      ? "This browser could not store your entries. Keep this tab open and download a backup before leaving."
+      : "This action could not finish. Keep your entries and try again.";
+  return error instanceof Error
+    ? error.message
+    : "This action could not finish. Keep your entries and try again.";
+}
 export function count(raw: string): number | null {
   if (raw === "") return null;
   if (!/^\d+$/.test(raw) || !Number.isSafeInteger(Number(raw)))
     throw Error(
-      "Enter a nonnegative whole number up to 9,007,199,254,740,991, or leave blank.",
+      "Enter 0 or a positive whole number, or leave blank. Very large numbers are not supported.",
     );
   return Number(raw);
 }
@@ -303,14 +314,22 @@ export function currentEvents(changes: Change[]): Capture[] {
   const events = new Map<string, Capture>();
   const seen = new Set<string>();
   for (const c of changes) {
-    if (seen.has(c.id)) throw Error("Duplicate change identity.");
+    if (seen.has(c.id))
+      throw Error(
+        "The correction history contains a repeated change. Keep the original backup and ask for help.",
+      );
     seen.add(c.id);
     if (
       JSON.stringify(events.get(c.eventID) ?? null) !== JSON.stringify(c.before)
     )
-      throw Error("Correction history does not match its before-image.");
+      throw Error(
+        "The correction history could not be read. Keep the original backup and ask for help.",
+      );
     if (c.after) {
-      if (c.after.id !== c.eventID) throw Error("Changed event identity.");
+      if (c.after.id !== c.eventID)
+        throw Error(
+          "This correction does not match the original entry. Keep the original backup and ask for help.",
+        );
       events.set(c.eventID, c.after);
     } else events.delete(c.eventID);
   }
@@ -374,18 +393,22 @@ export function validateLedger(db: Ledger): Ledger {
     !Array.isArray(db.sessions)
   )
     throw Error(
-      "Unsupported or damaged local ledger. Original bytes were kept.",
+      "This backup could not be read. Keep the original file and ask for help; your saved drafts have not changed.",
     );
   const ids = new Set<string>();
   const identity = (x: string) => {
     if (typeof x !== "string" || !x || ids.has(x))
-      throw Error("Duplicate or missing identity.");
+      throw Error(
+        "This backup has missing or repeated entries. Keep the original file and ask for help.",
+      );
     ids.add(x);
   };
   for (const p of db.players) {
     identity(p.id);
     if (!p.name?.trim() || typeof p.number !== "string")
-      throw Error("Invalid local player.");
+      throw Error(
+        "A saved player’s details could not be read. Keep the original backup and ask for help.",
+      );
   }
   for (const t of db.templates) {
     identity(t.id);
@@ -393,7 +416,9 @@ export function validateLedger(db: Ledger): Ledger {
       !t.name?.trim() ||
       !["count", "makes", "timed", "note"].includes(t.kind)
     )
-      throw Error("Invalid template.");
+      throw Error(
+        "A stat-tracking template could not be read. Keep the original backup and ask for help.",
+      );
   }
   for (const s of db.sessions) {
     identity(s.id);
@@ -405,10 +430,14 @@ export function validateLedger(db: Ledger): Ledger {
       !Array.isArray(s.plan) ||
       !Array.isArray(s.observations)
     )
-      throw Error("Invalid session.");
+      throw Error(
+        "A saved practice or game could not be read. Keep the original backup and ask for help.",
+      );
     const players = new Set(s.players.map((p) => p.id));
     if (players.size !== s.players.length)
-      throw Error("Duplicate session player.");
+      throw Error(
+        "A player is repeated in this practice or game. Keep the original backup and ask for help.",
+      );
     if (
       !s.clock ||
       !Number.isFinite(s.clock.seconds) ||
@@ -418,7 +447,9 @@ export function validateLedger(db: Ledger): Ledger {
       s.clock.length < 0 ||
       (s.clock.startedAt !== null && !Number.isFinite(s.clock.startedAt))
     )
-      throw Error("Invalid clock.");
+      throw Error(
+        "The saved game clock could not be read. Keep the original backup and ask for help.",
+      );
     for (const row of Object.values(s.shooting))
       for (const p of Object.values(row)) validatePair(p);
     for (const p of Object.values(s.ft)) validatePair(p);
@@ -432,7 +463,9 @@ export function validateLedger(db: Ledger): Ledger {
           r.number !== i + 1 ||
           ![null, true, false].includes(r.turnover)
         )
-          throw Error("Invalid independent possession numbering.");
+          throw Error(
+            "The possession rows are out of order or repeated. Keep the original backup and ask for help.",
+          );
         for (const n of Object.values(r.values)) count(n);
       });
     for (const item of s.plan) {
@@ -442,7 +475,9 @@ export function validateLedger(db: Ledger): Ledger {
         item.name.length > 100 ||
         item.instructions.length > 4000
       )
-        throw Error("Invalid practice plan.");
+        throw Error(
+          "The practice plan could not be read. Keep the original backup and ask for help.",
+        );
       count(item.minutes);
     }
     const iso = (value: string) =>
@@ -455,7 +490,9 @@ export function validateLedger(db: Ledger): Ledger {
         observationIDs.has(o.id) ||
         (o.supersedes && !observationIDs.has(o.supersedes))
       )
-        throw Error("Invalid observation correction lineage.");
+        throw Error(
+          "The correction history for these drill stats could not be read. Keep the original backup and ask for help.",
+        );
       observationIDs.add(o.id);
       if (
         !o.id ||
@@ -469,7 +506,9 @@ export function validateLedger(db: Ledger): Ledger {
         typeof o.note !== "string" ||
         o.note.length > 4000
       )
-        throw Error("Invalid observation definition, identity or time.");
+        throw Error(
+          "A drill entry has missing or unreadable details. Keep the original backup and ask for help.",
+        );
       if (o.template.kind === "makes")
         validatePair({
           made: o.values.made ?? "",
@@ -483,13 +522,19 @@ export function validateLedger(db: Ledger): Ledger {
     for (const team of ["ours", "opponent"] as const) {
       const seen = new Set<string>();
       for (const r of s.manual[team]) {
-        if (seen.has(r.id)) throw Error("Duplicate possession identity.");
+        if (seen.has(r.id))
+          throw Error(
+            "The backup repeats a possession. Keep the original file and ask for help.",
+          );
         seen.add(r.id);
       }
     }
     currentEvents(s.changes);
     for (const change of s.changes) {
-      if (!iso(change.at)) throw Error("Invalid correction time.");
+      if (!iso(change.at))
+        throw Error(
+          "The time of a correction could not be read. Keep the original backup and ask for help.",
+        );
       if (
         change.before &&
         change.after &&
@@ -529,14 +574,18 @@ export function validateLedger(db: Ledger): Ledger {
           (e.kind === "event" &&
             (e.made !== null || !e.label.trim() || !e.note.trim()))
         )
-          throw Error("Invalid captured event or retained history.");
+          throw Error(
+            "A recorded shot or its history could not be read. Keep the original backup and ask for help.",
+          );
         if (e.kind === "event" && e.template) {
           if (
             !e.template.definition.trim() ||
             !e.template.name.trim() ||
             !Number.isSafeInteger(e.template.version)
           )
-            throw Error("Invalid event definition.");
+            throw Error(
+              "The rule for a recorded stat could not be read. Keep the original backup and ask for help.",
+            );
           if (e.template.kind === "makes")
             validatePair({
               made: e.values?.made ?? "",
@@ -561,7 +610,7 @@ export function readLedger(store: Store, key: string): Ledger {
     return validateLedger(JSON.parse(raw));
   } catch {
     throw Error(
-      "Could not load this browser’s ledger. Its stored bytes were preserved. Retry or download the original for recovery.",
+      "Your saved drafts could not be opened. Nothing was overwritten. Try again or download the unreadable backup for help.",
     );
   }
 }
@@ -574,7 +623,7 @@ function writeLedger(
   const current = readLedger(store, key);
   if (current.revision !== expected)
     throw Error(
-      "Another tab saved newer work. Keep this draft, download a recovery copy, then reload the latest ledger.",
+      "Another tab saved newer entries. Download your unsaved entries, then reload the saved drafts.",
     );
   const next = validateLedger({ ...db, revision: expected + 1 });
   const bytes = JSON.stringify(next);
@@ -585,7 +634,7 @@ function writeLedger(
   store.setItem(key, bytes);
   if (store.getItem(key) !== bytes)
     throw Error(
-      "Could not confirm browser storage. Keep this draft and Retry.",
+      "Saving could not be confirmed. Keep this tab open, download your entries and try again.",
     );
   return next;
 }
@@ -632,7 +681,7 @@ export async function saveLedger(
 ): Promise<Ledger> {
   if (!locks)
     throw Error(
-      "This browser lacks safe cross-tab locking. Keep this draft and download a recovery copy; use a browser supporting Web Locks to save.",
+      "This browser cannot save drafts safely. Download your entries, then try an up-to-date browser.",
     );
   return locks.request(key, () => writeLedger(store, key, db, expected));
 }

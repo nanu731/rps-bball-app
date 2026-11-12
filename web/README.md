@@ -128,3 +128,41 @@ No native container was read or written during this web pass. All three protecte
 Xcode files' working bytes and staged entries matched the retained start baseline.
 Original native record counts were not independently re-audited; no automatic
 import, upload or temporary-identity conversion was performed.
+
+## Plain-language follow-up — 2026-11-11
+
+The follow-up to `3bad286` replaces technical screen copy with basketball tasks:
+My drafts, Team, after-game stats, stat-tracking templates and contextual recovery
+steps. Browser-only backups are explicitly separate from team entries. Owner
+connection settings and member account codes remain available through disclosures.
+Save confirmations distinguish browser-only work, saved team drafts, waiting for
+review and publication. Correction approval identifies the requester as the editor;
+rejected results are not described as unreviewed. Existing permissions, protocol
+values, records, validation and review/history behavior remain unchanged.
+
+The final compiled build (`index-DKkdM8S9.js`) passed 25 installed-Chrome checks,
+including actual signed isolated Auth/PostgREST journeys. The build and 16 unit
+checks passed. Phone, tablet, desktop, light/dark, enlarged text and recovery
+screenshots were inspected privately. A separate development-driver check covers
+SDK account switching/sign-out; it is not part of the compiled-browser count.
+The independent bounded source review closed its six wording findings. Intermediate
+old-label/ambiguous-locator test failures are retained privately, not presented as
+product defects or final passes. No hosted/provider activation occurred.
+
+Applied design guidance was limited to task copy, consistency, progressive
+help and rendered critique. Taste 2.5.1's marketing heroes, photography/effects,
+full-screen sections and marketing finish gate do not apply to these entry screens.
+The approved maroon layout, touch targets, court selection and clock dropdown stay.
+
+| Actual change | Relevant UX principle |
+|---|---|
+| Owner connection/member-code setup is disclosed only when needed. | [Hick’s Law](https://lawsofux.com/hicks-law/): fewer routine choices. |
+| Short task labels replace repeated architecture explanations. | [Cognitive load](https://lawsofux.com/cognitive-load/): less irrelevant interpretation. |
+| Recovery names the next safe action while retaining uncertain-write checks. | [Tesler’s Law](https://lawsofux.com/teslers-law/): simplify guidance without hiding necessary complexity. |
+| My drafts, Settings, Save and review states use familiar controls and language. | [Jakob’s Law](https://lawsofux.com/jakobs-law/): preserve familiar expectations. |
+| Shorter actions retain existing touch sizes; enlarged-text Save/column traversal is checked. | [Fitts’s Law](https://lawsofux.com/fittss-law/): preserve reachable targets rather than shrink controls to fit copy. |
+
+These are scoped browser and synthetic-service results. Hosted upgrade/delivery,
+Safari, real mobile keyboards, actual screen-reader interaction, physical devices,
+coach definitions and real-team pilot acceptance remain separate gates. The existing
+bundle-size advisory remains; no performance or release-readiness claim is added.

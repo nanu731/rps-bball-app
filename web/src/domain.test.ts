@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  entryError,
   count,
   scoring,
   rebound,
@@ -198,7 +199,7 @@ test("browser durability, stale revision denial, failure preservation and missin
   );
   assert.equal(map.get("synthetic"), prior);
   map.set("broken", "{");
-  assert.throws(() => readLedger(store, "broken"), /preserved/);
+  assert.throws(() => readLedger(store, "broken"), /Nothing was overwritten/);
   assert.equal(map.get("broken"), "{");
 });
 
@@ -251,7 +252,10 @@ test("same-base concurrent saves serialize and reject the loser without false su
   assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
   assert.equal(readLedger(store, "r").sessions[0].title, "A");
   assert.equal(b.sessions[0].title, "B");
-  await assert.rejects(() => saveLedger(store, "r", a, 1), /locking/);
+  await assert.rejects(
+    () => saveLedger(store, "r", a, 1),
+    /cannot save drafts safely/,
+  );
 });
 test("saved template observations and retained capture history reject malformed inputs", async () => {
   const map = new Map<string, string>();
@@ -306,4 +310,31 @@ test("saved template observations and retained capture history reject malformed 
   db.sessions[0].changes = recordChange([], event);
   await assert.rejects(() => saveLedger(store, "r", db, 1, locks));
   assert.equal(readLedger(store, "r").sessions[0].changes.length, 0);
+});
+
+test("unreadable and blocked browser storage errors give recovery steps without echoing contents", () => {
+  assert.match(
+    entryError(new SyntaxError("private fixture content")),
+    /original backup/,
+  );
+  assert.doesNotMatch(
+    entryError(new SyntaxError("private fixture content")),
+    /private fixture/,
+  );
+  assert.match(
+    entryError(new DOMException("private storage key", "QuotaExceededError")),
+    /download a backup/,
+  );
+  assert.doesNotMatch(
+    entryError(new DOMException("private request detail", "AbortError")),
+    /store|private request/,
+  );
+  assert.doesNotMatch(
+    entryError(new DOMException("private file", "NotReadableError")),
+    /store|private file/,
+  );
+  assert.equal(
+    entryError(new Error("Makes cannot exceed attempts.")),
+    "Makes cannot exceed attempts.",
+  );
 });

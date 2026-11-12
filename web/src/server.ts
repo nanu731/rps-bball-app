@@ -66,16 +66,16 @@ export class ServerError extends Error {
   constructor(code: string, write = false) {
     super(
       code === "42501" || code === "401" || code === "403"
-        ? "Access denied or session expired. Protected content has been concealed."
+        ? "Your current sign-in or team access does not allow this action. Check your sign-in or ask the team owner."
         : code === "PT409" || code === "409"
-          ? "The server changed. Reload and review the current revision before continuing."
+          ? "This was changed elsewhere. Reload the saved version before continuing."
           : code === "22023"
-            ? "The server rejected these inputs. Review counts, coverage and required confirmations."
+            ? "These entries could not be accepted. Check the numbers and required confirmations."
             : code === "42883" || code === "PGRST202"
-              ? "This server capability is unavailable. No success or publication is claimed."
+              ? "This team feature is not available on this connection. Nothing was changed."
               : write
-                ? "No confirmed result. Reload and reconcile the saved revision before any further write."
-                : "Could not load from the server. Check the connection and Retry.",
+                ? "We could not confirm whether this saved. Check the saved entries before trying again."
+                : "Could not load your team’s entries. Check your connection and try again.",
     );
     this.code = code;
     this.uncertain =
@@ -153,20 +153,26 @@ export function decodeManual(versions: Version[], game: string): Manual {
   for (const v of versions) {
     for (const r of v.records) {
       if (String(r.gameID).toLowerCase() !== game.toLowerCase())
-        throw Error("Saved record has a different game identity.");
+        throw Error(
+          "These saved entries belong to another game. Nothing was loaded.",
+        );
       if (v.dataset_type === "box_scores") {
         if (
           typeof r.playerID !== "string" ||
           !r.values ||
           typeof r.values !== "object"
         )
-          throw Error("Invalid saved box score.");
+          throw Error(
+            "The saved box score could not be read. Ask the team owner for help.",
+          );
         m.box[r.playerID.toLowerCase()] = Object.fromEntries(
           Object.entries(r.values).map(([k, v]) => [k, safeValue(v)]),
         );
       } else if (v.dataset_type === "player_paint_touches") {
         if (typeof r.playerID !== "string")
-          throw Error("Invalid saved player identity.");
+          throw Error(
+            "The player for these saved entries could not be verified.",
+          );
         m.paint[r.playerID.toLowerCase()] = safeValue(r.total);
       } else {
         if (
@@ -176,7 +182,9 @@ export function decodeManual(versions: Version[], game: string): Manual {
           r.values === null ||
           ![null, undefined, true, false].includes(r.turnover as never)
         )
-          throw Error("Invalid saved possession.");
+          throw Error(
+            "The saved possession could not be read. Ask the team owner for help.",
+          );
         const team = v.dataset_type === "our_possessions" ? "ours" : "opponent";
         m[team].push({
           id: r.id,
@@ -252,7 +260,9 @@ export function validateVersion(
       "superseded",
     ].includes(v.status)
   )
-    throw Error("The server returned an unsupported statistics snapshot.");
+    throw Error(
+      "These saved stats could not be read. Ask the team owner to check the app connection.",
+    );
   decodeManual([v], game);
   return v;
 }
@@ -295,7 +305,9 @@ export class CoreServer {
       !Array.isArray(data.capabilities) ||
       !Number.isSafeInteger(data.access_revision)
     )
-      throw Error("Invalid authority response.");
+      throw Error(
+        "Your team access could not be verified. Try checking your sign-in again.",
+      );
     return data as Access;
   }
   async rows<T>(
@@ -314,12 +326,15 @@ export class CoreServer {
       for (const [k, v] of Object.entries(filters)) q = q.eq(k, v);
       const { data, error } = await q;
       if (error) throw new ServerError(error.code);
-      if (!data) throw Error("Missing server response.");
+      if (!data)
+        throw Error(
+          "No reply was received. Check the saved entries before trying again.",
+        );
       all.push(...(data as unknown as T[]));
       if (data.length < 200) return all;
     }
     throw Error(
-      "This snapshot exceeds the browser page limit; no partial snapshot was displayed.",
+      "There are too many entries to load safely here. Ask the team owner for help; no partial results are shown.",
     );
   }
   async command<T>(

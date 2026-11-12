@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Pair, Session, Template, Values } from "./domain.ts";
 import {
+  entryError,
   count,
   id,
   currentObservations,
@@ -14,12 +15,14 @@ export function Practice({
   onChange,
   templates,
   tab,
-  provenance = "Local draft — incomplete and unreviewed.",
+  shared = false,
+  provenance = "Device-only draft · not reviewed",
 }: {
   session: Session;
   onChange: (s: Session) => void;
   templates: Template[];
   tab: string;
+  shared?: boolean;
   provenance?: string;
 }) {
   const [resultPlayer, setResultPlayer] = useState("all");
@@ -67,9 +70,9 @@ export function Practice({
         (editing
           ? s.observations.find((o) => o.id === editing)?.template
           : undefined) ?? templates.find((t) => t.id === chosen);
-      if (!t) throw Error("Choose a collection template.");
+      if (!t) throw Error("Choose a stat-tracking template.");
       if (!t.definition.trim())
-        throw Error("Define this template’s counting rule in Setup first.");
+        throw Error("Add what counts for this template in Settings first.");
       if (t.kind === "makes")
         validatePair({
           made: values.made ?? "",
@@ -95,7 +98,7 @@ export function Practice({
       setNote("");
       setIssue("");
     } catch (e) {
-      setIssue((e as Error).message);
+      setIssue(entryError(e));
     }
   };
   const t =
@@ -265,21 +268,21 @@ export function Practice({
               </select>
             </label>
           </div>
-          <h3>Session protocol</h3>
+          <h3>Drill instructions</h3>
           <label className="field">
             Sets, rotations, baskets and collector responsibility
             <textarea
               value={s.protocol}
               maxLength={4000}
-              placeholder="TODO_DRILL_PROTOCOL — enter the coach’s instructions"
+              placeholder="Enter your coach’s sets, rotations and recording responsibilities"
               onChange={(e) => onChange({ ...s, protocol: e.target.value })}
             />
           </label>
           <details>
-            <summary>Configure this session’s nine spot labels</summary>
+            <summary>Name the nine shooting spots</summary>
             <p>
-              Labels are placeholders until defined by your coach. This grid is
-              an ordered list, not official court geometry.
+              Enter your coach’s spot names. The grid shows their order, not
+              court locations.
             </p>
             <div className="spot-settings">
               {s.spots.map((spot, i) => (
@@ -309,8 +312,9 @@ export function Practice({
         <>
           {!selected ? (
             <Empty title="Include your players first">
-              Add names in Setup, then include that local roster in this
-              practice.
+              {shared
+                ? "No team players are available. Ask the team owner to check the team roster."
+                : "Add players in Settings, then include them in this practice."}
             </Empty>
           ) : (
             <>
@@ -430,7 +434,7 @@ export function Practice({
               )}
               {tab === "Collection" && (
                 <>
-                  <h2>Collect a coach-selected observation</h2>
+                  <h2>Record other drill stats</h2>
                   <label className="field">
                     Template
                     <select
@@ -453,7 +457,7 @@ export function Practice({
                     <>
                       <Notice>
                         {t.definition ||
-                          "Counting rule not supplied. Define it in Setup."}{" "}
+                          "Add what counts for this template in Settings."}{" "}
                         · definition v{t.version}
                       </Notice>
                       {t.kind === "count" || t.kind === "timed" ? (
@@ -612,8 +616,7 @@ export function Practice({
             </label>
           </div>
           <Notice>
-            {provenance} Percentages use observed makes / attempts. No ranking
-            or causal conclusions are inferred.
+            {provenance} Percentages use the makes and attempts entered.
           </Notice>
           <Scroller label="Practice shooting results">
             <table>
@@ -655,7 +658,7 @@ export function Practice({
               </tbody>
             </table>
           </Scroller>
-          <h3>Recorded template observations</h3>
+          <h3>Other drill results</h3>
           {resultObservations.length === 0 ? (
             <p className="muted">No observations entered.</p>
           ) : (

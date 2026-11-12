@@ -56,7 +56,7 @@ test("event correction retains its original rule; switching template kinds clear
   );
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Try synthetic demo", exact: true })
+    .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
   await page.getByRole("button", { name: /TEST ONLY opponent/ }).click();
   await page.getByRole("button", { name: "Correct", exact: true }).click();
@@ -66,7 +66,7 @@ test("event correction retains its original rule; switching template kinds clear
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("combobox", { name: "Event definition", exact: true }),
+    page.getByRole("combobox", { name: "What to track", exact: true }),
   ).toBeDisabled();
   await page.getByLabel("Observed count", { exact: true }).fill("2");
   await page.getByRole("button", { name: "Record event", exact: true }).click();
@@ -91,16 +91,16 @@ test("event correction retains its original rule; switching template kinds clear
   expect(corrected[1].after.values).toEqual({ count: "2" });
   expect(corrected[1].after.at).toBe(event.at);
   await page
-    .getByRole("combobox", { name: "Event definition", exact: true })
+    .getByRole("combobox", { name: "What to track", exact: true })
     .selectOption(makes.id);
   await page.getByLabel("Event makes", { exact: true }).fill("1");
   await page.getByLabel("Event attempts", { exact: true }).fill("2");
   await page.getByRole("button", { name: "Record event", exact: true }).click();
   await page
-    .getByRole("combobox", { name: "Event definition", exact: true })
+    .getByRole("combobox", { name: "What to track", exact: true })
     .selectOption(note.id);
   await page
-    .getByLabel("Counting rule / context", { exact: true })
+    .getByLabel("What counts? / note", { exact: true })
     .fill("TEST ONLY note");
   await page.getByRole("button", { name: "Record event", exact: true }).click();
   await expect

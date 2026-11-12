@@ -2,7 +2,7 @@ import { WebSessions } from "./WebSessions.tsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Manual, Player } from "./domain.ts";
-import { id } from "./domain.ts";
+import { id, entryError } from "./domain.ts";
 import {
   clientFor,
   CoreServer,
@@ -31,10 +31,25 @@ import {
   download,
   useUnsavedGuard,
   Scroller,
+  statusLabel,
 } from "./ui.tsx";
 import type { NavigationGuard } from "./ui.tsx";
 const CONFIG = "teamstats-web-public-config";
 const kinds = Object.keys(KIND_LABEL) as Kind[];
+const capabilityLabel = (cap: string) =>
+  ({
+    "stats.review": "Review after-game stats",
+    "stats.publish": "Publish own after-game stats",
+    "datasets.reopen": "Allow stat corrections",
+    "roster.manage": "Manage roster",
+    "members.manage": "Manage members",
+    "sessions.manage": "Plan sessions and assign recorders",
+    "sessions.record": "Record assigned sessions",
+    "sessions.clock": "Control assigned game clock",
+    "sessions.review": "Review session entries",
+    "sessions.publish": "Publish own session entries",
+    "sessions.reopen": "Allow session corrections",
+  })[cap] ?? "Unknown access";
 export function Connected({
   navigationGuard,
 }: {
@@ -70,7 +85,7 @@ export function Connected({
       if (u && k) setClient(clientFor(u, k));
     } catch {
       setError(
-        "Could not load public connection configuration. Re-enter it; no account authority was assumed.",
+        "The team connection could not be opened. Ask the team owner to check connection settings.",
       );
     }
   }, []);
@@ -96,9 +111,7 @@ export function Connected({
       actorRef.current = u.id;
       setUser(u);
       setTeams(rows);
-      setMessage(
-        "Account verified by Supabase. Team permissions are checked by the server.",
-      );
+      setMessage("Signed in. Choose your team to continue.");
     } catch (e) {
       if (g === generation.current) {
         if (
@@ -111,7 +124,7 @@ export function Connected({
           setTeam("");
           server.epoch++;
         }
-        setError((e as Error).message);
+        setError(entryError(e));
       }
     } finally {
       if (g === generation.current) setPending(false);
@@ -160,11 +173,9 @@ export function Connected({
         const { error } = await client.auth.signOut({ scope: "local" });
         if (error)
           throw Error(
-            "This browser has been concealed, but server sign-out was not confirmed. Check session again before continuing.",
+            "Team entries are hidden, but sign-out could not be confirmed. Check your sign-in before continuing.",
           );
-        setMessage(
-          "Signed out of this browser. Original local drafts were not uploaded or removed.",
-        );
+        setMessage("Signed out. Your device-only drafts are still here.");
       } else if (action === "send") {
         const { error } = await client.auth.signInWithOtp({
           email: email.trim(),
@@ -175,11 +186,11 @@ export function Connected({
         });
         if (error)
           throw Error(
-            "Could not request email sign-in. Check the address/provider configuration; no account was created.",
+            "The sign-in email could not be requested. Check your address or ask the team owner for help.",
           );
         setSent(true);
         setMessage(
-          "Email requested. Use the link or code supplied by your configured provider. Delivery is not guaranteed by this screen.",
+          "Sign-in email requested. Check your inbox for the link or code.",
         );
       } else {
         const { error } = await client.auth.verifyOtp({
@@ -193,7 +204,7 @@ export function Connected({
           );
       }
     } catch (e) {
-      setError((e as Error).message);
+      setError(entryError(e));
     } finally {
       setPending(false);
     }
@@ -202,11 +213,11 @@ export function Connected({
     <>
       <div className="page-heading">
         <div>
-          <h1>Shared team workspace</h1>
+          <h1>Team</h1>
           {!team && (
             <p>
-              Supabase is authoritative. Browser drafts never upload
-              automatically.
+              Sign in to work with your team. Drafts saved only in this browser
+              stay here.
             </p>
           )}
         </div>
@@ -216,7 +227,7 @@ export function Connected({
             disabled={pending}
             onClick={() => void verify(true)}
           >
-            {pending ? "Checking…" : "Check session again"}
+            {pending ? "Checking…" : "Check sign-in"}
           </button>
         )}
       </div>
@@ -233,14 +244,14 @@ export function Connected({
         </Notice>
       )}
       <details className="account-details" open={!team}>
-        <summary>Team and account{user ? " · verified" : ""}</summary>
+        <summary>Account and team{user ? " · verified" : ""}</summary>
         {team && client && (
           <button
             type="button"
             disabled={pending}
             onClick={() => void verify(true)}
           >
-            Check session again
+            Check sign-in
           </button>
         )}
         {message && (
@@ -249,48 +260,53 @@ export function Connected({
           </p>
         )}
         {!client ? (
-          <form
-            className="create-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              try {
-                const c = clientFor(url, key);
-                localStorage.setItem(CONFIG, JSON.stringify({ url, key }));
-                setClient(c);
-                setError("");
-              } catch (e) {
-                setError((e as Error).message);
-              }
-            }}
-          >
-            <h2>Connect nonproduction</h2>
+          <details>
+            <summary>Owner connection settings</summary>
             <p>
-              Only a browser publishable/anon key belongs here. Never enter a
-              service-role key. No project or owner authority is created.
+              Ask your team owner for the test connection before signing in.
             </p>
-            <label className="field">
-              Project URL
-              <input
-                type="url"
-                required
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://your-project.supabase.co"
-              />
-            </label>
-            <label className="field">
-              Publishable key
-              <input
-                required
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-                autoComplete="off"
-              />
-            </label>
-            <button type="submit" className="primary">
-              Use this connection
-            </button>
-          </form>
+            <form
+              className="create-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                try {
+                  const c = clientFor(url, key);
+                  localStorage.setItem(CONFIG, JSON.stringify({ url, key }));
+                  setClient(c);
+                  setError("");
+                } catch (e) {
+                  setError(entryError(e));
+                }
+              }}
+            >
+              <p>
+                Use the team’s test connection and public key. Never enter a
+                private server key. This does not grant team access.
+              </p>
+              <label className="field">
+                Project URL
+                <input
+                  type="url"
+                  required
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://your-project.supabase.co"
+                />
+              </label>
+              <label className="field">
+                Publishable key
+                <input
+                  required
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                  autoComplete="off"
+                />
+              </label>
+              <button type="submit" className="primary">
+                Use this connection
+              </button>
+            </form>
+          </details>
         ) : !user ? (
           <section className="auth-form">
             <h2>Sign in to an existing account</h2>
@@ -325,7 +341,7 @@ export function Connected({
               <div className="actions">
                 <button type="submit" className="primary" disabled={pending}>
                   {pending
-                    ? "Contacting Supabase…"
+                    ? "Signing in…"
                     : sent
                       ? "Verify code"
                       : "Request sign-in email"}
@@ -342,9 +358,8 @@ export function Connected({
               </div>
             </form>
             <p className="muted">
-              SMS remains disabled under the $0 boundary. Email
-              delivery/templates and redirect allowlists are provider
-              configuration gates. No signup or paid sender is activated here.
+              Phone sign-in is unavailable. If your sign-in email does not
+              arrive, ask the team owner to check email setup.
             </p>
           </section>
         ) : (
@@ -362,8 +377,7 @@ export function Connected({
             </div>
             {teams.length === 0 ? (
               <Empty title="No accessible teams">
-                A verified account is not team membership. Request admission
-                with a team ID supplied privately by the owner.
+                Ask the team owner for your team code, then request to join.
               </Empty>
             ) : (
               <label className="field">
@@ -384,7 +398,7 @@ export function Connected({
               </label>
             )}
             <details>
-              <summary>Request team admission</summary>
+              <summary>Join a team</summary>
               <form
                 className="inline-form"
                 onSubmit={async (e) => {
@@ -398,17 +412,19 @@ export function Connected({
                     );
                     if (error) throw new ServerError(error.code);
                     setMessage(
-                      `Server-confirmed admission status: ${data}. Only an authorized administrator can activate membership.`,
+                      data === "active"
+                        ? "You have joined this team. Check your sign-in again to load it."
+                        : "Request sent. A team administrator must approve it.",
                     );
                   } catch (e) {
-                    setError((e as Error).message);
+                    setError(entryError(e));
                   } finally {
                     setPending(false);
                   }
                 }}
               >
                 <label className="field">
-                  Owner-provided team ID
+                  Team code from the owner
                   <input
                     required
                     value={join}
@@ -417,7 +433,7 @@ export function Connected({
                   />
                 </label>
                 <button type="submit" disabled={pending}>
-                  Request admission
+                  Request to join
                 </button>
               </form>
             </details>
@@ -434,15 +450,11 @@ export function Connected({
         />
       )}
       <details className="capability-boundary">
-        <summary>What is connected in this web pilot?</summary>
+        <summary>About this pilot</summary>
         <p>
-          Existing shared manual statistics use current Auth, team authority,
-          RLS and version/review commands. Practice plans, running clocks and
-          court/event capture have a separate prepared server contract. Shared
-          use is available only on a compatible authorized server; hosted
-          activation remains unverified. Video permissions do not authorize
-          practice collection. No Sheets/media delivery or scheduling is
-          activated.
+          Team features depend on the connection set up by your owner. Drafts
+          saved in this browser stay separate. Google Sheets, video delivery and
+          scheduled exports are not active in this pilot.
         </p>
       </details>
     </>
@@ -484,7 +496,7 @@ function SharedTeam({
     [type, setType] = useState("regularSeason"),
     [newID, setNewID] = useState(id),
     [uncertain, setUncertain] = useState(false),
-    [section, setSection] = useState("Manual games"),
+    [section, setSection] = useState("After-game stats"),
     [adminTarget, setAdminTarget] = useState(""),
     [adminCap, setAdminCap] = useState("sessions.record"),
     [adminLocked, setAdminLocked] = useState(!!adminAttempt),
@@ -501,7 +513,9 @@ function SharedTeam({
     setGame(null);
     setManage(false);
     setMembers([]);
-    setError("Current team access was denied. Cached team data is concealed.");
+    setError(
+      "You no longer have access to this team. Check your sign-in or ask the team owner.",
+    );
   };
   const load = async () => {
     const g = ++generation.current;
@@ -580,7 +594,7 @@ function SharedTeam({
         setRevisions([]);
         setGame(null);
       }
-      setError((e as Error).message);
+      setError(entryError(e));
     } finally {
       if (g === generation.current) setBusy(false);
     }
@@ -620,7 +634,7 @@ function SharedTeam({
       if (e instanceof ServerError && e.uncertain) setUncertain(true);
       if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
         conceal();
-      setError((e as Error).message);
+      setError(entryError(e));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -642,9 +656,7 @@ function SharedTeam({
       });
       sessionStorage.removeItem(adminKey);
       setAdminAttempt(null);
-      setAdminReceipt(
-        "Server confirmed the administration change. Effective access is rechecked on every operation.",
-      );
+      setAdminReceipt("Team access updated.");
       await load();
       setMembers(
         await server.rows(
@@ -664,7 +676,7 @@ function SharedTeam({
       }
       if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
         conceal();
-      setError((e as Error).message);
+      setError(entryError(e));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -689,8 +701,8 @@ function SharedTeam({
         });
         const current = grants.find((g) => g.revoked_at === null);
         description = current
-          ? `Current stored grant is present${current.expires_at ? " with an expiry; server authority remains decisive" : ""}.`
-          : "Current stored grant is absent.";
+          ? `This access is assigned${current.expires_at ? " with an expiry" : ""}.`
+          : "This access is not assigned.";
       } else if (adminAttempt.name === "team_set_membership") {
         const found = await server.rows<{ status: string }>(
           "team_memberships",
@@ -701,21 +713,21 @@ function SharedTeam({
         description = `Current membership: ${found[0]?.status ?? "not visible"}.`;
       } else
         throw Error(
-          "Unrecognized retained administration command; preserve recovery data for support.",
+          "This access change could not be checked. Keep your recovery information and ask for help.",
         );
       const after = await server.access(team.id);
       if (before.access_revision !== after.access_revision)
-        throw Error("Authority changed during readback. Check again.");
+        throw Error("Team access changed while checking. Check again.");
       setAccess(after);
       setAdminReceipt(
         description +
-          " The prior reply remains unconfirmed; no write was repeated. Review this state before allowing a new command.",
+          " The earlier change is still unconfirmed. Check this access before allowing another change.",
       );
       setAdminChecked(true);
     } catch (e) {
       if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
         conceal();
-      setError((e as Error).message);
+      setError(entryError(e));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -726,11 +738,11 @@ function SharedTeam({
       <div className="section-heading">
         <h2>{team.name}</h2>
         <details className="team-authority">
-          <summary>Team authority & administration</summary>
-          <p>Access revision {access?.access_revision ?? "not loaded"}</p>
+          <summary>Team access</summary>
+
           <div className="actions">
             <button type="button" disabled={busy} onClick={() => void load()}>
-              Reload current authority
+              Check team access
             </button>
             {access &&
               (access.is_owner ||
@@ -758,7 +770,7 @@ function SharedTeam({
                         ["401", "403", "42501"].includes(e.code)
                       )
                         conceal();
-                      setError((e as Error).message);
+                      setError(entryError(e));
                       setMembers([]);
                     }
                   }}
@@ -770,151 +782,161 @@ function SharedTeam({
         </details>
       </div>
       {error && <Notice error>{error}</Notice>}
-      {busy && <p role="status">Loading current team state…</p>}
+      {busy && <p role="status">Loading your team…</p>}
       {access && (
         <p className="muted">
           {access.is_owner
-            ? "Owner access confirmed by server"
+            ? "Team owner · access verified"
             : access.can_propose_stats
-              ? "Active member · draft proposals allowed"
-              : "Active viewer"}{" "}
+              ? "Team member · can enter draft stats"
+              : "Team member · can view published results"}{" "}
         </p>
       )}
       {manage && access && (
         <section className="create-form">
-          <h3>Protected team administration</h3>
+          <h3>Manage team</h3>
           <p>
-            {members.length} visible membership records; {roster.length} active
-            roster entries. Only server-confirmed authority permits a change. No
-            owner identity is inferred from an email.
+            {members.length} members · {roster.length} active players. Access
+            changes apply to this team.
           </p>
           {adminReceipt && (
             <p className="receipt" role="status">
               {adminReceipt}
             </p>
           )}
-          {members
-            .filter((m) => m.user_id !== actor)
-            .map((m) => (
-              <div className="observation" key={m.user_id}>
-                <div>
-                  <strong>Account {m.user_id}</strong>
-                  <small>Server membership: {m.status}</small>
+          <details>
+            <summary>Member access · account codes</summary>
+            <p>
+              Use a member’s verified account code. Check it privately with that
+              person before changing access.
+            </p>
+            {members
+              .filter((m) => m.user_id !== actor)
+              .map((m) => (
+                <div className="observation" key={m.user_id}>
+                  <div>
+                    <strong>Account {m.user_id}</strong>
+                    <small>{statusLabel(m.status)}</small>
+                  </div>
+                  {m.status === "pending" &&
+                    (access.is_owner ||
+                      access.capabilities.includes("members.manage")) && (
+                      <button
+                        type="button"
+                        disabled={busy || adminLocked}
+                        onClick={() =>
+                          void adminCommand("team_set_membership", {
+                            p_user_id: m.user_id,
+                            p_status: "active",
+                          })
+                        }
+                      >
+                        Admit member
+                      </button>
+                    )}
                 </div>
-                {m.status === "pending" &&
-                  (access.is_owner ||
-                    access.capabilities.includes("members.manage")) && (
-                    <button
-                      type="button"
-                      disabled={busy || adminLocked}
-                      onClick={() =>
-                        void adminCommand("team_set_membership", {
-                          p_user_id: m.user_id,
-                          p_status: "active",
-                        })
-                      }
-                    >
-                      Admit member
-                    </button>
-                  )}
-              </div>
-            ))}
-          {access.is_owner && (
-            <>
-              <label className="field">
-                Existing active member
-                <select
-                  value={adminTarget}
-                  onChange={(e) => setAdminTarget(e.target.value)}
-                >
-                  <option value="">Choose an account</option>
-                  {members
-                    .filter((m) => m.user_id !== actor && m.status === "active")
-                    .map((m) => (
-                      <option key={m.user_id} value={m.user_id}>
-                        {m.user_id}
+              ))}
+            {access.is_owner && (
+              <>
+                <label className="field">
+                  Existing active member
+                  <select
+                    value={adminTarget}
+                    onChange={(e) => setAdminTarget(e.target.value)}
+                  >
+                    <option value="">Choose an account</option>
+                    {members
+                      .filter(
+                        (m) => m.user_id !== actor && m.status === "active",
+                      )
+                      .map((m) => (
+                        <option key={m.user_id} value={m.user_id}>
+                          {m.user_id}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label className="field">
+                  Access to give or remove
+                  <select
+                    value={adminCap}
+                    onChange={(e) => setAdminCap(e.target.value)}
+                  >
+                    {[
+                      "stats.review",
+                      "stats.publish",
+                      "datasets.reopen",
+                      "roster.manage",
+                      "members.manage",
+                      "sessions.manage",
+                      "sessions.record",
+                      "sessions.clock",
+                      "sessions.review",
+                      "sessions.publish",
+                      "sessions.reopen",
+                    ].map((cap) => (
+                      <option key={cap} value={cap}>
+                        {capabilityLabel(cap)}
                       </option>
                     ))}
-                </select>
-              </label>
-              <label className="field">
-                Capability
-                <select
-                  value={adminCap}
-                  onChange={(e) => setAdminCap(e.target.value)}
-                >
-                  {[
-                    "stats.review",
-                    "stats.publish",
-                    "datasets.reopen",
-                    "roster.manage",
-                    "members.manage",
-                    "sessions.manage",
-                    "sessions.record",
-                    "sessions.clock",
-                    "sessions.review",
-                    "sessions.publish",
-                    "sessions.reopen",
-                  ].map((cap) => (
-                    <option key={cap}>{cap}</option>
-                  ))}
-                </select>
-              </label>
-              <div className="actions">
-                <button
-                  type="button"
-                  disabled={busy || adminLocked || !adminTarget}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Grant ${adminCap} to this selected existing account?`,
+                  </select>
+                </label>
+                <div className="actions">
+                  <button
+                    type="button"
+                    disabled={busy || adminLocked || !adminTarget}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Allow “${capabilityLabel(adminCap)}” for this member?`,
+                        )
                       )
-                    )
-                      void adminCommand("team_set_capability", {
-                        p_user_id: adminTarget,
-                        p_capability: adminCap,
-                        p_enabled: true,
-                      });
-                  }}
-                >
-                  Grant selected capability
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || adminLocked || !adminTarget}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Revoke ${adminCap} from this selected existing account?`,
+                        void adminCommand("team_set_capability", {
+                          p_user_id: adminTarget,
+                          p_capability: adminCap,
+                          p_enabled: true,
+                        });
+                    }}
+                  >
+                    Allow selected access
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || adminLocked || !adminTarget}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Remove “${capabilityLabel(adminCap)}” from this member?`,
+                        )
                       )
-                    )
-                      void adminCommand("team_set_capability", {
-                        p_user_id: adminTarget,
-                        p_capability: adminCap,
-                        p_enabled: false,
-                      });
-                  }}
-                >
-                  Revoke selected capability
-                </button>
-              </div>
-              <p className="muted">
-                sessions.* permissions are separate from practice-video grants.
-                Unactivated servers reject unsupported names. This panel does
-                not create accounts or delegate owner authority.
-              </p>
-            </>
-          )}
+                        void adminCommand("team_set_capability", {
+                          p_user_id: adminTarget,
+                          p_capability: adminCap,
+                          p_enabled: false,
+                        });
+                    }}
+                  >
+                    Remove selected access
+                  </button>
+                </div>
+                <p className="muted">
+                  Recording access allows assignment to a practice or game. It
+                  does not change who owns the team.
+                </p>
+              </>
+            )}
+          </details>
           {adminLocked && (
             <Notice error>
-              Administration result uncertain. No command will be replayed.
+              This access change could not be confirmed. Check the current
+              access before making another change.
               <div className="actions">
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => void reconcileAdmin()}
                 >
-                  Read current attempted target state
+                  Check current access
                 </button>
                 {adminChecked && (
                   <button
@@ -929,12 +951,12 @@ function SharedTeam({
                         setError("");
                       } catch {
                         setError(
-                          "Could not clear the recovery marker. New administration remains blocked.",
+                          "Recovery could not finish. Check current access again before making another change.",
                         );
                       }
                     }}
                   >
-                    I reviewed the current state; allow a new command
+                    I checked access; allow another change
                   </button>
                 )}
               </div>
@@ -944,7 +966,7 @@ function SharedTeam({
       )}
       {access && (
         <Tabs
-          items={["Manual games", "Practices & capture"]}
+          items={["After-game stats", "Practices & shots"]}
           value={section}
           onChange={(next) => {
             if (navigationGuard.current()) setSection(next);
@@ -952,7 +974,7 @@ function SharedTeam({
           label="Shared team section"
         />
       )}
-      {section === "Practices & capture" && access ? (
+      {section === "Practices & shots" && access ? (
         <WebSessions
           server={server}
           team={team.id}
@@ -1018,7 +1040,7 @@ function SharedTeam({
                   void create();
                 }}
               >
-                <h3>Add shared game</h3>
+                <h3>Add team game</h3>
                 <div className="field-grid">
                   <label className="field">
                     Opponent
@@ -1064,12 +1086,12 @@ function SharedTeam({
                   className="primary"
                   disabled={busy || uncertain}
                 >
-                  Create server game
+                  Create team game
                 </button>
                 {uncertain && (
                   <p>
-                    Creation result is uncertain. Reload to reconcile this
-                    stable game ID; do not create another copy.
+                    We could not confirm whether the game was created. Reload
+                    the game list before trying again.
                   </p>
                 )}
               </form>
@@ -1176,7 +1198,7 @@ function SharedGame({
             )
           )
             throw Error(
-              "A covered roster revision is unavailable; saved labels were not replaced.",
+              "A player’s saved roster details are unavailable. Names have not been replaced.",
             );
         }
       });
@@ -1189,7 +1211,7 @@ function SharedGame({
         const latest = v.find((x) => x.id === editing.id);
         if (latest && latest.revision > editing.revision)
           setMessage(
-            "A newer server revision exists. Compare it with retained entries before continuing.",
+            "Newer entries were saved elsewhere. Compare them with your unsaved entries before continuing.",
           );
       }
     } catch (e) {
@@ -1205,7 +1227,7 @@ function SharedGame({
         setEditing(null);
         onDenied();
       }
-      setError((e as Error).message);
+      setError(entryError(e));
     } finally {
       if (g === generation.current) setBusy(false);
     }
@@ -1245,7 +1267,22 @@ function SharedGame({
       sessionStorage.removeItem(pendingKey);
       pendingOp.current = null;
       setMessage(
-        "Server confirmed this operation. Saving, completion, submission and publication are separate states.",
+        name === "stats_save_drafts" || name === "stats_save_draft"
+          ? "Saved for your team. Not published yet."
+          : name === "stats_complete"
+            ? "Entry complete. Send it for review when ready."
+            : name === "stats_submit"
+              ? "Waiting for review."
+              : name === "stats_publish" ||
+                  (name === "stats_review" && args.p_approve === true)
+                ? "Published to team."
+                : name === "stats_review"
+                  ? "Not approved. Saved entries are kept in history."
+                  : name === "stats_request_edit"
+                    ? "Correction request sent."
+                    : name === "stats_review_edit"
+                      ? "Correction approved. The requester can now edit."
+                      : "Your change was saved.",
       );
       await load(false);
     } catch (e) {
@@ -1264,7 +1301,7 @@ function SharedGame({
         setRequests([]);
         onDenied();
       }
-      setError((e as Error).message);
+      setError(entryError(e));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -1278,7 +1315,7 @@ function SharedGame({
       );
       if (!p)
         throw Error(
-          "A covered roster revision is unavailable; no name was substituted.",
+          "A player’s saved roster details are unavailable. Names have not been replaced.",
         );
       return p;
     });
@@ -1301,7 +1338,7 @@ function SharedGame({
       setConfirmZeros(false);
       setView("Draft entry");
     } catch (e) {
-      setError((e as Error).message);
+      setError(entryError(e));
     }
   };
   const players =
@@ -1326,7 +1363,7 @@ function SharedGame({
       );
     } catch {
       setError(
-        "Browser recovery storage failed. Keep this tab open and download the unsaved draft before leaving.",
+        "This browser could not back up your unsaved entries. Keep this tab open and download them before leaving.",
       );
     }
   };
@@ -1394,17 +1431,15 @@ function SharedGame({
         sessionStorage.removeItem(pendingKey);
         setUncertain(false);
         pendingOp.current = null;
-        setMessage(
-          "Reconciled with the exact expected saved revision/status. No write was replayed.",
-        );
+        setMessage("The expected change was saved. It was not sent again.");
       } else
         setMessage(
-          "Fresh server state does not establish the expected outcome. Retained entries are unchanged; inspect history before explicitly resuming with revision checks.",
+          "We still cannot confirm this change. Your unsaved entries are kept here. Check Review & history before continuing.",
         );
     } catch (e) {
       if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
         onDenied();
-      setError((e as Error).message);
+      setError(entryError(e));
     }
   };
   const openWorking = async (target: Kind = kind) => {
@@ -1454,7 +1489,7 @@ function SharedGame({
       }
       if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
         onDenied();
-      setError((e as Error).message);
+      setError(entryError(e));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -1503,7 +1538,7 @@ function SharedGame({
         );
       }
     } catch (e) {
-      setError((e as Error).message);
+      setError(entryError(e));
     }
   };
   return (
@@ -1512,13 +1547,14 @@ function SharedGame({
         <div>
           <h2>{game.opponent}</h2>
           <p>
-            {game.date} · {game.home_away} · server-confirmed game
+            {game.date} · {game.home_away === "home" ? "Home" : "Away"} · Team
+            game
           </p>
         </div>
         <span>
-          Independent datasets
+          Separate stat sheets
           <br />
-          Accepted versions only in summary
+          Only published stats appear in team results
         </span>
       </div>
       <Tabs
@@ -1527,12 +1563,12 @@ function SharedGame({
         onChange={setView}
         label="Shared game section"
       />
-      {busy && <p role="status">Contacting statistics server…</p>}
+      {busy && <p role="status">Loading team stats…</p>}
       {error && (
         <Notice error>
           {error}
           <button type="button" disabled={busy} onClick={() => void load()}>
-            Reload / Retry reads
+            Reload saved stats
           </button>
         </Notice>
       )}
@@ -1543,14 +1579,14 @@ function SharedGame({
       )}
       {uncertain && (
         <Notice error>
-          Write result uncertain. Further writes are blocked; retained entries
-          remain available.
+          We could not confirm whether this saved. Keep this tab open. Check
+          before saving again.
           <button
             type="button"
             disabled={busy}
             onClick={() => void reconcile()}
           >
-            Reload and reconcile
+            Check save status
           </button>
           {reconciled && (
             <button
@@ -1560,7 +1596,7 @@ function SharedGame({
                   sessionStorage.removeItem(pendingKey);
                 } catch {
                   setError(
-                    "Recovery marker could not be cleared; further writes remain blocked.",
+                    "Recovery could not finish. Keep your backup and check save status again before editing.",
                   );
                   return;
                 }
@@ -1570,11 +1606,11 @@ function SharedGame({
                 setDirty(false);
                 setView("Review & history");
                 setMessage(
-                  "Current server state loaded. No old command was replayed. Open a permitted current draft before recovering browser entries.",
+                  "Latest saved stats loaded. Nothing was sent again. Open your draft to recover unsaved entries.",
                 );
               }}
             >
-              Continue from reviewed server state without replay
+              Continue from latest saved stats
             </button>
           )}
         </Notice>
@@ -1582,20 +1618,19 @@ function SharedGame({
       {view === "Accepted summary" && loaded && (
         <>
           {accepted.length === 0 ? (
-            <Empty title="No accepted statistics visible">
-              Drafts and submitted proposals do not appear as reviewed results.
-              A load failure is shown above, not treated as proof of empty data.
+            <Empty title="No published stats yet">
+              Drafts and stats waiting for review are not team results yet.
             </Empty>
           ) : (
             <>
               <p>
-                {accepted.length} independently accepted datasets. Missing
-                accepted datasets remain missing.
+                {accepted.length} published stat sheets. Sheets not yet
+                published are not included.
               </p>
               <ManualSummary
                 manual={acceptedManual}
                 players={acceptedPlayers}
-                provenance="Server-accepted versions · missing datasets remain unavailable"
+                provenance="Published to team · missing sheets not included"
               />
             </>
           )}
@@ -1604,7 +1639,7 @@ function SharedGame({
       {view === "Draft entry" && (
         <>
           <label className="field">
-            Dataset
+            Stat sheet
             <select
               value={kind}
               disabled={dirty || busy}
@@ -1625,16 +1660,15 @@ function SharedGame({
           {!editing ? (
             <>
               <p>
-                Open your existing permitted draft. Completed/published versions
-                require an authorized edit request; no new permission is
-                inferred.
+                Open your draft to enter stats. Finished entries are locked;
+                request a correction from Review & history.
               </p>
               <button
                 type="button"
                 disabled={busy || uncertain || !access.can_propose_stats}
                 onClick={() => void openWorking()}
               >
-                Open my permitted draft
+                Open my draft
               </button>
               {versions
                 .filter(
@@ -1651,15 +1685,15 @@ function SharedGame({
                       void openWorking(v.dataset_type);
                     }}
                   >
-                    Continue saved draft · revision {v.revision}
+                    Continue saved draft
                   </button>
                 ))}
             </>
           ) : (
             <>
               <p className="badge">
-                {editing.status} · server revision {editing.revision}
-                {dirty ? " · unsaved browser entries" : ""}
+                {statusLabel(editing.status)}
+                {dirty ? " · unsaved changes" : ""}
               </p>
               {editing.status === "draft" ? (
                 <>
@@ -1668,6 +1702,7 @@ function SharedGame({
                     className="entry-fields"
                   >
                     <ManualEntry
+                      shared
                       only={
                         kind === "box_scores"
                           ? "Box scores"
@@ -1694,7 +1729,7 @@ function SharedGame({
                       disabled={!dirty || busy || uncertain}
                       onClick={saveWorking}
                     >
-                      Save server draft
+                      Save team draft
                     </button>
                     <button
                       type="button"
@@ -1715,7 +1750,7 @@ function SharedGame({
                         )
                       }
                     >
-                      Download unsaved recovery copy
+                      Download unsaved entries
                     </button>
                     <button
                       type="button"
@@ -1725,7 +1760,7 @@ function SharedGame({
                           const raw = sessionStorage.getItem(recoveryKey);
                           if (!raw)
                             throw Error(
-                              "No retained browser buffer for this account and game.",
+                              "No unsaved entries were found for this account and game.",
                             );
                           const b = JSON.parse(raw);
                           if (
@@ -1735,27 +1770,28 @@ function SharedGame({
                             b.version?.id !== editing.id
                           )
                             throw Error(
-                              "Retained buffer belongs to a different version; no values were imported.",
+                              "These unsaved entries belong to a different draft. Nothing was imported.",
                             );
                           encodeRecords(b.manual, kind, game.id, players);
                           buffer(b.manual);
                           setMessage(
-                            "Retained browser entries loaded. Not saved or server-confirmed.",
+                            "Unsaved entries restored. Save them to your team when ready.",
                           );
                         } catch (e) {
-                          setError((e as Error).message);
+                          setError(entryError(e));
                         }
                       }}
                     >
-                      Recover this account’s retained entries
+                      Restore my unsaved entries
                     </button>
                   </div>
                   <details>
-                    <summary>Complete this independent dataset</summary>
+                    <summary>Finish this stat sheet</summary>
                     <p>
-                      Save first. Completion freezes entry; it is not submission
-                      or publication. Scoring contradictions block completion,
-                      not draft saving.
+                      Save first. Finishing locks this sheet until a correction
+                      is approved. You can then send it for review. Check
+                      scoring differences before finishing; drafts can still be
+                      saved.
                     </p>
                     {kind === "box_scores" ||
                     kind === "player_paint_touches" ? (
@@ -1765,7 +1801,7 @@ function SharedGame({
                           checked={confirmRoster}
                           onChange={(e) => setConfirmRoster(e.target.checked)}
                         />
-                        I confirm this game and the covered real roster.
+                        I checked the game and the players included.
                       </label>
                     ) : (
                       <label className="checkbox">
@@ -1774,8 +1810,8 @@ function SharedGame({
                           checked={confirmZeros}
                           onChange={(e) => setConfirmZeros(e.target.checked)}
                         />
-                        Convert only existing numeric blanks to explicit zero on
-                        completion. Every turnover must be answered.
+                        Blank counts in rows I added will be saved as 0. Every
+                        turnover still needs Yes or No.
                       </label>
                     )}
                     <button
@@ -1809,9 +1845,8 @@ function SharedGame({
                 </>
               ) : (
                 <Notice>
-                  This version is frozen. Use Review & history to submit it or
-                  request an authorized correction. No values were silently
-                  reopened.
+                  These entries are locked. Use Review & history to send them
+                  for review or request a correction.
                 </Notice>
               )}
             </>
@@ -1820,21 +1855,21 @@ function SharedGame({
       )}
       {view === "Review & history" && (
         <>
-          {versions.length === 0 && <p>No versions visible to this account.</p>}
+          {versions.length === 0 && (
+            <p>No saved stat sheets are available to you.</p>
+          )}
           <div className="version-list">
             {versions.map((v) => (
               <section key={v.id}>
                 <div className="section-heading">
                   <h3>{KIND_LABEL[v.dataset_type]}</h3>
-                  <span className="badge">
-                    {v.status} · revision {v.revision}
-                  </span>
+                  <span className="badge">{statusLabel(v.status)}</span>
                 </div>
                 <p>
                   {v.records.length} records ·{" "}
                   {v.base_published_version_id
-                    ? "Correction lineage retained"
-                    : "Original proposal"}
+                    ? "Correction · earlier results kept"
+                    : "First submission"}
                 </p>
                 <div className="actions">
                   {v.author_user_id === actor && v.status === "draft" && (
@@ -1856,7 +1891,7 @@ function SharedGame({
                         })
                       }
                     >
-                      Submit for review
+                      Send for review
                     </button>
                   )}
                   {v.status === "submitted" &&
@@ -1870,7 +1905,7 @@ function SharedGame({
                           onClick={() => {
                             if (
                               window.confirm(
-                                "Accept and publish this exact submitted version? This creates a queued export job; it does not deliver to Google.",
+                                "Approve these saved stats and publish them to the team? Earlier published results will be kept.",
                               )
                             )
                               void mutate("stats_review", {
@@ -1881,7 +1916,7 @@ function SharedGame({
                               });
                           }}
                         >
-                          Accept & publish
+                          Approve & publish
                         </button>
                         <button
                           type="button"
@@ -1895,7 +1930,7 @@ function SharedGame({
                             })
                           }
                         >
-                          Reject proposal
+                          Do not approve
                         </button>
                       </>
                     )}
@@ -1909,7 +1944,7 @@ function SharedGame({
                         onClick={() => {
                           if (
                             window.confirm(
-                              "Publish your exact saved version using server-confirmed bypass authority?",
+                              "Your access lets you publish without another reviewer. Publish these saved stats to the team?",
                             )
                           )
                             void mutate("stats_publish", {
@@ -1918,7 +1953,7 @@ function SharedGame({
                             });
                         }}
                       >
-                        Publish with current authority
+                        Publish my saved stats
                       </button>
                     )}
                   {["published", "completed", "submitted", "rejected"].includes(
@@ -1929,7 +1964,7 @@ function SharedGame({
                       disabled={busy || uncertain}
                       onClick={() => {
                         const reason = window.prompt(
-                          "Reason for requesting permission to edit this retained version:",
+                          "Why do these entries need a correction?",
                         );
                         if (reason?.trim())
                           void mutate("stats_request_edit", {
@@ -1939,12 +1974,12 @@ function SharedGame({
                           });
                       }}
                     >
-                      Request permission to edit
+                      Request a correction
                     </button>
                   )}
                 </div>
                 <details>
-                  <summary>Review saved values and correction context</summary>
+                  <summary>View saved stats and changes</summary>
                   {v.base_published_version_id ? (
                     (() => {
                       const base = versions.find(
@@ -1953,14 +1988,14 @@ function SharedGame({
                       if (!base)
                         return (
                           <p>
-                            Accepted base unavailable to this account. No
-                            comparison is inferred.
+                            The earlier published stats are not available to
+                            you, so changes cannot be compared.
                           </p>
                         );
                       const changes = recordChanges(base, v);
                       return (
                         <section>
-                          <h4>Changes from accepted base</h4>
+                          <h4>Changes from published stats</h4>
                           {changes.length === 0 ? (
                             <p>No saved field changes.</p>
                           ) : (
@@ -2007,15 +2042,17 @@ function SharedGame({
                       );
                     })()
                   ) : (
-                    <p>Original proposal — no accepted base to compare.</p>
+                    <p>
+                      First submission — no earlier published stats to compare.
+                    </p>
                   )}
                   <ManualSummary
                     manual={decodeManual([v], game.id)}
                     players={labelsFor(v)}
-                    provenance={`${v.status} · server revision ${v.revision}`}
+                    provenance={statusLabel(v.status)}
                   />
                   <details>
-                    <summary>Technical record identifiers / raw JSON</summary>
+                    <summary>Technical details</summary>
                     <pre>{JSON.stringify(v.records, null, 2)}</pre>
                   </details>
                 </details>
@@ -2024,7 +2061,7 @@ function SharedGame({
           </div>
           {requests.map((r) => (
             <section className="request-row" key={r.id}>
-              <h3>Edit request · {r.status}</h3>
+              <h3>Correction request · {statusLabel(r.status)}</h3>
               <p>{r.reason}</p>
               {r.status === "pending" &&
                 (access.is_owner ||
@@ -2036,7 +2073,7 @@ function SharedGame({
                     onClick={() => {
                       if (
                         window.confirm(
-                          "Approve one new working revision while preserving published history?",
+                          "Allow a new correction draft? Published history will be kept.",
                         )
                       )
                         void mutate("stats_review_edit", {
@@ -2047,14 +2084,14 @@ function SharedGame({
                         });
                     }}
                   >
-                    Approve reopening
+                    Allow correction
                   </button>
                 )}
             </section>
           ))}
           <p className="muted">
-            Publication can queue output work. Queued is not delivered. Google
-            delivery and scheduling remain disabled.
+            Google Sheets delivery is not active. Published stats are available
+            to your team in TeamStats.
           </p>
         </>
       )}

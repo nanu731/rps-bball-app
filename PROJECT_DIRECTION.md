@@ -223,3 +223,9 @@ proof and three independent visual scores averaging 95.33. This accepts only the
 recorded local/isolated scope. It does not resolve coach facts or owner decisions,
 establish Safari/mobile-keyboard/physical-device/screen-reader acceptance, or
 authorize hosted activation, native data upload, provider spending or release.
+
+A later plain-language follow-up to `3bad286` keeps the same web pilot behavior and
+approved visual direction, with task labels and distinct browser/team/review states.
+Its final build, 16 unit checks and 25 compiled Chrome/signed-isolated checks passed;
+see web/README.md for the scoped evidence and design-principle mapping. This does not
+activate hosted contracts or resolve the outstanding coach/device/policy gates.

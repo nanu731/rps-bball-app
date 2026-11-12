@@ -6,10 +6,10 @@ mkdirSync(evidence, { recursive: true });
 async function demo(page: import("@playwright/test").Page) {
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Try synthetic demo", exact: true })
+    .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
   await expect(
-    page.getByText("SYNTHETIC DEMO · TEST ONLY", { exact: true }),
+    page.getByText("SAMPLE DEMO · TEST ONLY", { exact: true }),
   ).toBeVisible();
 }
 
@@ -37,10 +37,10 @@ test("practice station collection, missing versus zero, save/reopen and plan PDF
   await page.getByLabel("Spot 1 makes", { exact: true }).fill("0");
   await page.getByLabel("Spot 1 attempts", { exact: true }).fill("0");
   await page
-    .getByRole("button", { name: "Save browser draft", exact: true })
+    .getByRole("button", { name: "Save in this browser", exact: true })
     .click();
   await expect(
-    page.getByText("Saved in this browser’s separate synthetic demo ledger."),
+    page.getByText("Sample data saved in this browser only."),
   ).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
@@ -49,7 +49,7 @@ test("practice station collection, missing versus zero, save/reopen and plan PDF
   });
   await page.reload();
   await page
-    .getByRole("button", { name: "Try synthetic demo", exact: true })
+    .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
   await page
     .getByRole("button", { name: /TEST ONLY shooting practice/ })
@@ -100,7 +100,9 @@ test("court locations automatically select shot value, with manual override and 
     page.getByText("TEST ONLY Player A · 2PT make", { exact: true }),
   ).toBeVisible();
   await expect(observations).toHaveCount(before + 1);
-  await page.getByText("Keyboard / precise location", { exact: true }).click();
+  await page
+    .getByText("Choose location with keyboard", { exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Select center location", exact: true })
     .click();
@@ -136,7 +138,7 @@ test("game court provisional selection, explicit value, FT, correction Undo and 
   await expect(
     page.getByText("TEST ONLY Player A · FT miss", { exact: true }),
   ).toHaveCount(0);
-  await page.getByText("Set / correct clock", { exact: true }).click();
+  await page.getByText("Set game clock", { exact: true }).click();
   const period = page.getByRole("combobox", { name: "Period", exact: true });
   await expect(period.locator("option")).toHaveText([
     "Quarter 1",
@@ -153,7 +155,7 @@ test("game court provisional selection, explicit value, FT, correction Undo and 
   await expect(
     page.getByText("Quarter 3 · manager reference", { exact: true }),
   ).toBeVisible();
-  await page.getByText("Set / correct clock", { exact: true }).click();
+  await page.getByText("Set game clock", { exact: true }).click();
   await period.selectOption("Overtime");
   await page
     .getByRole("button", { name: "Set stopped period", exact: true })
@@ -163,7 +165,7 @@ test("game court provisional selection, explicit value, FT, correction Undo and 
   ).toBeVisible();
   await page.getByRole("button", { name: "Start clock", exact: true }).click();
   await expect(
-    page.getByText("Running on this browser", { exact: false }),
+    page.getByText("Running in this browser", { exact: false }),
   ).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
@@ -173,7 +175,7 @@ test("game court provisional selection, explicit value, FT, correction Undo and 
   await page.getByRole("button", { name: "Stop clock", exact: true }).click();
   await page.reload();
   await page
-    .getByRole("button", { name: "Try synthetic demo", exact: true })
+    .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
   await page.getByRole("button", { name: /TEST ONLY opponent/ }).click();
   await expect(
@@ -186,7 +188,9 @@ test("manual modes share draft, calm scoring does not block Save, independent pa
 }) => {
   await demo(page);
   await page.getByRole("button", { name: /TEST ONLY opponent/ }).click();
-  await page.getByRole("button", { name: "Manual entry", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   await page.getByLabel("Points", { exact: true }).fill("4");
   await page.getByLabel("Threes made", { exact: true }).fill("7");
   await expect(page.getByText("Check scoring", { exact: true })).toBeVisible();
@@ -200,10 +204,10 @@ test("manual modes share draft, calm scoring does not block Save, independent pa
     page.getByLabel("TEST ONLY Player A Points", { exact: true }),
   ).toHaveValue("4");
   await page
-    .getByRole("button", { name: "Save browser draft", exact: true })
+    .getByRole("button", { name: "Save in this browser", exact: true })
     .click();
   await expect(
-    page.getByText("Saved in this browser’s separate synthetic demo ledger."),
+    page.getByText("Sample data saved in this browser only."),
   ).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
@@ -221,7 +225,7 @@ test("manual modes share draft, calm scoring does not block Save, independent pa
     page.getByText("0 records entered", { exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Save browser draft", exact: true })
+    .getByRole("button", { name: "Save in this browser", exact: true })
     .click();
 });
 
@@ -241,7 +245,9 @@ test("responsive phone/tablet, dark, reduced motion and accessible scrolling ren
     path: evidence + "/phone-game-court-light.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Manual entry", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   await page.getByLabel("Points", { exact: true }).fill("4");
   await page.getByLabel("Threes made", { exact: true }).fill("7");
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -269,7 +275,7 @@ test("responsive phone/tablet, dark, reduced motion and accessible scrolling ren
     fullPage: true,
   });
   await page
-    .getByRole("button", { name: "Save browser draft", exact: true })
+    .getByRole("button", { name: "Save in this browser", exact: true })
     .click();
   await page.getByRole("button", { name: "Court", exact: true }).click();
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -289,13 +295,15 @@ test("clock stop persists despite unrelated invalid manual input; capture select
     .getByRole("button", { name: /#1/ })
     .click();
   await page.getByRole("button", { name: "3 points", exact: true }).click();
-  await page.getByText("Set / correct clock", { exact: true }).click();
+  await page.getByText("Set game clock", { exact: true }).click();
   await page.getByLabel("Period length (minutes)", { exact: true }).fill("8");
   await page
     .getByRole("button", { name: "Set stopped period", exact: true })
     .click();
   await page.getByRole("button", { name: "Start clock", exact: true }).click();
-  await page.getByRole("button", { name: "Manual entry", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   await page.getByLabel("Points", { exact: true }).fill("-1");
   await page.getByRole("button", { name: "Court", exact: true }).click();
   await expect(
@@ -310,7 +318,9 @@ test("clock stop persists despite unrelated invalid manual input; capture select
   await expect(
     page.getByText("Stopped · not the official scoreboard", { exact: false }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Manual entry", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   await expect(page.getByLabel("Points", { exact: true })).toHaveValue("-1");
   const stored = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("teamstats.web.demo.v1")!),
@@ -358,4 +368,84 @@ test("same browser tabs cannot both overwrite one base revision", async ({
   );
   expect(saved.sessions).toHaveLength(1);
   expect(saved.revision).toBe(1);
+});
+
+test("task wording separates browser drafts, team sign-in and advanced owner settings", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "My drafts", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("ONLY IN THIS BROWSER", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("main")).not.toContainText(
+    /ledger|revision|authoritative|RPC|JWT/,
+  );
+  await page.getByRole("button", { name: "Team", exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.getByText("TEAM WORKSPACE", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Backups below contain My drafts only, not team entries.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("textbox", { name: "Project URL", exact: true }),
+  ).not.toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByText("Owner connection settings", { exact: true }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Project URL", exact: true }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: evidence + "/phone-owner-connection.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Stat-tracking templates", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("main")).not.toContainText(
+    /stable local identity|authoritative|TODO_/,
+  );
+  await page.screenshot({
+    path: evidence + "/phone-draft-settings.png",
+    fullPage: true,
+  });
+});
+
+test("unreadable browser drafts show a recovery action without echoing private contents or an empty state", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const broken = '{"private fixture contents"';
+  await page.addInitScript(
+    (raw) => localStorage.setItem("teamstats.web.local.v1", raw),
+    broken,
+  );
+  await page.goto("/");
+  await expect(page.getByRole("alert")).toContainText(
+    "Your saved drafts could not be opened. Nothing was overwritten.",
+  );
+  await expect(page.getByRole("alert")).not.toContainText("private fixture");
+  await expect(
+    page.getByRole("button", {
+      name: "Download unreadable backup",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Your next session starts here", { exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Retry load", exact: true }).click();
+  expect(
+    await page.evaluate(() => localStorage.getItem("teamstats.web.local.v1")),
+  ).toBe(broken);
+  await page.screenshot({
+    path: evidence + "/phone-unreadable-draft-recovery.png",
+    fullPage: true,
+  });
 });

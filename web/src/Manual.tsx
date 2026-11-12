@@ -16,11 +16,13 @@ export function ManualEntry({
   onChange,
   only,
   disabledTeams = [],
+  shared = false,
 }: {
   manual: Manual;
   players: Player[];
   onChange: (m: Manual) => void;
   only?: string;
+  shared?: boolean;
   disabledTeams?: ("ours" | "opponent")[];
 }) {
   const [tab, setTab] = useState("Box scores"),
@@ -57,8 +59,7 @@ export function ManualEntry({
         />
       )}
       <p className="muted">
-        After-game datasets are collected independently. Court records do not
-        fill these fields.
+        Enter totals from your stat sheet. Shot-chart entries are separate.
       </p>
       {active === "Box scores" && (
         <>
@@ -73,7 +74,7 @@ export function ManualEntry({
                 ))}
               </ul>
               <span>
-                Drafts can still be saved. No values are changed automatically.
+                You can still save this draft. Your entries will not be changed.
               </span>
             </Notice>
           )}
@@ -85,8 +86,9 @@ export function ManualEntry({
           />
           {!p ? (
             <Empty title="No players included">
-              Add your local roster, then explicitly include it in this session.
-              Shared entry requires an authorized server roster.
+              {shared
+                ? "No team players are available. Ask the team owner to check the team roster."
+                : "Add players in Settings, then include them in this practice or game."}
             </Empty>
           ) : mode === "Single player" ? (
             <>
@@ -275,14 +277,16 @@ export function ManualEntry({
       )}
       {active === "Paint touches" && (
         <>
-          <h3>Player game-total paint touches</h3>
+          <h3>Player paint touches · game totals</h3>
           <p>
             A player intentionally establishes two feet in the paint with the
-            ball. Independent totals; not inferred from possession records.
+            ball. Enter each player’s total separately from possessions.
           </p>
           {players.length === 0 ? (
             <Empty title="No players included">
-              Include your roster before entry.
+              {shared
+                ? "No team players are available. Ask the team owner to check the team roster."
+                : "Add players in Settings, then include them in this game."}
             </Empty>
           ) : (
             <div className="ledger-rows">
@@ -314,7 +318,7 @@ export function ManualEntry({
 export function ManualSummary({
   manual,
   players,
-  provenance = "Local draft · incomplete and unreviewed",
+  provenance = "Device-only draft · not reviewed",
 }: {
   manual: Manual;
   players: Player[];
@@ -335,17 +339,17 @@ export function ManualSummary({
   return (
     <>
       <div className="section-heading">
-        <h2>Independent manual totals</h2>
+        <h2>After-game totals</h2>
         <span className="badge">{provenance}</span>
       </div>
       <p>
-        <strong>{subtotal} points</strong> — entered-data subtotal; {missing} of{" "}
-        {players.length} players missing points. This is not a final score.
+        <strong>{subtotal} points</strong> — entered points subtotal; {missing}{" "}
+        of {players.length} players missing points. This is not a final score.
       </p>
       <label className="field player-select">
         View player
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All covered players</option>
+          <option value="all">All players</option>
           {players.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name} · #{p.number}
@@ -391,8 +395,7 @@ export function ManualSummary({
             possession records entered
           </h3>
           <p className="muted">
-            Records entered, not final game possessions. No cross-sheet
-            reconciliation is claimed.
+            Entered records only, not a final possession count.
           </p>
           <Scroller label={`${team} possession records`}>
             <table>

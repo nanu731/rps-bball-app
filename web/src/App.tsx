@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Ledger, Session, Template } from "./domain.ts";
 import {
+  entryError,
   demoLedger,
   emptyLedger,
   id,
@@ -13,7 +14,7 @@ import { ManualEntry, ManualSummary } from "./Manual.tsx";
 import { CaptureEntry, ShotResults } from "./Capture.tsx";
 import { Practice } from "./Practice.tsx";
 import { Connected } from "./Connected.tsx";
-import { Empty, Icon, Notice, Tabs, download } from "./ui.tsx";
+import { Empty, Icon, Notice, Tabs, download, taskLabel } from "./ui.tsx";
 const LOCAL = "teamstats.web.local.v1",
   DEMO = "teamstats.web.demo.v1";
 export default function App() {
@@ -50,7 +51,7 @@ export default function App() {
       setStorageFailure(false);
       setError("");
     } catch (e) {
-      setLoadError((e as Error).message);
+      setLoadError(entryError(e));
       setLoaded(false);
     }
   };
@@ -105,7 +106,7 @@ export default function App() {
     const storage = (e: StorageEvent) => {
       if (e.key === key) {
         setError(
-          "This browser ledger changed in another tab. Download unsaved work, then reload the latest ledger.",
+          "Your drafts changed in another tab. Download unsaved entries, then reload the saved drafts.",
         );
         setStorageFailure(true);
       }
@@ -125,7 +126,7 @@ export default function App() {
     try {
       validateLedger(candidate);
     } catch (e) {
-      setError((e as Error).message);
+      setError(entryError(e));
       return false;
     }
     busyRef.current = true;
@@ -148,14 +149,14 @@ export default function App() {
       setStorageFailure(false);
       setReceipt(
         retain
-          ? "Capture/clock saved in this browser. Other draft fields remain unsaved."
+          ? "Shots and clock saved in this browser. Other entries still need saving."
           : demo
-            ? "Saved in this browser’s separate synthetic demo ledger."
-            : "Saved in this browser. Incomplete and unreviewed; not uploaded.",
+            ? "Sample data saved in this browser only."
+            : "Saved in this browser only. Not sent to your team.",
       );
       return true;
     } catch (e) {
-      setError((e as Error).message);
+      setError(entryError(e));
       setStorageFailure(true);
       return false;
     } finally {
@@ -190,7 +191,9 @@ export default function App() {
   };
   const switchMode = async () => {
     if (dirty) {
-      setError("Save or download unsaved work before switching ledgers.");
+      setError(
+        "Save or download your entries before switching between your drafts and the demo.",
+      );
       return;
     }
     if (screen === "Shared team" && !sharedGuard.current()) return;
@@ -199,7 +202,7 @@ export default function App() {
       try {
         await saveLedger(localStorage, DEMO, demoLedger(), 0, navigator.locks);
       } catch (e) {
-        setError((e as Error).message);
+        setError(entryError(e));
         return;
       }
     }
@@ -226,13 +229,20 @@ export default function App() {
   const importRecovery = async (f: File) => {
     try {
       if (f.size > 4_000_000) throw Error("Recovery file exceeds 4 MB.");
-      const raw = JSON.parse(await f.text());
+      let raw;
+      try {
+        raw = JSON.parse(await f.text());
+      } catch {
+        throw Error(
+          "This backup could not be read. Choose a TeamStats backup file; your drafts have not changed.",
+        );
+      }
       if (
         raw.format !== "teamstats-web-recovery-v1" ||
         raw.mode !== (demo ? "demo" : "local")
       )
         throw Error(
-          "Choose a recovery file for this ledger. Demo and real local drafts cannot be mixed.",
+          "Choose a backup for this workspace. Sample data and your own drafts stay separate.",
         );
       const restored = validateLedger(raw.ledger);
       const merged = {
@@ -250,13 +260,13 @@ export default function App() {
         const old = merged.sessions.find((x) => x.id === s.id);
         if (old && JSON.stringify(old) !== JSON.stringify(s))
           throw Error(
-            "A session with this identity has different contents. Keep both recovery files; no records were overwritten.",
+            "This practice or game already has different entries. Keep both backups; nothing was overwritten.",
           );
         if (!old) merged.sessions.push(s);
       }
       await save(merged);
     } catch (e) {
-      setError((e as Error).message);
+      setError(entryError(e));
     }
   };
   const open = (s: Session) => {
@@ -267,7 +277,7 @@ export default function App() {
   return (
     <div className="app">
       <a className="skip" href="#main">
-        Skip to workspace
+        Skip to main content
       </a>
       <header className="brand-header">
         <a
@@ -281,7 +291,7 @@ export default function App() {
           className="wordmark"
         >
           TEAM<span>STATS</span>
-          <small>Practice & game ledger</small>
+          <small>Practice & game stats</small>
         </a>
         <div className="header-actions">
           <button
@@ -305,7 +315,7 @@ export default function App() {
             className={demo ? "demo-active" : ""}
             onClick={() => void switchMode()}
           >
-            {demo ? "Exit synthetic demo" : "Try synthetic demo"}
+            {demo ? "Exit sample demo" : "Try sample demo"}
           </button>
         </div>
       </header>
@@ -334,23 +344,25 @@ export default function App() {
                 }}
               >
                 <Icon name={icon} />
-                {name}
+                {taskLabel(name)}
               </button>
             ))}
           </nav>
           <div className="sidebar-note">
-            <strong>{demo ? "Synthetic demo" : "Browser drafts"}</strong>
+            <strong>
+              {demo ? "Sample demo" : "My drafts · browser backups"}
+            </strong>
             <p>
               {demo
-                ? "TEST ONLY identities. Nothing connects to Supabase."
-                : "Private to this browser profile. Not reviewed or shared."}
+                ? "TEST ONLY sample players and games. Not sent to a team."
+                : "Backups below contain My drafts only, not team entries."}
             </p>
             <button type="button" onClick={recovery}>
               <Icon name="download" />
-              Download recovery copy
+              Download backup
             </button>
             <button type="button" onClick={() => file.current?.click()}>
-              Import recovery copy
+              Import backup
             </button>
             <input
               hidden
@@ -369,23 +381,23 @@ export default function App() {
           <div className={`context-bar ${demo ? "demo" : ""}`}>
             <span>
               {demo
-                ? "SYNTHETIC DEMO · TEST ONLY"
+                ? "SAMPLE DEMO · TEST ONLY"
                 : screen === "Shared team"
-                  ? "SHARED TEAM WORKSPACE"
-                  : "LOCAL BROWSER WORKSPACE"}
+                  ? "TEAM WORKSPACE"
+                  : "ONLY IN THIS BROWSER"}
             </span>
             <span>
               {screen === "Shared team" && !demo
-                ? "Current server permissions required"
+                ? "Your team access applies here"
                 : dirty
                   ? "Unsaved draft changes"
-                  : `Browser ledger · revision ${db.revision}`}
+                  : "Not sent to your team"}
             </span>
           </div>
           {demo && (
             <p className="demo-note muted">
-              Separate TEST ONLY demo. Browser saves are real; hosted
-              permissions are not simulated.
+              TEST ONLY sample data. Demo entries stay separate from your drafts
+              and team.
             </p>
           )}
           {loadError ? (
@@ -404,7 +416,7 @@ export default function App() {
                     )
                   }
                 >
-                  Download original stored bytes
+                  Download unreadable backup
                 </button>
               </div>
             </>
@@ -424,11 +436,11 @@ export default function App() {
                           )
                         }
                       >
-                        Retry same draft
+                        Try saving again
                       </button>
                     )}
                     <button type="button" onClick={recovery}>
-                      Download unsaved recovery copy
+                      Download unsaved entries
                     </button>
                     <button
                       type="button"
@@ -436,13 +448,13 @@ export default function App() {
                         if (
                           !dirty ||
                           window.confirm(
-                            "Download your unsaved recovery copy first. Reload the saved ledger now?",
+                            "Download a backup of your unsaved entries first. Replace them with the last saved drafts?",
                           )
                         )
                           load();
                       }}
                     >
-                      Reload saved ledger
+                      Reload saved drafts
                     </button>
                   </div>
                 </Notice>
@@ -455,9 +467,9 @@ export default function App() {
               )}
               {screen === "Shared team" ? (
                 demo ? (
-                  <Empty title="Demo stays separate from shared teams">
-                    Exit synthetic demo to configure an actual nonproduction
-                    Supabase account. No demo action grants server authority.
+                  <Empty title="Leave the demo to use your team">
+                    Exit the sample demo, then sign in from Team. Sample players
+                    and stats stay here.
                   </Empty>
                 ) : (
                   <Connected navigationGuard={sharedGuard} />
@@ -467,10 +479,10 @@ export default function App() {
                   <Setup db={work} change={setWork} />
                   <div className="actions">
                     <button type="button" onClick={recovery}>
-                      Download recovery copy
+                      Download backup
                     </button>
                     <button type="button" onClick={() => file.current?.click()}>
-                      Import recovery copy
+                      Import backup
                     </button>
                   </div>
                 </>
@@ -495,15 +507,14 @@ export default function App() {
                       </p>
                     </div>
                     <span>
-                      Local draft
+                      Device-only draft
                       <br />
-                      Incomplete · unreviewed
+                      Not reviewed
                     </span>
                   </div>
                   {session.players.length === 0 && (
                     <Notice>
-                      This session has no players. Add your roster in Setup,
-                      then{" "}
+                      No players are included. Add players in Settings, then{" "}
                       <button
                         type="button"
                         disabled={!work.players.length}
@@ -514,9 +525,9 @@ export default function App() {
                           })
                         }
                       >
-                        Include current local roster
+                        Include my players
                       </button>
-                      . Local identities never become server roster identities.
+                      .
                     </Notice>
                   )}
                   <Tabs
@@ -620,7 +631,7 @@ export default function App() {
                           )
                             open(s);
                         } catch (e) {
-                          setError((e as Error).message);
+                          setError(entryError(e));
                         }
                       }}
                     />
@@ -633,15 +644,14 @@ export default function App() {
                   />
                   {work.sessions.length === 0 ? (
                     <Empty title="Your next session starts here">
-                      Add a practice to prepare a plan, or add a game for court
-                      capture and after-game entry. No roster or results have
-                      been invented.
+                      Add a practice to plan drills, or add a game to record
+                      shots and after-game stats.
                     </Empty>
                   ) : (
                     <div className="session-list">
                       <div className="list-head">
                         <span>Session</span>
-                        <span>Collection</span>
+                        <span>Players</span>
                         <span>Status</span>
                       </div>
                       {work.sessions
@@ -672,14 +682,14 @@ export default function App() {
                               <strong>{s.title}</strong>
                               <small>
                                 {s.kind === "practice"
-                                  ? "Practice plan & collection"
-                                  : "Game · court & manual datasets"}
+                                  ? "Practice plan & stats"
+                                  : "Game shots & after-game stats"}
                               </small>
                             </button>
                             <span className="session-collection">
                               {s.players.length} players included
                             </span>
-                            <span className="badge">Local draft</span>
+                            <span className="badge">Device-only draft</span>
                             <button
                               type="button"
                               onClick={() => {
@@ -698,11 +708,10 @@ export default function App() {
                     </div>
                   )}
                   <div className="workspace-footer">
-                    <h2>One session. Independent evidence.</h2>
+                    <h2>Keep each stat sheet separate</h2>
                     <p>
-                      Practice observations, court shots and after-game datasets
-                      keep their own context. Saved drafts do not become
-                      reviewed team results automatically.
+                      Shot-chart entries do not fill in after-game totals.
+                      Drafts saved here are not team results.
                     </p>
                   </div>
                 </>
@@ -711,10 +720,10 @@ export default function App() {
                 <div className="save-dock" ref={dock}>
                   <span>
                     {busy
-                      ? "Saving browser ledger…"
+                      ? "Saving in this browser…"
                       : dirty
                         ? "Unsaved changes — keep this tab open until saved."
-                        : "Saved browser draft · not uploaded"}
+                        : "Only in this browser · not sent to your team"}
                   </span>
                   <button
                     type="button"
@@ -722,7 +731,7 @@ export default function App() {
                     disabled={busy || !dirty}
                     onClick={() => void save()}
                   >
-                    {busy ? "Saving…" : "Save browser draft"}
+                    {busy ? "Saving…" : "Save in this browser"}
                   </button>
                 </div>
               )}
@@ -730,10 +739,7 @@ export default function App() {
           )}
         </main>
       </div>
-      <footer className="app-footer">
-        TeamStats · Browser pilot · Official identity assets and real roster are
-        owner-provided. No automatic upload.
-      </footer>
+      <footer className="app-footer">TeamStats · Test version</footer>
     </div>
   );
 }
@@ -839,17 +845,19 @@ function Setup({ db, change }: { db: Ledger; change: (s: Ledger) => void }) {
     <>
       <div className="page-heading">
         <div>
-          <h1>Local setup</h1>
-          <p>Your roster and reusable collection definitions.</p>
+          <h1>Draft settings</h1>
+          <p>
+            Players and stat-tracking templates for your device-only drafts.
+          </p>
         </div>
       </div>
       <Notice>
-        Local player identities stay local. This does not create or edit an
-        authoritative shared roster. Sessions retain the roster labels and
-        template definitions included when they were prepared.
+        These players and templates are only for drafts in this browser. Your
+        team roster is separate. Earlier entries keep their original player
+        details and tracking rules.
       </Notice>
       <section>
-        <h2>Local roster</h2>
+        <h2>My draft players</h2>
         <form
           className="inline-form"
           onSubmit={(e) => {
@@ -893,28 +901,27 @@ function Setup({ db, change }: { db: Ledger; change: (s: Ledger) => void }) {
               onChange={(e) => setNumber(e.target.value)}
             />
           </label>
-          <button type="submit">Add local player</button>
+          <button type="submit">Add player</button>
         </form>
         <div className="ledger-rows">
           {db.players.map((p) => (
             <div className="roster-row" key={p.id}>
               <strong>{p.name}</strong>
               <span>#{p.number}</span>
-              <small>Stable local identity</small>
             </div>
           ))}
         </div>
         {!db.players.length && (
           <p className="muted">
-            No players added. Use only owner-authorized names.
+            No players added yet. Add only names you have permission to use.
           </p>
         )}
       </section>
       <section>
-        <h2>Reusable collection templates</h2>
+        <h2>Stat-tracking templates</h2>
         <p>
-          Use your coach’s names and definitions. Earlier observations retain
-          the exact definition version used.
+          Use your coach’s drill names and what counts. Changing a template does
+          not change earlier entries.
         </p>
         <form
           className="create-form"
@@ -954,7 +961,7 @@ function Setup({ db, change }: { db: Ledger; change: (s: Ledger) => void }) {
               />
             </label>
             <label className="field">
-              Collection type
+              What to record
               <select
                 value={kind}
                 onChange={(e) => setKind(e.target.value as Template["kind"])}
@@ -967,13 +974,13 @@ function Setup({ db, change }: { db: Ledger; change: (s: Ledger) => void }) {
             </label>
           </div>
           <label className="field">
-            Definition / counting rule
+            What counts?
             <textarea
               required
               value={definition}
               maxLength={4000}
               onChange={(e) => setDefinition(e.target.value)}
-              placeholder="Instructions and what counts are not supplied"
+              placeholder="Enter your coach’s instructions and what counts"
             />
           </label>
           <button type="submit">Add template</button>
@@ -984,14 +991,20 @@ function Setup({ db, change }: { db: Ledger; change: (s: Ledger) => void }) {
               <h3>{t.name}</h3>
               <p>{t.definition}</p>
               <small>
-                {t.kind} · version {t.version}
+                {t.kind === "count"
+                  ? "Count"
+                  : t.kind === "makes"
+                    ? "Makes / attempts"
+                    : t.kind === "timed"
+                      ? "Timed event"
+                      : "Note"}
               </small>
             </div>
             <button
               type="button"
               onClick={() => {
                 const rule = window.prompt(
-                  "New definition for future sessions. Earlier observations keep their original version.",
+                  "What counts in future practices and games? Earlier entries will keep their original rule.",
                   t.definition,
                 );
                 if (rule?.trim())
@@ -1009,23 +1022,21 @@ function Setup({ db, change }: { db: Ledger; change: (s: Ledger) => void }) {
                   });
               }}
             >
-              Revise for future sessions
+              Change future rule
             </button>
           </div>
         ))}
       </section>
       {issue && <Notice error>{issue}</Notice>}
       <section>
-        <h2>Recovery & privacy</h2>
+        <h2>Back up your drafts</h2>
         <p>
-          Browser storage can be cleared by the browser or device owner.
-          Download an explicit recovery copy to an owner-approved private
-          destination. It can contain personal records; no copy is sent
-          automatically. A recovery file is not a verified hosted backup.
+          Browser data can be cleared. Download a backup and keep it somewhere
+          private: it may contain player information. Nothing is sent
+          automatically. This backs up browser drafts, not your team account.
         </p>
         <p className="muted">
-          Official logo, maroon hex, coach protocols, spot layout and real
-          roster remain owner-provided.
+          Use only team-approved player information and coach-provided rules.
         </p>
       </section>
     </>

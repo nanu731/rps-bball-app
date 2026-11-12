@@ -60,7 +60,7 @@ async function signed(page: Page, role = "owner", pending?: unknown) {
     { f: fixture, account, pending },
   );
   await page.goto("/");
-  await page.getByRole("button", { name: "Shared team", exact: true }).click();
+  await page.getByRole("button", { name: "Team", exact: true }).click();
   await expect(
     page.getByText("Account verified", { exact: true }),
   ).toBeVisible();
@@ -68,7 +68,7 @@ async function signed(page: Page, role = "owner", pending?: unknown) {
     .getByRole("combobox", { name: "Team", exact: true })
     .selectOption(fixture.team);
   await page
-    .getByRole("button", { name: "Practices & capture", exact: true })
+    .getByRole("button", { name: "Practices & shots", exact: true })
     .click();
   await expect(page.locator(".web-sessions")).toBeVisible();
 }
@@ -110,19 +110,15 @@ test("uncommitted create survives remount and retries the identical retained com
   await signed(page, "owner", pending);
   await page
     .getByRole("button", {
-      name: "Look up this command’s receipt",
+      name: "Check change status",
       exact: true,
     })
     .click();
   await expect(
-    page.getByRole("button", { name: "Retry the identical retained command" }),
+    page.getByRole("button", { name: "Retry this same change" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Retry the identical retained command" })
-    .click();
-  await expect(
-    page.getByText(/Server confirmed create · revision 1/),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Retry this same change" }).click();
+  await expect(page.getByText(/Team session created/)).toBeVisible();
   const state = await rpc("owner", "web_session_state", {
     p_team_id: fixture.team,
     p_session_id: s.id,
@@ -140,16 +136,17 @@ test("lost administration reply reconciles the actual target before enabling ano
   page,
 }) => {
   await signed(page);
-  await page
-    .getByText("Team authority & administration", { exact: true })
-    .click();
+  await page.getByText("Team access", { exact: true }).click();
   await page.getByRole("button", { name: "Manage team", exact: true }).click();
+  await page
+    .getByText("Member access · account codes", { exact: true })
+    .click();
   await shot(page, "desktop-shared-owner-administration");
   await page
     .getByRole("combobox", { name: "Existing active member", exact: true })
     .selectOption(fixture.actors.viewer.id);
   await page
-    .getByRole("combobox", { name: "Capability", exact: true })
+    .getByRole("combobox", { name: "Access to give or remove", exact: true })
     .selectOption("sessions.clock");
   page.on("dialog", (d) => d.accept());
   let applied = 0;
@@ -164,43 +161,43 @@ test("lost administration reply reconciles the actual target before enabling ano
     { times: 1 },
   );
   await page
-    .getByRole("button", { name: "Grant selected capability", exact: true })
+    .getByRole("button", { name: "Allow selected access", exact: true })
     .click();
   await expect(
-    page.getByText("Administration result uncertain.", { exact: false }),
+    page.getByText("This access change could not be confirmed.", {
+      exact: false,
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", {
-      name: "Grant selected capability",
+      name: "Allow selected access",
       exact: true,
     }),
   ).toBeDisabled();
   await page
     .getByRole("button", {
-      name: "Read current attempted target state",
+      name: "Check current access",
       exact: true,
     })
     .click();
-  await expect(page.getByText(/Current stored grant is present/)).toBeVisible();
+  await expect(page.getByText(/This access is assigned/)).toBeVisible();
   expect(applied).toBe(1);
   await page
     .getByRole("button", {
-      name: "I reviewed the current state; allow a new command",
+      name: "I checked access; allow another change",
       exact: true,
     })
     .click();
   await expect(
     page.getByRole("button", {
-      name: "Revoke selected capability",
+      name: "Remove selected access",
       exact: true,
     }),
   ).toBeEnabled();
   await page
-    .getByRole("button", { name: "Revoke selected capability", exact: true })
+    .getByRole("button", { name: "Remove selected access", exact: true })
     .click();
-  await expect(
-    page.getByText(/Server confirmed the administration change/),
-  ).toBeVisible();
+  await expect(page.getByText(/Team access updated/)).toBeVisible();
   expect(
     await page.evaluate(() =>
       Object.keys(sessionStorage).filter((k) =>
@@ -211,7 +208,7 @@ test("lost administration reply reconciles the actual target before enabling ano
 });
 
 async function recovery(page: Page) {
-  const summary = page.getByText("Recovery & server snapshot", { exact: true });
+  const summary = page.getByText("Saved and unsaved entries", { exact: true });
   if (await summary.evaluate((e) => !e.parentElement?.hasAttribute("open")))
     await summary.click();
 }
@@ -236,7 +233,7 @@ async function createShared(
     .fill(title);
   if (kind === "game")
     await page
-      .getByRole("combobox", { name: "Existing server game", exact: true })
+      .getByRole("combobox", { name: "Team game", exact: true })
       .selectOption(fixture.game);
   const response = page.waitForResponse(
     (r) =>
@@ -244,31 +241,33 @@ async function createShared(
       r.request().postDataJSON()?.p_action === "create",
   );
   await page
-    .getByRole("button", { name: "Create server session", exact: true })
+    .getByRole("button", { name: "Create team session", exact: true })
     .click();
   const r = await response;
   expect(r.ok()).toBe(true);
   const result = await r.json();
-  await expect(page.getByText(/Server confirmed create/)).toBeVisible();
+  await expect(page.getByText(/Team session created/)).toBeVisible();
   return result.session.id as string;
 }
 async function assign(page: Page) {
-  const settings = page.getByText(
-    "Recorder assignment and collection definitions",
-    { exact: true },
-  );
+  const settings = page.getByText("Assign recorders and tracking rules", {
+    exact: true,
+  });
   if (await settings.evaluate((e) => !e.parentElement?.hasAttribute("open")))
     await settings.click();
   await page
-    .getByRole("textbox", { name: "Recording account UUID", exact: true })
+    .getByRole("textbox", { name: "Recorder’s account code", exact: true })
     .fill(fixture.actors.recorder.id);
   await page
-    .getByRole("textbox", { name: "Clock account UUID", exact: true })
+    .getByRole("textbox", {
+      name: "Clock operator’s account code",
+      exact: true,
+    })
     .fill(fixture.actors.clock.id);
   await page
-    .getByRole("button", { name: "Confirm recorder handoff", exact: true })
+    .getByRole("button", { name: "Assign recorders", exact: true })
     .click();
-  await expect(page.getByText(/Server confirmed assign/)).toBeVisible();
+  await expect(page.getByText(/Recording assignments updated/)).toBeVisible();
 }
 test("actual signed practice plan, recording, review, accepted viewer and correction lineage", async ({
   page,
@@ -294,9 +293,9 @@ test("actual signed practice plan, recording, review, accepted viewer and correc
     .getByLabel("Coach’s instructions", { exact: true })
     .fill("TEST ONLY synthetic observations, no coach protocol implied.");
   await page
-    .getByRole("button", { name: "Save shared session draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
-  await expect(page.getByText(/Server confirmed save/)).toBeVisible();
+  await expect(page.getByText(/Saved for your team/)).toBeVisible();
   await shot(page, "desktop-shared-practice-plan");
   await assign(page);
   const recorder = await browser.newPage();
@@ -306,14 +305,14 @@ test("actual signed practice plan, recording, review, accepted viewer and correc
   await recorder.getByLabel("Spot 1 makes", { exact: true }).fill("0");
   await recorder.getByLabel("Spot 1 attempts", { exact: true }).fill("0");
   await recorder
-    .getByRole("button", { name: "FT conditioning", exact: true })
+    .getByRole("button", { name: "Free throws", exact: true })
     .click();
   await recorder.getByLabel("Free-throw makes", { exact: true }).fill("1");
   await recorder.getByLabel("Free-throw attempts", { exact: true }).fill("2");
   await recorder
-    .getByRole("button", { name: "Save shared session draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
-  await expect(recorder.getByText(/Server confirmed save/)).toBeVisible();
+  await expect(recorder.getByText(/Saved for your team/)).toBeVisible();
   const saved = await rpc("recorder", "web_session_state", {
     p_team_id: fixture.team,
     p_session_id: session,
@@ -332,33 +331,39 @@ test("actual signed practice plan, recording, review, accepted viewer and correc
   await shot(recorder, "phone-shared-practice-entry");
   await recovery(recorder);
   await recorder
-    .getByRole("button", { name: "Load server snapshot", exact: true })
+    .getByRole("button", { name: "Reload saved entries", exact: true })
     .click();
   await recorder.getByRole("button", { name: "Shooting", exact: true }).click();
   await expect(
     recorder.getByLabel("Spot 1 makes", { exact: true }),
   ).toHaveValue("0");
   await recorder
-    .getByRole("button", { name: "Submit session for review", exact: true })
+    .getByRole("button", { name: "Send session for review", exact: true })
     .click();
-  await expect(recorder.getByText(/Server confirmed submit/)).toBeVisible();
+  await expect(
+    recorder.getByRole("status").filter({ hasText: /Waiting for review/ }),
+  ).toBeVisible();
   const reviewer = await browser.newPage();
   await signed(reviewer, "reviewer");
   await openShared(reviewer, title);
   reviewer.on("dialog", (d) => d.accept());
   await reviewer
-    .getByRole("button", { name: "Accept session & publish", exact: true })
+    .getByRole("button", { name: "Approve session & publish", exact: true })
     .click();
-  await expect(reviewer.getByText(/Server confirmed review/)).toBeVisible();
+  await expect(
+    reviewer.getByRole("status").filter({ hasText: /Published to team/ }),
+  ).toBeVisible();
   const viewer = await browser.newPage();
   await signed(viewer, "viewer");
   await openShared(viewer, title);
   await expect(
-    viewer.getByText("Server-accepted snapshot.", { exact: false }),
+    viewer
+      .locator(".session-banner")
+      .getByText("Published to team", { exact: true }),
   ).toBeVisible();
   await expect(
     viewer.getByRole("button", {
-      name: "Save shared session draft",
+      name: "Save team draft",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -396,22 +401,20 @@ test("actual signed practice plan, recording, review, accepted viewer and correc
   await shot(viewer, "tablet-shared-practice-accepted-dark");
   await recovery(recorder);
   await recorder
-    .getByRole("button", { name: "Load server snapshot", exact: true })
+    .getByRole("button", { name: "Reload saved entries", exact: true })
     .click();
   await recorder
     .getByRole("button", { name: "Request session correction", exact: true })
     .click();
-  await expect(
-    recorder.getByText(/Server confirmed request edit/),
-  ).toBeVisible();
+  await expect(recorder.getByText(/Correction request sent/)).toBeVisible();
   await recovery(reviewer);
   await reviewer
-    .getByRole("button", { name: "Load server snapshot", exact: true })
+    .getByRole("button", { name: "Reload saved entries", exact: true })
     .click();
   await reviewer
     .getByRole("button", { name: "Approve session correction", exact: true })
     .click();
-  await expect(reviewer.getByText(/Server confirmed reopen/)).toBeVisible();
+  await expect(reviewer.getByText(/Correction approved/)).toBeVisible();
   const correction = await rpc("recorder", "web_session_state", {
     p_team_id: fixture.team,
     p_session_id: session,
@@ -441,11 +444,11 @@ test("separate assigned clock operator and recorder save an actual shared shot w
   await clock
     .getByRole("button", { name: "Set stopped shared clock", exact: true })
     .click();
-  await expect(clock.getByText(/Server confirmed clock set/)).toBeVisible();
+  await expect(clock.getByText(/Team clock updated/)).toBeVisible();
   await clock
     .getByRole("button", { name: "Start shared clock", exact: true })
     .click();
-  await expect(clock.getByText(/Server confirmed clock start/)).toBeVisible();
+  await expect(clock.getByText(/Team clock updated/)).toBeVisible();
   const recorder = await browser.newPage();
   await signed(recorder, "recorder");
   await openShared(recorder, title);
@@ -457,7 +460,7 @@ test("separate assigned clock operator and recorder save an actual shared shot w
     .click({ position: { x: 150, y: 170 } });
   await recorder.getByRole("button", { name: "3 points", exact: true }).click();
   await recorder.getByRole("button", { name: "Make", exact: true }).click();
-  await expect(recorder.getByText(/Server confirmed save/)).toBeVisible();
+  await expect(recorder.getByText(/Saved for your team/)).toBeVisible();
   const saved = await rpc("recorder", "web_session_state", {
     p_team_id: fixture.team,
     p_session_id: session,
@@ -472,7 +475,7 @@ test("separate assigned clock operator and recorder save an actual shared shot w
   await recorder
     .getByRole("button", { name: "Undo last change", exact: true })
     .click();
-  await expect(recorder.getByText(/Server confirmed save/)).toBeVisible();
+  await expect(recorder.getByText(/Saved for your team/)).toBeVisible();
   const after = await rpc("recorder", "web_session_state", {
     p_team_id: fixture.team,
     p_session_id: session,
@@ -484,29 +487,33 @@ test("separate assigned clock operator and recorder save an actual shared shot w
   await clock
     .getByRole("button", { name: "Stop shared clock", exact: true })
     .click();
-  await expect(clock.getByText(/Server confirmed clock stop/)).toBeVisible();
+  await expect(clock.getByText(/Team clock updated/)).toBeVisible();
   await recorder.setViewportSize({ width: 390, height: 844 });
   await shot(recorder, "phone-shared-game-capture");
   await recorder
-    .getByRole("button", { name: "Submit session for review", exact: true })
+    .getByRole("button", { name: "Send session for review", exact: true })
     .click();
-  await expect(recorder.getByText(/Server confirmed submit/)).toBeVisible();
+  await expect(
+    recorder.getByRole("status").filter({ hasText: /Waiting for review/ }),
+  ).toBeVisible();
   const reviewer = await browser.newPage();
   await signed(reviewer, "reviewer");
   await openShared(reviewer, title);
   reviewer.on("dialog", (d) => d.accept());
   await reviewer
-    .getByRole("button", { name: "Accept session & publish", exact: true })
+    .getByRole("button", { name: "Approve session & publish", exact: true })
     .click();
-  await expect(reviewer.getByText(/Server confirmed review/)).toBeVisible();
+  await expect(
+    reviewer.getByRole("status").filter({ hasText: /Published to team/ }),
+  ).toBeVisible();
   const viewer = await browser.newPage();
   await signed(viewer, "viewer");
   await openShared(viewer, title);
   await expect(
-    viewer.getByRole("heading", { name: "Recorded-shot results", exact: true }),
+    viewer.getByRole("heading", { name: "Shot-chart results", exact: true }),
   ).toBeVisible();
   await expect(
-    viewer.getByText("Server-accepted snapshot · coverage unconfirmed", {
+    viewer.getByText("Published to team · recorded attempts only", {
       exact: true,
     }),
   ).toBeVisible();
@@ -587,14 +594,18 @@ test("dirty working buffer is never relabeled accepted when server visibility fa
   await signed(recorder, "recorder");
   await openShared(recorder, title);
   await recorder
-    .getByRole("button", { name: "FT conditioning", exact: true })
+    .getByRole("button", { name: "Free throws", exact: true })
     .click();
   await recorder.getByLabel("Free-throw makes", { exact: true }).fill("9");
   await sessionCommand("recorder", "submit", session);
   await sessionCommand("reviewer", "review", session, null, { approve: false });
   await sessionCommand("owner", "request_edit", session);
   await sessionCommand("reviewer", "reopen", session);
-  await expect(recorder.getByText(/Accepted snapshot · revision/)).toBeVisible({
+  await expect(
+    recorder
+      .locator(".session-banner")
+      .getByText("Published to team", { exact: true }),
+  ).toBeVisible({
     timeout: 8000,
   });
   await expect(
@@ -602,7 +613,7 @@ test("dirty working buffer is never relabeled accepted when server visibility fa
   ).toBeVisible();
   await expect(
     recorder.getByRole("button", {
-      name: "Save shared session draft",
+      name: "Save team draft",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -649,27 +660,27 @@ test("committed save with a lost reply reconciles after remount without duplicat
     { times: 1 },
   );
   await page
-    .getByRole("button", { name: "Save shared session draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
   await expect.poll(() => writes).toBe(1);
-  await expect(page.getByText(/No confirmed result/)).toBeVisible();
-  await page.getByRole("button", { name: "Workspace", exact: true }).click();
-  await page.getByRole("button", { name: "Shared team", exact: true }).click();
+  await expect(
+    page.getByText(/We could not confirm whether this saved/),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
+  await page.getByRole("button", { name: "Team", exact: true }).click();
   await page
     .getByRole("combobox", { name: "Team", exact: true })
     .selectOption(fixture.team);
   await page
-    .getByRole("button", { name: "Practices & capture", exact: true })
+    .getByRole("button", { name: "Practices & shots", exact: true })
     .click();
   await page
     .getByRole("button", {
-      name: "Look up this command’s receipt",
+      name: "Check change status",
       exact: true,
     })
     .click();
-  await expect(
-    page.getByText(/Server confirmed save · revision 2/),
-  ).toBeVisible();
+  await expect(page.getByText(/Saved for your team/)).toBeVisible();
   const saved = await rpc("owner", "web_session_state", {
     p_team_id: fixture.team,
     p_session_id: session,
@@ -690,7 +701,9 @@ test("actual shared manual box, paired possessions and paint keep independent co
 }) => {
   test.setTimeout(90000);
   await signed(page, "recorder");
-  await page.getByRole("button", { name: "Manual games", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   const title = "TEST ONLY manual browser " + randomUUID().slice(0, 8);
   await page
     .getByRole("textbox", { name: "Opponent", exact: true })
@@ -699,13 +712,13 @@ test("actual shared manual box, paired possessions and paint keep independent co
     r.url().endsWith("/rpc/stats_create_game"),
   );
   await page
-    .getByRole("button", { name: "Create server game", exact: true })
+    .getByRole("button", { name: "Create team game", exact: true })
     .click();
   const game = await (await created).json();
   expect(game.opponent).toBe(title);
-  await page.getByRole("button", { name: "Draft entry", exact: true }).click();
+  await page.getByRole("button", { name: "Enter stats", exact: true }).click();
   await page
-    .getByRole("button", { name: "Open my permitted draft", exact: true })
+    .getByRole("button", { name: "Open my draft", exact: true })
     .click();
   await page.getByLabel("Points", { exact: true }).fill("4");
   await page.getByLabel("Threes made", { exact: true }).fill("7");
@@ -713,9 +726,13 @@ test("actual shared manual box, paired possessions and paint keep independent co
   await page.setViewportSize({ width: 390, height: 844 });
   await shot(page, "phone-shared-manual-warning");
   await page
-    .getByRole("button", { name: "Save server draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
-  await expect(page.getByText(/Server confirmed this operation/)).toBeVisible();
+  await expect(
+    page.getByText(
+      /Saved for your team|Entry complete|Waiting for review|Published to team|Correction request sent|Correction approved/,
+    ),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Roster table", exact: true }).click();
   const players = ["TEST ONLY Web Player A", "TEST ONLY Web Player B"];
   for (const name of players)
@@ -739,29 +756,27 @@ test("actual shared manual box, paired possessions and paint keep independent co
       await page.getByLabel(name + " " + label, { exact: true }).fill("0");
   await expect(page.getByText("Check scoring", { exact: true })).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Save server draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Save server draft", exact: true }),
+    page.getByRole("button", { name: "Save team draft", exact: true }),
   ).toBeDisabled();
-  await page
-    .getByText("Complete this independent dataset", { exact: true })
-    .click();
+  await page.getByText("Finish this stat sheet", { exact: true }).click();
   await page
     .getByRole("checkbox", {
-      name: "I confirm this game and the covered real roster.",
+      name: "I checked the game and the players included.",
       exact: true,
     })
     .check();
   await page
     .getByRole("button", { name: "Complete player box scores", exact: true })
     .click();
-  await expect(page.getByText(/This version is frozen/)).toBeVisible();
+  await expect(page.getByText(/These entries are locked/)).toBeVisible();
   await page
-    .getByRole("combobox", { name: "Dataset", exact: true })
+    .getByRole("combobox", { name: "Stat sheet", exact: true })
     .selectOption("our_possessions");
   await page
-    .getByRole("button", { name: "Open my permitted draft", exact: true })
+    .getByRole("button", { name: "Open my draft", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Add next our-team possession", exact: true })
@@ -773,10 +788,10 @@ test("actual shared manual box, paired possessions and paint keep independent co
     .getByRole("button", { name: "Add next opponent possession", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Save server draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Save server draft", exact: true }),
+    page.getByRole("button", { name: "Save team draft", exact: true }),
   ).toBeDisabled();
   await expect(
     page.getByText("1 records entered", { exact: true }),
@@ -786,9 +801,9 @@ test("actual shared manual box, paired possessions and paint keep independent co
   ).toBeVisible();
   for (const kind of ["our_possessions", "opponent_possessions"]) {
     await page
-      .getByRole("combobox", { name: "Dataset", exact: true })
+      .getByRole("combobox", { name: "Stat sheet", exact: true })
       .selectOption(kind);
-    const disclosure = page.getByText("Complete this independent dataset", {
+    const disclosure = page.getByText("Finish this stat sheet", {
       exact: true,
     });
     if (
@@ -796,7 +811,7 @@ test("actual shared manual box, paired possessions and paint keep independent co
     )
       await disclosure.click();
     await page
-      .getByRole("checkbox", { name: /Convert only existing numeric blanks/ })
+      .getByRole("checkbox", { name: /Blank counts in rows I added/ })
       .check();
     await page
       .getByRole("button", {
@@ -807,35 +822,33 @@ test("actual shared manual box, paired possessions and paint keep independent co
         exact: true,
       })
       .click();
-    await expect(page.getByText(/This version is frozen/)).toBeVisible();
+    await expect(page.getByText(/These entries are locked/)).toBeVisible();
   }
   await page
-    .getByRole("combobox", { name: "Dataset", exact: true })
+    .getByRole("combobox", { name: "Stat sheet", exact: true })
     .selectOption("player_paint_touches");
   await page
-    .getByRole("button", { name: "Open my permitted draft", exact: true })
+    .getByRole("button", { name: "Open my draft", exact: true })
     .click();
   for (const name of players)
     await page.getByLabel(name + " paint touches", { exact: true }).fill("0");
   await page
-    .getByRole("button", { name: "Save server draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Save server draft", exact: true }),
+    page.getByRole("button", { name: "Save team draft", exact: true }),
   ).toBeDisabled();
-  await page
-    .getByText("Complete this independent dataset", { exact: true })
-    .click();
+  await page.getByText("Finish this stat sheet", { exact: true }).click();
   await page
     .getByRole("checkbox", {
-      name: "I confirm this game and the covered real roster.",
+      name: "I checked the game and the players included.",
       exact: true,
     })
     .check();
   await page
     .getByRole("button", { name: "Complete player paint touches", exact: true })
     .click();
-  await expect(page.getByText(/This version is frozen/)).toBeVisible();
+  await expect(page.getByText(/These entries are locked/)).toBeVisible();
   await page
     .getByRole("button", { name: "Review & history", exact: true })
     .click();
@@ -849,14 +862,16 @@ test("actual shared manual box, paired possessions and paint keep independent co
       .locator(".version-list > section")
       .filter({ has: page.getByRole("heading", { name: label, exact: true }) });
     await row
-      .getByRole("button", { name: "Submit for review", exact: true })
+      .getByRole("button", { name: "Send for review", exact: true })
       .click();
-    await expect(row.getByText(/submitted · revision/)).toBeVisible();
+    await expect(row.locator(".badge").first()).toHaveText(
+      "Waiting for review",
+    );
   }
   const reviewer = await browser.newPage();
   await signed(reviewer, "reviewer");
   await reviewer
-    .getByRole("button", { name: "Manual games", exact: true })
+    .getByRole("button", { name: "After-game stats", exact: true })
     .click();
   await reviewer
     .getByRole("button", { name: new RegExp("^" + title + " ") })
@@ -875,31 +890,28 @@ test("actual shared manual box, paired possessions and paint keep independent co
       has: reviewer.getByRole("heading", { name: label, exact: true }),
     });
     await row
-      .getByRole("button", { name: "Accept & publish", exact: true })
+      .getByRole("button", { name: "Approve & publish", exact: true })
       .click();
-    await expect(row.getByText(/published · revision/)).toBeVisible();
+    await expect(row.locator(".badge").first()).toHaveText("Published to team");
   }
   const viewer = await browser.newPage();
   await signed(viewer, "viewer");
   await viewer
-    .getByRole("button", { name: "Manual games", exact: true })
+    .getByRole("button", { name: "After-game stats", exact: true })
     .click();
   await viewer
     .getByRole("button", { name: new RegExp("^" + title + " ") })
     .click();
-  await expect(
-    viewer.getByText(/4 independently accepted datasets/),
-  ).toBeVisible();
+  await expect(viewer.getByText(/4 published stat sheets/)).toBeVisible();
   await shot(viewer, "desktop-shared-manual-accepted");
   await expect(
-    viewer.getByText(
-      "Server-accepted versions · missing datasets remain unavailable",
-      { exact: false },
-    ),
+    viewer.getByText("Published to team · missing sheets not included", {
+      exact: false,
+    }),
   ).toBeVisible();
   await expect(
     viewer.getByRole("button", {
-      name: "Open my permitted draft",
+      name: "Open my draft",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -910,17 +922,19 @@ test("manual lost save stays blocked across remount and reconciles the saved rev
   page,
 }) => {
   await signed(page, "recorder");
-  await page.getByRole("button", { name: "Manual games", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   const title = "TEST ONLY manual lost reply " + randomUUID().slice(0, 8);
   await page
     .getByRole("textbox", { name: "Opponent", exact: true })
     .fill(title);
   await page
-    .getByRole("button", { name: "Create server game", exact: true })
+    .getByRole("button", { name: "Create team game", exact: true })
     .click();
-  await page.getByRole("button", { name: "Draft entry", exact: true }).click();
+  await page.getByRole("button", { name: "Enter stats", exact: true }).click();
   await page
-    .getByRole("button", { name: "Open my permitted draft", exact: true })
+    .getByRole("button", { name: "Open my draft", exact: true })
     .click();
   await page.getByLabel("Points", { exact: true }).fill("4");
   await page.getByLabel("Threes made", { exact: true }).fill("7");
@@ -936,25 +950,31 @@ test("manual lost save stays blocked across remount and reconciles the saved rev
     { times: 1 },
   );
   await page
-    .getByRole("button", { name: "Save server draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
-  await expect(page.getByText(/Write result uncertain/)).toBeVisible();
+  await expect(
+    page.getByText(
+      /We could not confirm whether this saved\. Keep this tab open/,
+    ),
+  ).toBeVisible();
   page.on("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: "Workspace", exact: true }).click();
-  await page.getByRole("button", { name: "Shared team", exact: true }).click();
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
+  await page.getByRole("button", { name: "Team", exact: true }).click();
   await page
     .getByRole("combobox", { name: "Team", exact: true })
     .selectOption(fixture.team);
   await page
     .getByRole("button", { name: new RegExp("^" + title + " ") })
     .click();
-  await expect(page.getByText(/Write result uncertain/)).toBeVisible();
-  await page
-    .getByRole("button", { name: "Reload and reconcile", exact: true })
-    .click();
   await expect(
-    page.getByText(/Reconciled with the exact expected saved revision\/status/),
+    page.getByText(
+      /We could not confirm whether this saved\. Keep this tab open/,
+    ),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Check save status", exact: true })
+    .click();
+  await expect(page.getByText(/The expected change was saved/)).toBeVisible();
   await expect(page.getByLabel("Points", { exact: true })).toHaveValue("4");
   await expect(page.getByLabel("Threes made", { exact: true })).toHaveValue(
     "7",
@@ -992,16 +1012,18 @@ test("dirty shared navigation keeps editing when recovery storage is unavailable
       exact: true,
     })
     .fill("TEST ONLY only-in-memory input");
-  await expect(page.getByText(/Browser recovery storage failed/)).toBeVisible();
   await expect(
-    page.getByText("Unsaved browser entries", { exact: true }),
+    page.getByText(/This browser could not back up your unsaved entries/),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Unsaved changes", { exact: true }),
   ).toBeVisible();
   let prompts = 0;
   page.on("dialog", async (d) => {
     prompts++;
     await d.dismiss();
   });
-  await page.getByRole("button", { name: "Workspace", exact: true }).click();
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   expect(prompts).toBe(1);
   await expect(
     page.getByRole("textbox", {
@@ -1009,7 +1031,9 @@ test("dirty shared navigation keeps editing when recovery storage is unavailable
       exact: true,
     }),
   ).toHaveValue("TEST ONLY only-in-memory input");
-  await page.getByRole("button", { name: "Manual games", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   await expect(
     page.getByRole("textbox", {
       name: "Sets, rotations, baskets and collector responsibility",
@@ -1063,18 +1087,18 @@ test("actual SDK account switch and browser sign-out conceal the previous accoun
     }),
   ).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Practices & capture", exact: true })
+    .getByRole("button", { name: "Practices & shots", exact: true })
     .click();
   await openShared(page, title);
   await expect(
     page.getByRole("heading", {
-      name: "No permitted snapshot available",
+      name: "No entries available to you",
       exact: true,
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", {
-      name: "Save shared session draft",
+      name: "Save team draft",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -1104,10 +1128,9 @@ for (const kind of ["practice", "game"] as const)
       const title =
         "TEST ONLY " + kind + " templates " + randomUUID().slice(0, 8);
       const session = await createShared(page, kind, title);
-      const settings = page.getByText(
-        "Recorder assignment and collection definitions",
-        { exact: true },
-      );
+      const settings = page.getByText("Assign recorders and tracking rules", {
+        exact: true,
+      });
       await settings.click();
       for (const type of ["count", "makes", "timed", "note"]) {
         await page
@@ -1117,31 +1140,31 @@ for (const kind of ["practice", "game"] as const)
           .getByRole("combobox", { name: "Type", exact: true })
           .selectOption(type);
         await page
-          .getByRole("textbox", { name: "Counting rule", exact: true })
+          .getByRole("textbox", { name: "What counts?", exact: true })
           .fill(
             "TEST ONLY " + type + " observation rule, not a coaching protocol",
           );
         await page
           .getByRole("button", {
-            name: "Add definition to this session draft",
+            name: "Add tracking rule",
             exact: true,
           })
           .click();
       }
       await page
-        .getByRole("button", { name: "Save shared session draft", exact: true })
+        .getByRole("button", { name: "Save team draft", exact: true })
         .click();
-      await expect(page.getByText(/Server confirmed save/)).toBeVisible();
+      await expect(page.getByText(/Saved for your team/)).toBeVisible();
       await assign(page);
       const recorder = await browser.newPage();
       await signed(recorder, "recorder");
       await openShared(recorder, title);
       if (kind === "practice")
         await recorder
-          .getByRole("button", { name: "Collection", exact: true })
+          .getByRole("button", { name: "Other drills", exact: true })
           .click();
       const chooser = recorder.getByRole("combobox", {
-        name: kind === "practice" ? "Template" : "Event definition",
+        name: kind === "practice" ? "Template" : "What to track",
         exact: true,
       });
       const select = async (type: string) =>
@@ -1157,9 +1180,7 @@ for (const kind of ["practice", "game"] as const)
           })
           .click();
         if (kind === "game")
-          await expect(
-            recorder.getByText(/Server confirmed save/),
-          ).toBeVisible();
+          await expect(recorder.getByText(/Saved for your team/)).toBeVisible();
       };
       await select("count");
       await recorder
@@ -1183,9 +1204,7 @@ for (const kind of ["practice", "game"] as const)
       await recorder
         .getByRole(kind === "practice" ? "textbox" : "textbox", {
           name:
-            kind === "practice"
-              ? "Observation note"
-              : "Counting rule / context",
+            kind === "practice" ? "Observation note" : "What counts? / note",
           exact: true,
         })
         .fill("TEST ONLY note");
@@ -1205,11 +1224,11 @@ for (const kind of ["practice", "game"] as const)
       if (kind === "practice") {
         await recorder
           .getByRole("button", {
-            name: "Save shared session draft",
+            name: "Save team draft",
             exact: true,
           })
           .click();
-        await expect(recorder.getByText(/Server confirmed save/)).toBeVisible();
+        await expect(recorder.getByText(/Saved for your team/)).toBeVisible();
       }
       const saved = await rpc("recorder", "web_session_state", {
         p_team_id: fixture.team,
@@ -1305,7 +1324,9 @@ test("authorized manual correction review shows saved base versus proposal witho
     p_reason: "",
   });
   await signed(page, "recorder");
-  await page.getByRole("button", { name: "Manual games", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   await page
     .getByRole("button", { name: new RegExp("^" + title + " ") })
     .click();
@@ -1318,15 +1339,17 @@ test("authorized manual correction review shows saved base versus proposal witho
       : d.accept(),
   );
   await page
-    .getByRole("button", { name: "Request permission to edit", exact: true })
+    .getByRole("button", { name: "Request a correction", exact: true })
     .click();
   await expect(
-    page.getByText("Edit request · pending", { exact: true }),
+    page.getByText("Correction request · Waiting for approval", {
+      exact: true,
+    }),
   ).toBeVisible();
   const reviewer = await browser.newPage();
   await signed(reviewer, "reviewer");
   await reviewer
-    .getByRole("button", { name: "Manual games", exact: true })
+    .getByRole("button", { name: "After-game stats", exact: true })
     .click();
   await reviewer
     .getByRole("button", { name: new RegExp("^" + title + " ") })
@@ -1336,10 +1359,10 @@ test("authorized manual correction review shows saved base versus proposal witho
     .click();
   reviewer.on("dialog", (d) => d.accept());
   await reviewer
-    .getByRole("button", { name: "Approve reopening", exact: true })
+    .getByRole("button", { name: "Allow correction", exact: true })
     .click();
   await expect(
-    reviewer.getByText("Edit request · approved", { exact: true }),
+    reviewer.getByText("Correction request · Approved", { exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Back to shared games", exact: true })
@@ -1359,36 +1382,42 @@ test("authorized manual correction review shows saved base versus proposal witho
     r.url().endsWith("/rpc/stats_save_draft"),
   );
   await page
-    .getByRole("button", { name: "Save server draft", exact: true })
+    .getByRole("button", { name: "Save team draft", exact: true })
     .click();
   const response = await savedResponse;
   expect(response.ok()).toBe(true);
   const savedProposal = await response.json();
-  await expect(page.getByText(/Server confirmed this operation/)).toBeVisible();
+  await expect(
+    page.getByText(
+      /Saved for your team|Entry complete|Waiting for review|Published to team|Correction request sent|Correction approved/,
+    ),
+  ).toBeVisible();
   await expect(reviewer.locator(".version-list > section")).toHaveCount(1);
-  await page
-    .getByText("Complete this independent dataset", { exact: true })
-    .click();
+  await page.getByText("Finish this stat sheet", { exact: true }).click();
   await page
     .getByRole("checkbox", {
-      name: "I confirm this game and the covered real roster.",
+      name: "I checked the game and the players included.",
       exact: true,
     })
     .check();
   await page
     .getByRole("button", { name: "Complete player box scores", exact: true })
     .click();
-  await expect(page.getByText(/This version is frozen/)).toBeVisible();
+  await expect(page.getByText(/These entries are locked/)).toBeVisible();
   await page
     .getByRole("button", { name: "Review & history", exact: true })
     .click();
+  const submittedResponse = page.waitForResponse((r) =>
+    r.url().endsWith("/rpc/stats_submit"),
+  );
   await page
-    .getByRole("button", { name: "Submit for review", exact: true })
+    .getByRole("button", { name: "Send for review", exact: true })
     .click();
+  const submitted = await (await submittedResponse).json();
+  expect(submitted.revision).toBe(savedProposal.revision + 2);
+  expect(submitted.status).toBe("submitted");
   await expect(
-    page.getByText("submitted · revision " + (savedProposal.revision + 2), {
-      exact: true,
-    }),
+    page.getByRole("status").filter({ hasText: "Waiting for review." }),
   ).toBeVisible();
   await reviewer
     .getByRole("button", { name: "Back to shared games", exact: true })
@@ -1402,12 +1431,12 @@ test("authorized manual correction review shows saved base versus proposal witho
   await expect(reviewer.locator(".version-list > section")).toHaveCount(2);
   const proposal = reviewer.locator(".version-list > section").filter({
     has: reviewer.getByRole("button", {
-      name: "Accept & publish",
+      name: "Approve & publish",
       exact: true,
     }),
   });
   await proposal
-    .getByText("Review saved values and correction context", { exact: true })
+    .getByText("View saved stats and changes", { exact: true })
     .click();
   const changes = proposal.getByRole("region", {
     name: "Correction changes",
@@ -1449,13 +1478,13 @@ test("shared Save stays in flow without covering the banner and works in a short
     })
     .fill("TEST ONLY short viewport saved protocol");
   const save = page.getByRole("button", {
-    name: "Save shared session draft",
+    name: "Save team draft",
     exact: true,
   });
   await save.scrollIntoViewIfNeeded();
   await expect(save).toBeInViewport();
   await save.click();
-  await expect(page.getByText(/Server confirmed save/)).toBeVisible();
+  await expect(page.getByText(/Saved for your team/)).toBeVisible();
   const state = await rpc("owner", "web_session_state", {
     p_team_id: fixture.team,
     p_session_id: session,

@@ -8,10 +8,12 @@ test("large text, keyboard focus, reduced viewport and every roster column remai
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Try synthetic demo", exact: true })
+    .getByRole("button", { name: "Try sample demo", exact: true })
     .click();
   await page.getByRole("button", { name: /TEST ONLY opponent/ }).click();
-  await page.getByRole("button", { name: "Manual entry", exact: true }).click();
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
   await page.addStyleTag({ content: ":root {font-size:24px}" });
   await page.getByLabel("Points", { exact: true }).fill("4");
   await page.getByLabel("Threes made", { exact: true }).fill("7");
@@ -30,13 +32,13 @@ test("large text, keyboard focus, reduced viewport and every roster column remai
     )
     .toBe(true);
   const save = page.getByRole("button", {
-    name: "Save browser draft",
+    name: "Save in this browser",
     exact: true,
   });
   await expect(save).toBeInViewport();
   await save.click();
   await expect(
-    page.getByText("Saved in this browser’s separate synthetic demo ledger.", {
+    page.getByText("Sample data saved in this browser only.", {
       exact: true,
     }),
   ).toBeVisible();
@@ -67,7 +69,7 @@ test("large text, keyboard focus, reduced viewport and every roster column remai
   );
   const snapshot = await page.locator("main").ariaSnapshot();
   expect(snapshot).toContain("Check scoring");
-  expect(snapshot).toContain("Save browser draft");
+  expect(snapshot).toContain("Save in this browser");
   if (evidence) {
     mkdirSync(evidence, { recursive: true });
     await page.screenshot({

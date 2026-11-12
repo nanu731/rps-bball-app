@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Player, Session, Template, Ledger } from "./domain.ts";
 import {
+  entryError,
   id,
   newSession,
   validateLedger,
@@ -12,7 +13,14 @@ import { CoreServer, ServerError } from "./server.ts";
 import type { Access, Game } from "./server.ts";
 import { Practice } from "./Practice.tsx";
 import { CaptureEntry, ShotResults } from "./Capture.tsx";
-import { Empty, Notice, Tabs, download, useUnsavedGuard } from "./ui.tsx";
+import {
+  Empty,
+  Notice,
+  Tabs,
+  statusLabel,
+  download,
+  useUnsavedGuard,
+} from "./ui.tsx";
 
 import type { NavigationGuard } from "./ui.tsx";
 type WebRow = {
@@ -170,7 +178,6 @@ export function WebSessions({
   const can = (cap: string) =>
     access.is_owner || access.capabilities.includes(cap);
   const fail = (e: unknown) => {
-    const err = e as Error;
     if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code)) {
       setReply(null);
       setBase(null);
@@ -179,7 +186,7 @@ export function WebSessions({
       generation.current++;
       onDenied();
     }
-    setError(err.message);
+    setError(entryError(e));
   };
   const loadList = async () => {
     try {
@@ -199,7 +206,7 @@ export function WebSessions({
         ["42P01", "PGRST205", "42883", "PGRST202"].includes(e.code)
       )
         setError(
-          "Shared practice/capture contracts are not activated on this server. Browser-local collection remains available; no shared save or permission is assumed.",
+          "Team practices and shot charts are unavailable on this connection. You can still record in My drafts; those entries stay in this browser.",
         );
       else fail(e);
     }
@@ -240,8 +247,13 @@ export function WebSessions({
         !dirtyRef.current
       ) {
         if (dirtyRef.current)
-          setError(
-            "Working entries remain in this account’s recovery buffer. Only the server-permitted snapshot is displayed.",
+          setError((previous) =>
+            [
+              previous,
+              "The view has changed. Only entries available to your account are shown. Check Saved and unsaved entries for a backup before reopening your draft.",
+            ]
+              .filter(Boolean)
+              .join(" "),
           );
         setDraft(sessionFor(r));
         setBase(r.session);
@@ -269,11 +281,13 @@ export function WebSessions({
       !Number.isFinite(Date.parse(r.server_time))
     )
       throw Error(
-        "Invalid server session/clock response. No snapshot was displayed.",
+        "The saved session or clock could not be read. Nothing was displayed. Try reloading.",
       );
     r.receivedAt ??= Date.now();
     if (r.document && r.document.session.id !== r.session.id)
-      throw Error("Wrong session document identity.");
+      throw Error(
+        "These entries belong to a different session. Nothing was loaded.",
+      );
     if (r.document) sessionFor(r);
   };
   useEffect(() => {
@@ -284,7 +298,7 @@ export function WebSessions({
     }
     if (pending?.action === "recovery_required")
       setError(
-        "Retained command marker is unreadable. New writes are blocked; keep the original browser recovery data.",
+        "Your pending change could not be read. Keep your backup and ask for help before making another change.",
       );
     return () => {
       generation.current++;
@@ -320,7 +334,7 @@ export function WebSessions({
       );
     } catch {
       setError(
-        "Browser recovery storage failed. Keep this tab open and download the retained entries.",
+        "This browser could not back up your unsaved entries. Keep this tab open and download them before leaving.",
       );
     }
   };
@@ -353,11 +367,29 @@ export function WebSessions({
       sessionStorage.removeItem(bufferKey + ":pending");
     } catch {
       setError(
-        "Server confirmed the operation, but the browser recovery marker could not be cleared. A remount may require receipt lookup.",
+        "Your change was saved, but this browser could not finish updating its recovery status. Check change status if asked after reopening.",
       );
     }
     setReceipt(
-      `Server confirmed ${action.replaceAll("_", " ")} · revision ${r.session.revision} · clock revision ${r.session.clock_revision}.`,
+      action === "create"
+        ? "Team session created. Not published yet."
+        : action === "save"
+          ? "Saved for your team. Not published yet."
+          : action === "submit"
+            ? "Waiting for review."
+            : action === "review"
+              ? r.session.status === "published"
+                ? "Published to team."
+                : "Not approved. Saved entries are kept in history."
+              : action === "assign"
+                ? "Recording assignments updated."
+                : action === "request_edit"
+                  ? "Correction request sent."
+                  : action === "reopen"
+                    ? "Correction approved. The requester can now edit."
+                    : action.startsWith("clock")
+                      ? "Team clock updated."
+                      : "Your change was saved.",
     );
   };
   const clearPending = () => {
@@ -401,7 +433,9 @@ export function WebSessions({
         p_argument: argument,
       });
       if (r.operation_id !== op.id || r.session.id !== sessionID)
-        throw Error("Unmatched command response; reconcile before retrying.");
+        throw Error(
+          "The reply could not be matched to this change. Check change status before trying again.",
+        );
       apply(r, action);
       await loadList();
       return true;
@@ -429,7 +463,7 @@ export function WebSessions({
       if (!r) {
         setReceiptMissing(true);
         setReceipt(
-          "No receipt is visible yet. No write was repeated. Keep this exact command for another lookup or explicit same-command retry.",
+          "This change has not been confirmed. Check again or retry this same change; no new copy will be added.",
         );
         return;
       }
@@ -438,12 +472,14 @@ export function WebSessions({
         setDraft(null);
         setBase(null);
         setReceipt(
-          "The prior operation has a receipt, but its document is no longer visible to this account. No content was restored.",
+          "The change was saved, but your account no longer has access to those entries.",
         );
         return;
       }
       if (r.operation_id !== pending.id || r.session.id !== pending.session)
-        throw Error("Unmatched recovery receipt.");
+        throw Error(
+          "The saved result could not be matched to this change. Keep your backup and check again.",
+        );
       apply(r, pending.action);
       await loadList();
     } catch (e) {
@@ -519,9 +555,13 @@ export function WebSessions({
         p_argument: pending.argument,
       });
       if (r.operation_id !== pending.id)
-        throw Error("Unmatched retry receipt.");
+        throw Error(
+          "The reply could not be matched to this change. Keep your backup and check again.",
+        );
       if (r.operation_id !== pending.id || r.session.id !== pending.session)
-        throw Error("Unmatched recovery receipt.");
+        throw Error(
+          "The saved result could not be matched to this change. Keep your backup and check again.",
+        );
       apply(r, pending.action);
       await loadList();
     } catch (e) {
@@ -549,17 +589,14 @@ export function WebSessions({
     <section className="web-sessions">
       {!selected && (
         <div className="section-heading">
-          <h2>Shared practices & capture</h2>
+          <h2>Team practices & shots</h2>
           <button type="button" disabled={busy} onClick={() => void loadList()}>
-            Check availability / Retry
+            Reload practices & shots
           </button>
         </div>
       )}
       {!selected && (
-        <p>
-          New session permissions are separate from video grants. Only server
-          replies confirm a save, assignment or publication.
-        </p>
+        <p>Plan practices, record shots and send entries for review.</p>
       )}
       {error && <Notice error>{error}</Notice>}
       {receipt && (
@@ -569,14 +606,15 @@ export function WebSessions({
       )}
       {pending && (
         <Notice>
-          Operation pending or uncertain. Do not record another copy.
+          We could not confirm this change yet. Check its status before trying
+          again.
           <div className="actions">
             <button
               type="button"
               disabled={busy || pending.action === "recovery_required"}
               onClick={() => void recover()}
             >
-              Look up this command’s receipt
+              Check change status
             </button>
             {receiptMissing && (
               <button
@@ -584,7 +622,7 @@ export function WebSessions({
                 disabled={busy}
                 onClick={() => void retryFrozen()}
               >
-                Retry the identical retained command
+                Retry this same change
               </button>
             )}
             <button
@@ -600,7 +638,7 @@ export function WebSessions({
                 )
               }
             >
-              Download pending recovery copy
+              Download a backup of these entries
             </button>
           </div>
         </Notice>
@@ -624,7 +662,7 @@ export function WebSessions({
                     {row.session_date} · {row.kind}
                   </small>
                 </span>
-                <span className="badge">{row.status}</span>
+                <span className="badge">{statusLabel(row.status)}</span>
               </button>
             ))}
           </div>
@@ -655,7 +693,7 @@ export function WebSessions({
                 }
               }}
             >
-              <h3>Create shared session</h3>
+              <h3>Add team practice or shot chart</h3>
               <div className="field-grid">
                 <label className="field">
                   Session kind
@@ -689,7 +727,7 @@ export function WebSessions({
                 </label>
                 {kind === "game" && (
                   <label className="field">
-                    Existing server game
+                    Team game
                     <select
                       required
                       value={game}
@@ -710,7 +748,7 @@ export function WebSessions({
                 className="primary"
                 disabled={busy || !!pending}
               >
-                Create server session
+                Create team session
               </button>
             </form>
           )}
@@ -723,7 +761,7 @@ export function WebSessions({
             onClick={() => {
               if (dirty) {
                 setError(
-                  "Save or download this retained draft before leaving.",
+                  "Save or download your unsaved entries before leaving.",
                 );
                 return;
               }
@@ -746,16 +784,15 @@ export function WebSessions({
                 </div>
                 <span>
                   {reply.document_scope === "accepted"
-                    ? "Accepted snapshot"
-                    : current!.status}{" "}
-                  · revision {reply.document_revision ?? current!.revision}
+                    ? "Published to team"
+                    : statusLabel(current!.status)}{" "}
                 </span>
               </div>
               <details className="recovery-controls">
-                <summary>Recovery & server snapshot</summary>
+                <summary>Saved and unsaved entries</summary>
                 <p>
-                  Clock revision {current!.clock_revision} · assignment{" "}
-                  {current!.assignment_revision}
+                  Reload the last saved entries, or restore your unsaved entries
+                  from this browser.
                 </p>
                 <div className="actions">
                   <button
@@ -765,14 +802,14 @@ export function WebSessions({
                       if (
                         dirty &&
                         !window.confirm(
-                          "Keep a recovery copy of unsaved entries before loading the server snapshot? Cancel keeps editing.",
+                          "Download your unsaved entries first. Replace them with the last saved entries? Cancel to keep editing.",
                         )
                       )
                         return;
                       void state(selected);
                     }}
                   >
-                    Load server snapshot
+                    Reload saved entries
                   </button>
                   <button
                     type="button"
@@ -787,7 +824,7 @@ export function WebSessions({
                       )
                     }
                   >
-                    Download retained entries
+                    Download unsaved entries
                   </button>
                   <button
                     type="button"
@@ -796,7 +833,9 @@ export function WebSessions({
                       try {
                         const raw = sessionStorage.getItem(bufferKey);
                         if (!raw)
-                          throw Error("No retained buffer for this account.");
+                          throw Error(
+                            "No unsaved entries were found for this account.",
+                          );
                         const saved = JSON.parse(raw);
                         if (
                           saved.actor !== actor ||
@@ -813,7 +852,7 @@ export function WebSessions({
                         validateLedger(candidate);
                         change({ ...saved.session, clock: clockFor(reply) });
                         setReceipt(
-                          "Retained entries recovered in this browser; not server-saved.",
+                          "Unsaved entries restored. Save them to your team when ready.",
                         );
                       } catch (e) {
                         fail(e);
@@ -838,8 +877,7 @@ export function WebSessions({
                         )}
                       </strong>
                       <small>
-                        {current!.clock_period} · server-anchored manager
-                        reference
+                        {current!.clock_period} · manager’s team clock reference
                       </small>
                     </div>
                     {current!.clock_user_id === actor &&
@@ -948,11 +986,12 @@ export function WebSessions({
                           }
                         >
                           <Practice
+                            shared
                             session={withClock}
                             onChange={change}
                             templates={templates}
                             tab={tab}
-                            provenance="Shared proposal — incomplete and unreviewed."
+                            provenance="Team draft · not reviewed"
                           />
                         </fieldset>
                       ) : tab === "Court" ? (
@@ -972,14 +1011,12 @@ export function WebSessions({
                       ) : (
                         <ShotResults
                           session={withClock}
-                          provenance="Shared proposal · not accepted"
+                          provenance="Team draft · not reviewed"
                         />
                       )}
                       <div className="shared-save">
                         <span>
-                          {dirty
-                            ? "Unsaved browser entries"
-                            : "Server snapshot loaded"}
+                          {dirty ? "Unsaved changes" : "Saved entries loaded"}
                         </span>
                         <button
                           type="button"
@@ -992,19 +1029,20 @@ export function WebSessions({
                           }
                           onClick={() => void save(draft!)}
                         >
-                          Save shared session draft
+                          Save team draft
                         </button>
                         <button
                           type="button"
                           disabled={dirty || busy || !!pending || !canRecord}
                           onClick={() => void command("submit")}
                         >
-                          Submit session for review
+                          Send session for review
                         </button>
                       </div>
                     </>
                   ) : withClock.kind === "practice" ? (
                     <Practice
+                      shared
                       session={withClock}
                       onChange={() => {}}
                       templates={templates}
@@ -1012,8 +1050,8 @@ export function WebSessions({
                       provenance={
                         reply.document_scope === "accepted" ||
                         current!.status === "published"
-                          ? "Server-accepted snapshot."
-                          : "Shared proposal — not accepted."
+                          ? "Published to team"
+                          : "Not published"
                       }
                     />
                   ) : (
@@ -1022,16 +1060,16 @@ export function WebSessions({
                       provenance={
                         reply.document_scope === "accepted" ||
                         current!.status === "published"
-                          ? "Server-accepted snapshot"
-                          : "Shared proposal · not accepted"
+                          ? "Published to team"
+                          : statusLabel(current!.status)
                       }
                     />
                   )}
                 </>
               ) : (
-                <Empty title="No permitted snapshot available">
-                  This account can see session metadata and clock authority, but
-                  no working or accepted collection document.
+                <Empty title="No entries available to you">
+                  You can see the session and clock, but its entries are not
+                  available with your current team access.
                 </Empty>
               )}
               {current!.status === "submitted" &&
@@ -1044,13 +1082,13 @@ export function WebSessions({
                       onClick={() => {
                         if (
                           window.confirm(
-                            "Accept this exact submitted snapshot and retain prior accepted history?",
+                            "Approve these saved entries and publish them to the team? Earlier published results will be kept.",
                           )
                         )
                           void command("review", null, { approve: true });
                       }}
                     >
-                      Accept session & publish
+                      Approve session & publish
                     </button>
                     <button
                       type="button"
@@ -1059,7 +1097,7 @@ export function WebSessions({
                         void command("review", null, { approve: false })
                       }
                     >
-                      Reject session proposal
+                      Do not approve session
                     </button>
                   </div>
                 )}
@@ -1089,23 +1127,21 @@ export function WebSessions({
                 )}
               {can("sessions.manage") && (
                 <details>
-                  <summary>
-                    Recorder assignment and collection definitions
-                  </summary>
+                  <summary>Assign recorders and tracking rules</summary>
                   <p>
-                    Assignments use existing verified team accounts with the
-                    corresponding capabilities. Handoff stops the clock and
-                    fences previous writers.
+                    Choose existing team accounts with recording or clock
+                    access. Changing the assignment stops the clock and ends the
+                    previous recorder’s editing access.
                   </p>
                   <label className="field">
-                    Recording account UUID
+                    Recorder’s account code
                     <input
                       value={recorder}
                       onChange={(e) => setRecorder(e.target.value)}
                     />
                   </label>
                   <label className="field">
-                    Clock account UUID
+                    Clock operator’s account code
                     <input
                       value={clockUser}
                       onChange={(e) => setClockUser(e.target.value)}
@@ -1122,7 +1158,7 @@ export function WebSessions({
                       })
                     }
                   >
-                    Confirm recorder handoff
+                    Assign recorders
                   </button>
                   {draft && current!.status === "draft" && (
                     <fieldset
@@ -1158,10 +1194,10 @@ export function WebSessions({
                           setDefinition("");
                         }}
                       >
-                        <h3>Session collection definition</h3>
+                        <h3>What to track</h3>
                         <p>
-                          Configure before collection starts; used definitions
-                          are frozen with the session.
+                          Choose what counts before recording. Earlier entries
+                          keep the rule they used.
                         </p>
                         <label className="field">
                           Name
@@ -1189,7 +1225,7 @@ export function WebSessions({
                           </select>
                         </label>
                         <label className="field">
-                          Counting rule
+                          What counts?
                           <textarea
                             required
                             value={definition}
@@ -1197,9 +1233,7 @@ export function WebSessions({
                             maxLength={4000}
                           />
                         </label>
-                        <button type="submit">
-                          Add definition to this session draft
-                        </button>
+                        <button type="submit">Add tracking rule</button>
                       </form>
                     </fieldset>
                   )}

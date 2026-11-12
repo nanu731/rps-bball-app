@@ -79,12 +79,36 @@ export function Count({
       </div>
       {invalid && (
         <small className="error">
-          Use a nonnegative whole number within the supported range.
+          Enter 0 or a positive whole number, or leave blank. Very large numbers
+          are not supported.
         </small>
       )}
     </div>
   );
 }
+export const taskLabel = (value: string) =>
+  ({
+    Workspace: "My drafts",
+    "Shared team": "Team",
+    Setup: "Settings",
+    "FT conditioning": "Free throws",
+    Collection: "Other drills",
+    "Manual entry": "After-game stats",
+    "Accepted summary": "Team results",
+    "Draft entry": "Enter stats",
+  })[value] ?? value;
+export const statusLabel = (value: string) =>
+  ({
+    draft: "Draft · not reviewed",
+    completed: "Entry complete",
+    submitted: "Waiting for review",
+    published: "Published to team",
+    rejected: "Not approved",
+    superseded: "Earlier draft",
+    pending: "Waiting for approval",
+    active: "Active",
+    approved: "Approved",
+  })[value] ?? "Status unavailable";
 export function Tabs({
   items,
   value,
@@ -105,7 +129,7 @@ export function Tabs({
           aria-current={value === v ? "page" : undefined}
           onClick={() => onChange(v)}
         >
-          {v}
+          {taskLabel(v)}
         </button>
       ))}
     </nav>
@@ -157,7 +181,7 @@ export function Scroller({
   return (
     <>
       <div className="scroll-guidance">
-        <span>Scroll across for every column.</span>
+        <span>Swipe or use the arrows to see more stats.</span>
         <span>
           <button
             type="button"
@@ -209,7 +233,7 @@ export function useUnsavedGuard(guard: NavigationGuard, dirty: boolean) {
     const check = () =>
       !dirty ||
       window.confirm(
-        "Discard unsaved shared entries and leave? Cancel keeps editing. Download a recovery copy first if needed.",
+        "Leave without saving these team entries? Cancel to keep editing or download a backup first.",
       );
     guard.current = check;
     return () => {
