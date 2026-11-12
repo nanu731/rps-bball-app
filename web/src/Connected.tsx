@@ -1795,6 +1795,7 @@ function SharedGame({
                         <input
                           type="checkbox"
                           checked={confirmRoster}
+                          disabled={busy || uncertain}
                           onChange={(e) => setConfirmRoster(e.target.checked)}
                         />
                         I checked the game and the players included.
@@ -1804,6 +1805,7 @@ function SharedGame({
                         <input
                           type="checkbox"
                           checked={confirmZeros}
+                          disabled={busy || uncertain}
                           onChange={(e) => setConfirmZeros(e.target.checked)}
                         />
                         Blank counts in rows I added will be saved as 0. Every

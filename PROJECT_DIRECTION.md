@@ -241,3 +241,13 @@ synthetic rehearsal. This does not authorize bootstrap reruns, blanket migration
 configuration, actual delivery and hosted cross-user acceptance remain separate
 from source/local checks. Both email and Google may be offered only when their
 actual configuration and strict $0 operation are verified.
+
+The reviewed selective upgrade is now activated on the intended nonproduction
+project: verified baseline 13 plus migration21, with 14–20 skipped. Actual history,
+source-body, RLS/RPC permissions, owner binding and private-schema exclusion checks
+passed. A compiled Chrome journey using existing signed synthetic accounts passed
+the independent manual-statistics save/completion/review/publication lifecycle;
+authenticated readback confirmed saved identities, missing values and accepted
+pointers. See web/README.md for scope. Provider delivery, hosted practice/game/clock
+acceptance, public hosting and real-team/device acceptance remain separate gates;
+activation alone does not establish a functional teammate pilot.

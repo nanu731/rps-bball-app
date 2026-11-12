@@ -212,3 +212,33 @@ public-origin check is simulated hosting, not a deployed website. A proposed tes
 that changed a membership was rejected by automatic review and was not executed;
 no fresh membership-revocation result is claimed. Hosted provider delivery and
 cross-user pilot acceptance remain pending.
+
+## Selective hosted upgrade and manual-statistics evidence
+
+The authorized nonproduction upgrade applied migration `202611110001` only over
+the verified 13-migration baseline; migrations 14–20 remain unapplied. The guarded
+transaction passed a populated synthetic upgrade rehearsal and independent review.
+Actual hosted readback matched the reviewed source body and migration history,
+confirmed four RLS-protected tables and three authenticated-only RPCs, and retained
+client denial of migration history and private-schema Data API access. Original
+records, grants and owner binding were checked in the atomic transaction.
+
+An actual signed-user Chrome journey against that hosted project passed for a new
+TEST ONLY game: box scores, independent possession sheets and player paint touches
+were saved, separately completed, submitted, independently reviewed and published.
+Authenticated owner/member readback confirmed four distinct saved versions and
+matching accepted pointers. The first draft retained missing made-shot categories
+alongside the proven scoring contradiction; explicit zeros remained zero. These
+synthetic fixture accounts used existing sessions, not verified email delivery.
+
+Hosted latency exposed a completion-checkbox timing defect: users could confirm
+while Save was pending, then the response cleared their confirmation. Both
+completion confirmations now wait for Save/reconciliation, consistent with entry
+fields. A held real local save response reproduced the defect before the repair
+and passed afterward. Build, 16 unit checks and two focused compiled browser checks
+passed, including fresh isolated synthetic membership revocation, concealment and
+restoration. The hosted manual journey passed on the repaired compiled build.
+
+Normal email/Google delivery, hosted practice/game/clock acceptance and a public
+frontend URL remain separate unfinished gates. SMS, delivery workers and schedules
+remain disabled. This is neither real-team acceptance nor release readiness.

@@ -97,7 +97,8 @@ async function rpc(role: string, name: string, args: Record<string, unknown>) {
   });
   if (!r.ok)
     throw Error("Isolated signed RPC failed: " + r.status + " " + name);
-  return r.json();
+  const body = await r.text();
+  return body ? JSON.parse(body) : null;
 }
 test("uncommitted create survives remount and retries the identical retained command once", async ({
   page,
@@ -1609,4 +1610,221 @@ test("existing outsider and already signed-out synthetic session cannot read pro
     expect(response.status).toBe(403);
     await page.close();
   }
+});
+
+test("synthetic capability and membership revocation conceal team data and restore original access", async ({
+  page,
+}) => {
+  safeFixture();
+  const headers = (role: string) => ({
+    apikey: fixture.publishableKey,
+    Authorization: "Bearer " + fixture.actors[role].session.access_token,
+    "Content-Type": "application/json",
+  });
+  const read = async (path: string) => {
+    const response = await fetch(fixture.apiRoot + "/rest/v1/" + path, {
+      headers: headers("owner"),
+    });
+    expect(response.ok).toBe(true);
+    return response.json();
+  };
+  // Removal revokes grants; only an ordinary synthetic member with no grants is safe to restore exactly.
+  const team = await read(
+    "teams?select=name,owner_auth_uuid&id=eq." + fixture.team,
+  );
+  expect(team[0].name).toMatch(/^TEST ONLY/);
+  expect(team[0].owner_auth_uuid).toBe(fixture.actors.owner.id);
+  const user = await fetch(fixture.apiRoot + "/auth/v1/user", {
+    headers: headers("viewer"),
+  });
+  expect(user.ok).toBe(true);
+  const identity = await user.json();
+  expect(identity.id).toBe(fixture.actors.viewer.id);
+  expect(identity.email).toMatch(/^test-only-web-.*@example\.invalid$/);
+  const original = await rpc("viewer", "team_access", {
+    p_team_id: fixture.team,
+  });
+  expect(original.is_owner).toBe(false);
+  expect(original.capabilities).toEqual([]);
+  const membership = await read(
+    "team_memberships?select=status&team_id=eq." +
+      fixture.team +
+      "&user_id=eq." +
+      identity.id,
+  );
+  expect(membership).toEqual([{ status: "active" }]);
+  const grants = await read(
+    "capability_grants?select=id&team_id=eq." +
+      fixture.team +
+      "&user_id=eq." +
+      identity.id +
+      "&revoked_at=is.null",
+  );
+  const envelopes = await read(
+    "delegation_envelopes?select=id&team_id=eq." +
+      fixture.team +
+      "&delegate_user_id=eq." +
+      identity.id +
+      "&revoked_at=is.null",
+  );
+  expect(grants).toEqual([]);
+  expect(envelopes).toEqual([]);
+  const published = await read(
+    "web_sessions?select=id&team_id=eq." +
+      fixture.team +
+      "&accepted_snapshot_id=not.is.null&limit=1",
+  );
+  expect(published).toHaveLength(1);
+  const before = await rpc("viewer", "web_session_state", {
+    p_team_id: fixture.team,
+    p_session_id: published[0].id,
+  });
+  expect(before.document_scope).toBe("accepted");
+  await signed(page, "viewer");
+  const command = async (name: string, args: Record<string, unknown>) => {
+    const access = await rpc("owner", "team_access", {
+      p_team_id: fixture.team,
+    });
+    await rpc("owner", name, {
+      p_team_id: fixture.team,
+      p_user_id: identity.id,
+      p_expected_access_revision: access.access_revision,
+      ...args,
+    });
+  };
+  let granted = false;
+  let removed = false;
+  try {
+    granted = true;
+    await command("team_set_capability", {
+      p_capability: "sessions.clock",
+      p_enabled: true,
+    });
+    expect(
+      (await rpc("viewer", "team_access", { p_team_id: fixture.team }))
+        .capabilities,
+    ).toContain("sessions.clock");
+    await command("team_set_capability", {
+      p_capability: "sessions.clock",
+      p_enabled: false,
+    });
+    granted = false;
+    expect(
+      (await rpc("viewer", "team_access", { p_team_id: fixture.team }))
+        .capabilities,
+    ).toEqual([]);
+    removed = true;
+    await command("team_set_membership", { p_status: "removed" });
+    for (const [name, args] of [
+      ["team_access", { p_team_id: fixture.team }],
+      [
+        "web_session_state",
+        { p_team_id: fixture.team, p_session_id: published[0].id },
+      ],
+    ] as const) {
+      const response = await fetch(fixture.apiRoot + "/rest/v1/rpc/" + name, {
+        method: "POST",
+        headers: headers("viewer"),
+        body: JSON.stringify(args),
+      });
+      expect(response.status).toBe(403);
+    }
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "No accessible teams", exact: true }),
+    ).toBeVisible();
+    await expect(page.locator(".shared-team")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Save team draft", exact: true }),
+    ).toHaveCount(0);
+  } finally {
+    if (granted)
+      await command("team_set_capability", {
+        p_capability: "sessions.clock",
+        p_enabled: false,
+      });
+    if (removed) await command("team_set_membership", { p_status: "active" });
+  }
+  expect(
+    (await rpc("viewer", "team_access", { p_team_id: fixture.team }))
+      .capabilities,
+  ).toEqual(original.capabilities);
+  const after = await rpc("viewer", "web_session_state", {
+    p_team_id: fixture.team,
+    p_session_id: published[0].id,
+  });
+  expect(after.session.accepted_snapshot_id).toBe(
+    before.session.accepted_snapshot_id,
+  );
+  expect(after.document).toEqual(before.document);
+  await page.reload();
+  await expect(
+    page.locator("summary").filter({ hasText: "Account and team · verified" }),
+  ).toBeVisible();
+});
+
+test("manual completion confirmation waits for the pending draft save", async ({
+  page,
+}) => {
+  await signed(page, "recorder");
+  await page
+    .getByRole("button", { name: "After-game stats", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Opponent", exact: true })
+    .fill("TEST ONLY pending confirmation " + randomUUID().slice(0, 8));
+  await page
+    .getByRole("button", { name: "Create team game", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Enter stats", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Open my draft", exact: true })
+    .click();
+  await page.getByLabel("Points", { exact: true }).fill("0");
+  await page.getByText("Finish this stat sheet", { exact: true }).click();
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let committed = false;
+  await page.route(
+    "**/rpc/stats_save_draft",
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.ok()).toBe(true);
+      committed = true;
+      await held;
+      await route.fulfill({ response });
+    },
+    { times: 1 },
+  );
+  await page
+    .getByRole("button", { name: "Save team draft", exact: true })
+    .click();
+  try {
+    await expect.poll(() => committed).toBe(true);
+    await expect(
+      page.getByRole("checkbox", {
+        name: "I checked the game and the players included.",
+        exact: true,
+      }),
+    ).toBeDisabled();
+  } finally {
+    release();
+  }
+  await expect(
+    page.getByText("Saved for your team. Not published yet.", { exact: true }),
+  ).toBeVisible();
+  const confirmation = page.getByRole("checkbox", {
+    name: "I checked the game and the players included.",
+    exact: true,
+  });
+  await expect(confirmation).toBeEnabled();
+  await confirmation.check();
+  await expect(
+    page.getByRole("button", {
+      name: "Complete player box scores",
+      exact: true,
+    }),
+  ).toBeEnabled();
 });
