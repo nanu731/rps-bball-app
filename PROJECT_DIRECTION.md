@@ -257,5 +257,7 @@ passed. Email remains hidden pending its private SMTP setup and delivery check.
 See web/README.md for scope. Provider delivery and real-team/device acceptance
 remain separate gates; activation alone does not establish a functional teammate
 pilot. Google remains in Testing with only the approved owner account, an exact
-callback and no linked Cloud billing. Email SMTP delivery and sign-in remain
-unverified; the authorized single owner email test has not been requested.
+callback and no linked Cloud billing. Owner-saved SMTP is now enabled, with its
+Gmail host/port verified without reading the password. The email-enabled frontend
+update awaits specific deployment approval; actual email delivery/sign-in remain
+unverified, and the authorized single owner email test has not been requested.

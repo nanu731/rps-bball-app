@@ -262,7 +262,12 @@ Google identity belongs to the original verified owner UUID. No owner grant was
 created. Google remains in Testing with one approved owner account; the Cloud
 project has no linked billing account.
 
-Fresh server readback shows custom SMTP is still disabled. The owner-only
-credential step is prepared, and no sign-in email has yet been requested in this
-verification pass. Actual email delivery and email sign-in remain unverified. SMS, delivery workers and schedules
+The owner completed private SMTP credential entry. Fresh server readback confirms
+custom SMTP enabled with the Gmail host and port465; sender/username readback is
+masked by the browser tool and is unavailable for direct comparison. The password
+was not read. The existing email-enabled build is prepared, but its final primary
+nonproduction deployment awaits specific approval because the earlier approval
+kept email hidden. No sign-in email has yet been requested. The unchanged template
+contains a confirmation link; same-browser callback and actual delivery remain
+unverified. SMS, delivery workers and schedules
 remain disabled. This is neither real-team acceptance nor release readiness.
