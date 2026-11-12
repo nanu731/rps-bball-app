@@ -55,7 +55,7 @@ export function ManualEntry({
           items={["Box scores", "Possessions", "Paint touches"]}
           value={tab}
           onChange={setTab}
-          label="Manual dataset"
+          label="After-game stat sheet"
         />
       )}
       <p className="muted">
@@ -318,7 +318,7 @@ export function ManualEntry({
 export function ManualSummary({
   manual,
   players,
-  provenance = "Device-only draft · not reviewed",
+  provenance = "Draft on this device · not reviewed",
 }: {
   manual: Manual;
   players: Player[];
@@ -397,7 +397,9 @@ export function ManualSummary({
           <p className="muted">
             Entered records only, not a final possession count.
           </p>
-          <Scroller label={`${team} possession records`}>
+          <Scroller
+            label={`${team === "ours" ? "Our team" : "Opponent"} possession records`}
+          >
             <table>
               <thead>
                 <tr>

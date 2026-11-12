@@ -128,7 +128,7 @@ export function Connected({
             ? rows[0].id
             : "",
       );
-      setMessage("Signed in. Choose your team to continue.");
+      setMessage("Signed in. Your available teams are shown below.");
     } catch (e) {
       if (g === generation.current) {
         if (
@@ -287,8 +287,7 @@ export function Connected({
         )}
         {!client ? (
           <Empty title="Team sign-in is not ready">
-            Ask the team owner to finish connecting this test version. My drafts
-            remains separate and available in this browser.
+            Ask the team owner to finish setting up team sign-in.
           </Empty>
         ) : !user ? (
           <section className="auth-form">
@@ -351,11 +350,11 @@ export function Connected({
                 </div>
               </form>
             ) : (
-              <p>Email sign-in is not available on this test connection.</p>
+              <p>Email sign-in is not available yet.</p>
             )}
             <p className="muted">
-              Phone sign-in is unavailable. If your sign-in email does not
-              arrive, ask the team owner to check email setup.
+              Need help signing in? Ask the team owner. Phone sign-in is not
+              available.
             </p>
           </section>
         ) : (
@@ -372,7 +371,7 @@ export function Connected({
               </button>
             </div>
             {teams.length === 0 ? (
-              <Empty title="No accessible teams">
+              <Empty title="No team access yet">
                 Ask the team owner for your team code, then request to join.
               </Empty>
             ) : (
@@ -448,9 +447,9 @@ export function Connected({
       <details className="capability-boundary">
         <summary>About this pilot</summary>
         <p>
-          Team features depend on the connection set up by your owner. Drafts
-          saved in this browser stay separate. Google Sheets, video delivery and
-          scheduled exports are not active in this pilot.
+          This is a test version. Team entries and drafts saved only on this
+          device stay separate. Google Sheets exports and videos are not
+          available.
         </p>
       </details>
     </>
@@ -697,8 +696,8 @@ function SharedTeam({
         });
         const current = grants.find((g) => g.revoked_at === null);
         description = current
-          ? `This access is assigned${current.expires_at ? " with an expiry" : ""}.`
-          : "This access is not assigned.";
+          ? `This permission was granted${current.expires_at ? " with an end date and may have expired" : ""}. Check the member’s current access.`
+          : "This permission is not currently assigned.";
       } else if (adminAttempt.name === "team_set_membership") {
         const found = await server.rows<{ status: string }>(
           "team_memberships",
@@ -785,7 +784,7 @@ function SharedTeam({
             ? "Team owner · access verified"
             : access.can_propose_stats
               ? "Team member · can enter draft stats"
-              : "Team member · can view published results"}{" "}
+              : "Team member · access verified"}{" "}
         </p>
       )}
       {manage && access && (
@@ -967,7 +966,7 @@ function SharedTeam({
           onChange={(next) => {
             if (navigationGuard.current()) setSection(next);
           }}
-          label="Shared team section"
+          label="Team section"
         />
       )}
       {section === "Practices & shots" && access ? (
@@ -990,7 +989,7 @@ function SharedTeam({
               if (navigationGuard.current()) setGame(null);
             }}
           >
-            Back to shared games
+            Back to team games
           </button>
           <SharedGame
             key={`${actor}:${game.id}`}
@@ -1021,7 +1020,7 @@ function SharedTeam({
                       {g.date} · {g.home_away === "home" ? "Home" : "Away"}
                     </small>
                   </span>
-                  <span className="badge">Server game</span>
+                  <span className="badge">Team game</span>
                 </button>
               ))}
             </div>
@@ -1264,7 +1263,7 @@ function SharedGame({
       pendingOp.current = null;
       setMessage(
         name === "stats_save_drafts" || name === "stats_save_draft"
-          ? "Saved for your team. Not published yet."
+          ? "Saved to team. Not published yet."
           : name === "stats_complete"
             ? "Entry complete. Send it for review when ready."
             : name === "stats_submit"
@@ -1345,6 +1344,7 @@ function SharedGame({
       : roster;
   const buffer = (m: Manual) => {
     setManual(m);
+    setMessage("");
     setDirty(true);
     try {
       sessionStorage.setItem(
@@ -1430,7 +1430,7 @@ function SharedGame({
         setMessage("The expected change was saved. It was not sent again.");
       } else
         setMessage(
-          "We still cannot confirm this change. Your unsaved entries are kept here. Check Review & history before continuing.",
+          "We still cannot confirm this change. Keep this tab open and download your unsaved entries. Check Review & history before continuing.",
         );
     } catch (e) {
       if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
@@ -1557,7 +1557,7 @@ function SharedGame({
         items={["Accepted summary", "Draft entry", "Review & history"]}
         value={view}
         onChange={setView}
-        label="Shared game section"
+        label="Team game section"
       />
       {busy && <p role="status">Loading team stats…</p>}
       {error && (
@@ -1864,7 +1864,7 @@ function SharedGame({
                   <span className="badge">{statusLabel(v.status)}</span>
                 </div>
                 <p>
-                  {v.records.length} records ·{" "}
+                  {v.records.length} entries ·{" "}
                   {v.base_published_version_id
                     ? "Correction · earlier results kept"
                     : "First submission"}
@@ -2050,7 +2050,7 @@ function SharedGame({
                     provenance={statusLabel(v.status)}
                   />
                   <details>
-                    <summary>Technical details</summary>
+                    <summary>Saved data for troubleshooting</summary>
                     <pre>{JSON.stringify(v.records, null, 2)}</pre>
                   </details>
                 </details>

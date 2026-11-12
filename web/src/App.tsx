@@ -483,7 +483,13 @@ export default function App() {
                 )
               ) : screen === "Setup" ? (
                 <>
-                  <Setup db={work} change={setWork} />
+                  <Setup
+                    db={work}
+                    change={(next) => {
+                      setWork(next);
+                      setReceipt("");
+                    }}
+                  />
                   <div className="actions">
                     <button type="button" onClick={recovery}>
                       Download backup
@@ -514,7 +520,7 @@ export default function App() {
                       </p>
                     </div>
                     <span>
-                      Device-only draft
+                      Draft on this device
                       <br />
                       Not reviewed
                     </span>
@@ -551,7 +557,7 @@ export default function App() {
                     }
                     value={tab}
                     onChange={setTab}
-                    label="Session section"
+                    label="Practice or game section"
                   />
                   {session.kind === "practice" ? (
                     <Practice
@@ -647,10 +653,10 @@ export default function App() {
                     items={["All sessions", "Practices", "Games"]}
                     value={filter}
                     onChange={setFilter}
-                    label="Filter sessions"
+                    label="Filter practices and games"
                   />
                   {work.sessions.length === 0 ? (
-                    <Empty title="Your next session starts here">
+                    <Empty title="Plan your next practice or game">
                       Add a practice to plan drills, or add a game to record
                       shots and after-game stats.
                     </Empty>
@@ -677,7 +683,7 @@ export default function App() {
                             {work.sessions.some((s) => s.kind === kind) ? (
                               <div className="session-list">
                                 <div className="list-head">
-                                  <span>Session</span>
+                                  <span>Practice or game</span>
                                   <span>Players</span>
                                   <span>Status</span>
                                 </div>
@@ -716,7 +722,7 @@ export default function App() {
                                         {s.players.length} players included
                                       </span>
                                       <span className="badge">
-                                        Device-only draft
+                                        Draft on this device
                                       </span>
                                       <button
                                         type="button"
@@ -893,7 +899,7 @@ function Setup({ db, change }: { db: Ledger; change: (s: Ledger) => void }) {
         <div>
           <h1>Draft settings</h1>
           <p>
-            Players and stat-tracking templates for your device-only drafts.
+            Players and stat-tracking templates for your drafts on this device.
           </p>
         </div>
       </div>

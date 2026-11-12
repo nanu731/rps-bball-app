@@ -271,3 +271,38 @@ kept email hidden. No sign-in email has yet been requested. The unchanged templa
 contains a confirmation link; same-browser callback and actual delivery remain
 unverified. SMS, delivery workers and schedules
 remain disabled. This is neither real-team acceptance nor release readiness.
+
+## Plain-language task pass — 2026-11-12
+
+The existing maroon ledger now uses task names such as Create team practice,
+Restore my unsaved entries, and Assign recorder & clock operator. Device drafts,
+team saves, review and publication remain distinct. Rule history stays available
+under Rule used; printed practice plans no longer include internal identifiers.
+Routine results use Makes, Attempts, Count and Time rather than stored field names.
+No permissions, records, counting rules or provider configuration changed.
+
+Save confirmations clear after further shared-stat or draft-settings changes, so
+an earlier successful save does not imply the new edits are saved. Permission
+recovery reports a recorded grant without claiming an expiring grant still works.
+The calm Check scoring notice remains nonblocking and missing values remain
+separate from explicit zero. Existing safe status checks and recovery actions stay
+available; no blind retry or new diagnostic export was introduced.
+
+TypeScript/Vite and16 unit checks passed. Twenty-three focused compiled Chrome
+checks passed across390px phone,1024px tablet and1440px desktop views, with light/
+dark and reduced-motion evidence. The existing24px-root-text/390×540px check
+also passed: focused numeric entry, far-right roster columns, missing-value
+placeholder fit, accessible text and Save stayed reachable. Signed isolated
+services cover practice/shots,
+separate clock assignment, manual-stat completion/review/publication, incomplete
+values, interrupted administration and pending-save confirmation. Expired-grant
+readback is simulated within an otherwise actual isolated-service check. The manual lost-reply/remount check also passed after its obsolete Account-
+disclosure setup was corrected; readback retained values with one write only.
+
+Independent source Standards/Spec review reported no remaining concrete findings;
+the mechanical design detector returned no findings. Private synthetic screenshots
+were inspected. Browser test setup was updated for login-first navigation and the
+new labels. This is source/local acceptance only: the live nonproduction preview
+remains the earlier Google-enabled build. No deployment or email test occurred.
+Safari, actual mobile keyboards,200% text reflow, screen readers and physical-device
+acceptance were not newly established by this pass.

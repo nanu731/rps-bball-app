@@ -76,7 +76,7 @@ export function CaptureEntry({
   const push = async (kind: Capture["kind"], made: boolean | null) => {
     try {
       if (team === "ours" && !selected)
-        throw Error("Select one of this session’s players first.");
+        throw Error("Choose a player from this practice or game first.");
       if (kind === "shot" && !point)
         throw Error(
           "Choose a location first. A tap alone does not record an attempt.",
@@ -85,7 +85,7 @@ export function CaptureEntry({
         kind === "event" &&
         (!eventTemplate || !eventTemplate.definition.trim())
       )
-        throw Error("Choose a configured event template first.");
+        throw Error("Choose what to track before recording.");
       if (kind === "event" && eventTemplate?.kind === "makes")
         validatePair({
           made: eventValues.made ?? "",
@@ -302,7 +302,7 @@ export function CaptureEntry({
       <div className="section-heading">
         <h2>{correct ? "Correct recorded event" : "Record a field goal"}</h2>
         <span className="badge">
-          {shared ? "Team draft · not reviewed" : "Device-only draft"}
+          {shared ? "Team draft · not reviewed" : "Draft on this device"}
         </span>
       </div>
       <fieldset className="entry-fields" disabled={blocked}>
@@ -438,7 +438,7 @@ export function CaptureEntry({
               <span>{point ? "Location selected" : "Select a location"}</span>
             </div>
             <details>
-              <summary>Choose location with keyboard</summary>
+              <summary>Choose location without tapping the court</summary>
               <div className="field-grid">
                 {(["x", "y"] as const).map((axis) => (
                   <label className="field" key={axis}>
@@ -486,7 +486,7 @@ export function CaptureEntry({
                 }
                 onClick={() => void push("freeThrow", true)}
               >
-                FT make
+                Free throw made
               </button>
               <button
                 type="button"
@@ -497,7 +497,7 @@ export function CaptureEntry({
                 }
                 onClick={() => void push("freeThrow", false)}
               >
-                FT miss
+                Free throw missed
               </button>
             </div>
             <h3>Other game stats</h3>
@@ -518,17 +518,14 @@ export function CaptureEntry({
                   : templates
                 ).map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name} · v{t.version}
+                    {t.name} · rule {t.version}
                   </option>
                 ))}
               </select>
             </label>
             {eventTemplate && (
               <>
-                <p className="muted">
-                  {eventTemplate.definition} · definition v
-                  {eventTemplate.version}
-                </p>
+                <p className="muted">{eventTemplate.definition}</p>
                 {eventTemplate.kind === "count" ||
                 eventTemplate.kind === "timed" ? (
                   <Count
@@ -636,12 +633,22 @@ export function CaptureEntry({
                 {e.period} · {formatClock(e.clock)} ·{" "}
                 {e.values
                   ? Object.entries(e.values)
-                      .map(([k, v]) => `${k}: ${v || "Not entered"}`)
+                      .map(
+                        ([k, v]) =>
+                          `${k === "made" ? "Makes" : k === "attempts" ? "Attempts" : e.template?.kind === "timed" ? "Time (seconds)" : "Count"}: ${v || "Not entered"}`,
+                      )
                       .join(", ")
                   : ""}{" "}
                 · {e.note || "No note"}{" "}
-                {e.template ? `· definition v${e.template.version}` : ""}
               </small>
+              {e.template && (
+                <details>
+                  <summary>Rule used</summary>
+                  <p>
+                    {e.template.definition} · Rule version {e.template.version}
+                  </p>
+                </details>
+              )}
             </div>
             <button
               type="button"
@@ -724,7 +731,7 @@ export function CourtDiagram({
 
 export function ShotResults({
   session: s,
-  provenance = "Device-only draft · not reviewed",
+  provenance = "Draft on this device · not reviewed",
 }: {
   session: Session;
   provenance?: string;
@@ -845,7 +852,10 @@ export function ShotResults({
                 </strong>
                 <small>
                   {Object.entries(e.values ?? {})
-                    .map(([k, v]) => `${k}: ${v || "Not entered"}`)
+                    .map(
+                      ([k, v]) =>
+                        `${k === "made" ? "Makes" : k === "attempts" ? "Attempts" : e.template?.kind === "timed" ? "Time (seconds)" : "Count"}: ${v || "Not entered"}`,
+                    )
                     .join(", ")}{" "}
                   · {e.note} · {e.period} {formatClock(e.clock)}
                 </small>

@@ -62,7 +62,7 @@ test("event correction retains its original rule; switching template kinds clear
   await page.getByRole("button", { name: /TEST ONLY opponent/ }).click();
   await page.getByRole("button", { name: "Correct", exact: true }).click();
   await expect(
-    page.getByText("TEST ONLY original observed rule · definition v1", {
+    page.getByText("TEST ONLY original observed rule", {
       exact: true,
     }),
   ).toBeVisible();

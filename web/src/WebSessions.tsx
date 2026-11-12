@@ -206,7 +206,7 @@ export function WebSessions({
         ["42P01", "PGRST205", "42883", "PGRST202"].includes(e.code)
       )
         setError(
-          "Team practices and shot charts are unavailable on this connection. You can still record in My drafts; those entries stay in this browser.",
+          "Team practices and shot charts could not be opened. Try reloading, or ask the team owner for help.",
         );
       else fail(e);
     }
@@ -372,9 +372,9 @@ export function WebSessions({
     }
     setReceipt(
       action === "create"
-        ? "Team session created. Not published yet."
+        ? `${r.session.kind === "practice" ? "Practice" : "Shot chart"} created. Not published yet.`
         : action === "save"
-          ? "Saved for your team. Not published yet."
+          ? "Saved to team. Not published yet."
           : action === "submit"
             ? "Waiting for review."
             : action === "review"
@@ -382,7 +382,7 @@ export function WebSessions({
                 ? "Published to team."
                 : "Not approved. Saved entries are kept in history."
               : action === "assign"
-                ? "Recording assignments updated."
+                ? "Recorder and clock operator assigned."
                 : action === "request_edit"
                   ? "Correction request sent."
                   : action === "reopen"
@@ -708,7 +708,7 @@ export function WebSessions({
                 e.preventDefault();
                 try {
                   if (kind === "game" && !game)
-                    throw Error("Choose an existing shared game.");
+                    throw Error("Choose an existing team game.");
                   const s = newSession(kind, title, date, roster);
                   void command(
                     "create",
@@ -725,7 +725,7 @@ export function WebSessions({
               <h3>Add team practice or shot chart</h3>
               <div className="field-grid">
                 <label className="field">
-                  Session kind
+                  What to add
                   <select
                     value={kind}
                     onChange={(e) =>
@@ -733,11 +733,11 @@ export function WebSessions({
                     }
                   >
                     <option value="practice">Practice</option>
-                    <option value="game">Game capture</option>
+                    <option value="game">Game shot chart</option>
                   </select>
                 </label>
                 <label className="field">
-                  Session name
+                  Name
                   <input
                     required
                     maxLength={100}
@@ -746,7 +746,7 @@ export function WebSessions({
                   />
                 </label>
                 <label className="field">
-                  Session date
+                  Date
                   <input
                     required
                     type="date"
@@ -777,7 +777,8 @@ export function WebSessions({
                 className="primary"
                 disabled={busy || !!pending}
               >
-                Create team session
+                Create{" "}
+                {kind === "practice" ? "team practice" : "team shot chart"}
               </button>
             </form>
           )}
@@ -800,7 +801,7 @@ export function WebSessions({
               setBase(null);
             }}
           >
-            Back to shared sessions
+            Back to practices & shots
           </button>
           {reply && (
             <>
@@ -872,7 +873,7 @@ export function WebSessions({
                           saved.session.id !== selected
                         )
                           throw Error(
-                            "Retained entries belong to a different session/account.",
+                            "These unsaved entries belong to a different practice, game or account. Nothing was restored.",
                           );
                         const candidate = {
                           ...emptyLedger(),
@@ -888,7 +889,7 @@ export function WebSessions({
                       }
                     }}
                   >
-                    Recover this account’s buffer
+                    Restore my unsaved entries
                   </button>
                 </div>
               </details>
@@ -1003,7 +1004,7 @@ export function WebSessions({
                         }
                         value={tab}
                         onChange={setTab}
-                        label="Shared session section"
+                        label="Practice and shot-chart section"
                       />
                       {withClock.kind === "practice" ? (
                         <fieldset
@@ -1065,7 +1066,7 @@ export function WebSessions({
                           disabled={dirty || busy || !!pending || !canRecord}
                           onClick={() => void command("submit")}
                         >
-                          Send session for review
+                          Send for review
                         </button>
                       </div>
                     </>
@@ -1097,8 +1098,8 @@ export function WebSessions({
                 </>
               ) : (
                 <Empty title="No entries available to you">
-                  You can see the session and clock, but its entries are not
-                  available with your current team access.
+                  Your access lets you view this practice or game and its clock,
+                  but not these entries.
                 </Empty>
               )}
               {current!.status === "submitted" &&
@@ -1117,7 +1118,7 @@ export function WebSessions({
                           void command("review", null, { approve: true });
                       }}
                     >
-                      Approve session & publish
+                      Approve & publish
                     </button>
                     <button
                       type="button"
@@ -1126,7 +1127,7 @@ export function WebSessions({
                         void command("review", null, { approve: false })
                       }
                     >
-                      Do not approve session
+                      Do not approve
                     </button>
                   </div>
                 )}
@@ -1140,7 +1141,7 @@ export function WebSessions({
                     disabled={busy || !!pending}
                     onClick={() => void command("request_edit")}
                   >
-                    Request session correction
+                    Request a correction
                   </button>
                 )}
               {current!.edit_requested_by &&
@@ -1151,12 +1152,12 @@ export function WebSessions({
                     disabled={busy || !!pending}
                     onClick={() => void command("reopen")}
                   >
-                    Approve session correction
+                    Allow correction
                   </button>
                 )}
               {can("sessions.manage") && (
                 <details>
-                  <summary>Assign recorders and tracking rules</summary>
+                  <summary>Recorder, clock operator & tracking rules</summary>
                   <p>
                     Choose existing team accounts with recording or clock
                     access. Changing the assignment stops the clock and ends the
@@ -1187,7 +1188,7 @@ export function WebSessions({
                       })
                     }
                   >
-                    Assign recorders
+                    Assign recorder & clock operator
                   </button>
                   {draft && current!.status === "draft" && (
                     <fieldset

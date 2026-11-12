@@ -16,7 +16,7 @@ export function Practice({
   templates,
   tab,
   shared = false,
-  provenance = "Device-only draft · not reviewed",
+  provenance = "Draft on this device · not reviewed",
 }: {
   session: Session;
   onChange: (s: Session) => void;
@@ -122,9 +122,7 @@ export function Practice({
           <div className="print-plan">
             <div className="print-heading">
               <h2>{s.title}</h2>
-              <p>
-                {s.date} · Practice plan · {s.id}
-              </p>
+              <p>{s.date} · Practice plan</p>
             </div>
             {s.plan.length === 0 && (
               <Empty title="Build the practice plan">
@@ -171,9 +169,7 @@ export function Practice({
                       />
                     </label>
                     {row.template && (
-                      <span className="badge">
-                        {row.template.name} · definition v{row.template.version}
-                      </span>
+                      <span className="badge">{row.template.name}</span>
                     )}
                     <button
                       type="button"
@@ -262,7 +258,7 @@ export function Practice({
                 <option value="">Choose a template</option>
                 {templates.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name} · v{t.version}
+                    {t.name} · rule {t.version}
                   </option>
                 ))}
               </select>
@@ -343,8 +339,8 @@ export function Practice({
                   </p>
                   {!s.protocol && (
                     <Notice>
-                      Protocol not supplied. Configure the spot labels and
-                      session protocol in Plan before real collection.
+                      Drill instructions are missing. Add the spot names and
+                      instructions in Plan before recording team results.
                     </Notice>
                   )}
                   <div className="nine-spots">
@@ -384,8 +380,8 @@ export function Practice({
                 <>
                   <h2>Free-throw conditioning</h2>
                   <p>
-                    Observed makes and attempts for {selected.name}.
-                    Conditioning rules remain the coach’s session protocol.
+                    Observed makes and attempts for {selected.name}. Follow the
+                    coach’s conditioning instructions in Plan.
                   </p>
                   <div className="field-grid">
                     <Count
@@ -458,7 +454,6 @@ export function Practice({
                       <Notice>
                         {t.definition ||
                           "Add what counts for this template in Settings."}{" "}
-                        · definition v{t.version}
                       </Notice>
                       {t.kind === "count" || t.kind === "timed" ? (
                         <Count
@@ -534,26 +529,33 @@ export function Practice({
                       Undo last observation change
                     </button>
                     <span className="muted">
-                      {s.observations.length} retained history records
+                      {s.observations.length} changes, including corrections
                     </span>
                   </div>
                   <div className="ledger-rows">
                     {visibleObservations.map((o) => (
                       <div className="observation" key={o.id}>
                         <div>
-                          <strong>
-                            {o.template.name} · v{o.template.version}
-                          </strong>
+                          <strong>{o.template.name}</strong>
                           <small>
                             {s.players.find((p) => p.id === o.playerID)?.name ??
                               "Team"}{" "}
                             ·{" "}
                             {Object.entries(o.values)
-                              .map(([k, v]) => `${k}: ${shown(v)}`)
+                              .map(
+                                ([k, v]) =>
+                                  `${k === "made" ? "Makes" : k === "attempts" ? "Attempts" : o.template.kind === "timed" ? "Time (seconds)" : "Count"}: ${shown(v)}`,
+                              )
                               .join(" / ")}{" "}
                             · {o.note}
                           </small>
-                          <small>Rule used: {o.template.definition}</small>
+                          <details>
+                            <summary>Rule used</summary>
+                            <p>
+                              {o.template.definition} · Rule version{" "}
+                              {o.template.version}
+                            </p>
+                          </details>
                         </div>
                         <button
                           type="button"
@@ -664,10 +666,13 @@ export function Practice({
           ) : (
             resultObservations.map((o) => (
               <p key={o.id}>
-                {o.template.name} (definition v{o.template.version}) ·{" "}
+                {o.template.name} ·{" "}
                 {s.players.find((p) => p.id === o.playerID)?.name ?? "Team"} ·{" "}
                 {Object.entries(o.values)
-                  .map(([k, v]) => `${k}: ${shown(v)}`)
+                  .map(
+                    ([k, v]) =>
+                      `${k === "made" ? "Makes" : k === "attempts" ? "Attempts" : o.template.kind === "timed" ? "Time (seconds)" : "Count"}: ${shown(v)}`,
+                  )
                   .join(", ")}{" "}
                 · {o.note || "No note"} · Rule used: {o.template.definition}
               </p>

@@ -103,7 +103,7 @@ test("court locations automatically select shot value, with manual override and 
   ).toBeVisible();
   await expect(observations).toHaveCount(before + 1);
   await page
-    .getByText("Choose location with keyboard", { exact: true })
+    .getByText("Choose location without tapping the court", { exact: true })
     .click();
   await page
     .getByRole("button", { name: "Select center location", exact: true })
@@ -130,7 +130,9 @@ test("game court provisional selection, explicit value, FT, correction Undo and 
   await expect(
     page.getByText("TEST ONLY Player A · 3PT make", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "FT miss", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Free throw missed", exact: true })
+    .click();
   await expect(
     page.getByText("TEST ONLY Player A · FT miss", { exact: true }),
   ).toBeVisible();
@@ -345,6 +347,7 @@ test("same browser tabs cannot both overwrite one base revision", async ({
   const second = await context.newPage();
   await second.goto("/");
   for (const p of [page, second]) {
+    await p.getByRole("button", { name: "My drafts", exact: true }).click();
     await p.getByRole("button", { name: "Add game", exact: true }).click();
     await p
       .getByLabel("Opponent", { exact: true })
@@ -373,47 +376,60 @@ test("same browser tabs cannot both overwrite one base revision", async ({
   expect(saved.revision).toBe(1);
 });
 
-test("task wording separates browser drafts, team sign-in and advanced owner settings", async ({
+test("task wording separates device drafts, team sign-in and draft settings", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(
-    page.getByRole("button", { name: "My drafts", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("ONLY IN THIS BROWSER", { exact: true }),
-  ).toBeVisible();
-  await expect(page.locator("main")).not.toContainText(
-    /ledger|revision|authoritative|RPC|JWT/,
-  );
-  await page.getByRole("button", { name: "Team", exact: true }).click();
-  await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(page.getByText("TEAM WORKSPACE", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("Backups below contain My drafts only, not team entries.", {
+    page.getByRole("heading", {
+      name: "Team sign-in is not ready",
       exact: true,
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("textbox", { name: "Project URL", exact: true }),
-  ).not.toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByText("Owner connection settings", { exact: true }).click();
-  await expect(
-    page.getByRole("textbox", { name: "Project URL", exact: true }),
-  ).toBeVisible();
-  await page.screenshot({
-    path: evidence + "/phone-owner-connection.png",
-    fullPage: true,
-  });
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Stat-tracking templates", exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(page.locator("main")).not.toContainText(
-    /stable local identity|authoritative|TODO_/,
+    /Supabase|authoritative|RPC|JWT|UUID/,
   );
+  await demo(page);
+  await page
+    .getByRole("button", { name: /TEST ONLY shooting practice/ })
+    .click();
+  await expect(page.locator(".print-heading")).not.toContainText(
+    /[0-9a-f]{8}-[0-9a-f-]{27}/i,
+  );
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Player name", exact: true })
+    .fill("TEST ONLY Copy player");
+  await page
+    .getByRole("textbox", { name: "Jersey number", exact: true })
+    .fill("0");
+  await page.getByRole("button", { name: "Add player", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Save in this browser", exact: true })
+    .click();
+  await expect(
+    page.getByText("Sample data saved in this browser only.", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Template name", exact: true })
+    .fill("TEST ONLY Copy drill");
+  await page
+    .getByRole("textbox", { name: "What counts?", exact: true })
+    .fill("TEST ONLY synthetic rule");
+  await page.getByRole("button", { name: "Add template", exact: true }).click();
+  await expect(
+    page.getByText("Sample data saved in this browser only.", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Unsaved changes — keep this tab open until saved.", {
+      exact: true,
+    }),
+  ).toBeVisible();
   await page.screenshot({
     path: evidence + "/phone-draft-settings.png",
     fullPage: true,
@@ -430,6 +446,7 @@ test("unreadable browser drafts show a recovery action without echoing private c
     broken,
   );
   await page.goto("/");
+  await page.getByRole("button", { name: "My drafts", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText(
     "Your saved drafts could not be opened. Nothing was overwritten.",
   );
@@ -441,7 +458,7 @@ test("unreadable browser drafts show a recovery action without echoing private c
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("Your next session starts here", { exact: true }),
+    page.getByText("Plan your next practice or game", { exact: true }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Retry load", exact: true }).click();
   expect(
