@@ -384,3 +384,7 @@ the original actor/team-scoped ID and frozen arguments; failed scoped readback
 cannot release the uncertainty guard. The final four season/layout checks passed
 after the guard repair. An explicit old-guard fault variant failed the same test;
 exact source bytes were restored before the passing build.
+
+The public standard-runner no-deploy workflow for source64cba91 completed
+successfully: [GitHub Actions](https://github.com/nanu731/rps-bball-app/actions/runs/44180633949).
+This is synthetic backend/recovery CI, separate from hosted application acceptance.

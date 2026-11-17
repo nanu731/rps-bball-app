@@ -81,3 +81,6 @@ build/
 # Generated Python test/runtime caches
 __pycache__/
 *.py[cod]
+
+# Generated, pinned PDF-validation service artifacts (never private configuration).
+supabase/functions/teamstats-pdf-validator/vendor/

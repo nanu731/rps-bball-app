@@ -45,6 +45,8 @@ jobs:
           python3 -m unittest discover -s supabase/tests -p test_operation_diagnostics.py
           python3 -m unittest discover -s supabase/tests -p test_recovery_drill.py
           node --test supabase/tests/test_file_relay.mjs
+          node --test supabase/tests/test_pdf_validator_service.mjs
+          python3 -m unittest discover -s supabase/tests -p test_prepare_pdf_validator.py
       - name: Fresh migrations and synthetic backup restore
         env:
           PGHOST: 127.0.0.1
