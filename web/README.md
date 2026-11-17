@@ -466,3 +466,9 @@ notification contracts on baseline13 plus21 plus prepared22-26, explicitly omitt
 native migrations14-20. This19-file path is local compatibility evidence, not fresh
 hosted drift verification or authorization to apply it. PDF delivery separately
 needs its request-admission contract and all validator/licensing/capacity gates.
+
+The standard public-runner no-deploy workflow passed for notification source
+`3ba214d`: [GitHub Actions](https://github.com/nanu731/rps-bball-app/actions/runs/44199004490).
+This executed the synthetic worker/recovery/database checks, including all26 source
+migrations and admission/notification contracts. It did not test hosted Gmail,
+activate any provider, deploy the frontend or establish device/release acceptance.
