@@ -67,9 +67,11 @@ they are requirements, not claims that the current app implements them.
   to publication; this does not grant players access to unreviewed staff drafts.
 - Coaches have those viewing rights, practice-plan uploads and the statistics
   recording, correction and verification tools.
-- Managers have the same statistics tools and viewing rights as coaches, but
-  cannot upload practice plans. The owner is also a manager and retains full
-  administration and access. Roles must not be mutually exclusive.
+- Managers and coaches have the SAME practice-plan and statistics permissions:
+  both may upload PDFs, create/edit plans in the builder, record/correct stats
+  and verify their own entries. This supersedes the earlier manager upload
+  restriction. The owner is also a manager and retains full administration and
+  access. Roles must not be mutually exclusive.
 - Practice plans support BOTH PDF upload and the editable plan builder. Make
   shared upcoming plans readable before practice, independently of publication
   of collected practice results. Do not promise PDF-to-editable-plan conversion.
@@ -80,18 +82,19 @@ they are requirements, not claims that the current app implements them.
 
 ### Implementation sequence and acceptance
 
-1. Define role presets using separately enforced permissions. Split the current
-   bundled session-management rights wherever necessary so statistics access
-   cannot confer practice-plan upload access. Preserve recorder/clock assignments
+1. Define role presets using separately enforced permissions. Coaches and managers
+   receive the same plan-upload, builder and statistics rights; players receive
+   viewing rights only. Preserve recorder/clock assignments
    and safe handoff independently of a user's role. Test both allowed actions
    and direct denied requests, not just navigation visibility.
 2. Complete email/password signup, confirmation, sign-in, recovery and session
    persistence. Verify actual email delivery, unverified/unapproved denial,
    sign-out and account switching on the deployed origin. Preserve the existing
    owner identity; never assign ownership by an email-string comparison.
-3. Deliver coach-authorized private PDF uploads and the plan builder, with plan
-   sharing independent of practice-result approval. Test manager upload denial,
-   team-only reads, interrupted uploads and retained plan versions. Verify the
+3. Deliver coach/manager-authorized private PDF uploads and the plan builder, with
+   plan sharing independent of practice-result approval. Test coach/manager upload
+   success, player upload denial, team-only reads, interrupted uploads and retained
+   plan versions. Verify the
    $0 storage/transfer envelope before activating hosted file delivery.
 4. Deliver clear player/team/game/practice navigation and both game-level and
    season-level views. Aggregate each accepted game/dataset once, preserve missing
@@ -106,9 +109,8 @@ they are requirements, not claims that the current app implements them.
    access revocation and recovery. Then prepare a reviewed deployment and small
    team pilot; existing source tests alone are not release acceptance.
 
-Still resolve before dependent work: TODO_MANAGER_PLAN_BUILDER_RIGHTS (whether
-the no-upload restriction also excludes creating/editing plans in the builder),
-explicit season boundaries, real roster/account associations, and the existing
+Still resolve before dependent work: explicit season boundaries,
+real roster/account associations, and the existing
 coach drill/clock definitions. Privacy, backup and real-user rollout decisions
 remain separate gates. No hosted migration, grant, provider activation or release
 is authorized solely by recording these requirements.
