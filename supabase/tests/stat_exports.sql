@@ -44,6 +44,9 @@ insert into public.team_memberships(team_id,user_id,status) values(pg_temp.team(
 insert into public.roster_entries(id,team_id,display_name,jersey_number)
  values('a5000000-0000-4000-8000-000000000001',pg_temp.team(),'=SYNTHETIC historical player','90');
 insert into public.teams(id,name,owner_auth_uuid) values('a3000000-0000-4000-8000-000000000002','SYNTHETIC OTHER EXPORT TEAM','a1000000-0000-4000-8000-000000000001');
+-- Synthetic authors need explicit recording authority; ordinary players remain read-only.
+insert into public.capability_grants(team_id,user_id,capability,issued_by) values
+(pg_temp.team(),'a1000000-0000-4000-8000-000000000002','stats.record','a1000000-0000-4000-8000-000000000001');
 set local role authenticated;
 select pg_temp.login(1);
 select public.stats_create_game(pg_temp.team(),pg_temp.game(),'2026-10-10','=SYNTHETIC opponent','away','regularSeason');

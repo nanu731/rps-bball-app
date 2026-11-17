@@ -421,6 +421,11 @@ export class CoreServer {
     name: string,
     args: Record<string, unknown>,
   ): Promise<T> {
+    const readOnly = [
+      "web_results",
+      "web_plan_list",
+      "team_administrator_identities",
+    ].includes(name);
     const epoch = this.epoch;
     const authority = await this.access(team);
     if (epoch !== this.epoch) throw new ServerError("401");
@@ -434,11 +439,12 @@ export class CoreServer {
         p_team_id: team,
       });
     } catch {
-      throw new ServerError("network", true);
+      throw new ServerError("network", !readOnly);
     }
     // A dispatched write may have committed even after this account/view detached.
-    if (epoch !== this.epoch) throw new ServerError("account_changed", true);
-    if (result.error) throw new ServerError(result.error.code, true);
+    if (epoch !== this.epoch)
+      throw new ServerError(readOnly ? "401" : "account_changed", !readOnly);
+    if (result.error) throw new ServerError(result.error.code, !readOnly);
     return result.data as T;
   }
 }
@@ -610,4 +616,57 @@ export function recordChanges(base: Version, proposal: Version) {
     }
   }
   return changes;
+}
+
+/** Bound private-file/receipt reads even when a proxy omits Content-Length. */
+export async function readFileResponse(
+  response: Response,
+  maximum: number,
+  signal?: AbortSignal,
+) {
+  const declared = response.headers.get("Content-Length");
+  if (
+    declared &&
+    (!/^\d+$/.test(declared) ||
+      !Number.isSafeInteger(Number(declared)) ||
+      Number(declared) > maximum)
+  ) {
+    await response.body?.cancel();
+    throw Error("The file-service response exceeds the supported size.");
+  }
+  const reader = response.body?.getReader();
+  if (!reader) throw Error("The file service returned no data.");
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const cancel = () => {
+    void reader.cancel().catch(() => {});
+  };
+  signal?.addEventListener("abort", cancel, { once: true });
+  try {
+    for (;;) {
+      signal?.throwIfAborted();
+      const next = await reader.read();
+      signal?.throwIfAborted();
+      if (next.done) break;
+      size += next.value.byteLength;
+      if (size > maximum)
+        throw Error("The file-service response exceeds the supported size.");
+      chunks.push(next.value);
+    }
+    if (declared && size !== Number(declared))
+      throw Error(
+        "The file-service response was incomplete. Check its status before retrying.",
+      );
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return bytes;
+  } finally {
+    signal?.removeEventListener("abort", cancel);
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
 }

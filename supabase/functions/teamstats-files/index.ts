@@ -54,7 +54,7 @@ async function boundedBody(stream: ReadableStream<Uint8Array> | null, maximum: n
   }
 }
 
-export async function handle(request: Request, configuredWorker: string | undefined, transport: typeof fetch = fetch): Promise<Response> {
+async function relay(request: Request, configuredWorker: string | undefined, transport: typeof fetch = fetch): Promise<Response> {
   // No hosted fallback. Unknown validator hosting/capacity must remain unavailable.
   if (configuredWorker !== "http://127.0.0.1:55448") return error(503, "file_delivery_not_configured");
   const url = new URL(request.url);
@@ -122,6 +122,24 @@ export async function handle(request: Request, configuredWorker: string | undefi
     clearTimeout(deadline);
     request.signal.removeEventListener("abort", cancel);
   }
+}
+
+// Exact frontend origins only; preflight is transport permission, never user authority.
+export async function handle(request: Request, configuredWorker: string | undefined, transport: typeof fetch = fetch): Promise<Response> {
+  const origin=request.headers.get("Origin");
+  if(origin && !["http://127.0.0.1:4173","http://127.0.0.1:5173","https://teamstats-nonproduction.pages.dev"].includes(origin)) return error(403,"access_denied");
+  let response: Response;
+  if(request.method === "OPTIONS") {
+    const method=request.headers.get("Access-Control-Request-Method"), headers=request.headers.get("Access-Control-Request-Headers")?.toLowerCase().split(",").map(h=>h.trim()) ?? [];
+    if(!origin || !["GET","POST"].includes(method ?? "") || headers.some(h=>!["authorization","content-type"].includes(h))) return error(403,"access_denied");
+    response=new Response(null,{status:204,headers:{"Access-Control-Allow-Methods":"GET,POST,OPTIONS","Access-Control-Allow-Headers":"Authorization,Content-Type","Cache-Control":"no-store"}});
+  } else response=await relay(request,configuredWorker,transport);
+  if(origin) {
+    response.headers.set("Access-Control-Allow-Origin",origin);
+    response.headers.set("Access-Control-Expose-Headers","X-TeamStats-SHA256,Content-Length,Retry-After");
+    response.headers.set("Vary","Origin");
+  }
+  return response;
 }
 
 if (import.meta.main) {

@@ -121,6 +121,13 @@ class MediaValidationTests(unittest.TestCase):
         self.assertEqual(result["byte_count"],len(data));self.assertEqual(result["sha256"],hashlib.sha256(data).hexdigest())
         self.assertEqual(result["details"]["page_count"],1)
 
+    def test_practice_plan_uses_the_same_strong_pdf_contract(self):
+        result=self.validate(pdf(),kind="practice_plan")
+        self.assertTrue(result["valid"]);self.assertEqual(result["media_type"],"application/pdf")
+        for extra in [b"/Custom << /AA << /O << /S /JavaScript /JS (alert\\(1\\)) >> >> >>",b"/Names << /EmbeddedFiles << /Names [] >> >>"]:
+            self.assertFalse(self.validate(pdf(extra=extra),kind="practice_plan")["valid"])
+        self.assertFalse(self.validate(b"not a PDF",kind="practice_plan")["valid"])
+
     def test_pdf_exact_five_mib_and_one_byte_over(self):
         target=5*1024*1024
         content=b"%"+b"x"*(target-1000)+b"\n"

@@ -46,6 +46,14 @@ values(pg_temp.team(),'91000000-0000-4000-8000-000000000003','stats.review','910
 insert into public.teams(id,name,owner_auth_uuid) values('93000000-0000-4000-8000-000000000002','SYNTHETIC OTHER TEAM','91000000-0000-4000-8000-000000000001');
 insert into public.roster_entries(id,team_id,display_name,jersey_number)
 values('95000000-0000-4000-8000-000000000002','93000000-0000-4000-8000-000000000002','SYNTHETIC OTHER PLAYER','91');
+-- Synthetic authors need explicit recording authority; ordinary players remain read-only.
+insert into public.capability_grants(team_id,user_id,capability,issued_by) values
+(pg_temp.team(),'91000000-0000-4000-8000-000000000002','stats.record','91000000-0000-4000-8000-000000000001'),
+(pg_temp.team(),'91000000-0000-4000-8000-000000000003','stats.record','91000000-0000-4000-8000-000000000001'),
+(pg_temp.team(),'91000000-0000-4000-8000-000000000004','stats.record','91000000-0000-4000-8000-000000000001'),
+(pg_temp.team(),'91000000-0000-4000-8000-000000000005','stats.record','91000000-0000-4000-8000-000000000001'),
+(pg_temp.team(),'91000000-0000-4000-8000-000000000006','stats.record','91000000-0000-4000-8000-000000000001'),
+(pg_temp.team(),'91000000-0000-4000-8000-000000000010','stats.record','91000000-0000-4000-8000-000000000001');
 set local role authenticated;
 select pg_temp.login(2);
 select lives_ok($$select pg_temp.keep('game',public.stats_create_game(pg_temp.team(),pg_temp.game(),'2026-10-10','SYNTHETIC OPPONENT','away','regularSeason'))$$,
@@ -282,16 +290,14 @@ select pg_temp.keep('viewer-pos',pg_temp.body('batch')->0);
 select pg_temp.keep('viewer-opponent',pg_temp.body('batch')->1);
 select is(pg_temp.body('viewer-pos')->'records'->0->'values','{"paintTouches":0}'::jsonb,'paired Save preserves zero and absent fields');
 select is(jsonb_array_length(pg_temp.body('viewer-opponent')->'records'),0,'unadded opposing paired cells remain absent');
--- Reviewers cannot approve their own proposals; rejection stays frozen until reopening.
+-- Authorized self-verification does not make a rejected proposal mutable.
 select pg_temp.login(3);
 select pg_temp.keep('self-proposal',public.stats_open_draft(pg_temp.team(),pg_temp.game(),'our_possessions'));
 select pg_temp.keep('self-proposal',public.stats_save_draft(pg_temp.team(),pg_temp.id('self-proposal'),pg_temp.rev('self-proposal'),pg_temp.pos('ours','{}','false')));
 select pg_temp.keep('self-proposal',public.stats_complete(pg_temp.team(),pg_temp.id('self-proposal'),pg_temp.rev('self-proposal'),false,true));
 select pg_temp.keep('self-proposal',public.stats_submit(pg_temp.team(),pg_temp.id('self-proposal'),pg_temp.rev('self-proposal')));
-select throws_ok($$select public.stats_review(pg_temp.team(),pg_temp.id('self-proposal'),pg_temp.rev('self-proposal'),true)$$,
- '42501',null,'stats reviewer cannot approve own submission');
-select pg_temp.login(1);
-select pg_temp.keep('self-proposal',public.stats_review(pg_temp.team(),pg_temp.id('self-proposal'),pg_temp.rev('self-proposal'),false,'Synthetic rejected proposal'));
+select lives_ok($$select pg_temp.keep('self-proposal',public.stats_review(pg_temp.team(),pg_temp.id('self-proposal'),pg_temp.rev('self-proposal'),false,'Synthetic rejected proposal'))$$,
+ 'authorized reviewer may reject own submission without making it editable');
 select pg_temp.login(3);
 select throws_ok($$select public.stats_save_draft(pg_temp.team(),pg_temp.id('self-proposal'),pg_temp.rev('self-proposal'),pg_temp.pos('ours','{}','false'))$$,
  '42501',null,'rejected completed proposal cannot silently become mutable');

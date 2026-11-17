@@ -1,3 +1,4 @@
+import { PracticePlans } from "./PracticePlans.tsx";
 import { useEffect, useRef, useState } from "react";
 import type { Player, Session, Template, Ledger } from "./domain.ts";
 import {
@@ -986,6 +987,19 @@ export function WebSessions({
                       )}
                   </div>
                 )}
+              {current!.kind === "practice" && (
+                <PracticePlans
+                  key={current!.id}
+                  server={server}
+                  team={team}
+                  actor={actor}
+                  practice={current!.id}
+                  revision={current!.revision}
+                  editable={can("plans.manage")}
+                  dirty={dirty}
+                  onDenied={onDenied}
+                />
+              )}
               {withClock ? (
                 <>
                   {current!.status === "draft" && isWorking ? (

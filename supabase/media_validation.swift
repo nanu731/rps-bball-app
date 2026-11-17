@@ -325,13 +325,13 @@ do {
     guard requestBytes.count <= 16_384 else { throw ValidationFailure.invalid_request }
     let request = try JSONDecoder().decode(ValidationRequest.self, from: requestBytes)
     guard request.path.hasPrefix("/"), !request.path.contains("\0"), request.path.utf8.count <= 4096 else { throw ValidationFailure.invalid_request }
-    guard request.kind == "scouting" || request.kind == "practice" else { throw ValidationFailure.unsupported_type }
-    let bytes = try readFile(request.path, maximum: (request.kind == "scouting" ? 5 : 10) * 1024 * 1024)
+    guard request.kind == "scouting" || request.kind == "practice_plan" || request.kind == "practice" else { throw ValidationFailure.unsupported_type }
+    let bytes = try readFile(request.path, maximum: ((request.kind == "scouting" || request.kind == "practice_plan") ? 5 : 10) * 1024 * 1024)
     let details: [String: Int]
-    do { details = request.kind == "scouting" ? try validatePDF(bytes) : try await validateVideo(bytes) }
+    do { details = (request.kind == "scouting" || request.kind == "practice_plan") ? try validatePDF(bytes) : try await validateVideo(bytes) }
     catch let failure as ValidationFailure { throw failure }
-    catch { throw request.kind == "scouting" ? ValidationFailure.invalid_pdf : ValidationFailure.invalid_video }
-    reply = ValidationReply(valid: true, media_type: request.kind == "scouting" ? "application/pdf" : "video/mp4", byte_count: bytes.count,
+    catch { throw (request.kind == "scouting" || request.kind == "practice_plan") ? ValidationFailure.invalid_pdf : ValidationFailure.invalid_video }
+    reply = ValidationReply(valid: true, media_type: (request.kind == "scouting" || request.kind == "practice_plan") ? "application/pdf" : "video/mp4", byte_count: bytes.count,
         sha256: SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined(), details: details, failure_reason: nil)
 } catch {
     reply = ValidationReply(valid: false, media_type: nil, byte_count: nil, sha256: nil, details: [:],

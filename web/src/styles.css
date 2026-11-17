@@ -1838,3 +1838,57 @@ button {
     padding: 24px;
   }
 }
+
+.shared-practice-plan {
+  margin-block: 24px;
+  padding-block: 16px;
+  border-block: 1px solid var(--border);
+}
+.shared-practice-plan li {
+  margin-block: 16px;
+}
+.plan-pdf {
+  width: 100%;
+  min-height: 60vh;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+@media print {
+  .shared-practice-plan iframe,
+  .shared-practice-plan button,
+  .shared-practice-plan input {
+    display: none;
+  }
+}
+
+@media (max-width: 600px), (max-width: 900px) and (max-height: 650px) {
+  .sign-in-intro {
+    padding: 16px 24px;
+  }
+  .sign-in-intro h2 {
+    font-size: 1.45rem;
+    margin: 8px 0;
+  }
+  .sign-in-intro p {
+    font-size: 0.95rem;
+    margin: 0;
+    max-width: none;
+  }
+  .sign-in-form {
+    padding: 20px 24px;
+  }
+}
+
+/* Keep the ledger readable; the existing scroller provides touch and button access. */
+.published-results table {
+  min-width: 640px;
+}
+.published-results th:first-child {
+  min-width: 150px;
+}
+
+@media (max-width: 600px) {
+  .sign-in-form .tabs {
+    margin-block: 16px;
+  }
+}

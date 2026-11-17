@@ -1,3 +1,4 @@
+import { Results } from "./Results.tsx";
 import { WebSessions } from "./WebSessions.tsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
@@ -731,13 +732,18 @@ function SharedTeam({
     [busy, setBusy] = useState(false),
     [manage, setManage] = useState(false),
     [members, setMembers] = useState<{ status: string; user_id: string }[]>([]),
+    [identities, setIdentities] = useState<
+      { user_id: string; email: string | null; phone: string | null }[]
+    >([]),
+    [rosterName, setRosterName] = useState(""),
+    [rosterNumber, setRosterNumber] = useState(""),
     [opponent, setOpponent] = useState(""),
     [date, setDate] = useState(new Date().toLocaleDateString("en-CA")),
     [venue, setVenue] = useState("home"),
     [type, setType] = useState("regularSeason"),
     [newID, setNewID] = useState(id),
     [uncertain, setUncertain] = useState(false),
-    [section, setSection] = useState("After-game stats"),
+    [section, setSection] = useState("Published results"),
     [adminTarget, setAdminTarget] = useState(""),
     [adminCap, setAdminCap] = useState("sessions.record"),
     [adminRole, setAdminRole] = useState("player"),
@@ -756,6 +762,7 @@ function SharedTeam({
     setGame(null);
     setManage(false);
     setMembers([]);
+    setIdentities([]);
     setError(
       "You no longer have access to this team. Check your sign-in or ask the team owner.",
     );
@@ -899,7 +906,15 @@ function SharedTeam({
       });
       sessionStorage.removeItem(adminKey);
       setAdminAttempt(null);
-      setAdminReceipt("Team access updated.");
+      setAdminReceipt(
+        name === "team_save_roster"
+          ? "Team player added."
+          : "Team access updated.",
+      );
+      if (name === "team_save_roster") {
+        setRosterName("");
+        setRosterNumber("");
+      }
       await load();
       setMembers(
         await server.rows(
@@ -961,11 +976,26 @@ function SharedTeam({
             .map((g) => capabilityLabel(g.capability))
             .join(", ") || "none") +
           ". These records alone do not confirm current access or the earlier change.";
+      } else if (adminAttempt.name === "team_save_roster") {
+        const list = await server.rows<{
+          display_name: string;
+          jersey_number: string;
+        }>("roster_entries", "display_name,jersey_number", {
+          team_id: team.id,
+        });
+        const matches = list.filter(
+          (p) =>
+            p.display_name === adminAttempt.args.p_display_name &&
+            p.jersey_number === adminAttempt.args.p_jersey_number,
+        ).length;
+        description = `The roster contains ${matches} players with the entered name and number. This does not identify which request created them; inspect the team roster before another addition.`;
+        await load();
       } else if (adminAttempt.name === "team_link_player_account") {
         const links = await server.rows<{ player_id: string }>(
           "team_player_accounts",
           "player_id",
           { team_id: team.id, user_id: String(adminAttempt.args.p_user_id) },
+          "user_id",
         );
         description = links.some(
           (l) => l.player_id === adminAttempt.args.p_player_id,
@@ -1022,6 +1052,13 @@ function SharedTeam({
                   onClick={async () => {
                     setManage(!manage);
                     try {
+                      setIdentities(
+                        await server.command(
+                          team.id,
+                          "team_administrator_identities",
+                          {},
+                        ),
+                      );
                       setAccess(await server.access(team.id));
                       setMembers(
                         await server.rows(
@@ -1073,6 +1110,65 @@ function SharedTeam({
               {adminReceipt}
             </p>
           )}
+          {access.is_owner && (
+            <details>
+              <summary>Team roster</summary>
+              <p>
+                Add only player information approved for this team. New server
+                identities do not replace or upload temporary device players.
+              </p>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void adminCommand("team_save_roster", {
+                    p_display_name: rosterName.trim(),
+                    p_jersey_number: rosterNumber.trim(),
+                  });
+                }}
+              >
+                <div className="field-grid">
+                  <label className="field">
+                    Team player name
+                    <input
+                      required
+                      maxLength={100}
+                      value={rosterName}
+                      disabled={busy || adminLocked}
+                      onChange={(e) => setRosterName(e.target.value)}
+                    />
+                  </label>
+                  <label className="field">
+                    Team jersey number
+                    <input
+                      required
+                      maxLength={10}
+                      value={rosterNumber}
+                      disabled={busy || adminLocked}
+                      onChange={(e) => setRosterNumber(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <button
+                  type="submit"
+                  disabled={
+                    busy ||
+                    adminLocked ||
+                    !rosterName.trim() ||
+                    !rosterNumber.trim()
+                  }
+                >
+                  Add team player
+                </button>
+              </form>
+              <ul>
+                {roster.map((p) => (
+                  <li key={p.id}>
+                    #{p.number} {p.name}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           <details>
             <summary>Member access · account codes</summary>
             <p>
@@ -1084,7 +1180,12 @@ function SharedTeam({
               .map((m) => (
                 <div className="observation" key={m.user_id}>
                   <div>
-                    <strong>Account {m.user_id}</strong>
+                    <strong>
+                      {identities.find((p) => p.user_id === m.user_id)?.email ??
+                        identities.find((p) => p.user_id === m.user_id)
+                          ?.phone ??
+                        "Verified contact unavailable"}
+                    </strong>
                     <small>{statusLabel(m.status)}</small>
                   </div>
                   {m.status === "pending" &&
@@ -1120,7 +1221,11 @@ function SharedTeam({
                       )
                       .map((m) => (
                         <option key={m.user_id} value={m.user_id}>
-                          {m.user_id}
+                          {identities.find((p) => p.user_id === m.user_id)
+                            ?.email ??
+                            identities.find((p) => p.user_id === m.user_id)
+                              ?.phone ??
+                            "Account code " + m.user_id}
                         </option>
                       ))}
                   </select>
@@ -1319,7 +1424,7 @@ function SharedTeam({
       )}
       {access && (
         <Tabs
-          items={["After-game stats", "Practices & shots"]}
+          items={["Published results", "After-game stats", "Practices & shots"]}
           value={section}
           onChange={(next) => {
             if (navigationGuard.current()) setSection(next);
@@ -1327,7 +1432,18 @@ function SharedTeam({
           label="Team section"
         />
       )}
-      {section === "Practices & shots" && access ? (
+      {section === "Published results" && access ? (
+        <Results
+          server={server}
+          team={team.id}
+          access={access}
+          roster={Array.from(
+            new Map([...revisions, ...roster].map((p) => [p.id, p])).values(),
+          )}
+          games={games}
+          onDenied={conceal}
+        />
+      ) : section === "Practices & shots" && access ? (
         <WebSessions
           server={server}
           team={team.id}

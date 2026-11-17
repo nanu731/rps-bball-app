@@ -60,7 +60,7 @@ select pg_temp.login(2);
 select is((select count(*)::int from public.teams), 1, 'active member reads team');
 select is((select count(*)::int from public.roster_entries),1,'active member reads existing roster data');
 select is((public.team_access('20000000-0000-4000-8000-000000000001')->>'can_propose_stats')::boolean,
-  true, 'stats proposals are active-member baseline');
+  false, 'active player needs an explicit statistics recording grant');
 select throws_ok($$select public.team_set_membership(p_team_id => '20000000-0000-4000-8000-000000000001',p_user_id => '00000000-0000-4000-8000-000000000003',p_status => 'active',p_expected_access_revision => (select access_revision from public.teams where id='20000000-0000-4000-8000-000000000001'))$$,
   '42501', null, 'ordinary member cannot admit others');
 select throws_ok($$insert into public.team_memberships(team_id,user_id,status) values ('20000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000003','active')$$,

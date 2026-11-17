@@ -88,8 +88,11 @@ create table public.team_player_accounts(
  foreign key(team_id,user_id) references public.team_memberships(team_id,user_id)
 );
 alter table public.team_player_accounts enable row level security;
-create policy player_account_read on public.team_player_accounts for select to authenticated using(team_private.can_read(team_id) and (user_id=team_private.actor() or team_private.is_owner(team_id,team_private.actor())));
-grant select on public.team_player_accounts to authenticated;
+create function team_private.player_account_visible(t uuid,u uuid) returns boolean language sql stable security definer set search_path=pg_catalog as $$ select team_private.can_read(t) and (u=team_private.actor() or team_private.is_owner(t,team_private.actor())) $$;
+revoke all on function team_private.player_account_visible(uuid,uuid) from public,anon;
+grant execute on function team_private.player_account_visible(uuid,uuid) to authenticated;
+create policy player_account_read on public.team_player_accounts for select to authenticated using(team_private.player_account_visible(team_id,user_id));
+grant select(team_id,player_id,user_id) on public.team_player_accounts to authenticated;
 create function public.team_link_player_account(p_team_id uuid,p_user_id uuid,p_player_id uuid,p_expected_access_revision bigint) returns jsonb language plpgsql security definer set search_path=pg_catalog as $$
 declare a uuid:=team_private.command_actor(p_team_id,p_expected_access_revision);result public.team_player_accounts;
 begin

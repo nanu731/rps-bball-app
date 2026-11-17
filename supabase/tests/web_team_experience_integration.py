@@ -66,7 +66,48 @@ def run(sql):
     assert correction['review_actor_user_id']==coach
     print('PASS direct author publication also records verifier; correction retains lineage',flush=True)
     rpc(owner,'team_link_player_account',p_team_id=team,p_user_id=player,p_player_id=roster,p_expected_access_revision=access(owner)['access_revision'])
+    claims=json.dumps({'sub':player,'session_id':sessions[player],'exp':4102444800,'role':'authenticated'})
+    own=sql("begin;set local role authenticated;set local request.jwt.claims='"+claims+"';select player_id from public.team_player_accounts where team_id='"+team+"';commit;")
+    assert roster in own
+    print('PASS player account link RLS is usable without exposing private actor helper',flush=True)
     denied('player cannot link accounts',lambda:rpc(player,'team_link_player_account',p_team_id=team,p_user_id=manager,p_player_id=roster,p_expected_access_revision=access(owner)['access_revision']))
+    season=uid()
+    denied('manager cannot change owner season setup',lambda:rpc(manager,'team_save_season',p_team_id=team,p_season_id=season,p_name='TEST ONLY denied',p_expected_access_revision=access(manager)['access_revision']))
+    rpc(owner,'team_save_season',p_team_id=team,p_season_id=season,p_name='TEST ONLY explicit season',p_expected_access_revision=access(owner)['access_revision'])
+    assert rpc(player,'web_results',p_team_id=team,p_season_id=season)['games']==[]
+    rpc(owner,'team_assign_season_game',p_team_id=team,p_season_id=season,p_game_id=game['id'],p_expected_season_id=None,p_expected_access_revision=access(owner)['access_revision'])
+    results=rpc(player,'web_results',p_team_id=team,p_season_id=season)
+    assert len(results['games'])==1 and len(results['versions'])==1 and results['versions'][0]['id']==correction['id']
+    assert results['versions'][0]['records'][0]['values']=={'points':0,'assists':None} and 'author_user_id' not in results['versions'][0]
+    denied('outsider cannot read season results',lambda:rpc(outsider,'web_results',p_team_id=team,p_season_id=season))
+    # Same UUID belonging to another team cannot be renamed through this team.
+    other_team,other_season=uid(),uid()
+    sql(f"insert into public.teams(id,name,owner_auth_uuid) values('{other_team}','TEST ONLY other season team','{owner}');")
+    rpc(owner,'team_save_season',p_team_id=other_team,p_season_id=other_season,p_name='TEST ONLY retained other season',p_expected_access_revision=rpc(owner,'team_access',p_team_id=other_team)['access_revision'])
+    denied('cross-team season UUID cannot be overwritten',lambda:rpc(owner,'team_save_season',p_team_id=team,p_season_id=other_season,p_name='TEST ONLY denied overwrite',p_expected_access_revision=access(owner)['access_revision']))
+    print('PASS explicit season results use current accepted pointers once and preserve missing values',flush=True)
+    practice=uid()
+    document={'schema':1,'session':{'id':practice,'kind':'practice','title':'TEST ONLY independently shared plan','date':'2037-01-01','venue':'home','season':'regularSeason','players':[],'spots':['TEST ONLY spot '+str(n) for n in range(1,10)],'protocol':'TEST ONLY protocol','plan':[{'id':uid(),'name':'TEST ONLY drill','minutes':'','instructions':'TEST ONLY instructions'}],'shooting':{},'ft':{},'observations':[],'changes':[],'savedAt':'2037-01-01T00:00:00.000Z'}}
+    def command(actor,action,revision,doc=None,arg=None):
+        return rpc(actor,'web_session_command',p_team_id=team,p_operation_id=uid(),p_action=action,p_session_id=practice,p_expected_revision=revision,p_expected_access_revision=access(actor)['access_revision'],p_document=doc,p_argument=arg or {})
+    state=command(manager,'create',0,document)
+    op=uid();args=dict(p_team_id=team,p_practice_id=practice,p_operation_id=op,p_expected_revision=state['session']['revision'])
+    denied('player cannot share a builder plan',lambda:rpc(player,'web_plan_share',**args))
+    shared=rpc(manager,'web_plan_share',**args)
+    assert rpc(manager,'web_plan_share',**args)==shared
+    listing=rpc(player,'web_plan_list',p_team_id=team,p_practice_id=practice)
+    assert len(listing)==1 and listing[0]['is_current'] and listing[0]['operation_id'] is None
+    assert set(listing[0]['builder'])=={'title','date','plan','protocol','spots'}
+    assert state['session']['accepted_snapshot_id'] is None
+    assert rpc(manager,'web_plan_list',p_team_id=team,p_practice_id=practice)[0]['operation_id']==op
+    denied('outsider cannot read early shared plan',lambda:rpc(outsider,'web_plan_list',p_team_id=team,p_practice_id=practice))
+    denied('player cannot reserve practice PDF bytes',lambda:rpc(player,'file_reserve',p_team_id=team,p_resource_id=uid(),p_kind='practice_plan',p_target_id=practice,p_operation_id=uid(),p_declared_bytes=100,p_title='TEST ONLY denied PDF'))
+    document['session']['plan'][0]['instructions']='TEST ONLY revised instructions'
+    state=command(manager,'save',state['session']['revision'],document,{'assignment_revision':state['session']['assignment_revision']})
+    rpc(manager,'web_plan_share',p_team_id=team,p_practice_id=practice,p_operation_id=uid(),p_expected_revision=state['session']['revision'])
+    listing=rpc(player,'web_plan_list',p_team_id=team,p_practice_id=practice)
+    assert len(listing)==2 and listing[0]['is_current'] and not listing[1]['is_current'] and listing[1]['builder']['plan'][0]['instructions']=='TEST ONLY instructions'
+    print('PASS builder sharing is idempotent, versioned, team-only and independent of statistical publication',flush=True)
     rpc(owner,'team_set_capability',p_team_id=team,p_user_id=manager,p_capability='members.manage',p_enabled=True,p_expected_access_revision=access(owner)['access_revision'])
     denied('player preset rejects remaining administration authority',lambda:preset(manager,'player'))
     rpc(owner,'team_set_capability',p_team_id=team,p_user_id=manager,p_capability='members.manage',p_enabled=False,p_expected_access_revision=access(owner)['access_revision'])

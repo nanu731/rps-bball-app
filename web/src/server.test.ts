@@ -287,3 +287,72 @@ test("password recovery refuses a changed account/session before dispatch and ne
     globalThis.fetch = original;
   }
 });
+
+test("result/plan read failures are not uncertain saves; mutation failures remain uncertain", async () => {
+  const client = {
+    auth: {
+      getUser: async () => ({
+        data: { user: { id: "TEST_ONLY_USER" } },
+        error: null,
+      }),
+    },
+    rpc: async (name: string) =>
+      name === "team_access"
+        ? {
+            data: {
+              team_id: "TEST_ONLY_TEAM",
+              capabilities: [],
+              access_revision: 1,
+            },
+            error: null,
+          }
+        : Promise.reject(new TypeError("TEST ONLY lost response")),
+  } as unknown as CoreServer["client"];
+  const server = new CoreServer(client);
+  await assert.rejects(
+    server.command("TEST_ONLY_TEAM", "web_results", {}),
+    (error: unknown) =>
+      error instanceof ServerError &&
+      !error.uncertain &&
+      error.message.includes("load"),
+  );
+  await assert.rejects(
+    server.command("TEST_ONLY_TEAM", "web_plan_list", {}),
+    (error: unknown) => error instanceof ServerError && !error.uncertain,
+  );
+  await assert.rejects(
+    server.command("TEST_ONLY_TEAM", "stats_save_draft", {}),
+    (error: unknown) => error instanceof ServerError && error.uncertain,
+  );
+});
+
+test("private file response bounds include undeclared streams, declared mismatch and cancellation", async () => {
+  const { readFileResponse } = await import("./server.ts");
+  assert.deepEqual(
+    [...(await readFileResponse(new Response(new Uint8Array([1, 2, 3])), 3))],
+    [1, 2, 3],
+  );
+  await assert.rejects(
+    readFileResponse(new Response(new Uint8Array([1, 2, 3])), 2),
+    /size/,
+  );
+  await assert.rejects(
+    readFileResponse(
+      new Response(new Uint8Array([1]), { headers: { "Content-Length": "2" } }),
+      3,
+    ),
+    /incomplete/,
+  );
+  let cancelled = false;
+  const stream = new ReadableStream<Uint8Array>({
+    pull() {},
+    cancel() {
+      cancelled = true;
+    },
+  });
+  const controller = new AbortController();
+  const pending = readFileResponse(new Response(stream), 10, controller.signal);
+  controller.abort();
+  await assert.rejects(pending);
+  assert.equal(cancelled, true);
+});

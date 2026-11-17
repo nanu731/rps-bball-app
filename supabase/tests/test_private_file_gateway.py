@@ -249,6 +249,12 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
                 try:os.killpg(parent,signal.SIGKILL)
                 except ProcessLookupError:pass
 
+    def test_practice_plan_uses_pdf_receipts_without_relaxing_hash_or_type_checks(self):
+        reply={'valid':True,'byte_count':len(DATA),'sha256':hashlib.sha256(DATA).hexdigest(),'media_type':'application/pdf','details':{'page_count':1}}
+        self.assertEqual(MODULE.verified_validation('practice_plan',DATA,reply)['content_type'],'application/pdf')
+        self.failure(lambda:MODULE.verified_validation('practice_plan',DATA,dict(reply,media_type='video/mp4')),'validator_receipt_mismatch')
+        self.failure(lambda:MODULE.verified_validation('practice_plan',DATA,dict(reply,sha256='0'*64)),'validator_receipt_mismatch')
+
     def test_external_endpoint_configuration_is_denied(self):
         self.failure(lambda:MODULE.Providers(dict(self.config,rest_url='https://external.example.invalid/rest')),'local_endpoint_required')
     def test_credentials_in_endpoint_are_denied(self):
@@ -268,6 +274,15 @@ reply={'valid':True,'media_type':'application/pdf','byte_count':len(data),'sha25
                     if time.monotonic()>deadline:self.fail('gateway did not start')
                     time.sleep(.03)
             root='http://127.0.0.1:'+str(port)
+            preflight=urllib.request.Request(root+'/uploads/'+OPERATION,headers={'Origin':'http://127.0.0.1:4173'},method='OPTIONS')
+            with urllib.request.urlopen(preflight,timeout=2) as response:
+                self.assertEqual(response.status,204)
+                self.assertEqual(response.headers['Access-Control-Allow-Origin'],'http://127.0.0.1:4173')
+                self.assertNotIn('*',response.headers['Access-Control-Allow-Origin'])
+            denied=urllib.request.Request(root+'/uploads/'+OPERATION,headers={'Origin':'https://untrusted.example.invalid'},method='OPTIONS')
+            with self.assertRaises(urllib.error.HTTPError) as origin_error:urllib.request.urlopen(denied,timeout=2)
+            self.assertEqual(origin_error.exception.code,403)
+            self.assertEqual(self.admissions,0)
             with urllib.request.urlopen(root+'/health/live',timeout=2) as response:
                 self.assertEqual(json.load(response),{'liveness':'alive'})
                 self.assertEqual(response.headers['Cache-Control'],'no-store')

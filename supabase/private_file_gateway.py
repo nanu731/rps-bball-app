@@ -246,14 +246,14 @@ def verified_validation(kind: str, data: bytes, reply: dict) -> dict:
                    'invalid_video', 'dimensions_limit'}
         raise FileFailure(code if code in allowed else 'file_validation_failed', 503 if code=='validator_unavailable' else 422)
     digest = hashlib.sha256(data).hexdigest()
-    media_type = 'application/pdf' if kind == 'scouting' else 'video/mp4'
+    media_type = 'application/pdf' if kind in ('scouting', 'practice_plan') else 'video/mp4'
     if type(reply.get('byte_count')) is not int or reply['byte_count'] != len(data) or reply.get('sha256') != digest or reply.get('media_type') != media_type:
         raise FileFailure('validator_receipt_mismatch', 422)
     details = reply.get('details')
     if not isinstance(details, dict):
         raise FileFailure('validator_receipt_mismatch', 422)
     # Normalize the pinned native validator's bounded integer decode report.
-    if kind == 'scouting' and 'page_count' in details:
+    if kind in ('scouting', 'practice_plan') and 'page_count' in details:
         details = {'pageCount': details['page_count']}
     elif kind == 'practice' and 'duration_milliseconds' in details:
         milliseconds = details.get('duration_milliseconds')
@@ -262,7 +262,7 @@ def verified_validation(kind: str, data: bytes, reply: dict) -> dict:
             raise FileFailure('validator_receipt_mismatch', 422)
         details = {'duration': milliseconds / 1000, 'width': details.get('width'), 'height': details.get('height'),
                    'videoCodec': 'h264', 'audioCodec': 'aac' if audio_buffers>0 else None}
-    if kind == 'scouting':
+    if kind in ('scouting', 'practice_plan'):
         pages = details.get('pageCount')
         if type(pages) is not int or not 1 <= pages <= 500:
             raise FileFailure('validator_receipt_mismatch', 422)
@@ -393,6 +393,20 @@ def serve(gateway: FileGateway, port: int):
             self.connection.settimeout(30)  # Includes request-line/header parsing.
         def log_message(self, *args):
             pass  # Never log tokens, user identities, storage paths or provider diagnostics.
+        def end_headers(self):
+            # This gateway remains local-only; hosted adapters need their own exact-origin contract.
+            if self.headers.get('Origin') in ('http://127.0.0.1:4173','http://127.0.0.1:5173'):
+                self.send_header('Access-Control-Allow-Origin',self.headers['Origin'])
+                self.send_header('Access-Control-Expose-Headers','X-TeamStats-SHA256,Content-Length,Retry-After')
+                self.send_header('Vary','Origin')
+            super().end_headers()
+        def do_OPTIONS(self):
+            if self.headers.get('Origin') not in ('http://127.0.0.1:4173','http://127.0.0.1:5173'):
+                self.respond(403,b'{"error":"access_denied"}');return
+            self.send_response(204)
+            self.send_header('Access-Control-Allow-Headers','Authorization,Content-Type')
+            self.send_header('Access-Control-Allow-Methods','GET,POST,OPTIONS')
+            self.send_header('Content-Length','0');self.end_headers()
         def respond(self, status: int, body: bytes, content_type: str = 'application/json', digest: str | None = None, retry_after: int | None = None):
             self.send_response(status); self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(body))); self.send_header('Cache-Control', 'no-store')

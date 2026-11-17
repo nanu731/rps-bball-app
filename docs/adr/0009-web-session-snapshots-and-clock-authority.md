@@ -51,3 +51,16 @@ actual author and verifier; earlier independent approvals are not relabeled.
 This supersedes the independent-review requirement above for web statistics only,
 not play/media approvals or completed-data reopening controls. Migration
 202611170001 is prepared and locally exercised, not activated hosted.
+
+### Independently shared plans and explicit seasons — prepared2026-11-17
+
+A shared plan is an append-only allowlisted builder projection or a validated
+private PDF reference, independent of accepted practice statistics. The current
+plan pointer and prior versions preserve author/sharer history. Coach and manager
+permissions are equal; no uploaded PDF is represented as an editable builder.
+
+Owner-named seasons explicitly assign each game once; date/game-type labels do not
+infer membership. A coherent accepted-pointer read prevents duplicate dataset
+aggregation. Multiple accepted charts per game require a user choice. Preserve
+weighted percentages, missing input coverage, independent possession sheets and
+custom-event definition versions; never sum displayed game-clock readings.

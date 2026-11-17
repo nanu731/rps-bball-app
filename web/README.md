@@ -332,3 +332,55 @@ permission SQL checks used Auth platform stand-ins and are separate from actual
 signed local evidence. Further season/plan implementation remains in progress.
 No hosted migration, permission assignment, provider activation or deployment is
 implied. The public preview remains the older approved Google-only build.
+
+## Shared plans and published game/season results — local preparation
+
+Prepared migrations202611170002–0003 add explicit owner-named seasons/game
+assignments and independently shared practice plans. No date range is inferred.
+Results read the current accepted pointer for each game/dataset once, retain
+missing versus zero, derive rebounds only from paired inputs, and calculate shot
+percentages from matched makes/attempts. Ambiguous multiple published charts need
+an explicit choice; chart points are never added to box-score points. Recorded
+custom events retain their definition/version; clock readings are not summed.
+
+Coach and manager plan permissions are identical. Both can share the saved
+builder before practice results are accepted, or upload/validate and explicitly
+share a private PDF. The projection excludes draft shooting/results. Earlier
+builder/PDF versions remain inspectable; sharing does not accept statistics.
+The PDF path reuses the existing capacity reservations, immutable Storage bytes,
+strong native validator, hash readback and live permission checks. Lost upload
+replies reconcile retained operations; definite refusals release controls. Browser
+transport uses exact-origin preflight and exposes the verified hash header.
+
+Local evidence:25 unit checks, build, ten compiled Chrome checks, actual signed
+local Auth/PostgREST/official Storage/native-validator PDF uploads and retained
+player reads, denied outsider/direct Storage access; phone390/tablet1024/desktop1440,
+dark/light, larger text, hidden-indicator horizontal traversal and reduced-motion
+layout. One root/header was confirmed in the DOM; full-page screenshot artifacts
+were not treated as duplicate UI. Final sign-in-only spacing was rechecked. This
+is not Safari, physical-keyboard/mobile-keypad or actual screen-reader acceptance.
+
+A fresh isolated cluster replayed all24 source migrations and passed the existing
+CI recovery/database integration checks plus the web role/season/plan RPC checks.
+Relevant pgTAP suites passed: access81, statistics136, draft recovery37 assertions.
+The older `stat_exports.sql` still calls a retired unfenced worker API: it fails
+with42501 instead of its historical55000 expectation. Current fenced export queue
+integration passes; no worker permission was weakened to make that old test pass.
+
+No new contracts, file service, email feature flag or frontend were activated
+hosted. The public preview remains the earlier approved Google-only build. The
+PDF.js compatibility spike failed the existing active-object contract. An isolated
+MuPDF alternative passed bounded synthetic graph/render cases; preparing its
+separate AGPL service and licensing review is approved, but integration/deployment
+and actual Free capacity/real-form acceptance remain gates. Local SMTP capture
+continues to be distinct from hosted email delivery. Signup/admission requirements
+confirmed afterward remain an active separate implementation slice.
+
+Final independent review found two additional recovery paths: confirmed missing
+pre-Storage bytes and season creation with a lost reply across navigation. Both
+have focused browser regressions. The upload retains the old reservation and starts
+a distinct new operation only after authoritative absence. Season requests retain
+the original actor/team-scoped ID and frozen arguments; failed scoped readback
+cannot release the uncertainty guard. The final four season/layout checks passed
+after the guard repair. An explicit old-guard fault variant failed the same test;
+exact source bytes were restored before the passing build.

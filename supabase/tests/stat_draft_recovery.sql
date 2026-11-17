@@ -27,6 +27,10 @@ insert into public.teams(id,name,owner_auth_uuid) values(pg_temp.team(),'SYNTHET
 insert into public.team_memberships(team_id,user_id,status) select pg_temp.team(),('d7000001-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'active' from generate_series(2,3) n;
 insert into public.capability_grants(team_id,user_id,capability,issued_by) values
  (pg_temp.team(),'d7000001-0000-4000-8000-000000000003','stats.publish','d7000001-0000-4000-8000-000000000001');
+-- Synthetic authors need explicit recording authority; ordinary players remain read-only.
+insert into public.capability_grants(team_id,user_id,capability,issued_by) values
+(pg_temp.team(),'d7000001-0000-4000-8000-000000000002','stats.record','d7000001-0000-4000-8000-000000000001'),
+(pg_temp.team(),'d7000001-0000-4000-8000-000000000003','stats.record','d7000001-0000-4000-8000-000000000001');
 set local role authenticated;
 select pg_temp.login(1);
 select lives_ok($$select public.stats_create_game(pg_temp.team(),pg_temp.game(),'2026-10-11','SYNTHETIC OPPONENT','home','regularSeason')$$,'synthetic game creation');

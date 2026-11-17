@@ -98,3 +98,14 @@ test('rate denial keeps bounded retry guidance without transfer replay', async (
   assert.equal((await result.json()).error,'rate_limited');
   assert.equal(sends,1);
 });
+test('browser preflight, failures and verified byte replies expose only exact approved origins',async()=>{
+ const origin='http://127.0.0.1:4173';let calls=0;
+ const preflight=await handle(new Request(base+'/uploads/'+id,{method:'OPTIONS',headers:{Origin:origin,'Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'authorization,content-type'}}),undefined,()=>{calls++;assert.fail('preflight cannot transfer');});
+ assert.equal(preflight.status,204);assert.equal(preflight.headers.get('Access-Control-Allow-Origin'),origin);assert.equal(calls,0);
+ const disabled=await handle(new Request(base+'/files/'+id+'?operation='+id,{headers:{...headers,Origin:origin}}),undefined);
+ assert.equal(disabled.status,503);assert.equal(disabled.headers.get('Access-Control-Allow-Origin'),origin);
+ const result=await handle(new Request(base+'/files/'+id+'?operation='+id,{headers:{...headers,Origin:origin}}),worker,async()=>new Response('abc',{headers:{'X-TeamStats-SHA256':'synthetic-digest','Content-Type':'application/pdf'}}));
+ assert.equal(result.headers.get('Access-Control-Allow-Origin'),origin);assert.match(result.headers.get('Access-Control-Expose-Headers'),/X-TeamStats-SHA256/);
+ const denied=await handle(new Request(base+'/files/'+id+'?operation='+id,{headers:{...headers,Origin:'https://untrusted.example.invalid'}}),worker,()=>assert.fail('denied origin cannot dispatch'));
+ assert.equal(denied.status,403);assert.equal(denied.headers.get('Access-Control-Allow-Origin'),null);
+});

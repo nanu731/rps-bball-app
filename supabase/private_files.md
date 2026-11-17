@@ -211,3 +211,29 @@ The unchanged67-check shared-budget harness was deliberately not rerun during
 concurrent native-client fixture work. Root integration must switch only its own
 ignored trusted configuration/pin and verify the new native byte client. Hosted
 capacity, deployment, provider rights and$0 acceptance remain gated.
+
+## Prepared web practice-plan extension (not hosted activation)
+
+Migration202611170003 adds `practice_plan` PDFs linked immutably to a same-team
+web practice. Existing `practice` remains play-linked video; scouting remains
+game-linked PDF. The new kind uses the same5MiB strong PDF validation, shared
+capacity budget, durable object/readback receipt and current signed authorization.
+No direct browser Storage policy or public/signed URL bypass is introduced.
+
+`plans.manage` is equal for owner-applied coach and manager presets. Sharing a
+validated PDF or a saved builder is separate from statistical review/publication.
+Shared plan versions are append-only; referenced earlier published PDFs remain
+readable by current eligible members even after the current plan changes. Revoked
+or removed members remain denied. Downloaded copies cannot be recalled.
+
+The development relay now handles exact approved frontend origins and exposes
+only the byte hash/length/retry headers needed for browser verification. It still
+rejects nonlocal worker configuration and remains unavailable hosted. Actual local
+Edge relay/browser CORS and signed native-validator/Storage tests are separate
+from injected transport tests. PDF.js was not accepted as a validator substitute;
+no parse-only or malware-scanning claim is made.
+
+A worker-confirmed absent upload releases only the browser recovery marker. The
+original uploading/interrupted reservation and audit history remain retained; a new
+operation uses a new immutable identity. This is distinct from a lost successful
+write reply, which reconciles the existing operation/receipt without another PUT.
