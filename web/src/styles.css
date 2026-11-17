@@ -1892,3 +1892,33 @@ button {
     margin-block: 16px;
   }
 }
+
+.pending-access {
+  max-width: 960px;
+}
+.admission-preview {
+  margin-top: 32px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.admission-preview figure {
+  max-width: 480px;
+  margin: 24px 0;
+}
+.preview-ledger {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(0, 2fr);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.preview-ledger > * {
+  padding: 14px;
+}
+.preview-ledger > div {
+  display: contents;
+}
+.preview-ledger span {
+  padding: 14px;
+  border-top: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}

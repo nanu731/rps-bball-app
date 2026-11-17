@@ -5,6 +5,49 @@ import type {
 } from "@supabase/supabase-js";
 import type { Manual, Player, Possession, Values } from "./domain.ts";
 import { count, validCount, BOX_FIELDS, POS_FIELDS } from "./domain.ts";
+export type Applicant = {
+  first_name: string;
+  last_name: string;
+  requested_role: "player" | "coach" | "manager";
+};
+export type SignupStatus = {
+  has_access: boolean;
+  configured: boolean;
+  request:
+    | ({
+        id: string;
+        status: "pending" | "approved" | "declined";
+        confirmed_role: Applicant["requested_role"] | null;
+        revision: number;
+        notification: string | null;
+        notification_error: string | null;
+      } & Applicant)
+    | null;
+};
+export function applicantDetails(
+  first: string,
+  last: string,
+  role: string,
+): Applicant {
+  const first_name = first.trim(),
+    last_name = last.trim();
+  if (
+    !first_name ||
+    !last_name ||
+    first_name.length > 80 ||
+    last_name.length > 80 ||
+    /\p{Cc}/u.test(first + last) ||
+    !["player", "coach", "manager"].includes(role)
+  )
+    throw Error(
+      "Enter your first and last name (up to 80 characters each), then choose Player, Coach or Manager.",
+    );
+  return {
+    first_name,
+    last_name,
+    requested_role: role as Applicant["requested_role"],
+  };
+}
 export type Access = {
   team_id: string;
   user_id: string;
@@ -72,17 +115,20 @@ export class ServerError extends Error {
         ? "Your current sign-in or team access does not allow this action. Check your sign-in or ask the team owner."
         : code === "PT409" || code === "409"
           ? "This was changed elsewhere. Reload the saved version before continuing."
-          : code === "22023"
-            ? "These entries could not be accepted. Check the numbers and required confirmations."
-            : code === "42883" || code === "PGRST202"
-              ? "This team feature is not available on this connection. Nothing was changed."
-              : write
-                ? "We could not confirm whether this saved. Check the saved entries before trying again."
-                : "Could not load your team’s entries. Check your connection and try again.",
+          : code === "PT503"
+            ? "Owner approval requests are not configured yet. Your verified account is retained; ask the owner to finish setup."
+            : code === "22023"
+              ? "These entries could not be accepted. Check the numbers and required confirmations."
+              : code === "42883" || code === "PGRST202"
+                ? "This team feature is not available on this connection. Nothing was changed."
+                : write
+                  ? "We could not confirm whether this saved. Check the saved entries before trying again."
+                  : "Could not load your team’s entries. Check your connection and try again.",
     );
     this.code = code;
     this.uncertain =
-      write && !["42501", "401", "403", "PT409", "409", "22023"].includes(code);
+      write &&
+      !["42501", "401", "403", "PT409", "409", "22023", "PT503"].includes(code);
   }
 }
 export function publicConfiguration(url: string, key: string) {
@@ -301,9 +347,91 @@ export class CoreServer {
   client: SupabaseClient;
   namespace: string;
   epoch = 0;
-  constructor(client: SupabaseClient, namespace = "unconfigured") {
+  publicKey: string;
+  constructor(
+    client: SupabaseClient,
+    namespace = "unconfigured",
+    publicKey = "",
+  ) {
     this.client = client;
     this.namespace = namespace;
+    this.publicKey = publicKey;
+  }
+  // A captured token prevents a cross-tab account switch from redirecting this request.
+  async admission(details?: Applicant): Promise<SignupStatus> {
+    const config = publicConfiguration(this.namespace, this.publicKey),
+      epoch = this.epoch;
+    const local = await this.client.auth.getSession(),
+      session = local.data.session;
+    if (local.error || !session) throw new ServerError("401");
+    const verified = await this.client.auth.getUser(session.access_token);
+    if (
+      verified.error ||
+      verified.data.user?.id !== session.user.id ||
+      epoch !== this.epoch
+    )
+      throw new ServerError("401");
+    const controller = new AbortController(),
+      timer = setTimeout(() => controller.abort(), 20000);
+    let response: Response, bytes: Uint8Array;
+    try {
+      response = await fetch(
+        config.url +
+          "/rest/v1/rpc/" +
+          (details ? "web_request_access" : "web_signup_status"),
+        {
+          method: "POST",
+          headers: {
+            apikey: config.key,
+            Authorization: "Bearer " + session.access_token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(
+            details
+              ? {
+                  p_first_name: details.first_name,
+                  p_last_name: details.last_name,
+                  p_requested_role: details.requested_role,
+                }
+              : {},
+          ),
+          signal: controller.signal,
+          redirect: "error",
+        },
+      );
+      bytes = await readFileResponse(response, 16384, controller.signal);
+    } catch {
+      throw new ServerError("network", !!details);
+    } finally {
+      clearTimeout(timer);
+    }
+    if (epoch !== this.epoch)
+      throw new ServerError(details ? "account_changed" : "401", !!details);
+    let result;
+    try {
+      result = JSON.parse(new TextDecoder().decode(bytes));
+    } catch {
+      throw new ServerError("response", !!details);
+    }
+    if (!response.ok)
+      throw new ServerError(
+        typeof result?.code === "string"
+          ? result.code
+          : String(response.status),
+        !!details,
+      );
+    if (
+      typeof result?.has_access !== "boolean" ||
+      typeof result.configured !== "boolean" ||
+      (result.request !== null &&
+        (!result.request?.id ||
+          !["pending", "approved", "declined"].includes(
+            result.request.status,
+          ) ||
+          !Number.isSafeInteger(result.request.revision)))
+    )
+      throw new ServerError("response", !!details);
+    return result;
   }
   async changeRecoveryPassword(
     password: string,
@@ -425,6 +553,7 @@ export class CoreServer {
       "web_results",
       "web_plan_list",
       "team_administrator_identities",
+      "web_list_join_requests",
     ].includes(name);
     const epoch = this.epoch;
     const authority = await this.access(team);

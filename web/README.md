@@ -388,3 +388,33 @@ exact source bytes were restored before the passing build.
 The public standard-runner no-deploy workflow for source64cba91 completed
 successfully: [GitHub Actions](https://github.com/nanu731/rps-bball-app/actions/runs/44180633949).
 This is synthetic backend/recovery CI, separate from hosted application acceptance.
+
+## Verified signup and owner-reviewed admission - local preparation
+
+Prepared migration202611170004 adds one stable access request per verified Auth
+identity. Signup collects first/last name and requested Player, Coach or Manager;
+metadata is never authority. Until approval, the browser loads only its own request
+status and a labeled data-free preview. Owner review confirms identity and the
+selected role atomically. Existing approved accounts and owner authority are not
+reset. Configured web admission also closes the older direct activation path for
+unapproved/declined applicants; existing active memberships remain intact.
+
+Applicant RLS excludes ineligible callers. Owner contact lookup works in the
+Data API's read-only transaction. Approval holds current owner/applicant Auth
+eligibility until commit; decline can remove access after the applicant loses
+verification. Existing audit, grant revocation and revision behavior is retained.
+Unknown review replies use the existing durable administration reconciliation.
+
+Local evidence:28 unit checks/build,24 admission SQL assertions including actual
+concurrent-ban blocking, and the compiled signed Auth/owner browser journey.
+The browser verified email before requesting, retained one request across reload,
+sent no protected team reads while pending, rendered390/1024/1440 at125% text,
+and changed requested Manager to owner-confirmed read-only Player before access.
+Recovery, old-password rejection, account switching and continuing sessions passed.
+Screenshots were privately inspected. SMTP confirmation remains local capture;
+Safari, real mobile keyboards, actual screen readers and hosted email are separate.
+
+The private signup target defaults disabled/unset. The notification outbox is
+prepared, but worker/retry execution and authenticated review links remain the
+next slice; no actual owner-email delivery is claimed. No hosted migration,
+account/grant changes, provider activation or frontend deployment occurred.

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  applicantDetails,
   publicConfiguration,
   safeValue,
   decodeManual,
@@ -355,4 +356,123 @@ test("private file response bounds include undeclared streams, declared mismatch
   controller.abort();
   await assert.rejects(pending);
   assert.equal(cancelled, true);
+});
+
+test("signup names and requested roles are bounded untrusted profile data", () => {
+  assert.deepEqual(
+    applicantDetails("  TEST ONLY  ", " Applicant ", "manager"),
+    {
+      first_name: "TEST ONLY",
+      last_name: "Applicant",
+      requested_role: "manager",
+    },
+  );
+  for (const fields of [
+    ["", "Applicant", "player"],
+    ["TEST ONLY", "   ", "coach"],
+    ["TEST\nONLY", "Applicant", "player"],
+    ["TEST ONLY", "Applicant", "owner"],
+    ["x".repeat(81), "Applicant", "coach"],
+  ])
+    assert.throws(() =>
+      applicantDetails(...(fields as [string, string, string])),
+    );
+});
+
+test("admission binds its verified token rather than a replacement browser account", async () => {
+  const saved = globalThis.fetch,
+    key = "a." + btoa(JSON.stringify({ role: "anon" })) + ".b";
+  let current = {
+    user: { id: "SYNTHETIC-A" },
+    access_token: "SYNTHETIC-A-TOKEN",
+  };
+  const client = {
+    auth: {
+      getSession: async () => ({ data: { session: current }, error: null }),
+      getUser: async (token: string) => {
+        assert.equal(token, "SYNTHETIC-A-TOKEN");
+        current = {
+          user: { id: "SYNTHETIC-B" },
+          access_token: "SYNTHETIC-B-TOKEN",
+        };
+        return {
+          data: {
+            user: { id: "SYNTHETIC-A", email_confirmed_at: "2037-01-01" },
+          },
+          error: null,
+        };
+      },
+    },
+  };
+  try {
+    globalThis.fetch = async (url, options) => {
+      assert.equal(
+        String(url),
+        "http://127.0.0.1:55873/rest/v1/rpc/web_request_access",
+      );
+      assert.equal(
+        new Headers(options?.headers).get("Authorization"),
+        "Bearer SYNTHETIC-A-TOKEN",
+      );
+      assert.deepEqual(JSON.parse(String(options?.body)), {
+        p_first_name: "TEST ONLY",
+        p_last_name: "Applicant",
+        p_requested_role: "manager",
+      });
+      return Response.json({
+        has_access: false,
+        configured: true,
+        request: { id: "SYNTHETIC-request", status: "pending", revision: 1 },
+      });
+    };
+    const server = new CoreServer(
+      client as never,
+      "http://127.0.0.1:55873",
+      key,
+    );
+    const result = await server.admission(
+      applicantDetails("TEST ONLY", "Applicant", "manager"),
+    );
+    assert.equal(result.request?.id, "SYNTHETIC-request");
+  } finally {
+    globalThis.fetch = saved;
+  }
+});
+test("admission does not advertise a dispatched request as successful after account change", async () => {
+  const saved = globalThis.fetch,
+    key = "a." + btoa(JSON.stringify({ role: "anon" })) + ".b";
+  const client = {
+    auth: {
+      getSession: async () => ({
+        data: {
+          session: {
+            user: { id: "SYNTHETIC-A" },
+            access_token: "SYNTHETIC-TOKEN",
+          },
+        },
+        error: null,
+      }),
+      getUser: async () => ({
+        data: { user: { id: "SYNTHETIC-A", email_confirmed_at: "2037-01-01" } },
+        error: null,
+      }),
+    },
+  };
+  const server = new CoreServer(client as never, "http://127.0.0.1:55873", key);
+  try {
+    globalThis.fetch = async () => {
+      server.epoch++;
+      return Response.json({
+        has_access: false,
+        configured: true,
+        request: null,
+      });
+    };
+    await assert.rejects(
+      server.admission(applicantDetails("TEST ONLY", "Applicant", "coach")),
+      (e) => e instanceof ServerError && e.uncertain,
+    );
+  } finally {
+    globalThis.fetch = saved;
+  }
 });

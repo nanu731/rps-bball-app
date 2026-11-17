@@ -1,3 +1,9 @@
+import {
+  ApplicantFields,
+  PendingAccess,
+  OwnerApplications,
+  type ApplicantDraft,
+} from "./Admission.tsx";
 import { Results } from "./Results.tsx";
 import { WebSessions } from "./WebSessions.tsx";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -6,6 +12,7 @@ import type { Manual, Player } from "./domain.ts";
 import { id, entryError } from "./domain.ts";
 import {
   clientFor,
+  applicantDetails,
   CoreServer,
   ServerError,
   KIND_LABEL,
@@ -18,6 +25,7 @@ import {
 } from "./server.ts";
 import type {
   Access,
+  SignupStatus,
   EditRequest,
   Game,
   Kind,
@@ -72,6 +80,12 @@ export function Connected({
     [authMode, setAuthMode] = useState("signin"),
     [password, setPassword] = useState(""),
     [confirmation, setConfirmation] = useState(""),
+    [applicant, setApplicant] = useState<ApplicantDraft>({
+      first_name: "",
+      last_name: "",
+      requested_role: "",
+    }),
+    [admission, setAdmission] = useState<SignupStatus | null>(null),
     [showPassword, setShowPassword] = useState(false),
     [recovering, setRecovering] = useState(false),
     [teams, setTeams] = useState<Team[]>([]),
@@ -79,7 +93,7 @@ export function Connected({
     [join, setJoin] = useState(""),
     [message, setMessage] = useState("");
   const server = useMemo(
-      () => (client ? new CoreServer(client, url) : null),
+      () => (client ? new CoreServer(client, url, publicKey) : null),
       [client],
     ),
     generation = useRef(0),
@@ -108,6 +122,7 @@ export function Connected({
     if (!keep) {
       server.epoch++;
       setUser(null);
+      setAdmission(null);
       setTeams([]);
       setTeam("");
     }
@@ -119,12 +134,26 @@ export function Connected({
       if (!local.data.session) {
         actorRef.current = null;
         setUser(null);
+        setAdmission(null);
         setTeams([]);
         setTeam("");
         server.epoch++;
         return;
       }
       const u = await server.identity();
+      const status = await server.admission();
+      if (g !== generation.current) return;
+      setAdmission(status);
+      if (!status.has_access) {
+        actorRef.current = u.id;
+        setUser(u);
+        setTeams([]);
+        setTeam("");
+        setMessage(
+          "Email verified. Team access requires the owner's approval.",
+        );
+        return;
+      }
       const rows = await server.rows<Team>("teams", "id,name");
       if (g !== generation.current) return;
       if (actorRef.current !== null && actorRef.current !== u.id) {
@@ -150,6 +179,7 @@ export function Connected({
         ) {
           actorRef.current = null;
           setUser(null);
+          setAdmission(null);
           setTeams([]);
           setTeam("");
           server.epoch++;
@@ -187,9 +217,12 @@ export function Connected({
       const same =
         actorRef.current !== null && actorRef.current === session?.user.id;
       if (!same) {
+        if (_event === "SIGNED_OUT" || actorRef.current !== null)
+          setApplicant({ first_name: "", last_name: "", requested_role: "" });
         generation.current++;
         server!.epoch++;
         setUser(null);
+        setAdmission(null);
         setTeams([]);
         setTeam("");
         actorRef.current = null;
@@ -227,8 +260,10 @@ export function Connected({
         generation.current++;
         server!.epoch++;
         setUser(null);
+        setAdmission(null);
         setTeams([]);
         setTeam("");
+        setApplicant({ first_name: "", last_name: "", requested_role: "" });
         const { error } = await client.auth.signOut({ scope: "local" });
         if (error)
           throw Error(
@@ -253,7 +288,14 @@ export function Connected({
         const { error } = await client.auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: location.origin },
+          options: {
+            emailRedirectTo: location.origin,
+            data: applicantDetails(
+              applicant.first_name,
+              applicant.last_name,
+              applicant.requested_role,
+            ),
+          },
         });
         if (error)
           throw Error(
@@ -421,6 +463,12 @@ export function Connected({
                   }}
                 >
                   <fieldset disabled={pending} className="entry-fields">
+                    {authMode === "signup" && (
+                      <ApplicantFields
+                        value={applicant}
+                        onChange={setApplicant}
+                      />
+                    )}
                     {authMode !== "update" && (
                       <label className="field">
                         Email
@@ -617,11 +665,7 @@ export function Connected({
                 Sign out of this browser
               </button>
             </div>
-            {teams.length === 0 ? (
-              <Empty title="No team access yet">
-                Ask the team owner for your team code, then request to join.
-              </Empty>
-            ) : (
+            {teams.length > 0 && (
               <label className="field">
                 Team
                 <select
@@ -639,50 +683,61 @@ export function Connected({
                 </select>
               </label>
             )}
-            <details>
-              <summary>Join a team</summary>
-              <form
-                className="inline-form"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (pending) return;
-                  setPending(true);
-                  try {
-                    const { data, error } = await client.rpc(
-                      "team_request_membership",
-                      { p_team_id: join.trim() },
-                    );
-                    if (error) throw new ServerError(error.code);
-                    setMessage(
-                      data === "active"
-                        ? "You have joined this team. Check your sign-in again to load it."
-                        : "Request sent. A team administrator must approve it.",
-                    );
-                  } catch (e) {
-                    setError(entryError(e));
-                  } finally {
-                    setPending(false);
-                  }
-                }}
-              >
-                <label className="field">
-                  Team code from the owner
-                  <input
-                    required
-                    value={join}
-                    onChange={(e) => setJoin(e.target.value)}
-                    pattern="[0-9a-fA-F-]{36}"
-                  />
-                </label>
-                <button type="submit" disabled={pending}>
-                  Request to join
-                </button>
-              </form>
-            </details>
+            {admission?.has_access && (
+              <details>
+                <summary>Join a team</summary>
+                <form
+                  className="inline-form"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (pending) return;
+                    setPending(true);
+                    try {
+                      const { data, error } = await client.rpc(
+                        "team_request_membership",
+                        { p_team_id: join.trim() },
+                      );
+                      if (error) throw new ServerError(error.code);
+                      setMessage(
+                        data === "active"
+                          ? "You have joined this team. Check your sign-in again to load it."
+                          : "Request sent. A team administrator must approve it.",
+                      );
+                    } catch (e) {
+                      setError(entryError(e));
+                    } finally {
+                      setPending(false);
+                    }
+                  }}
+                >
+                  <label className="field">
+                    Team code from the owner
+                    <input
+                      required
+                      value={join}
+                      onChange={(e) => setJoin(e.target.value)}
+                      pattern="[0-9a-fA-F-]{36}"
+                    />
+                  </label>
+                  <button type="submit" disabled={pending}>
+                    Request to join
+                  </button>
+                </form>
+              </details>
+            )}
           </>
         }
       </details>
-      {user && team && server && (
+      {user && server && admission && !admission.has_access && (
+        <PendingAccess
+          key={user.id}
+          server={server}
+          user={user}
+          initial={admission}
+          onApproved={() => void verify(true)}
+        />
+      )}
+      {user && team && server && admission?.has_access && (
         <SharedTeam
           key={user.id + ":" + team}
           server={server}
@@ -732,6 +787,9 @@ function SharedTeam({
     [busy, setBusy] = useState(false),
     [manage, setManage] = useState(false),
     [members, setMembers] = useState<{ status: string; user_id: string }[]>([]),
+    [requestedApplicants, setRequestedApplicants] = useState<string[] | null>(
+      null,
+    ),
     [identities, setIdentities] = useState<
       { user_id: string; email: string | null; phone: string | null }[]
     >([]),
@@ -763,6 +821,7 @@ function SharedTeam({
     setManage(false);
     setMembers([]);
     setIdentities([]);
+    setRequestedApplicants(null);
     setError(
       "You no longer have access to this team. Check your sign-in or ask the team owner.",
     );
@@ -961,6 +1020,16 @@ function SharedTeam({
         description = current
           ? `This permission was granted${current.expires_at ? " with an end date and may have expired" : ""}. Check the member’s current access.`
           : "This permission is not currently assigned.";
+      } else if (adminAttempt.name === "web_review_join_request") {
+        const requests = await server.command<
+          { id: string; status: string; confirmed_role: string | null }[]
+        >(team.id, "web_list_join_requests", {});
+        const row = requests.find(
+          (r) => r.id === adminAttempt.args.p_request_id,
+        );
+        description = row
+          ? `Current applicant decision: ${row.status}${row.confirmed_role ? " · " + row.confirmed_role : ""}. Check this recorded decision before another change.`
+          : "The applicant request could not be found. Keep the pending details and ask for help.";
       } else if (adminAttempt.name === "team_apply_staff_preset") {
         const grants = await server.rows<{
           capability: string;
@@ -1111,6 +1180,17 @@ function SharedTeam({
             </p>
           )}
           {access.is_owner && (
+            <OwnerApplications
+              server={server}
+              team={team.id}
+              revision={access.access_revision}
+              locked={busy || adminLocked}
+              onReview={(args) => adminCommand("web_review_join_request", args)}
+              onDenied={conceal}
+              onKnown={setRequestedApplicants}
+            />
+          )}
+          {access.is_owner && (
             <details>
               <summary>Team roster</summary>
               <p>
@@ -1189,6 +1269,9 @@ function SharedTeam({
                     <small>{statusLabel(m.status)}</small>
                   </div>
                   {m.status === "pending" &&
+                    (!access.is_owner ||
+                      (requestedApplicants !== null &&
+                        !requestedApplicants.includes(m.user_id))) &&
                     (access.is_owner ||
                       access.capabilities.includes("members.manage")) && (
                       <button
