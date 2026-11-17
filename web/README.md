@@ -306,3 +306,29 @@ new labels. This is source/local acceptance only: the live nonproduction preview
 remains the earlier Google-enabled build. No deployment or email test occurred.
 Safari, actual mobile keyboards,200% text reflow, screen readers and physical-device
 acceptance were not newly established by this pass.
+
+## Finished-experience preparation — 2026-11-17
+
+Prepared migration202611170001 closes the old active-member manual-write baseline:
+statistics entry requires an explicit capability. Owner-applied coach/manager
+presets give equal practice/statistics permissions; player presets remove those
+web capabilities and reject conflicting remaining administration/delegation or
+content authority. No existing grants are silently migrated. Owner-controlled
+roster/account links use stable identities and do not grant permissions. Authorized
+web self-verification and direct publication both retain the actual verifier;
+historical approvals and correction ancestry remain unchanged.
+
+The sign-in surface supports email/password signup, confirmation, password login,
+recovery, continuing sessions and sign-out. Google and email-link options remain
+optional. Recovery writes bind the freshly verified original account/session token,
+not whichever account later occupies browser storage. The isolated signed Auth
+journey passed signup mismatch, unverified-login denial, captured confirmation
+email, unapproved-team denial, reload persistence, cross-tab switch/sign-out
+concealment, reset, old-password rejection and replacement-password login. Local
+SMTP is a synthetic capture, not evidence of hosted Gmail delivery.
+
+Seventeen unit checks and the compiled build passed at the roles/Auth checkpoint;
+permission SQL checks used Auth platform stand-ins and are separate from actual
+signed local evidence. Further season/plan implementation remains in progress.
+No hosted migration, permission assignment, provider activation or deployment is
+implied. The public preview remains the older approved Google-only build.

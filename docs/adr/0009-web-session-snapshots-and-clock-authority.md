@@ -40,3 +40,14 @@ compact excerpts, not full originals; this limits the review process. They added
 current-authority receipt lookup, atomic publication, append-prefix validation and
 reversal integrity as explicit checks. No hosted migration, grants, bootstrap,
 provider activation, delivery or release is authorized by this decision.
+
+## Prospective web staff verification — 2026-11-17
+
+The owner now authorizes coaches and managers to verify their own statistical
+entries. Their web permission presets are identical; role labels alone never
+authorize writes. Explicit entry/review/publication capabilities and current
+recorder/clock assignments remain enforced. New verification records retain the
+actual author and verifier; earlier independent approvals are not relabeled.
+This supersedes the independent-review requirement above for web statistics only,
+not play/media approvals or completed-data reopening controls. Migration
+202611170001 is prepared and locally exercised, not activated hosted.

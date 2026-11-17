@@ -1,5 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  SupabaseClient,
+  Session as AuthSession,
+} from "@supabase/supabase-js";
 import type { Manual, Player, Possession, Values } from "./domain.ts";
 import { count, validCount, BOX_FIELDS, POS_FIELDS } from "./domain.ts";
 export type Access = {
@@ -279,6 +282,21 @@ export function canonical(value: unknown): string {
     );
   return JSON.stringify(value);
 }
+export type RecoveryIdentity = { userID: string; sessionID: string };
+export function recoveryIdentity(
+  session: Pick<AuthSession, "user" | "access_token"> | null,
+): RecoveryIdentity | null {
+  if (!session) return null;
+  try {
+    const part = session.access_token.split(".")[1];
+    const claims = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof claims.session_id === "string" && claims.session_id
+      ? { userID: session.user.id, sessionID: claims.session_id }
+      : null;
+  } catch {
+    return null;
+  }
+}
 export class CoreServer {
   client: SupabaseClient;
   namespace: string;
@@ -286,6 +304,67 @@ export class CoreServer {
   constructor(client: SupabaseClient, namespace = "unconfigured") {
     this.client = client;
     this.namespace = namespace;
+  }
+  async changeRecoveryPassword(
+    password: string,
+    expected: RecoveryIdentity,
+    key: string,
+    stillCurrent: () => boolean,
+  ) {
+    const config = publicConfiguration(this.namespace, key);
+    const local = await this.client.auth.getSession();
+    const session = local.data.session;
+    const identity = recoveryIdentity(session);
+    const changed = () =>
+      Error(
+        "The sign-in changed. Request a new password-reset link for the intended account.",
+      );
+    if (
+      local.error ||
+      !session ||
+      !identity ||
+      identity.userID !== expected.userID ||
+      identity.sessionID !== expected.sessionID ||
+      !stillCurrent()
+    )
+      throw changed();
+    const checked = await this.client.auth.getUser(session.access_token);
+    if (
+      checked.error ||
+      checked.data.user?.id !== expected.userID ||
+      !checked.data.user.email_confirmed_at ||
+      !stillCurrent()
+    )
+      throw changed();
+    // Bind the write to this verified token: SDK updateUser otherwise reads a possibly switched session.
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), 20000);
+    try {
+      const result = await fetch(config.url + "/auth/v1/user", {
+        method: "PUT",
+        headers: {
+          apikey: config.key,
+          Authorization: "Bearer " + session.access_token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+        signal: controller.signal,
+        redirect: "error",
+      });
+      await result.body?.cancel();
+      if (!result.ok)
+        throw Error(
+          "The password could not be changed. Check its requirements or request a new reset link.",
+        );
+    } catch (error) {
+      if (controller.signal.aborted || error instanceof TypeError)
+        throw Error(
+          "The password change could not be confirmed. Check sign-in before trying again.",
+        );
+      throw error;
+    } finally {
+      clearTimeout(deadline);
+    }
   }
   async identity() {
     const { data, error } = await this.client.auth.getUser();

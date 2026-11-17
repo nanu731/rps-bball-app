@@ -13,6 +13,7 @@ import {
   encodeRecords,
   operationConfirmed,
   recordChanges,
+  recoveryIdentity,
 } from "./server.ts";
 import type {
   Access,
@@ -22,6 +23,7 @@ import type {
   Team,
   Version,
   PendingOperation,
+  RecoveryIdentity,
 } from "./server.ts";
 import { ManualEntry, ManualSummary } from "./Manual.tsx";
 import {
@@ -38,7 +40,9 @@ const CONFIG = "teamstats-web-public-config";
 const kinds = Object.keys(KIND_LABEL) as Kind[];
 const capabilityLabel = (cap: string) =>
   ({
-    "stats.review": "Review after-game stats",
+    "stats.record": "Enter after-game stats",
+    "plans.manage": "Create and share practice plans",
+    "stats.review": "Verify after-game stats",
     "stats.publish": "Publish own after-game stats",
     "datasets.reopen": "Allow stat corrections",
     "roster.manage": "Manage roster",
@@ -46,7 +50,7 @@ const capabilityLabel = (cap: string) =>
     "sessions.manage": "Plan sessions and assign recorders",
     "sessions.record": "Record assigned sessions",
     "sessions.clock": "Control assigned game clock",
-    "sessions.review": "Review session entries",
+    "sessions.review": "Verify practice and shot-chart entries",
     "sessions.publish": "Publish own session entries",
     "sessions.reopen": "Allow session corrections",
   })[cap] ?? "Unknown access";
@@ -56,6 +60,7 @@ export function Connected({
   navigationGuard: NavigationGuard;
 }) {
   const [url, setUrl] = useState(""),
+    [publicKey, setPublicKey] = useState(""),
     [client, setClient] = useState<SupabaseClient | null>(null),
     [error, setError] = useState(""),
     [user, setUser] = useState<User | null>(null),
@@ -63,6 +68,11 @@ export function Connected({
     [otp, setOTP] = useState(""),
     [pending, setPending] = useState(false),
     [sent, setSent] = useState(false),
+    [authMode, setAuthMode] = useState("signin"),
+    [password, setPassword] = useState(""),
+    [confirmation, setConfirmation] = useState(""),
+    [showPassword, setShowPassword] = useState(false),
+    [recovering, setRecovering] = useState(false),
     [teams, setTeams] = useState<Team[]>([]),
     [team, setTeam] = useState(""),
     [join, setJoin] = useState(""),
@@ -72,7 +82,8 @@ export function Connected({
       [client],
     ),
     generation = useRef(0),
-    actorRef = useRef<string | null>(null);
+    actorRef = useRef<string | null>(null),
+    recoveryRef = useRef<RecoveryIdentity | null>(null);
   useEffect(() => {
     try {
       const saved = ["127.0.0.1", "localhost"].includes(location.hostname)
@@ -82,6 +93,7 @@ export function Connected({
       const u = import.meta.env.VITE_SUPABASE_URL ?? config?.url ?? "",
         k = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? config?.key ?? "";
       setUrl(u);
+      setPublicKey(k);
       if (u && k) setClient(clientFor(u, k));
     } catch {
       setError(
@@ -152,6 +164,25 @@ export function Connected({
     let disposed = false;
     const { data } = client.auth.onAuthStateChange((_event, session) => {
       if (disposed) return;
+      const incoming = recoveryIdentity(session);
+      if (_event === "PASSWORD_RECOVERY" && incoming) {
+        recoveryRef.current = incoming;
+        setRecovering(true);
+        setAuthMode("update");
+        setPassword("");
+        setConfirmation("");
+      } else if (
+        recoveryRef.current &&
+        (!incoming ||
+          incoming.userID !== recoveryRef.current.userID ||
+          incoming.sessionID !== recoveryRef.current.sessionID)
+      ) {
+        recoveryRef.current = null;
+        setRecovering(false);
+        setAuthMode("signin");
+        setPassword("");
+        setConfirmation("");
+      }
       const same =
         actorRef.current !== null && actorRef.current === session?.user.id;
       if (!same) {
@@ -174,7 +205,17 @@ export function Connected({
       data.subscription.unsubscribe();
     };
   }, [client]);
-  const auth = async (action: "send" | "verify" | "out" | "google") => {
+  const auth = async (
+    action:
+      | "send"
+      | "verify"
+      | "out"
+      | "google"
+      | "signin"
+      | "signup"
+      | "reset"
+      | "update",
+  ) => {
     if (!client || pending) return;
     setPending(true);
     setError("");
@@ -193,6 +234,73 @@ export function Connected({
             "Team entries are hidden, but sign-out could not be confirmed. Check your sign-in before continuing.",
           );
         setMessage("Signed out. Your device-only drafts are still here.");
+      } else if (action === "signin") {
+        const { error } = await client.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error)
+          throw Error(
+            "Sign-in failed. Check your email and password. Verify your email first, or use Reset password.",
+          );
+        setPassword("");
+      } else if (action === "signup") {
+        if (password !== confirmation)
+          throw Error(
+            "The passwords do not match. Enter the same password in both fields.",
+          );
+        const { error } = await client.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { emailRedirectTo: location.origin },
+        });
+        if (error)
+          throw Error(
+            "The account request could not finish. Check your email address and password, then try again. If you already have an account, sign in or reset your password.",
+          );
+        setPassword("");
+        setConfirmation("");
+        setMessage(
+          "Check your email to verify your account. Team access still needs the owner’s approval. If you already have an account, sign in or reset your password.",
+        );
+      } else if (action === "reset") {
+        const { error } = await client.auth.resetPasswordForEmail(
+          email.trim(),
+          { redirectTo: location.origin },
+        );
+        if (error)
+          throw Error(
+            "The reset email could not be requested. Try again later or ask the team owner for help.",
+          );
+        setMessage(
+          "If this email has an account, a password-reset link has been requested. Open it in this browser. Delivery is not confirmed yet.",
+        );
+      } else if (action === "update") {
+        if (!recovering || password !== confirmation)
+          throw Error(
+            "Enter matching passwords from your password-reset link.",
+          );
+        const binding = recoveryRef.current,
+          g = generation.current;
+        if (!binding || !server)
+          throw Error(
+            "Open a new password-reset link before changing your password.",
+          );
+        await server.changeRecoveryPassword(
+          password,
+          binding,
+          publicKey,
+          () => generation.current === g && recoveryRef.current === binding,
+        );
+        if (generation.current !== g || recoveryRef.current !== binding) return;
+        recoveryRef.current = null;
+        setPassword("");
+        setConfirmation("");
+        setRecovering(false);
+        setAuthMode("signin");
+        setMessage(
+          "Password updated. Your existing account and team access are unchanged.",
+        );
       } else if (action === "google") {
         const { error } = await client.auth.signInWithOAuth({
           provider: "google",
@@ -235,6 +343,216 @@ export function Connected({
       setPending(false);
     }
   };
+  if (!client || !user || recovering)
+    return (
+      <section className="sign-in-page" aria-label="TeamStats account access">
+        <div className="sign-in-intro">
+          <div className="sign-in-wordmark">
+            TEAM<span>STATS</span>
+          </div>
+          <h2>
+            Practice plans.
+            <br />
+            Game stats.
+          </h2>
+          <p>Plan the work. Record what happened. Review it together.</p>
+          <div className="sign-in-ledger" aria-hidden="true">
+            <span>PLAN</span>
+            <span>RECORD</span>
+            <span>REVIEW</span>
+          </div>
+        </div>
+        <div className="sign-in-form">
+          <h1>
+            {authMode === "signup"
+              ? "Create your account"
+              : authMode === "reset"
+                ? "Reset your password"
+                : authMode === "update"
+                  ? "Choose a new password"
+                  : authMode === "email"
+                    ? "Sign in by email"
+                    : "Sign in to TeamStats"}
+          </h1>
+          <p>
+            {authMode === "signup"
+              ? "Verify your email, then request access from the team owner."
+              : "Use your team account. Your saved drafts stay separate."}
+          </p>
+          {!client ? (
+            <Empty title="Team sign-in is not ready">
+              Ask the team owner to finish setting up team sign-in.
+            </Empty>
+          ) : (
+            <>
+              {!recovering && (
+                <Tabs
+                  items={["Sign in", "Create account"]}
+                  value={authMode === "signup" ? "Create account" : "Sign in"}
+                  onChange={(v) => {
+                    setAuthMode(v === "Create account" ? "signup" : "signin");
+                    setError("");
+                    setMessage("");
+                    setPassword("");
+                    setConfirmation("");
+                  }}
+                  label="Account action"
+                />
+              )}
+              {error && <Notice error>{error}</Notice>}
+              {message && (
+                <p role="status" className="receipt">
+                  {message}
+                </p>
+              )}
+              {import.meta.env.VITE_EMAIL_SIGN_IN_ENABLED === "true" ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void auth(
+                      authMode === "email"
+                        ? sent
+                          ? "verify"
+                          : "send"
+                        : (authMode as
+                            "signin" | "signup" | "reset" | "update"),
+                    );
+                  }}
+                >
+                  <fieldset disabled={pending} className="entry-fields">
+                    {authMode !== "update" && (
+                      <label className="field">
+                        Email
+                        <input
+                          type="email"
+                          autoComplete="username"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                      </label>
+                    )}
+                    {["signin", "signup", "update"].includes(authMode) && (
+                      <>
+                        <label className="field">
+                          {authMode === "update" ? "New password" : "Password"}
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            autoComplete={
+                              authMode === "signin"
+                                ? "current-password"
+                                : "new-password"
+                            }
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                          />
+                        </label>
+                        {authMode !== "signin" && (
+                          <label className="field">
+                            Confirm password
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              autoComplete="new-password"
+                              required
+                              value={confirmation}
+                              onChange={(e) => setConfirmation(e.target.value)}
+                            />
+                          </label>
+                        )}
+                        <label className="checkbox">
+                          <input
+                            type="checkbox"
+                            checked={showPassword}
+                            onChange={(e) => setShowPassword(e.target.checked)}
+                          />
+                          Show password
+                        </label>
+                      </>
+                    )}
+                    {authMode === "email" && sent && (
+                      <label className="field">
+                        Email code
+                        <input
+                          value={otp}
+                          onChange={(e) => setOTP(e.target.value)}
+                          autoComplete="one-time-code"
+                          inputMode="numeric"
+                          required
+                        />
+                      </label>
+                    )}
+                    <button className="primary" type="submit">
+                      {pending
+                        ? "Please wait…"
+                        : authMode === "signup"
+                          ? "Create account"
+                          : authMode === "reset"
+                            ? "Request reset email"
+                            : authMode === "update"
+                              ? "Save new password"
+                              : authMode === "email"
+                                ? sent
+                                  ? "Verify code"
+                                  : "Request sign-in email"
+                                : "Sign in"}
+                    </button>
+                  </fieldset>
+                </form>
+              ) : (
+                <p>Email sign-in is not available yet.</p>
+              )}
+              {!recovering && (
+                <div className="sign-in-options">
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => {
+                      setAuthMode(authMode === "reset" ? "signin" : "reset");
+                      setError("");
+                      setMessage("");
+                    }}
+                  >
+                    {authMode === "reset"
+                      ? "Back to sign in"
+                      : "Reset password"}
+                  </button>
+                  {import.meta.env.VITE_GOOGLE_SIGN_IN_ENABLED === "true" && (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => void auth("google")}
+                    >
+                      Continue with Google
+                    </button>
+                  )}
+                  {import.meta.env.VITE_EMAIL_SIGN_IN_ENABLED === "true" && (
+                    <details>
+                      <summary>Use an email link instead</summary>
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => {
+                          setAuthMode("email");
+                          setSent(false);
+                          setError("");
+                        }}
+                      >
+                        Email me a sign-in link or code
+                      </button>
+                    </details>
+                  )}
+                </div>
+              )}
+              <p className="muted">
+                On a shared device, sign out when you finish. Signing in does
+                not grant team membership or staff access.
+              </p>
+            </>
+          )}
+        </div>
+      </section>
+    );
   return (
     <>
       <div className="page-heading">
@@ -285,79 +603,7 @@ export function Connected({
             {message}
           </p>
         )}
-        {!client ? (
-          <Empty title="Team sign-in is not ready">
-            Ask the team owner to finish setting up team sign-in.
-          </Empty>
-        ) : !user ? (
-          <section className="auth-form">
-            <h2>Sign in or request team access</h2>
-            {import.meta.env.VITE_GOOGLE_SIGN_IN_ENABLED === "true" && (
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => void auth("google")}
-              >
-                Continue with Google
-              </button>
-            )}
-            {import.meta.env.VITE_EMAIL_SIGN_IN_ENABLED === "true" ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void auth(sent ? "verify" : "send");
-                }}
-              >
-                <label className="field">
-                  Email
-                  <input
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </label>
-                {sent && (
-                  <label className="field">
-                    Email code
-                    <input
-                      value={otp}
-                      onChange={(e) => setOTP(e.target.value)}
-                      autoComplete="one-time-code"
-                      inputMode="numeric"
-                      required
-                    />
-                  </label>
-                )}
-                <div className="actions">
-                  <button type="submit" className="primary" disabled={pending}>
-                    {pending
-                      ? "Signing in…"
-                      : sent
-                        ? "Verify code"
-                        : "Request sign-in email"}
-                  </button>
-                  {sent && (
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => void auth("send")}
-                    >
-                      Request new email
-                    </button>
-                  )}
-                </div>
-              </form>
-            ) : (
-              <p>Email sign-in is not available yet.</p>
-            )}
-            <p className="muted">
-              Need help signing in? Ask the team owner. Phone sign-in is not
-              available.
-            </p>
-          </section>
-        ) : (
+        {
           <>
             <div className="account-strip">
               <strong>Account verified</strong>
@@ -433,7 +679,7 @@ export function Connected({
               </form>
             </details>
           </>
-        )}
+        }
       </details>
       {user && team && server && (
         <SharedTeam
@@ -494,6 +740,8 @@ function SharedTeam({
     [section, setSection] = useState("After-game stats"),
     [adminTarget, setAdminTarget] = useState(""),
     [adminCap, setAdminCap] = useState("sessions.record"),
+    [adminRole, setAdminRole] = useState("player"),
+    [linkedPlayer, setLinkedPlayer] = useState(""),
     [adminLocked, setAdminLocked] = useState(!!adminAttempt),
     [adminReceipt, setAdminReceipt] = useState("");
   const generation = useRef(0),
@@ -698,6 +946,32 @@ function SharedTeam({
         description = current
           ? `This permission was granted${current.expires_at ? " with an end date and may have expired" : ""}. Check the member’s current access.`
           : "This permission is not currently assigned.";
+      } else if (adminAttempt.name === "team_apply_staff_preset") {
+        const grants = await server.rows<{
+          capability: string;
+          revoked_at: string | null;
+        }>("capability_grants", "capability,revoked_at", {
+          team_id: team.id,
+          user_id: String(adminAttempt.args.p_user_id),
+        });
+        description =
+          "Recorded permission assignments: " +
+          (grants
+            .filter((g) => !g.revoked_at)
+            .map((g) => capabilityLabel(g.capability))
+            .join(", ") || "none") +
+          ". These records alone do not confirm current access or the earlier change.";
+      } else if (adminAttempt.name === "team_link_player_account") {
+        const links = await server.rows<{ player_id: string }>(
+          "team_player_accounts",
+          "player_id",
+          { team_id: team.id, user_id: String(adminAttempt.args.p_user_id) },
+        );
+        description = links.some(
+          (l) => l.player_id === adminAttempt.args.p_player_id,
+        )
+          ? "The selected account/player link is recorded."
+          : "The selected account/player link was not found.";
       } else if (adminAttempt.name === "team_set_membership") {
         const found = await server.rows<{ status: string }>(
           "team_memberships",
@@ -851,6 +1125,88 @@ function SharedTeam({
                       ))}
                   </select>
                 </label>
+                <section>
+                  <h4>Team role permissions</h4>
+                  <p>
+                    Coaches and managers can plan practices, upload plans,
+                    record and correct stats, and verify their own entries.
+                    Players can only view published results and shared plans.
+                    Recorder and clock assignments still apply.
+                  </p>
+                  <label className="field">
+                    Permission preset
+                    <select
+                      value={adminRole}
+                      onChange={(e) => setAdminRole(e.target.value)}
+                    >
+                      <option value="player">Player — view only</option>
+                      <option value="coach">Coach</option>
+                      <option value="manager">Manager</option>
+                    </select>
+                  </label>
+                  <p className="muted">
+                    Before changing someone to Player, separately remove any
+                    administration, delegation or other content-editing access.
+                    This preset never changes the team owner.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy || adminLocked || !adminTarget}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Apply ${adminRole} permissions to this member? Existing permission history is retained.`,
+                        )
+                      )
+                        void adminCommand("team_apply_staff_preset", {
+                          p_user_id: adminTarget,
+                          p_role: adminRole,
+                        });
+                    }}
+                  >
+                    Apply role permissions
+                  </button>
+                </section>
+                <details>
+                  <summary>Link a player to this account</summary>
+                  <p>
+                    This lets the member find their own stats. It does not give
+                    any editing access or change earlier player identities.
+                  </p>
+                  <label className="field">
+                    Roster player
+                    <select
+                      value={linkedPlayer}
+                      onChange={(e) => setLinkedPlayer(e.target.value)}
+                    >
+                      <option value="">Choose a player</option>
+                      {roster.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          #{p.number} {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    disabled={
+                      busy || adminLocked || !adminTarget || !linkedPlayer
+                    }
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "Link this verified team account to the selected roster player?",
+                        )
+                      )
+                        void adminCommand("team_link_player_account", {
+                          p_user_id: adminTarget,
+                          p_player_id: linkedPlayer,
+                        });
+                    }}
+                  >
+                    Link player account
+                  </button>
+                </details>
                 <label className="field">
                   Access to give or remove
                   <select
@@ -858,6 +1214,8 @@ function SharedTeam({
                     onChange={(e) => setAdminCap(e.target.value)}
                   >
                     {[
+                      "stats.record",
+                      "plans.manage",
                       "stats.review",
                       "stats.publish",
                       "datasets.reopen",
@@ -1894,8 +2252,7 @@ function SharedGame({
                   )}
                   {v.status === "submitted" &&
                     (access.is_owner ||
-                      access.capabilities.includes("stats.review")) &&
-                    (access.is_owner || v.author_user_id !== actor) && (
+                      access.capabilities.includes("stats.review")) && (
                       <>
                         <button
                           type="button"
@@ -1954,27 +2311,31 @@ function SharedGame({
                         Publish my saved stats
                       </button>
                     )}
-                  {["published", "completed", "submitted", "rejected"].includes(
-                    v.status,
-                  ) && (
-                    <button
-                      type="button"
-                      disabled={busy || uncertain}
-                      onClick={() => {
-                        const reason = window.prompt(
-                          "Why do these entries need a correction?",
-                        );
-                        if (reason?.trim())
-                          void mutate("stats_request_edit", {
-                            p_source_version_id: v.id,
-                            p_expected_revision: v.revision,
-                            p_reason: reason.trim(),
-                          });
-                      }}
-                    >
-                      Request a correction
-                    </button>
-                  )}
+                  {access.can_propose_stats &&
+                    [
+                      "published",
+                      "completed",
+                      "submitted",
+                      "rejected",
+                    ].includes(v.status) && (
+                      <button
+                        type="button"
+                        disabled={busy || uncertain}
+                        onClick={() => {
+                          const reason = window.prompt(
+                            "Why do these entries need a correction?",
+                          );
+                          if (reason?.trim())
+                            void mutate("stats_request_edit", {
+                              p_source_version_id: v.id,
+                              p_expected_revision: v.revision,
+                              p_reason: reason.trim(),
+                            });
+                        }}
+                      >
+                        Request a correction
+                      </button>
+                    )}
                 </div>
                 <details>
                   <summary>View saved stats and changes</summary>

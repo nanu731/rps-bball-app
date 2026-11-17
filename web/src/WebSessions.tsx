@@ -1102,35 +1102,33 @@ export function WebSessions({
                   but not these entries.
                 </Empty>
               )}
-              {current!.status === "submitted" &&
-                can("sessions.review") &&
-                (access.is_owner || !current!.contributors.includes(actor)) && (
-                  <div className="actions">
-                    <button
-                      type="button"
-                      disabled={busy || !!pending}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Approve these saved entries and publish them to the team? Earlier published results will be kept.",
-                          )
+              {current!.status === "submitted" && can("sessions.review") && (
+                <div className="actions">
+                  <button
+                    type="button"
+                    disabled={busy || !!pending}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "Approve these saved entries and publish them to the team? Earlier published results will be kept.",
                         )
-                          void command("review", null, { approve: true });
-                      }}
-                    >
-                      Approve & publish
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy || !!pending}
-                      onClick={() =>
-                        void command("review", null, { approve: false })
-                      }
-                    >
-                      Do not approve
-                    </button>
-                  </div>
-                )}
+                      )
+                        void command("review", null, { approve: true });
+                    }}
+                  >
+                    Approve & publish
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || !!pending}
+                    onClick={() =>
+                      void command("review", null, { approve: false })
+                    }
+                  >
+                    Do not approve
+                  </button>
+                </div>
+              )}
               {["published", "submitted", "rejected"].includes(
                 current!.status,
               ) &&

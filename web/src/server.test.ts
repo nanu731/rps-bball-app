@@ -208,3 +208,82 @@ test("correction comparison preserves missing versus zero and turnover answers",
     recordChanges(base, { ...proposal, game_id: "different" }),
   );
 });
+
+test("password recovery refuses a changed account/session before dispatch and never targets its replacement", async () => {
+  const first = {
+    user: { id: "TEST_ONLY_ACCOUNT_A" },
+    access_token:
+      "x." + btoa(JSON.stringify({ session_id: "TEST_ONLY_SESSION_A" })) + ".x",
+  };
+  let current = first,
+    valid = true,
+    writes = 0;
+  const sdk = {
+    auth: {
+      getSession: async () => ({ data: { session: current }, error: null }),
+      getUser: async () => ({
+        data: {
+          user: { id: current.user.id, email_confirmed_at: "2037-01-01" },
+        },
+        error: null,
+      }),
+    },
+  } as unknown as ConstructorParameters<typeof CoreServer>[0];
+  const original = globalThis.fetch;
+  const key = "sb_publishable_TEST_ONLY_CONFIGURATION";
+  const binding = {
+    userID: "TEST_ONLY_ACCOUNT_A",
+    sessionID: "TEST_ONLY_SESSION_A",
+  };
+  globalThis.fetch = async (_url, init) => {
+    writes++;
+    assert.equal(
+      new Headers(init?.headers).get("Authorization"),
+      "Bearer " + first.access_token,
+    );
+    current = {
+      user: { id: "TEST_ONLY_ACCOUNT_B" },
+      access_token:
+        "x." +
+        btoa(JSON.stringify({ session_id: "TEST_ONLY_SESSION_B" })) +
+        ".x",
+    };
+    return new Response("{}", { status: 200 });
+  };
+  try {
+    const server = new CoreServer(sdk, "http://127.0.0.1:55873");
+    current = { ...first, user: { id: "TEST_ONLY_ACCOUNT_B" } };
+    await assert.rejects(
+      server.changeRecoveryPassword(
+        "SYNTHETIC_TEST_VALUE",
+        binding,
+        key,
+        () => valid,
+      ),
+      /changed/,
+    );
+    assert.equal(writes, 0);
+    current = first;
+    valid = false;
+    await assert.rejects(
+      server.changeRecoveryPassword(
+        "SYNTHETIC_TEST_VALUE",
+        binding,
+        key,
+        () => valid,
+      ),
+      /changed/,
+    );
+    assert.equal(writes, 0);
+    valid = true;
+    await server.changeRecoveryPassword(
+      "SYNTHETIC_TEST_VALUE",
+      binding,
+      key,
+      () => valid,
+    );
+    assert.equal(writes, 1);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
