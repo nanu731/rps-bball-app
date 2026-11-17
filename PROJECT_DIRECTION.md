@@ -1,6 +1,6 @@
 # TeamStats — current direction and working agreement
 
-Updated: 2026-11-11. Status: primary platform and pilot scope confirmed; detailed capture rules pending.
+Updated: 2026-11-17. Status: team roles and expanded web scope confirmed; implementation and acceptance remain partial.
 
 ## Authority and reading order
 
@@ -51,6 +51,67 @@ The operating budget remains strictly $0.
 | Q2 | First web pilot includes practice plans/PDFs, nine-spot player shooting, free-throw conditioning, game shot recording and selected game events, PLUS manual box scores, possessions and player paint touches. |
 | Q3 | Our-team game shots require player selection; opponent shots are team-only. Include a running game clock in the app. Practice shooting remains player-attributed. |
 | Q4 | Support simple reusable coach-selected templates using counts, makes/attempts, timed events and notes. Preserve the definition used for earlier sessions. |
+
+## Owner-confirmed team experience — 2026-11-17
+
+These requirements supersede earlier proposals for the finished web experience;
+they are requirements, not claims that the current app implements them.
+
+- Members open the website on an iPad or computer, create an email/password
+  account, verify their email before first access, and can remain signed in.
+  Include password recovery and sign-out. Email verification does not approve
+  team membership or grant a staff role; preserve owner-controlled admission.
+- Players can view their own and other team players' statistics and shot charts,
+  team statistics and shot charts, practice plans and practice statistics.
+  Include both individual-game views and season totals. Results remain subject
+  to publication; this does not grant players access to unreviewed staff drafts.
+- Coaches have those viewing rights, practice-plan uploads and the statistics
+  recording, correction and verification tools.
+- Managers have the same statistics tools and viewing rights as coaches, but
+  cannot upload practice plans. The owner is also a manager and retains full
+  administration and access. Roles must not be mutually exclusive.
+- Practice plans support BOTH PDF upload and the editable plan builder. Make
+  shared upcoming plans readable before practice, independently of publication
+  of collected practice results. Do not promise PDF-to-editable-plan conversion.
+- Coaches and managers may verify their OWN statistics entries. Preserve the
+  author, verifier, version and correction history; do not fabricate independent
+  review or retroactively relabel historical approvals. Authorization is still
+  required to verify; this does not turn every member into a reviewer.
+
+### Implementation sequence and acceptance
+
+1. Define role presets using separately enforced permissions. Split the current
+   bundled session-management rights wherever necessary so statistics access
+   cannot confer practice-plan upload access. Preserve recorder/clock assignments
+   and safe handoff independently of a user's role. Test both allowed actions
+   and direct denied requests, not just navigation visibility.
+2. Complete email/password signup, confirmation, sign-in, recovery and session
+   persistence. Verify actual email delivery, unverified/unapproved denial,
+   sign-out and account switching on the deployed origin. Preserve the existing
+   owner identity; never assign ownership by an email-string comparison.
+3. Deliver coach-authorized private PDF uploads and the plan builder, with plan
+   sharing independent of practice-result approval. Test manager upload denial,
+   team-only reads, interrupted uploads and retained plan versions. Verify the
+   $0 storage/transfer envelope before activating hosted file delivery.
+4. Deliver clear player/team/game/practice navigation and both game-level and
+   season-level views. Aggregate each accepted game/dataset once, preserve missing
+   data and coverage labels, and never add official box-score points to the same
+   points observed in shot-chart capture. Derive percentages from total makes
+   and attempts, not averages of percentages. Season boundaries must be explicit.
+5. Update statistics verification for authorized self-review without removing
+   version checks, correction history or current-permission checks. Prove self-
+   review, unauthorized denial and later corrections with signed test accounts.
+6. Rehearse the complete coach-plan/player-view/manager-entry/review/results
+   journey across separate accounts and devices, including refresh, reconnect,
+   access revocation and recovery. Then prepare a reviewed deployment and small
+   team pilot; existing source tests alone are not release acceptance.
+
+Still resolve before dependent work: TODO_MANAGER_PLAN_BUILDER_RIGHTS (whether
+the no-upload restriction also excludes creating/editing plans in the builder),
+explicit season boundaries, real roster/account associations, and the existing
+coach drill/clock definitions. Privacy, backup and real-user rollout decisions
+remain separate gates. No hosted migration, grant, provider activation or release
+is authorized solely by recording these requirements.
 
 Playbook, practice-video delivery, scouting, Sheets delivery, OCR and voice are
 not prerequisites for this first web pilot. Their prior requirements/history are

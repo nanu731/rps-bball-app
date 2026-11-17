@@ -22,6 +22,24 @@ checks documented in web/README.md. SwiftUI/Supabase remains preserved legacy wo
 Source and local evidence do not establish hosted deployment or device acceptance.
 Budget: strictly $0. Do not activate services based on assumed free allowances.
 
+## Confirmed finished web experience — 2026-11-17
+
+Email/password accounts require email verification and owner-approved team access,
+with password recovery, sign-out and continuing sessions. Players view their own,
+other players' and team statistics/shot charts, practice plans and practice stats.
+Both individual-game views and season totals are required. Coaches and managers
+also record, correct and verify stats, including their own entries; retain who
+entered and verified each version. Coaches can upload practice plans; managers
+cannot. The owner retains every capability while also serving as a manager.
+
+Support both PDF plan uploads and the editable plan builder. Share upcoming plans
+independently of practice-result publication. Builder editing rights for managers
+remain an explicit pending choice; do not infer them from upload restrictions.
+Keep published results separate from staff drafts and independent statistical
+sources separate in season totals. PROJECT_DIRECTION.md records the delivery
+sequence and acceptance requirements. These are confirmed requirements, not
+evidence of completed authentication, uploads, permissions or season views.
+
 ## Evidence on hand
 
 Existing source, backend contracts and TESTING.md record native/local/hosted checks
