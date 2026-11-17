@@ -35,7 +35,9 @@ supersedes the earlier manager upload restriction. The owner retains every
 capability while also serving as a manager.
 
 Signup collects first and last name and a requested Player, Manager or Coach
-role. After email verification, applicants wait on a clearly labeled preview
+role. All new signups request the owner's existing Rutgers Prep team in the
+current nonproduction project, using its trusted, privately configured identity.
+After email verification, applicants wait on a clearly labeled preview
 with feature guidance and no real team data. Notify the privately configured
 owner email of each verified access request; the owner reviews the applicant
 and confirms or changes their role through authenticated administration. Email

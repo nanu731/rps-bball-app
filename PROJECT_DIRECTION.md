@@ -77,6 +77,11 @@ they are requirements, not claims that the current app implements them.
   are untrusted requests, never authority; the owner confirms or changes the role
   when approving access. Existing owner identities and approved memberships must
   not be reset by this onboarding flow.
+- Owner-confirmed signup destination: the existing Rutgers Prep team in the
+  current nonproduction project. Resolve its identity through trusted owner/team
+  readback and configure it privately; do not create a replacement team or infer
+  ownership from its name. This destination choice does not itself authorize
+  hosted migration, deployment or notification activation.
 - Verified users awaiting approval see a clearly labeled welcome/preview page
   explaining the available features and their requested role. It contains no
   real team data and cannot fetch protected records or perform staff actions.
