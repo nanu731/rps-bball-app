@@ -34,6 +34,16 @@ statistics permissions: both can upload PDFs and use the plan builder. This
 supersedes the earlier manager upload restriction. The owner retains every
 capability while also serving as a manager.
 
+Signup collects first and last name and a requested Player, Manager or Coach
+role. After email verification, applicants wait on a clearly labeled preview
+with feature guidance and no real team data. Notify the privately configured
+owner email of each verified access request; the owner reviews the applicant
+and confirms or changes their role through authenticated administration. Email
+verification and requested roles never grant team access. Preserve existing
+approved accounts, prevent duplicate requests, and keep pending requests
+reviewable if email delivery fails. Approval activates only the permissions
+confirmed by the owner and enforced by the server.
+
 Support both PDF plan uploads and the editable plan builder. Share upcoming plans
 independently of practice-result publication. Players can view shared plans but
 cannot upload or edit them.

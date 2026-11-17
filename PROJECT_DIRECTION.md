@@ -61,6 +61,22 @@ they are requirements, not claims that the current app implements them.
   account, verify their email before first access, and can remain signed in.
   Include password recovery and sign-out. Email verification does not approve
   team membership or grant a staff role; preserve owner-controlled admission.
+- Signup collects first name, last name and a requested role: Player, Manager or
+  Coach. Verify email before submitting a team-access request. Requested roles
+  are untrusted requests, never authority; the owner confirms or changes the role
+  when approving access. Existing owner identities and approved memberships must
+  not be reset by this onboarding flow.
+- Verified users awaiting approval see a clearly labeled welcome/preview page
+  explaining the available features and their requested role. It contains no
+  real team data and cannot fetch protected records or perform staff actions.
+  Show request status and a way to check again without resubmitting duplicates.
+- Send new verified access-request notifications to the owner's privately
+  configured email destination. Include the applicant's name, verified email and
+  requested role, with a link to authenticated owner review. Approval and role
+  assignment require current server-confirmed owner authority, not possession
+  of an email link. Keep notification credentials and the recipient out of public
+  configuration. Notification retries must not create duplicate requests or
+  grant access; failures remain visible in the owner's pending-request list.
 - Players can view their own and other team players' statistics and shot charts,
   team statistics and shot charts, practice plans and practice statistics.
   Include both individual-game views and season totals. Results remain subject
@@ -91,6 +107,9 @@ they are requirements, not claims that the current app implements them.
    persistence. Verify actual email delivery, unverified/unapproved denial,
    sign-out and account switching on the deployed origin. Preserve the existing
    owner identity; never assign ownership by an email-string comparison.
+   Test name/role collection, verified-email request creation, data-free pending
+   preview, owner notification/retry and authenticated role approval; prove a
+   self-selected staff role cannot bypass approval or expose team records.
 3. Deliver coach/manager-authorized private PDF uploads and the plan builder, with
    plan sharing independent of practice-result approval. Test coach/manager upload
    success, player upload denial, team-only reads, interrupted uploads and retained
