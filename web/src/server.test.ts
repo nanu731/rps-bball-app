@@ -476,3 +476,56 @@ test("admission does not advertise a dispatched request as successful after acco
     globalThis.fetch = saved;
   }
 });
+test("notification uses the captured account token and never retries an unknown reply", async () => {
+  const saved = globalThis.fetch,
+    key = "a." + btoa(JSON.stringify({ role: "anon" })) + ".b",
+    request = "11111111-1111-4111-8111-111111111111";
+  const client = {
+    auth: {
+      getSession: async () => ({
+        data: {
+          session: {
+            user: { id: "TEST_ONLY_A" },
+            access_token: "TEST_ONLY_TOKEN",
+          },
+        },
+        error: null,
+      }),
+      getUser: async (token: string) => {
+        assert.equal(token, "TEST_ONLY_TOKEN");
+        return { data: { user: { id: "TEST_ONLY_A" } }, error: null };
+      },
+    },
+  };
+  const server = new CoreServer(client as never, "http://127.0.0.1:55873", key);
+  let calls = 0;
+  try {
+    globalThis.fetch = async (url, init) => {
+      calls++;
+      assert.equal(
+        String(url),
+        "http://127.0.0.1:55873/functions/v1/teamstats-access-notice",
+      );
+      assert.equal(
+        new Headers(init?.headers).get("Authorization"),
+        "Bearer TEST_ONLY_TOKEN",
+      );
+      assert.deepEqual(JSON.parse(String(init?.body)), { request_id: request });
+      return Response.json({ state: "manual_review" });
+    };
+    assert.equal(await server.notifyAccess(request), "manual_review");
+    globalThis.fetch = async () => {
+      calls++;
+      throw Error("unknown transport result");
+    };
+    await assert.rejects(
+      server.notifyAccess(request),
+      (e) => e instanceof ServerError && e.uncertain,
+    );
+    assert.equal(calls, 2);
+    await assert.rejects(server.notifyAccess("invalid"));
+    assert.equal(calls, 2);
+  } finally {
+    globalThis.fetch = saved;
+  }
+});

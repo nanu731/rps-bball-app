@@ -1210,6 +1210,9 @@ pre {
   }
   .sidebar nav > button {
     border-radius: 0;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-wrap: wrap;
     font-size: 0.8rem;
     min-height: 56px;
     padding: 10px 8px;
@@ -1920,5 +1923,10 @@ button {
 .preview-ledger span {
   padding: 14px;
   border-top: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+/* Verified contacts must reflow inside owner review at enlarged text sizes. */
+.team-administration {
   overflow-wrap: anywhere;
 }

@@ -166,9 +166,16 @@ export function Connected({
       setTeam((current) =>
         rows.some((t) => t.id === current)
           ? current
-          : rows.length === 1
-            ? rows[0].id
-            : "",
+          : location.hash === "#access-requests" &&
+              rows.some(
+                (t) =>
+                  t.id ===
+                  new URLSearchParams(location.search).get("reviewTeam"),
+              )
+            ? new URLSearchParams(location.search).get("reviewTeam")!
+            : rows.length === 1
+              ? rows[0].id
+              : "",
       );
       setMessage("Signed in. Your available teams are shown below.");
     } catch (e) {
@@ -919,6 +926,40 @@ function SharedTeam({
       window.removeEventListener("focus", focus);
     };
   }, [team.id]);
+  const openManage = async (open: boolean) => {
+    setManage(open);
+    if (!open) return;
+    const g = generation.current,
+      epoch = server.epoch;
+    try {
+      const fresh = await server.access(team.id);
+      const [identities, members] = await Promise.all([
+        server.command<
+          { user_id: string; email: string | null; phone: string | null }[]
+        >(team.id, "team_administrator_identities", {}),
+        server.rows<{ status: string; user_id: string }>(
+          "team_memberships",
+          "status,user_id",
+          { team_id: team.id },
+          "user_id",
+        ),
+      ]);
+      if (g !== generation.current || epoch !== server.epoch) return;
+      setAccess(fresh);
+      setIdentities(identities);
+      setMembers(members);
+    } catch (e) {
+      if (g !== generation.current || epoch !== server.epoch) return;
+      if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
+        conceal();
+      setError(entryError(e));
+      setMembers([]);
+    }
+  };
+  useEffect(() => {
+    if (location.hash === "#access-requests" && access?.is_owner)
+      void openManage(true);
+  }, [team.id, access?.is_owner]);
   const create = async () => {
     if (busyRef.current || uncertain) return;
     busyRef.current = true;
@@ -950,7 +991,7 @@ function SharedTeam({
     }
   };
   const adminCommand = async (name: string, args: Record<string, unknown>) => {
-    if (busyRef.current || adminLocked || !access) return;
+    if (busyRef.current || adminLocked || !access) return false;
     busyRef.current = true;
     setBusy(true);
     setAdminReceipt("");
@@ -985,6 +1026,7 @@ function SharedTeam({
           "user_id",
         ),
       );
+      return true;
     } catch (e) {
       if (e instanceof ServerError && e.uncertain) setAdminLocked(true);
       else {
@@ -994,6 +1036,7 @@ function SharedTeam({
       if (e instanceof ServerError && ["401", "403", "42501"].includes(e.code))
         conceal();
       setError(entryError(e));
+      return false;
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -1020,16 +1063,28 @@ function SharedTeam({
         description = current
           ? `This permission was granted${current.expires_at ? " with an end date and may have expired" : ""}. Check the member’s current access.`
           : "This permission is not currently assigned.";
-      } else if (adminAttempt.name === "web_review_join_request") {
+      } else if (
+        ["web_review_join_request", "web_retry_join_notice"].includes(
+          adminAttempt.name,
+        )
+      ) {
         const requests = await server.command<
-          { id: string; status: string; confirmed_role: string | null }[]
+          {
+            id: string;
+            status: string;
+            confirmed_role: string | null;
+            notification: string;
+          }[]
         >(team.id, "web_list_join_requests", {});
         const row = requests.find(
           (r) => r.id === adminAttempt.args.p_request_id,
         );
-        description = row
-          ? `Current applicant decision: ${row.status}${row.confirmed_role ? " · " + row.confirmed_role : ""}. Check this recorded decision before another change.`
-          : "The applicant request could not be found. Keep the pending details and ask for help.";
+        description =
+          adminAttempt.name === "web_retry_join_notice"
+            ? `Current notification state: ${row?.notification ?? "unavailable"}. Inspect the saved request before another retry.`
+            : row
+              ? `Current applicant decision: ${row.status}${row.confirmed_role ? " · " + row.confirmed_role : ""}. Check this recorded decision before another change.`
+              : "The applicant request could not be found. Keep the pending details and ask for help.";
       } else if (adminAttempt.name === "team_apply_staff_preset") {
         const grants = await server.rows<{
           capability: string;
@@ -1116,40 +1171,7 @@ function SharedTeam({
               (access.is_owner ||
                 access.capabilities.includes("members.manage") ||
                 access.capabilities.includes("roster.manage")) && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setManage(!manage);
-                    try {
-                      setIdentities(
-                        await server.command(
-                          team.id,
-                          "team_administrator_identities",
-                          {},
-                        ),
-                      );
-                      setAccess(await server.access(team.id));
-                      setMembers(
-                        await server.rows(
-                          "team_memberships",
-                          "status,user_id",
-                          {
-                            team_id: team.id,
-                          },
-                          "user_id",
-                        ),
-                      );
-                    } catch (e) {
-                      if (
-                        e instanceof ServerError &&
-                        ["401", "403", "42501"].includes(e.code)
-                      )
-                        conceal();
-                      setError(entryError(e));
-                      setMembers([]);
-                    }
-                  }}
-                >
+                <button type="button" onClick={() => void openManage(!manage)}>
                   Manage team
                 </button>
               )}
@@ -1168,7 +1190,7 @@ function SharedTeam({
         </p>
       )}
       {manage && access && (
-        <section className="create-form">
+        <section className="create-form team-administration">
           <h3>Manage team</h3>
           <p>
             {members.length} members · {roster.length} active players. Access
@@ -1185,7 +1207,10 @@ function SharedTeam({
               team={team.id}
               revision={access.access_revision}
               locked={busy || adminLocked}
-              onReview={(args) => adminCommand("web_review_join_request", args)}
+              onReview={(args) =>
+                adminCommand("web_review_join_request", args).then(() => {})
+              }
+              onRetry={(args) => adminCommand("web_retry_join_notice", args)}
               onDenied={conceal}
               onKnown={setRequestedApplicants}
             />

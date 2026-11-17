@@ -358,7 +358,11 @@ export class CoreServer {
     this.publicKey = publicKey;
   }
   // A captured token prevents a cross-tab account switch from redirecting this request.
-  async admission(details?: Applicant): Promise<SignupStatus> {
+  private async accountRequest(
+    path: string,
+    body: Record<string, unknown>,
+    write: boolean,
+  ) {
     const config = publicConfiguration(this.namespace, this.publicKey),
       epoch = this.epoch;
     const local = await this.client.auth.getSession(),
@@ -375,51 +379,52 @@ export class CoreServer {
       timer = setTimeout(() => controller.abort(), 20000);
     let response: Response, bytes: Uint8Array;
     try {
-      response = await fetch(
-        config.url +
-          "/rest/v1/rpc/" +
-          (details ? "web_request_access" : "web_signup_status"),
-        {
-          method: "POST",
-          headers: {
-            apikey: config.key,
-            Authorization: "Bearer " + session.access_token,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(
-            details
-              ? {
-                  p_first_name: details.first_name,
-                  p_last_name: details.last_name,
-                  p_requested_role: details.requested_role,
-                }
-              : {},
-          ),
-          signal: controller.signal,
-          redirect: "error",
+      response = await fetch(config.url + path, {
+        method: "POST",
+        headers: {
+          apikey: config.key,
+          Authorization: "Bearer " + session.access_token,
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(body),
+        signal: controller.signal,
+        redirect: "error",
+      });
       bytes = await readFileResponse(response, 16384, controller.signal);
     } catch {
-      throw new ServerError("network", !!details);
+      throw new ServerError("network", write);
     } finally {
       clearTimeout(timer);
     }
     if (epoch !== this.epoch)
-      throw new ServerError(details ? "account_changed" : "401", !!details);
+      throw new ServerError(write ? "account_changed" : "401", write);
     let result;
     try {
       result = JSON.parse(new TextDecoder().decode(bytes));
     } catch {
-      throw new ServerError("response", !!details);
+      throw new ServerError("response", write);
     }
     if (!response.ok)
       throw new ServerError(
         typeof result?.code === "string"
           ? result.code
           : String(response.status),
-        !!details,
+        write,
       );
+    return result;
+  }
+  async admission(details?: Applicant): Promise<SignupStatus> {
+    const result = await this.accountRequest(
+      "/rest/v1/rpc/" + (details ? "web_request_access" : "web_signup_status"),
+      details
+        ? {
+            p_first_name: details.first_name,
+            p_last_name: details.last_name,
+            p_requested_role: details.requested_role,
+          }
+        : {},
+      !!details,
+    );
     if (
       typeof result?.has_access !== "boolean" ||
       typeof result.configured !== "boolean" ||
@@ -432,6 +437,33 @@ export class CoreServer {
     )
       throw new ServerError("response", !!details);
     return result;
+  }
+  async notifyAccess(requestID: string): Promise<string> {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        requestID,
+      )
+    )
+      throw new ServerError("invalid");
+    const result = await this.accountRequest(
+      "/functions/v1/teamstats-access-notice",
+      { request_id: requestID },
+      true,
+    );
+    if (
+      ![
+        "sent",
+        "retry",
+        "retry_wait",
+        "busy",
+        "manual_review",
+        "disabled",
+        "cancelled",
+        "stale",
+      ].includes(result?.state)
+    )
+      throw new ServerError("response", true);
+    return result.state;
   }
   async changeRecoveryPassword(
     password: string,

@@ -384,7 +384,7 @@ test("actual verified signup, owner-confirmed role admission, recovery and accou
     .getByRole("button", { name: "Save new password", exact: true })
     .click();
   await verifiedAccount();
-  await expect(page.getByRole("status")).toContainText("Password updated");
+  await expect(page.locator(".account-details").getByRole("status")).toContainText("Password updated");
   expect(writes).toBe(1);
   await page
     .getByRole("button", { name: "Sign out of this browser", exact: true })

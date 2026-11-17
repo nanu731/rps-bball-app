@@ -1,0 +1,11 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:nodemailer@10.6.0": "10.6.0"
+  },
+  "npm": {
+    "nodemailer@10.6.0": {
+      "integrity": "sha512-jWanL7D9GD3jvUDYKmoC5rWTiG8MnBgnN2yV68bgMKip1zUJhiSTyz7Eg+18y8sk5OvdVDzws5nZK5arSI4f5Q=="
+    }
+  }
+}

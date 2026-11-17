@@ -101,7 +101,7 @@ export function PendingAccess({
     setError("");
     try {
       let next = await server.admission();
-      if (submit && !next.has_access && !next.request && next.configured)
+      if (submit && !next.has_access && !next.request && next.configured) {
         next = await server.admission(
           applicantDetails(
             details.first_name,
@@ -109,11 +109,43 @@ export function PendingAccess({
             details.requested_role,
           ),
         );
+        if (active.current) setStatus(next);
+        if (next.request?.status === "pending") {
+          try {
+            await server.notifyAccess(next.request.id);
+          } catch {
+            if (active.current)
+              setError(
+                "Your access request is saved. Email notification could not be confirmed; the owner can still review it.",
+              );
+          }
+          next = await server.admission();
+        }
+      }
       if (!active.current) return;
       setStatus(next);
       if (next.has_access) onApproved();
     } catch (e) {
       if (active.current) setError(entryError(e));
+    } finally {
+      gate.current = false;
+      if (active.current) setBusy(false);
+    }
+  };
+  const notify = async () => {
+    if (gate.current || !status.request) return;
+    gate.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      await server.notifyAccess(status.request.id);
+      const next = await server.admission();
+      if (active.current) setStatus(next);
+    } catch {
+      if (active.current)
+        setError(
+          "Notification could not be confirmed. Your request remains saved. Check approval status before retrying; an uncertain email needs owner review.",
+        );
     } finally {
       gate.current = false;
       if (active.current) setBusy(false);
@@ -176,6 +208,18 @@ export function PendingAccess({
                 ? "The owner declined this access request. No team access was granted. Contact the owner about the decision; submitting another role does not change it."
                 : "Your current server-confirmed access does not open the team. Contact the owner; submitting a different role will not restore access."}
           </p>
+          {request.status === "pending" &&
+            !["sent", "sending", "manual_review"].includes(
+              request.notification ?? "",
+            ) && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void notify()}
+              >
+                Retry owner notification
+              </button>
+            )}
           <p>
             {request.notification === "sent"
               ? "Notification accepted by the email server; inbox delivery is not confirmed here."
@@ -287,6 +331,7 @@ export function OwnerApplications({
   revision,
   locked,
   onReview,
+  onRetry,
   onDenied,
   onKnown,
 }: {
@@ -295,6 +340,7 @@ export function OwnerApplications({
   revision: number;
   locked: boolean;
   onReview: (args: Record<string, unknown>) => Promise<void>;
+  onRetry: (args: Record<string, unknown>) => Promise<boolean>;
   onDenied: () => void;
   onKnown: (users: string[]) => void;
 }) {
@@ -302,9 +348,18 @@ export function OwnerApplications({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [roles, setRoles] = useState<Record<string, string>>({}),
-    [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
+    [confirmed, setConfirmed] = useState<Record<string, boolean>>({}),
+    [acknowledged, setAcknowledged] = useState<Record<string, boolean>>({}),
+    [noticeMessage, setNoticeMessage] = useState("");
   const active = useRef(true),
-    generation = useRef(0);
+    generation = useRef(0),
+    section = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (location.hash === "#access-requests") {
+      section.current?.focus({ preventScroll: true });
+      section.current?.scrollIntoView({ behavior: "instant", block: "start" });
+    }
+  }, []);
   const load = async () => {
     const n = ++generation.current,
       epoch = server.epoch;
@@ -372,8 +427,51 @@ export function OwnerApplications({
       if (active.current) setBusy(false);
     }
   };
+  const notify = async (row: ApplicantReview, retry = false) => {
+    if (busy || locked) return;
+    setBusy(true);
+    setError("");
+    setNoticeMessage("");
+    try {
+      if (
+        retry &&
+        !(await onRetry({
+          p_request_id: row.id,
+          p_expected_revision: row.revision,
+          p_acknowledge_possible_duplicate: !!acknowledged[row.id],
+        }))
+      )
+        return;
+      const state = await server.notifyAccess(row.id);
+      if (active.current)
+        setNoticeMessage(
+          state === "sent"
+            ? "Notification accepted by the mail server; inbox delivery is unverified."
+            : state === "retry_wait"
+              ? "The saved retry deadline has not arrived. Check later."
+              : "Notification status: " +
+                state +
+                ". The saved request can still be reviewed.",
+        );
+    } catch (e) {
+      if (active.current)
+        setError(
+          "Email notification could not be confirmed. Refresh signup requests before retrying. The request remains available for review.",
+        );
+    } finally {
+      if (active.current) {
+        await load();
+        setBusy(false);
+      }
+    }
+  };
   return (
-    <section id="access-requests" aria-label="Owner access requests">
+    <section
+      ref={section}
+      tabIndex={-1}
+      id="access-requests"
+      aria-label="Owner access requests"
+    >
       <div className="section-heading">
         <h3>Verified signup requests</h3>
         <button type="button" disabled={busy} onClick={() => void load()}>
@@ -386,6 +484,7 @@ export function OwnerApplications({
         the role. Email links never approve access.
       </p>
       {error && <Notice error>{error}</Notice>}
+      {noticeMessage && <p role="status">{noticeMessage}</p>}
       {busy && <p role="status">Loading signup requests…</p>}
       {!busy && !error && !rows.length && (
         <Empty title="No signup requests">
@@ -418,6 +517,40 @@ export function OwnerApplications({
           </p>
           {row.status === "pending" ? (
             <fieldset className="entry-fields" disabled={busy || locked}>
+              {row.notification !== "sent" && (
+                <div>
+                  {row.notification_error === "uncertain" && (
+                    <label className="check">
+                      <input
+                        type="checkbox"
+                        checked={!!acknowledged[row.id]}
+                        onChange={(e) =>
+                          setAcknowledged({
+                            ...acknowledged,
+                            [row.id]: e.target.checked,
+                          })
+                        }
+                      />
+                      A prior email may have arrived. I accept that retrying
+                      could send a duplicate notification.
+                    </label>
+                  )}
+                  <button
+                    type="button"
+                    disabled={
+                      row.notification_error === "uncertain" &&
+                      !acknowledged[row.id]
+                    }
+                    onClick={() =>
+                      void notify(row, row.notification === "manual_review")
+                    }
+                  >
+                    {row.notification === "manual_review"
+                      ? "Allow notification retry"
+                      : "Check/send owner notification"}
+                  </button>
+                </div>
+              )}
               <label className="field">
                 Role for {row.first_name} {row.last_name}
                 <select

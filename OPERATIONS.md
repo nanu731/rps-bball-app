@@ -146,3 +146,14 @@ trusted manual review/resume. Never blindly resubmit a potentially applied write
 Migrations14–17 and actual scheduling/delivery remain unactivated. Before activation,
 verify hosted mapping, signature/issuer/audience, least-privilege issuance/renewal/
 revocation, custody, Google destination rights and the current strict$0 arrangement.
+
+### Prepared signup-notification recovery
+
+The owner can review saved requests through Team -> Team access -> Manage team ->
+Verified signup requests even when mail is unavailable. Check/send refreshes the
+notification job; it never approves membership. After an expired/uncertain send,
+verify current status and acknowledge that a previous email may have arrived before
+allowing another notification cycle. Fix private sender configuration before retrying
+configuration failures. A sent receipt is mail-server acceptance, not inbox proof.
+No recurring sender or hosted delivery is activated by this preparation; see the
+access-notice worker contract for private configuration and zero-cost gates.

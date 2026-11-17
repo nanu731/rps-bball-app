@@ -43,6 +43,17 @@ The operating budget remains strictly $0.
   hidden horizontal indicators. Preserve accessible alternatives to gestures.
 - Use Impeccable, apple-design and UI/UX Pro Max as described below.
 
+## Local preparation checkpoint - 2026-11-17
+
+Roles/password access, independently shared plans, explicit season results and
+verified owner-reviewed admission have scoped local source/test evidence in
+web/README.md. The disabled notification worker also has actual isolated Edge/TLS
+SMTP and rendered recovery/review evidence. Source migrations22-26 are prepared;
+none were activated hosted. Public preview deployment, actual external email,
+PDF-service licensing/capacity and real-device acceptance remain separate gates.
+Requested signup roles and email notifications never establish team authority.
+This checkpoint does not mark the finished team experience or release accepted.
+
 ## Owner-confirmed decisions — 2026-11-11
 
 | ID | Decision |

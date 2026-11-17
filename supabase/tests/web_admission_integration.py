@@ -23,7 +23,7 @@ def run(sql):
         except RuntimeError as e:
             assert code in str(e),label+': wrong failure category';print('PASS '+label,flush=True);return
         raise AssertionError(label+': expected refusal')
-    sql("update team_private.web_signup_settings set enabled=false,team_id=null where id;")
+    sql("update team_private.web_signup_settings set enabled=false,team_id=null,notification_enabled=false where id;")
     status=rpc(applicant,'web_signup_status')
     assert status=={'has_access':False,'configured':False,'request':None}
     refuse('unconfigured signup creates no request',lambda:rpc(applicant,'web_request_access',p_first_name='TEST ONLY',p_last_name='Applicant',p_requested_role='manager'),'PT503')
@@ -119,6 +119,55 @@ def run(sql):
     rpc(applicant,'web_request_access',p_first_name='TEST ONLY',p_last_name='Applicant',p_requested_role='coach')
     assert rpc(applicant,'web_signup_status')['has_access'] is False
     refuse('old approved request cannot silently restore removed access',lambda:rpc(applicant,'team_access',p_team_id=team))
+    # Server-only notification commands use a freshly verified caller envelope.
+    def worker(name,**args):
+        output=sql("begin;set local role service_role;select to_jsonb(public."+name+'('+','.join(k+'=>'+value(v) for k,v in args.items())+'));commit;')
+        return json.loads(output.splitlines()[-1])
+    sql(f"update auth.users set email_confirmed_at=now() where id='{unverified}';")
+    notice_request=rpc(unverified,'web_request_access',p_first_name='TEST ONLY',p_last_name='Notice',p_requested_role='player')['request']
+    envelope=dict(p_request_id=notice_request['id'],p_actor=unverified,p_session=sessions[unverified],p_exp=4102444800)
+    refuse('authenticated clients cannot claim server notification jobs',lambda:rpc(unverified,'web_join_notice_claim',**envelope))
+    refuse('unrelated signed member cannot trigger applicant notification',lambda:worker('web_join_notice_claim',**dict(envelope,p_actor=member,p_session=sessions[member])))
+    refuse('missing verified-token expiry cannot authorize notification',lambda:worker('web_join_notice_claim',**dict(envelope,p_exp=None)))
+    assert worker('web_join_notice_claim',**envelope)['state']=='disabled'
+    assert rpc(unverified,'web_signup_status')['request']['notification_error']=='disabled'
+    print('PASS notifications default disabled without consuming delivery attempts',flush=True)
+    sql('update team_private.web_signup_settings set notification_enabled=true where id;')
+    claim=worker('web_join_notice_claim',**envelope)
+    assert claim['state']=='claimed' and claim['requested_role']=='player'
+    assert worker('web_join_notice_claim',**envelope)['state']=='busy'
+    assert worker('web_join_notice_finish',p_request_id=notice_request['id'],p_claim=uid(),p_outcome='sent')['state']=='stale'
+    assert worker('web_join_notice_finish',p_request_id=notice_request['id'],p_claim=claim['claim'],p_outcome='transient')['state']=='retry'
+    assert worker('web_join_notice_claim',**envelope)['state']=='retry_wait'
+    print('PASS one fenced claim and durable retry deadline survive separate connections',flush=True)
+    sql(f"update team_private.web_join_notifications set next_attempt_at=now()-interval '1 second' where request_id='{notice_request['id']}';")
+    claim=worker('web_join_notice_claim',**envelope)
+    sql(f"update team_private.web_join_notifications set claim_expires_at=now()-interval '1 second' where request_id='{notice_request['id']}';")
+    assert worker('web_join_notice_finish',p_request_id=notice_request['id'],p_claim=claim['claim'],p_outcome='sent')['state']=='stale'
+    assert worker('web_join_notice_claim',**envelope)['state']=='manual_review'
+    retry=dict(p_team_id=team,p_request_id=notice_request['id'],p_expected_revision=1,p_expected_access_revision=access())
+    refuse('uncertain email cannot be retried without owner duplicate acknowledgement',lambda:rpc(owner,'web_retry_join_notice',**retry),'22023')
+    refuse('applicant cannot reset delivery attempts',lambda:rpc(unverified,'web_retry_join_notice',**retry,p_acknowledge_possible_duplicate=True))
+    rpc(owner,'web_retry_join_notice',**retry,p_acknowledge_possible_duplicate=True)
+    claim=worker('web_join_notice_claim',**envelope)
+    assert worker('web_join_notice_finish',p_request_id=notice_request['id'],p_claim=claim['claim'],p_outcome='configuration')['state']=='manual_review'
+    rpc(owner,'web_retry_join_notice',**retry)
+    sql(f"update team_private.web_join_notifications set attempts=4 where request_id='{notice_request['id']}';")
+    claim=worker('web_join_notice_claim',**envelope)
+    assert worker('web_join_notice_finish',p_request_id=notice_request['id'],p_claim=claim['claim'],p_outcome='transient')['state']=='manual_review'
+    assert worker('web_join_notice_claim',**envelope)['state']=='manual_review'
+    print('PASS configuration failures and fifth transient failure stop automatic retry',flush=True)
+    rpc(owner,'web_retry_join_notice',**retry)
+    claim=worker('web_join_notice_claim',**envelope)
+    sql(f"update auth.sessions set not_after=now()-interval '1 second' where id='{sessions[unverified]}';")
+    assert worker('web_join_notice_finish',p_request_id=notice_request['id'],p_claim=claim['claim'],p_outcome='sent')['state']=='manual_review'
+    sql(f"update auth.sessions set not_after=null where id='{sessions[unverified]}';")
+    rpc(owner,'web_retry_join_notice',**retry,p_acknowledge_possible_duplicate=True)
+    claim=worker('web_join_notice_claim',**envelope)
+    assert worker('web_join_notice_finish',p_request_id=notice_request['id'],p_claim=claim['claim'],p_outcome='sent')['state']=='sent'
+    assert worker('web_join_notice_claim',**envelope)['state']=='sent'
+    assert sql(f"select count(*) from team_private.web_join_notifications where request_id='{notice_request['id']}';")=='1'
+    print('PASS expired claims fence late replies; explicit owner recovery does not duplicate business requests',flush=True)
 
 if __name__ == '__main__':
     import argparse,re,sys

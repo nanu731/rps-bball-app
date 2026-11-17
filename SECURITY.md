@@ -260,3 +260,13 @@ immutable batch contents. Either team's score may remain NULL. No score referenc
 changes official statistics, capture observations, review or publication state.
 Native cancellation/known authorization denial conceals stale data rather than
 issuing a continuation permit. This migration is isolated-test preparation only.
+
+### Prepared web admission notification boundary
+
+Access-notice claim/finish RPCs are service-only. The worker verifies the original
+signed token through Auth before supplying its actor/session/expiry; the database
+rechecks current eligibility. Client-submitted roles/IDs, the email link and SMTP
+receipt grant no authority. Owner role review remains a separate current-authority
+transaction. Unknown mail outcomes require explicit owner recovery; credentials,
+contacts and content stay out of application logs. Activation remains gated; see
+`supabase/functions/teamstats-access-notice/README.md` for exact local guarantees.

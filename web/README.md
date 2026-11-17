@@ -418,3 +418,51 @@ The private signup target defaults disabled/unset. The notification outbox is
 prepared, but worker/retry execution and authenticated review links remain the
 next slice; no actual owner-email delivery is claimed. No hosted migration,
 account/grant changes, provider activation or frontend deployment occurred.
+
+## Owner notification and authenticated review - local preparation
+
+Prepared migration202611170005 and the server-only access-notice function now
+supply fenced notification claims, persisted retry deadlines and explicit owner
+recovery. Nodemailer10.6.0 is pinned by the verified official SHA-512; it adds
+nothing to the frontend. Recipient and sender credentials stay private. The email
+includes the verified request details and navigates to current authenticated
+owner review; it never grants access or approves through GET.
+
+Only known SMTP4xx refusals are replay-safe. A real local lost-DATA-reply test
+initially exposed a misleading `CONN` error label; the adapter now treats unknown
+network/cancellation outcomes conservatively. Expired claims and uncertain sends
+require owner acknowledgment of possible duplicate email. A sent state establishes
+mail-server acceptance, not inbox delivery. The saved application remains usable
+when notification is disabled or unavailable. See the
+[worker contract](../supabase/functions/teamstats-access-notice/README.md).
+
+Final local evidence:29 browser-model unit checks/build, seven injected worker
+checks, four actual TLS SMTP outcomes,33 admission/notification SQL checks, and a
+fresh26-migration replay with the existing recovery/database CI checks. Actual
+signed Auth/PostgREST/official local Edge/TLS capture proved one message and no
+resend on repeated calls. Compiled Chrome exercised uncertain delivery, explicit
+owner retry, the actual captured review link, role confirmation and read-only
+player access. Local fixtures used only synthetic identities and separate loopback
+services. One notification fixture used local admin-confirmed Auth; the distinct
+signup journey exercised actual local captured confirmation links and recovery.
+Neither establishes external email delivery.
+
+The final390px/200%-text check exposed navigation and unbroken-contact overflow.
+Responsive navigation wrapping and scoped owner-contact wrapping fixed the measured
+449px document width to390px; text-range geometry confirmed complete contact text
+inside its panel. The affected compiled journey passed with dark appearance and
+reduced motion; the original phone/tablet/desktop account regression was rerun.
+Large stitched screenshots were not used alone to infer clipping. Safari, actual
+mobile keyboards, physical devices and actual screen-reader interaction remain
+separate acceptance gates.
+
+No hosted migration, SMTP credential configuration, provider activation, real
+email, schedule or deployment occurred. The public preview remains the earlier
+Google-only build. The separate AGPL PDF service remains prepared/disabled, with
+licensing, full source offer, Linux limits and hosted capacity still unresolved.
+
+A separate fresh local replay also passed the web role/plan/result and admission/
+notification contracts on baseline13 plus21 plus prepared22-26, explicitly omitting
+native migrations14-20. This19-file path is local compatibility evidence, not fresh
+hosted drift verification or authorization to apply it. PDF delivery separately
+needs its request-admission contract and all validator/licensing/capacity gates.
