@@ -512,3 +512,17 @@ and notification activation, worker credentials/deployment, frontend deployment
 and actual sender acceptance require separate reviewed actions. No hosted schema,
 account, grant, application record or provider setting changed in this preparation;
 no external email was sent. PDF delivery remains separately disabled and gated.
+
+### Hosted database checkpoint — 2026-11-17
+
+The owner executed the exact approved atomic SQL-editor transaction after browser
+automation stalled. Independent authenticated server readback confirmed19 history
+entries (13 plus21–26), all five installed source bodies,129 application function
+definitions/permissions,36 table structures and313 column-read projections matching
+the isolated rehearsal. Original owner binding, RLS, denied client writes,
+private/history access protection and authenticated policy-helper schema usage
+remain intact. No bootstrap or migrations14–20 were applied.
+
+At this checkpoint signup remains disabled/unbound and notifications remain off.
+No frontend/worker deployment, external email or PDF activation is established by
+these database checks. Actual signed-user/deployed acceptance remains separate.
