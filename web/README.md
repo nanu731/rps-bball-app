@@ -489,6 +489,12 @@ that private and migration-history schemas were not exposed. History client
 access remained denied and authenticated private-schema usage for policy helpers
 remained intact. Current public tables retained RLS and denied client writes.
 
+A subsequent actual hosted read-only connector check matched all256 existing
+public/private column read projections to the canonical baseline and reconfirmed
+the original owner/team binding and exact13-plus21 history. The first nine stored
+SQL bodies remain unavailable. No hosted activation or signed-user journey was
+performed by that check.
+
 Actual creator defaults exposed a preparation defect: newly created public tables
 could inherit unwanted client privileges. Prepared migrations22–25 now explicitly
 clear those privileges before restoring their intended read grants. The isolated
