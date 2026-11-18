@@ -526,3 +526,9 @@ remain intact. No bootstrap or migrations14–20 were applied.
 At this checkpoint signup remains disabled/unbound and notifications remain off.
 No frontend/worker deployment, external email or PDF activation is established by
 these database checks. Actual signed-user/deployed acceptance remains separate.
+
+The owner subsequently approved the separate signup configuration. Authenticated
+readback confirms verified access requests are enabled for the previously trusted
+existing team, with owner binding unchanged and notifications still off. This
+does not approve any applicant, grant a role, deploy the frontend or establish
+email-delivery acceptance.
