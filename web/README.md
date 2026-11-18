@@ -532,3 +532,12 @@ readback confirms verified access requests are enabled for the previously truste
 existing team, with owner binding unchanged and notifications still off. This
 does not approve any applicant, grant a role, deploy the frontend or establish
 email-delivery acceptance.
+
+The owner approved installation of only the notification worker with sending
+disabled. Hosted metadata confirms version1 with JWT verification enabled, and
+provider readback matches both reviewed TypeScript files. The uploaded package
+included its pinned lockfile; the provider's source readback did not return that
+file, so provider lock enforcement is not independently established. Actual HTTP
+checks returned503/disabled with a valid project JWT and401 without authorization.
+No applicant record was requested and no email was sent. Private SMTP setup,
+sending activation and actual signed-user delivery remain separate gates.
