@@ -92,6 +92,7 @@ create function team_private.player_account_visible(t uuid,u uuid) returns boole
 revoke all on function team_private.player_account_visible(uuid,uuid) from public,anon;
 grant execute on function team_private.player_account_visible(uuid,uuid) to authenticated;
 create policy player_account_read on public.team_player_accounts for select to authenticated using(team_private.player_account_visible(team_id,user_id));
+revoke all on public.team_player_accounts from public,anon,authenticated;
 grant select(team_id,player_id,user_id) on public.team_player_accounts to authenticated;
 create function public.team_link_player_account(p_team_id uuid,p_user_id uuid,p_player_id uuid,p_expected_access_revision bigint) returns jsonb language plpgsql security definer set search_path=pg_catalog as $$
 declare a uuid:=team_private.command_actor(p_team_id,p_expected_access_revision);result public.team_player_accounts;

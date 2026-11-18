@@ -12,6 +12,7 @@ alter table public.web_seasons enable row level security;
 alter table public.web_season_games enable row level security;
 create policy seasons_read on public.web_seasons for select to authenticated using(team_private.can_read(team_id));
 create policy season_games_read on public.web_season_games for select to authenticated using(team_private.can_read(team_id));
+revoke all on public.web_seasons,public.web_season_games from public,anon,authenticated;
 grant select on public.web_seasons,public.web_season_games to authenticated;
 create function public.team_save_season(p_team_id uuid,p_season_id uuid,p_name text,p_expected_access_revision bigint) returns jsonb language plpgsql security definer set search_path=pg_catalog as $$
 declare a uuid:=team_private.command_actor(p_team_id,p_expected_access_revision);s public.web_seasons;

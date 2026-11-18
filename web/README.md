@@ -472,3 +472,37 @@ The standard public-runner no-deploy workflow passed for notification source
 This executed the synthetic worker/recovery/database checks, including all26 source
 migrations and admission/notification contracts. It did not test hosted Gmail,
 activate any provider, deploy the frontend or establish device/release acceptance.
+
+### Nonproduction activation preparation — 2026-11-17
+
+Fresh read-only hosted inspection verified the previously trusted owner/team
+binding and the expected13-plus21 migration history. All109 application function
+definitions/effective execution permissions and29 application/private table
+structures, policies, triggers and indexes matched the canonical baseline. The
+separate managed RLS event trigger was inspected and preserved. Stored SQL was
+absent for the first nine history entries; available later source evidence matched
+its original reviewed transaction format. This is not a fresh signed-owner app
+journey or permission to activate the prepared web changes.
+
+Dashboard Data API settings and independent HTTP schema-profile probes confirmed
+that private and migration-history schemas were not exposed. History client
+access remained denied and authenticated private-schema usage for policy helpers
+remained intact. Current public tables retained RLS and denied client writes.
+
+Actual creator defaults exposed a preparation defect: newly created public tables
+could inherit unwanted client privileges. Prepared migrations22–25 now explicitly
+clear those privileges before restoring their intended read grants. The isolated
+`web_table_acl_integration.py` regression checks both observed maintenance-level
+and broad provider defaults, exact authenticated column projections, denied
+anonymous/writing access and RLS. A populated13-plus21 upgrade to22–26 preserved
+synthetic identities, publication history, missing/zero values and file/session
+metadata; the original recovery database and cluster authority remained unchanged.
+The existing no-deploy CI includes this regression. No previously installed
+hosted migration was edited or reapplied.
+
+The private guarded transaction remains a review candidate. Its isolated rehearsal
+does not establish hosted upgrade or email-delivery acceptance. Signup destination
+and notification activation, worker credentials/deployment, frontend deployment
+and actual sender acceptance require separate reviewed actions. No hosted schema,
+account, grant, application record or provider setting changed in this preparation;
+no external email was sent. PDF delivery remains separately disabled and gated.

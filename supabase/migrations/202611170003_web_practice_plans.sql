@@ -19,6 +19,7 @@ alter table public.web_sessions add foreign key(team_id,id,shared_plan_id) refer
 alter table public.web_practice_plan_versions enable row level security;
 create policy shared_plan_read on public.web_practice_plan_versions for select to authenticated using(team_private.can_read(team_id));
 -- Ordinary viewers need plan contents, not staff Auth identifiers.
+revoke all on public.web_practice_plan_versions from public,anon,authenticated;
 grant select(id,team_id,practice_id,revision,kind,builder,pdf_version_id,shared_at) on public.web_practice_plan_versions to authenticated;
 create or replace function team_private.file_resource_guard() returns trigger language plpgsql set search_path=pg_catalog as $$begin
  if tg_op='DELETE' or new.id<>old.id or new.team_id<>old.team_id or new.kind<>old.kind or new.play_id is distinct from old.play_id or new.game_id is distinct from old.game_id or new.practice_id is distinct from old.practice_id then raise exception 'Private file linkage is immutable' using errcode='42501';end if;return new;end$$;

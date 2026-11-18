@@ -33,6 +33,7 @@ revoke all on function team_private.join_request_visible(uuid,uuid) from public,
 grant execute on function team_private.join_request_visible(uuid,uuid) to authenticated;
 create policy own_or_owner_request on public.web_join_requests for select to authenticated using(team_private.join_request_visible(team_id,user_id));
 -- Notification settings, private worker leases and current contact lookup remain server-only.
+revoke all on public.web_join_requests from public,anon,authenticated;
 grant select(id,team_id,user_id,first_name,last_name,requested_role,status,confirmed_role,revision,created_at) on public.web_join_requests to authenticated;
 create function team_private.verified_email_actor() returns uuid language plpgsql stable security definer set search_path=pg_catalog as $$
 declare a uuid:=team_private.actor();
